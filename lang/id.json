@@ -1,0 +1,42 @@
+{
+    "Minutes": "Menit",
+
+    "Attendance": "Kehadiran",
+    "Date": "Tanggal",
+    "On Time": "Tepat Waktu",
+    "Late Clock In": "Terlambat Masuk",
+    "Early Clock Out": "Pulang Lebih Awal",
+    "Absense": "Absen",
+    "No Clock In": "Tidak Clock In",
+    "No Clock Out": "Tidak Clock Out",
+    "Day Off": "Hari Libur",
+    "Time Off": "Cuti / Libur",
+    "Schedule In": "Jadwal Masuk",
+    "Schedule Out": "Jadwal Pulang",
+    "Over Time": "Lembur",
+    "Clock In Dispensation": "Dispensasi Clock In",
+    "Clock Out Dispensation": "Dispensasi Clock Out",
+
+    "Confirmation": "Konfirmasi",
+    "Allowance Name": "Nama Tunjangan",
+    "New Allowance": "Tunjangan Baru",
+    "Will you create New Allowance?": "Apakah Anda akan membuat Tunjangan Baru?",
+    "Save": "Simpan",
+    "Cancel": "Batal",
+    "There is incomplete data": "Ada data yang belum lengkap",
+    "Employee Name": "Nama Pegawai",
+    "Employee": "Pegawai",
+    "Employee ID": "ID Pegawai",
+    "Full Name": "Nama Lengkap",
+    "Company Name": "Nama Perusahaan",
+    "Company": "Perusahaan",
+    "Department": "Departemen",
+    "Designation": "Posisi / Jabatan",
+    "Employee Type": "Tipe Pegawai",
+    "Employee Status": "Status Pegawai",
+
+    "On Boarding": "Orientasi",
+    "On Boarding Status": "Status Orientasi",
+
+    "Data Employee Not Found!": "Data Pegawai Tidak Ditemukan!"
+}

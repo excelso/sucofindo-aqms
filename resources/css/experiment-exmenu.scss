@@ -1,0 +1,70 @@
+@import "@fortawesome/fontawesome-free/css/all.css";
+
+.ex-menu-item {
+    transition: 0.12s ease-out;
+}
+
+.ex-menu-item .ex-menu-link {
+    transition: 0.12s ease-out;
+    display: flex;
+    align-items: center;
+    padding: 5px 10px 5px 0;
+}
+
+.ex-menu-item .ex-menu-link label {
+    flex: 1;
+    cursor: pointer;
+}
+
+.ex-menu-item .ex-menu-link:hover input[type=checkbox] {
+    outline: 1px solid #1C64F2;
+}
+
+.ex-menu-item .ex-menu-link:hover label:after {
+    font: var(--fa-font-solid);
+    content: '\f00c';
+    font-size: 12px;
+    color: #9ca3af;
+    margin-left: 5px;
+}
+
+.ex-menu-item .ex-menu-link input[type=checkbox] {
+    cursor: pointer;
+}
+
+.ex-menu-item .ex-menu-link .ex-menu-arrow {
+    padding: 0 15px 0 0;
+    cursor: pointer;
+}
+
+.ex-menu-item .ex-menu-link .ex-menu-arrow i {
+    transition: 0.12s ease-out;
+}
+
+//.ex-menu-item:has(> ul.ex-menu-tree) > .ex-menu-link:before {
+//    font: var(--fa-font-solid);
+//    content: '\f0d7';
+//    padding: 0 15px 0 5px;
+//    cursor: pointer;
+//}
+
+.ex-menu-item > ul.ex-menu-tree .ex-menu-item {
+    margin: 5px 0 5px 25px;
+}
+
+.ex-menu .ex-menu-collapsing {
+    position: relative;
+    height: 0;
+    overflow: hidden;
+    transition-timing-function: ease-out;
+    transition-duration: .25s;
+    transition-property: height, visibility;
+}
+
+.ex-menu-item > ul.ex-menu-tree:not(.ex-menu-show) {
+    display: none;
+}
+
+.ex-menu-item > .ex-menu-link:has(+ .ex-menu-show) > .ex-menu-arrow i {
+    transform: rotate(90deg);
+}

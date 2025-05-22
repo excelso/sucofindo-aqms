@@ -1,0 +1,70 @@
+.autocomplete-body {
+    border-left: 1px solid #e1e1e1;
+    border-right: 1px solid #e1e1e1;
+    border-bottom: 1px solid #e1e1e1;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+.autocomplete-body .autocomplete-list .autocomplete-item {
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.autocomplete-body .autocomplete-list .autocomplete-item:hover {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.autocomplete-body .autocomplete-list .autocomplete-item:not(:last-child) {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.autocomplete-body .autocomplete-list .autocomplete-item:last-child {
+    padding: 0.5rem 0.75rem;
+}
+
+.autocomplete-body .autocomplete-list .autocomplete-item:last-child:hover {
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+.autocomplete-body .autocomplete-list .autocomplete-item.autocomplete-active {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.autocomplete-items {
+    position: absolute;
+    border: 1px solid #d4d4d4;
+    border-top: none;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    z-index: 99;
+    /*position the autocomplete items to be the same width as the container:*/
+    top: 100%;
+    left: -30px;
+    right: 0;
+    width: calc(100% + 25px);
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.autocomplete-items div.items {
+    padding: 10px;
+    cursor: pointer;
+    background-color: #fff;
+    border-bottom: 1px solid #d4d4d4;
+}
+
+/*when hovering an item:*/
+.autocomplete-items div.items:hover {
+    background-color: #e9e9e9;
+}
+
+/*when navigating through the items using the arrow keys:*/
+.autocomplete-active {
+    background-color: DodgerBlue !important;
+    color: #ffffff;
+}

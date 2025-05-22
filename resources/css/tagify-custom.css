@@ -1,0 +1,34 @@
+.tagify.form-control {
+    background-color: white;
+    cursor: text;
+}
+
+.tagify.form-control.textarea {
+    background-color: white;
+    cursor: text;
+    height: 100px;
+}
+
+.tagify.tagify--focus {
+    background-color: white;
+    align-items: flex-start !important;
+}
+
+.tagify__tag {
+    margin-inline: 0 5px !important;
+    margin-block: 3px !important;
+    cursor: pointer !important;
+    background-color: #D3E2E2;
+    border-radius: 3px;
+    transition: 0.3s ease-out !important;
+}
+
+.tagify__tag:has(.tagify__tag__removeBtn:hover) {
+    background-color: rgb(236, 139, 139);
+}
+
+.tagify__input {
+    padding: unset !important;
+    color: #282942 !important;
+    margin: 7px 0 0 0 !important;
+}

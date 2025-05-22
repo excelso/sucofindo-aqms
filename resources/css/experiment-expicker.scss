@@ -1,0 +1,188 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap");
+
+:root {
+    --ex-calendar-common-color: #4a4a4a;
+    --ex-calendar-months-color-bg: #ffffff;
+    --ex-calendar-months-box-shadow-color: #a8a8a8;
+    --ex-calendar-months-weekday-color: #808080;
+    --ex-calendar-months-day-other-color: #c3c3c3;
+    --ex-day-hover-color: #1f88ba;
+    --ex-day-disable-bg-color: #dcf0ff;
+    --ex-month-width: calc(43px * 7);
+    --ex-day-width: 43px;
+}
+
+.ex-picker .calendar-main {
+    display: flex;
+    font-family: Nunito, sans-serif;
+}
+
+.ex-picker .calendar-months {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    background-color: var(--ex-calendar-months-color-bg);
+    border-radius: 5px;
+    -webkit-box-shadow: 0 0 3px var(--ex-calendar-months-box-shadow-color);
+    box-shadow: 0 0 3px var(--ex-calendar-months-box-shadow-color);
+    box-sizing: content-box;
+}
+
+.ex-picker .calendar-months .calendar-months-item {
+    display: flex;
+}
+
+.ex-picker .calendar-months .month-item {
+    padding: 15px;
+    width: var(--ex-month-width);
+    box-sizing: content-box;
+}
+
+.ex-picker .calendar-months .month-item .month-item-nav {
+    display: flex;
+    align-items: center;
+    padding: 10px 5px;
+    color: var(--ex-calendar-common-color);
+    cursor: default;
+}
+
+.ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-title {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    margin: 0 0 0 6px;
+}
+
+.ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-title .nav-month,
+.ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-title .nav-year {
+    font-size: 14px;
+    position: relative;
+    margin-right: 5px;
+}
+
+.ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-title .nav-month select,
+.ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-title .nav-year select{
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0.005;
+    padding: 0 !important;
+    background-image: none !important;
+    border: 0 !important;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-title select:focus {
+    outline: none !important;
+    box-shadow: none;
+}
+
+.ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-control {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-control .btn-today {
+    cursor: pointer;
+    padding: 7px 10px;
+    transition: all 0.3s, border 0.3s;
+}
+
+.ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-control .btn-prev-month,
+.ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-control .btn-next-month {
+    cursor: pointer;
+    padding: 10px 13px;
+    transition: all 0.3s, border 0.3s;
+}
+
+.ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-control .btn-today:hover,
+.ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-control .btn-prev-month:hover,
+.ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-control .btn-next-month:hover {
+    background-color: #ececec;
+    border-radius: 4px;
+}
+
+.ex-picker .calendar-months .month-item-weekdays-row {
+    display: flex;
+    justify-content: start;
+    color: var(--ex-calendar-months-weekday-color);
+}
+
+.ex-picker .calendar-months .month-item-weekdays-row > div {
+    padding: 5px 0;
+    font-size: 75%;
+    -webkit-box-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+    width: var(--ex-day-width);
+    text-align: center;
+}
+
+.ex-picker .calendar-months .month-item-days {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    text-align: center;
+}
+
+.ex-picker .calendar-months .month-item-days > div {
+    padding: 10px 0;
+    width: var(--ex-day-width);
+    font-size: 75%;
+}
+
+.ex-picker .calendar-months .month-item-days .day-item.prev-month,
+.ex-picker .calendar-months .month-item-days .day-item.next-month {
+    color: var(--ex-calendar-months-day-other-color);
+    text-align: center;
+    border-radius: 3px;
+    transition: all 0.1s, border 0.1s;
+    cursor: pointer;
+}
+
+.ex-picker .calendar-months .month-item-days .day-item {
+    color: #1f2937;
+    text-align: center;
+    border-radius: 3px;
+    transition: all 0.1s, border 0.1s;
+    cursor: pointer;
+}
+
+.ex-picker .calendar-months .month-item-days .day-item.disabled {
+    color: var(--ex-calendar-months-day-other-color);
+    cursor: not-allowed;
+}
+
+.ex-picker .calendar-months .month-item-days .day-item.today {
+    color: var(--ex-day-hover-color);
+}
+
+.ex-picker .calendar-months .month-item-days .day-item.active:not(.disabled) {
+    color: white;
+    background-color: var(--ex-day-hover-color);
+}
+
+.ex-picker .calendar-months .month-item-days .day-item.active:is(.disabled) {
+    color: white;
+    background-color: var(--ex-day-disable-bg-color);
+}
+
+.ex-picker .calendar-months .month-item-days .day-item:hover:not(.disabled) {
+    color: var(--ex-day-hover-color);
+    box-shadow: inset 0 0 0 1px var(--ex-day-hover-color);
+}
+
+.ex-picker .calendar-months .month-item-days .day-item:is(.active):hover:not(.disabled) {
+    color: white;
+    box-shadow: inset 0 0 0 1px var(--ex-day-hover-color);
+}
+
+.ex-picker .calendar-months .month-item-days .day-item.prev-month:hover:not(.disabled),
+.ex-picker .calendar-months .month-item-days .day-item.next-month:hover:not(.disabled) {
+    color: var(--ex-calendar-months-day-other-color);
+    box-shadow: inset 0 0 0 1px var(--ex-day-hover-color);
+}

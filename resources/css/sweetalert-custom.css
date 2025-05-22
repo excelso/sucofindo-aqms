@@ -1,0 +1,12 @@
+.swal2-container {
+    z-index: 9999;
+}
+
+.html-title {
+    padding: 1em 1em 0;
+    font-size: 1.4em;
+}
+
+.html-container {
+    padding: 0 1.6em .3em !important;
+}
