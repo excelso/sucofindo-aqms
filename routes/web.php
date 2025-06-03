@@ -45,18 +45,19 @@
         'middleware' => ['localeSessionRedirect', 'localizationRedirect', 'localeViewPath']
     ], function () {
 
-        Route::middleware(['auth', 'verified'])->group(function () {
-            Route::get('/', [ControllerDashboard::class, 'index'])->name('dashboard');
-
-            Route::group(['prefix' => 'settings'], function () {
-                //region Change Password
-                Route::group(['prefix' => 'change-password'], function () {
-                    Route::get('/', [ControllerChangePassword::class, 'index'])->name('settings.change-password');
-                    Route::post('update', [ControllerChangePassword::class, 'updatePassword']);
-                });
-                //endregion
-            });
-        });
+        Route::get('/', [ControllerDashboard::class, 'index'])->name('dashboard');
+        // Route::middleware(['auth', 'verified'])->group(function () {
+        //     Route::get('/', [ControllerDashboard::class, 'index'])->name('dashboard');
+        //
+        //     Route::group(['prefix' => 'settings'], function () {
+        //         //region Change Password
+        //         Route::group(['prefix' => 'change-password'], function () {
+        //             Route::get('/', [ControllerChangePassword::class, 'index'])->name('settings.change-password');
+        //             Route::post('update', [ControllerChangePassword::class, 'updatePassword']);
+        //         });
+        //         //endregion
+        //     });
+        // });
 
     });
 

@@ -1,7 +1,7 @@
 <aside class="main-sidebar darkMode">
     <div class="brand">
-        <img alt="logo" src="{{ asset('images/logo-color.png') }}" class="brand-logo"/>
-        <h2 class="brand-label">HRMS</h2>
+        <img alt="logo" src="{{ asset('images/logo-white.png') }}" class="brand-logo"/>
+        <h2 class="brand-label">BeAQMS</h2>
     </div>
     <div class="sidebar">
         <ul class="metismenu" id="menu">
