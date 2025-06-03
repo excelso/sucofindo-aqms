@@ -16,6 +16,7 @@ interface AirQualityData {
     location?: string;
     lastUpdated?: Date;
     forecastData?: Array<{ timestamp: number; value: number }>; // Unix timestamp
+    cctvLink?: string;
 }
 
 interface CardManagerOptions {
@@ -29,7 +30,7 @@ interface CardManagerOptions {
     apiEndpoint?: string;
     enableWebSocket?: boolean;
     webSocketUrl?: string;
-    onCardClick?: (data: AirQualityData) => void;
+    onCctvClick?: (cctvLink: string) => void;
     onDataUpdate?: (updatedData: AirQualityData[]) => void;
     onConnectionStatus?: (status: 'connected' | 'disconnected' | 'error') => void;
 }
@@ -838,10 +839,6 @@ class AirQualityCardManager {
         card.dataset.index = index.toString();
         card.id = cardId;
 
-        if (this.options.onCardClick) {
-            card.addEventListener('click', () => this.options.onCardClick!(data));
-        }
-
         const cardBody = this.createElement('div', 'card-body');
 
         // Header section
@@ -885,6 +882,10 @@ class AirQualityCardManager {
         cctvImg.alt = 'cctv';
         cctvLink.appendChild(cctvImg);
         rightSection.appendChild(cctvLink);
+
+        if (this.options.onCctvClick) {
+            cctvLink.addEventListener('click', () => this.options.onCctvClick!(data.cctvLink));
+        }
 
         headerFlex.appendChild(leftSection);
         headerFlex.appendChild(rightSection);
