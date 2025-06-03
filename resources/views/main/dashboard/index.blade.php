@@ -26,7 +26,7 @@
                     <div>
                         <i class="fas fa-eye"></i>
                     </div>
-                    <div>Watchlist (12)</div>
+                    <div class="leading-[2px] text-[10px] hidden">Watchlist (12)</div>
                 </div>
             </div>
 
