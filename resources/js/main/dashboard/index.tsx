@@ -2,6 +2,7 @@ import {AirQualityCardManager, AirQualityData, MetricsData} from "@/js/main/dash
 import Highcharts from 'highcharts'
 import "highcharts/highcharts-more";
 import {closeModalDialog, showModalDialog} from "@/js/plugins/modal";
+import Hls from "hls.js";
 
 document.addEventListener('DOMContentLoaded', function () {
     const modalCctv = document.querySelector('.modalCctv')
@@ -16,6 +17,11 @@ document.addEventListener('DOMContentLoaded', function () {
             closeModalDialog(modalCctv, () => {
                 const videos = modalBody.querySelectorAll('video');
                 videos.forEach(video => {
+                    if ((video as any).hlsInstance) {
+                        (video as any).hlsInstance.destroy();
+                        (video as any).hlsInstance = null;
+                    }
+
                     // Stop video sebelum remove
                     video.pause();
                     video.src = '';
@@ -42,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${id}
                 </div>
             `, () => {
-                modalBody.appendChild(createVideoElementWithUrl(cctvLink))
+                modalBody.appendChild(createVideoElementWithAutoplay(cctvLink))
             })
         },
         onMetricsClick: (id, metrics) => {
@@ -110,21 +116,33 @@ document.addEventListener('DOMContentLoaded', function () {
     //endregion
 
     //region Handle Create Video Element
-    function createVideoElementWithUrl(streamUrl: string): HTMLVideoElement {
+    function createVideoElementWithAutoplay(streamUrl: string): HTMLVideoElement {
         const video = document.createElement('video') as HTMLVideoElement;
 
-        video.autoplay = true;
+        video.autoplay = false; // Set false dulu
         video.width = 900;
         video.controls = true;
         video.style.height = 'auto';
-        video.src = streamUrl;
+        video.muted = true; // WAJIB untuk autoplay di Chrome
 
-        // Buat source element
-        const source = document.createElement('source') as HTMLSourceElement;
-        source.type = 'application/x-mpegURL';
-        source.src = streamUrl;
+        if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(streamUrl);
+            hls.attachMedia(video);
+            (video as any).hlsInstance = hls;
 
-        video.appendChild(source);
+            // Autoplay setelah manifest ready
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                console.log('HLS ready, starting autoplay...');
+                video.play().catch(error => {
+                    console.warn('Autoplay failed:', error);
+                });
+            });
+
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = streamUrl;
+            video.autoplay = true; // Safari support autoplay lebih baik
+        }
 
         return video;
     }
