@@ -34,6 +34,9 @@
                 <div class="airQualityParent grid grid-cols-3 gap-4"></div>
             </div>
         </div>
+
+        @include('main.dashboard.popup.cctv')
+        @include('main.dashboard.popup.detail-parameter')
     </div>
 </x-app-layout>
 

@@ -8,15 +8,39 @@ interface AirQualityData {
     isOnline: boolean;
     cctvIconPath?: string;
     metrics?: {
-        pm10?: number;
-        pm25?: number;
-        pm1?: number;
-        noise?: number;
+        pm10?: {
+            value?: number,
+            bml?: number,
+            buffer?: number
+        };
+        pm25?: {
+            value?: number,
+            bml?: number,
+            buffer?: number
+        };
+        pm1?: {
+            value?: number,
+            bml?: number,
+            buffer?: number
+        };
+        noise?: {
+            value?: number,
+            bml?: number,
+            buffer?: number
+        };
     };
     location?: string;
     lastUpdated?: Date;
     forecastData?: Array<{ timestamp: number; value: number }>; // Unix timestamp
     cctvLink?: string;
+}
+
+interface MetricsData {
+    title: string;
+    type: string;
+    value: number;
+    bml: number;
+    buffer: number
 }
 
 interface CardManagerOptions {
@@ -30,7 +54,8 @@ interface CardManagerOptions {
     apiEndpoint?: string;
     enableWebSocket?: boolean;
     webSocketUrl?: string;
-    onCctvClick?: (cctvLink: string) => void;
+    onCctvClick?: (id: string, cctvLink: string) => void;
+    onMetricsClick?: (id: string, metrics: MetricsData) => void;
     onDataUpdate?: (updatedData: AirQualityData[]) => void;
     onConnectionStatus?: (status: 'connected' | 'disconnected' | 'error') => void;
 }
@@ -109,7 +134,7 @@ class AirQualityCardManager {
     }
 
     // Create Gauge Chart
-    private createGaugeChart(element: HTMLElement, type: 'pm10' | 'pm25' | 'pm1' | 'noise', initialValue: number, cardId: string): void {
+    private createGaugeChart(id: string, element: HTMLElement, title: string, type: 'pm10' | 'pm25' | 'pm1' | 'noise', bml: number, buffer: number, initialValue: number, cardId: string, metricCard: HTMLElement): void {
         if (!this.options.enableCharts || typeof Highcharts === 'undefined') {
             return;
         }
@@ -194,6 +219,9 @@ class AirQualityCardManager {
             accessibility: { enabled: false },
             title: { text: null },
             credits: { enabled: false },
+            tooltip: {
+              enabled: false
+            },
             pane: {
                 center: ['50%', '70%'],
                 size: '150%',
@@ -250,7 +278,7 @@ class AirQualityCardManager {
                     backgroundColor: '#41a6d9',
                     radius: 0
                 },
-                tooltip: { valueSuffix: suffixMap[type] },
+                // tooltip: { valueSuffix: suffixMap[type] },
                 dataLabels: {
                     formatter: function () {
                         const decimals = type === 'noise' ? 0 : 1;
@@ -260,9 +288,9 @@ class AirQualityCardManager {
                             maximumFractionDigits: decimals
                         });
                         return `
-              <div class="font-bold text-[14px] leading-[2px]">${format.format(this.y)}</div><br>
-              <div class="font-normal text-[10px] leading-[2px] mb-2">${unitMap[type]}</div>
-            `;
+                          <div class="font-bold text-[14px] leading-[2px]">${format.format(this.y)}</div><br>
+                          <div class="font-normal text-[10px] leading-[2px] mb-2">${unitMap[type]}</div>
+                        `;
                     },
                     borderWidth: 0,
                     color: '#333',
@@ -294,6 +322,16 @@ class AirQualityCardManager {
                         if (step >= steps) {
                             clearInterval(animationInterval);
                             series.setData([newValue], true, { duration: 0 });
+
+                            if (this.options.onMetricsClick) {
+                                metricCard.addEventListener('click', () => this.options.onMetricsClick!(id, {
+                                    title: title,
+                                    type: type,
+                                    value: newValue,
+                                    bml: bml,
+                                    buffer: buffer
+                                }));
+                            }
                         }
                     }, 1000 / steps);
                 }
@@ -380,7 +418,9 @@ class AirQualityCardManager {
                 max: chartData[chartData.length - 1]?.x
             },
             yAxis: {
-                title: { text: null },
+                title: {
+                    text: 'Forcast Value'
+                },
                 labels: { enabled: false },
                 gridLineWidth: 0,
                 min: 0
@@ -436,7 +476,6 @@ class AirQualityCardManager {
                 }
             }]
         }, function(chart) {
-            // Highlight the last point (most recent forecast)
             const series = chart.series[0];
             const lastPointIndex = series.data.length - 1;
             if (series.data[lastPointIndex]) {
@@ -540,11 +579,12 @@ class AirQualityCardManager {
 
         // Update charts with new metric values
         if (newData.metrics) {
-            Object.entries(newData.metrics).forEach(([metric, value]) => {
-                if (value !== undefined && oldData.metrics?.[metric as keyof typeof oldData.metrics] !== value) {
-                    this.updateChartValue(`card-${cardId}-${this.getCardIndex(cardId)}`, metric as any, value);
-                }
-            });
+            console.log(Object.entries(newData.metrics))
+            // Object.entries(newData.metrics).forEach(([metric, value]) => {
+            //     if (value !== undefined && oldData.metrics?.[metric as keyof typeof oldData.metrics] !== value) {
+            //         this.updateChartValue(`card-${cardId}-${this.getCardIndex(cardId)}`, metric as any, value);
+            //     }
+            // });
         }
 
         // Update forecast chart if data changed
@@ -884,7 +924,7 @@ class AirQualityCardManager {
         rightSection.appendChild(cctvLink);
 
         if (this.options.onCctvClick) {
-            cctvLink.addEventListener('click', () => this.options.onCctvClick!(data.cctvLink));
+            cctvLink.addEventListener('click', () => this.options.onCctvClick!(data.id, data.cctvLink));
         }
 
         headerFlex.appendChild(leftSection);
@@ -895,14 +935,14 @@ class AirQualityCardManager {
         const metricsGrid = this.createElement('div', 'grid grid-cols-4 gap-2');
 
         const metrics = [
-            { title: 'PM10', type: 'pm10' as const, value: data.metrics?.pm10 || Math.random() * 50 + 20 },
-            { title: 'PM2.5', type: 'pm25' as const, value: data.metrics?.pm25 || Math.random() * 40 + 15 },
-            { title: 'PM1.0', type: 'pm1' as const, value: data.metrics?.pm1 || Math.random() * 30 + 10 },
-            { title: 'Noise', type: 'noise' as const, value: data.metrics?.noise || Math.random() * 60 + 40 }
+            { title: 'PM10', type: 'pm10' as const, value: data.metrics?.pm10?.value || Math.random() * 50 + 20, bml: data.metrics?.pm10?.bml, buffer: data.metrics?.pm10.buffer },
+            { title: 'PM2.5', type: 'pm25' as const, value: data.metrics?.pm25?.value || Math.random() * 40 + 15, bml: data.metrics?.pm25?.bml, buffer: data.metrics?.pm25.buffer },
+            { title: 'PM1.0', type: 'pm1' as const, value: data.metrics?.pm1?.value || Math.random() * 30 + 10, bml: data.metrics?.pm1?.bml, buffer: data.metrics?.pm1.buffer },
+            { title: 'Noise', type: 'noise' as const, value: data.metrics?.noise?.value || Math.random() * 60 + 40, bml: data.metrics?.noise?.bml, buffer: data.metrics?.noise.buffer }
         ];
 
         metrics.forEach(metric => {
-            const metricCard = this.createElement('div', 'border rounded-md');
+            const metricCard: HTMLElement = this.createElement('div', 'border rounded-md');
             const titleDiv = this.createElement('div', 'font-bold text-[12px] m-2 mb-2', metric.title);
             const chartDiv = this.createElement('div', `chart-${metric.type}`);
             chartDiv.id = `${cardId}-${metric.type}`;
@@ -911,9 +951,13 @@ class AirQualityCardManager {
             metricCard.appendChild(chartDiv);
             metricsGrid.appendChild(metricCard);
 
+            if (this.options.onMetricsClick) {
+                metricCard.addEventListener('click', () => this.options.onMetricsClick!(data.id, metric));
+            }
+
             // Create gauge chart after DOM insertion
             setTimeout(() => {
-                this.createGaugeChart(chartDiv, metric.type, metric.value, cardId);
+                this.createGaugeChart(data.id, chartDiv, metric.title, metric.type, metric.bml, metric.buffer, metric.value, cardId, metricCard);
             }, 100);
         });
 
@@ -1090,4 +1134,4 @@ class AirQualityCardManager {
     }
 }
 
-export {AirQualityCardManager, type AirQualityData, type CardManagerOptions};
+export {AirQualityCardManager, type AirQualityData, type CardManagerOptions, type MetricsData};
