@@ -47,6 +47,9 @@
 
         Route::middleware(['auth', 'verified', 'otp.verified'])->group(function () {
             Route::get('/', [ControllerDashboard::class, 'index'])->name('dashboard');
+            Route::group(['prefix' => 'dashboard'], function () {
+                Route::get('platforms', [ControllerDashboard::class, 'getDataPlatforms']);
+            });
 
             Route::group(['prefix' => 'settings'], function () {
                 //region Change Password

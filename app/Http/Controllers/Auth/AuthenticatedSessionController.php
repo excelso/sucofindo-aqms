@@ -24,14 +24,19 @@
             $request->authenticate();
             $request->session()->regenerate();
 
-            return redirect()->intended(route('verify-otp', absolute: false));
-            // return redirect()->intended(route('dashboard', absolute: false));
+            if (config('app.env') == 'local') {
+                session(['otp_verified' => true]);
+                return redirect()->intended();
+            } else {
+                return redirect()->intended(route('verify-otp', absolute: false));
+            }
         }
 
         /**
          * Destroy an authenticated session.
          */
         public function destroy(Request $request): RedirectResponse {
+            $request->session()->forget('otp_verified');
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

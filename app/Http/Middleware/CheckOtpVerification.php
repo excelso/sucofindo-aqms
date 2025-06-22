@@ -12,11 +12,11 @@
         public function handle(Request $request, Closure $next, ...$guards) {
             $guards = empty($guards) ? [null] : $guards;
 
-            foreach ($guards as $guard) {
+            foreach ( $guards as $guard ) {
                 if (Auth::guard($guard)->check() && !session()->has('otp_verified')) {
-                    if (!$request->is('verify-otp*')) {
-                        return redirect()->route('verify-otp');
-                    }
+                    return redirect()->intended(route('login', absolute: false));
+                } else {
+                    return $next($request);
                 }
             }
 

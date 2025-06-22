@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const ids = `AQ-BC-${String(i + 1).padStart(3, '0')}`;
 
             return {
-                id: ids,
+                uid: ids,
                 status: statuses[Math.floor(Math.random() * statuses.length)],
                 isOnline: Math.random() > 0.1,
                 metrics: {
@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const mockData = generateMockData(6);
-    manager.loadData(mockData).then(() => {
+    manager.loadData('/dashboard/platforms').then(() => {
         manager.renderAll();
     });
     //endregion

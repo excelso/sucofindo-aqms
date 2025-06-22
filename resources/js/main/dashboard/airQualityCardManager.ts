@@ -3,7 +3,7 @@ import "highcharts/highcharts-more";
 import "highcharts/modules/solid-gauge";
 
 interface AirQualityData {
-    id: string;
+    uid: string;
     status: 'Very Good' | 'Good' | 'Moderate' | 'Unhealthy';
     isOnline: boolean;
     cctvIconPath?: string;
@@ -216,11 +216,11 @@ class AirQualityCardManager {
                     }
                 }
             },
-            accessibility: { enabled: false },
-            title: { text: null },
-            credits: { enabled: false },
+            accessibility: {enabled: false},
+            title: {text: null},
+            credits: {enabled: false},
             tooltip: {
-              enabled: false
+                enabled: false
             },
             pane: {
                 center: ['50%', '70%'],
@@ -229,7 +229,7 @@ class AirQualityCardManager {
                 endAngle: 120,
                 background: [{
                     backgroundColor: {
-                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                        linearGradient: {x1: 0, y1: 0, x2: 0, y2: 1},
                         stops: [[0, '#EEE'], [1, '#FFF']]
                     },
                     borderRadius: 20,
@@ -247,14 +247,14 @@ class AirQualityCardManager {
                 tickColor: '#FFFFFF',
                 tickWidth: 2,
                 minorTickInterval: null,
-                labels: { enabled: false },
+                labels: {enabled: false},
                 plotBands: [{
                     from: 0,
                     to: 100,
                     innerRadius: '80%',
                     outerRadius: '100%',
                     color: {
-                        linearGradient: { x1: 0, y1: 0, x2: 1, y2: 0 },
+                        linearGradient: {x1: 0, y1: 0, x2: 1, y2: 0},
                         stops: stops
                     },
                     borderRadius: '50%'
@@ -321,7 +321,7 @@ class AirQualityCardManager {
 
                         if (step >= steps) {
                             clearInterval(animationInterval);
-                            series.setData([newValue], true, { duration: 0 });
+                            series.setData([newValue], true, {duration: 0});
 
                             if (this.options.onMetricsClick) {
                                 metricCard.addEventListener('click', () => this.options.onMetricsClick!(id, {
@@ -342,15 +342,18 @@ class AirQualityCardManager {
     }
 
     // Create Forecast Chart
-    private createForecastChart(element: HTMLElement, data: Array<{ timestamp: number; value: number }>, cardId: string): void {
+    private createForecastChart(element: HTMLElement, data: Array<{
+        timestamp: number;
+        value: number
+    }>, cardId: string): void {
         if (!this.options.enableCharts || typeof Highcharts === 'undefined') {
             return;
         }
 
-        // Default data with Unix timestamps (current time + hourly intervals)
+        // Default data with Unix timestamps (current time and hourly intervals)
         const now = Math.floor(Date.now() / 1000); // Current Unix timestamp
-        const defaultData = data || Array.from({ length: 6 }, (_, i) => ({
-            timestamp: now + (i * 3600), // Add 1 hour intervals
+        const defaultData = data || Array.from({length: 6}, (_, i) => ({
+            timestamp: now + (i * 3600), // Add 1-hour intervals
             value: Math.floor(Math.random() * 50) + 20
         }));
 
@@ -393,12 +396,12 @@ class AirQualityCardManager {
                     fontFamily: 'Arial, sans-serif'
                 }
             },
-            title: { text: null },
-            credits: { enabled: false },
+            title: {text: null},
+            credits: {enabled: false},
             xAxis: {
                 type: 'datetime',
                 labels: {
-                    formatter: function() {
+                    formatter: function () {
                         // Format as HH:MM for display
                         const value = (this as any).value as number;
                         return formatTimestamp(value / 1000, 'time');
@@ -413,7 +416,7 @@ class AirQualityCardManager {
                 gridLineWidth: 1,
                 gridLineColor: '#eee',
                 gridLineDashStyle: 'Dash',
-                tickInterval: 3600 * 1000, // 1 hour intervals in milliseconds
+                tickInterval: 3600 * 1000, // 1-hour intervals in milliseconds
                 min: chartData[0]?.x,
                 max: chartData[chartData.length - 1]?.x
             },
@@ -421,18 +424,18 @@ class AirQualityCardManager {
                 title: {
                     text: 'Forcast Value'
                 },
-                labels: { enabled: false },
+                labels: {enabled: false},
                 gridLineWidth: 0,
                 min: 0
             },
-            legend: { enabled: false },
+            legend: {enabled: false},
             tooltip: {
                 backgroundColor: 'white',
                 borderWidth: 0,
                 borderRadius: 8,
                 shadow: true,
-                style: { fontSize: '12px' },
-                formatter: function() {
+                style: {fontSize: '12px'},
+                formatter: function () {
                     const timestamp = this.x / 1000;
                     return `<b>Time:</b> ${formatTimestamp(timestamp, 'datetime')}<br><b>AQI:</b> ${this.y}`;
                 }
@@ -452,7 +455,7 @@ class AirQualityCardManager {
                         }
                     },
                     states: {
-                        hover: { lineWidth: 3 }
+                        hover: {lineWidth: 3}
                     }
                 }
             },
@@ -461,7 +464,7 @@ class AirQualityCardManager {
                 name: 'AQI Forecast',
                 data: chartData,
                 color: {
-                    linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+                    linearGradient: {x1: 0, x2: 0, y1: 0, y2: 1},
                     stops: [
                         [0, '#F44336'],
                         [0.5, '#FFC107'],
@@ -476,7 +479,7 @@ class AirQualityCardManager {
                     symbol: 'circle'
                 }
             }]
-        }, function(chart) {
+        }, function (chart) {
             const series = chart.series[0];
             const lastPointIndex = series.data.length - 1;
             if (series.data[lastPointIndex]) {
@@ -535,24 +538,24 @@ class AirQualityCardManager {
 
         newData.forEach(newItem => {
             // Find existing data index
-            const existingIndex = this.data.findIndex(item => item.id === newItem.id);
+            const existingIndex = this.data.findIndex(item => item.uid === newItem.uid);
 
             if (existingIndex !== -1) {
                 const oldItem = this.data[existingIndex];
 
                 // Update data array
-                this.data[existingIndex] = { ...newItem, lastUpdated: new Date() };
+                this.data[existingIndex] = {...newItem, lastUpdated: new Date()};
 
                 // Update cache
-                this.dataCache.set(newItem.id, this.data[existingIndex]);
+                this.dataCache.set(newItem.uid, this.data[existingIndex]);
 
                 // Update UI elements for this card
-                this.updateCardUI(newItem.id, oldItem, this.data[existingIndex]);
-                updatedCards.push(newItem.id);
+                this.updateCardUI(newItem.uid, oldItem, this.data[existingIndex]);
+                updatedCards.push(newItem.uid);
             } else {
                 // Add new card if not exists
-                this.data.push({ ...newItem, lastUpdated: new Date() });
-                this.dataCache.set(newItem.id, newItem);
+                this.data.push({...newItem, lastUpdated: new Date()});
+                this.dataCache.set(newItem.uid, newItem);
             }
         });
 
@@ -601,7 +604,7 @@ class AirQualityCardManager {
     }
 
     private getCardIndex(cardId: string): number {
-        return this.data.findIndex(item => item.id === cardId);
+        return this.data.findIndex(item => item.uid === cardId);
     }
 
     private updateStatusBadge(cardElement: HTMLElement, newStatus: string): void {
@@ -738,7 +741,7 @@ class AirQualityCardManager {
                 break;
 
             case 'HEARTBEAT':
-                // Handle heartbeat to keep connection alive
+                // Handle heartbeat to keep the connection alive
                 this.lastUpdateTime = new Date();
                 break;
 
@@ -748,17 +751,17 @@ class AirQualityCardManager {
     }
 
     private updateSingleStation(stationData: AirQualityData): void {
-        const existingIndex = this.data.findIndex(item => item.id === stationData.id);
+        const existingIndex = this.data.findIndex(item => item.uid === stationData.uid);
 
         if (existingIndex !== -1) {
             const oldData = this.data[existingIndex];
-            this.data[existingIndex] = { ...stationData, lastUpdated: new Date() };
-            this.updateCardUI(stationData.id, oldData, this.data[existingIndex]);
+            this.data[existingIndex] = {...stationData, lastUpdated: new Date()};
+            this.updateCardUI(stationData.uid, oldData, this.data[existingIndex]);
         }
     }
 
     private updateStationStatus(stationId: string, status: string, isOnline: boolean): void {
-        const stationIndex = this.data.findIndex(item => item.id === stationId);
+        const stationIndex = this.data.findIndex(item => item.uid === stationId);
 
         if (stationIndex !== -1) {
             const oldData = this.data[stationIndex];
@@ -789,9 +792,9 @@ class AirQualityCardManager {
         if (!indicator) return;
 
         const statusConfig = {
-            connected: { color: 'bg-green-500', text: 'Connected' },
-            disconnected: { color: 'bg-yellow-500', text: 'Disconnected' },
-            error: { color: 'bg-red-500', text: 'Error' }
+            connected: {color: 'bg-green-500', text: 'Connected'},
+            disconnected: {color: 'bg-yellow-500', text: 'Disconnected'},
+            error: {color: 'bg-red-500', text: 'Error'}
         };
 
         const config = statusConfig[status];
@@ -838,13 +841,15 @@ class AirQualityCardManager {
         }
         return Promise.resolve();
     }
+
     async loadData(dataSource: AirQualityData[] | string | (() => Promise<AirQualityData[]>)): Promise<void> {
         try {
             if (Array.isArray(dataSource)) {
                 this.data = dataSource;
             } else if (typeof dataSource === 'string') {
                 const response = await fetch(dataSource);
-                this.data = await response.json();
+                const {data} = await response.json()
+                this.data = data
             } else if (typeof dataSource === 'function') {
                 this.data = await dataSource();
             }
@@ -856,10 +861,10 @@ class AirQualityCardManager {
 
     private getStatusConfig(status: string) {
         const statusConfigs = {
-            'Very Good': { emoji: '😍', bgColor: 'bg-green-400/50' },
-            'Good': { emoji: '😊', bgColor: 'bg-green-200' },
-            'Moderate': { emoji: '😞', bgColor: 'bg-orange-200' },
-            'Unhealthy': { emoji: '😷', bgColor: 'bg-red-200' }
+            'Very Good': {emoji: '😍', bgColor: 'bg-green-400/50'},
+            'Good': {emoji: '😊', bgColor: 'bg-green-200'},
+            'Moderate': {emoji: '😞', bgColor: 'bg-orange-200'},
+            'Unhealthy': {emoji: '😷', bgColor: 'bg-red-200'}
         };
         return statusConfigs[status] || statusConfigs['Moderate'];
     }
@@ -873,7 +878,7 @@ class AirQualityCardManager {
 
     private createSingleCard(data: AirQualityData, index: number): HTMLElement {
         const statusConfig = this.getStatusConfig(data.status);
-        const cardId = `card-${data.id}-${index}`;
+        const cardId = `card-${data.uid}-${index}`;
 
         // Main card container
         const card = this.createElement('div', 'card mb-4 cursor-pointer');
@@ -885,7 +890,7 @@ class AirQualityCardManager {
         // Header section
         const headerFlex = this.createElement('div', 'flex items-center');
         const leftSection = this.createElement('div', 'flex-1');
-        const idTitle = this.createElement('div', 'text-[20px] font-bold', data.id);
+        const idTitle = this.createElement('div', 'text-[20px] font-bold', data.uid);
 
         if (data.location) {
             const locationDiv = this.createElement('div', 'text-[12px] text-gray-500', data.location);
@@ -925,7 +930,7 @@ class AirQualityCardManager {
         rightSection.appendChild(cctvLink);
 
         if (this.options.onCctvClick) {
-            cctvLink.addEventListener('click', () => this.options.onCctvClick!(data.id, data.cctvLink));
+            cctvLink.addEventListener('click', () => this.options.onCctvClick!(data.uid, data.cctvLink));
         }
 
         headerFlex.appendChild(leftSection);
@@ -936,10 +941,34 @@ class AirQualityCardManager {
         const metricsGrid = this.createElement('div', 'grid grid-cols-4 gap-2');
 
         const metrics = [
-            { title: 'PM10', type: 'pm10' as const, value: data.metrics?.pm10?.value || Math.random() * 50 + 20, bml: data.metrics?.pm10?.bml, buffer: data.metrics?.pm10.buffer },
-            { title: 'PM2.5', type: 'pm25' as const, value: data.metrics?.pm25?.value || Math.random() * 40 + 15, bml: data.metrics?.pm25?.bml, buffer: data.metrics?.pm25.buffer },
-            { title: 'PM1.0', type: 'pm1' as const, value: data.metrics?.pm1?.value || Math.random() * 30 + 10, bml: data.metrics?.pm1?.bml, buffer: data.metrics?.pm1.buffer },
-            { title: 'Noise', type: 'noise' as const, value: data.metrics?.noise?.value || Math.random() * 60 + 40, bml: data.metrics?.noise?.bml, buffer: data.metrics?.noise.buffer }
+            {
+                title: 'PM10',
+                type: 'pm10' as const,
+                value: data.metrics?.pm10?.value || Math.random() * 50 + 20,
+                bml: data.metrics?.pm10?.bml,
+                buffer: data.metrics?.pm10.buffer
+            },
+            {
+                title: 'PM2.5',
+                type: 'pm25' as const,
+                value: data.metrics?.pm25?.value || Math.random() * 40 + 15,
+                bml: data.metrics?.pm25?.bml,
+                buffer: data.metrics?.pm25.buffer
+            },
+            {
+                title: 'PM1.0',
+                type: 'pm1' as const,
+                value: data.metrics?.pm1?.value || Math.random() * 30 + 10,
+                bml: data.metrics?.pm1?.bml,
+                buffer: data.metrics?.pm1.buffer
+            },
+            {
+                title: 'Noise',
+                type: 'noise' as const,
+                value: data.metrics?.noise?.value || Math.random() * 60 + 40,
+                bml: data.metrics?.noise?.bml,
+                buffer: data.metrics?.noise.buffer
+            }
         ];
 
         metrics.forEach(metric => {
@@ -953,12 +982,12 @@ class AirQualityCardManager {
             metricsGrid.appendChild(metricCard);
 
             if (this.options.onMetricsClick) {
-                metricCard.addEventListener('click', () => this.options.onMetricsClick!(data.id, metric));
+                metricCard.addEventListener('click', () => this.options.onMetricsClick!(data.uid, metric));
             }
 
             // Create gauge chart after DOM insertion
             setTimeout(() => {
-                this.createGaugeChart(data.id, chartDiv, metric.title, metric.type, metric.bml, metric.buffer, metric.value, cardId, metricCard);
+                this.createGaugeChart(data.uid, chartDiv, metric.title, metric.type, metric.bml, metric.buffer, metric.value, cardId, metricCard);
             }, 100);
         });
 
@@ -1011,7 +1040,7 @@ class AirQualityCardManager {
 
                 if (step >= steps) {
                     clearInterval(interval);
-                    series.setData([newValue], true, { duration: 0 });
+                    series.setData([newValue], true, {duration: 0});
                 }
             }, 1000 / steps);
         }
@@ -1037,6 +1066,8 @@ class AirQualityCardManager {
         }
 
         this.container.innerHTML = '';
+
+        console.log(this.data)
 
         const batchSize = this.options.batchSize || 20;
         const initialBatch = this.data.slice(0, batchSize);
@@ -1119,7 +1150,7 @@ class AirQualityCardManager {
 
     search(query: string): void {
         const searchResults = this.data.filter(item =>
-            item.id.toLowerCase().includes(query.toLowerCase()) ||
+            item.uid.toLowerCase().includes(query.toLowerCase()) ||
             item.location?.toLowerCase().includes(query.toLowerCase()) ||
             item.status.toLowerCase().includes(query.toLowerCase())
         );
