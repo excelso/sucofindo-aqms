@@ -27,8 +27,6 @@
         ->withMiddleware(function (Middleware $middleware) {
             $middleware->web(append: [
                 DetectDevice::class,
-                CheckOtpVerification::class,
-                RedirectIfAuthenticated::class
             ]);
 
             $middleware->alias([

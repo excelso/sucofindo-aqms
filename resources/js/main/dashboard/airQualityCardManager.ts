@@ -461,10 +461,11 @@ class AirQualityCardManager {
                 name: 'AQI Forecast',
                 data: chartData,
                 color: {
-                    linearGradient: { x1: 0, x2: 1, y1: 0, y2: 0 },
+                    linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
                     stops: [
-                        [0, '#4CAF50'],
-                        [1, '#FFC107']
+                        [0, '#F44336'],
+                        [0.5, '#FFC107'],
+                        [1, '#4CAF50']
                     ]
                 },
                 marker: {

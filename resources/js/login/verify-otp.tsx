@@ -147,24 +147,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function handleSendOTP() {
         return new Promise(async (resolve, reject) => {
-            const response = await fetch('/verify-otp/send', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                body: JSON.stringify({
-                    email: emailUser.value,
+            await waitLoader('Mohon Tunggu...', 'Mengirim kode OTP ke email Anda', async () => {
+                const response = await fetch('/verify-otp/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        email: emailUser.value,
+                    })
                 })
-            })
 
-            const {status} = response
-            const {message} = await response.json()
-            if (status === 200) {
-                resolve(message);
-            } else {
-                reject(message);
-            }
+                const {status} = response
+                const {message} = await response.json()
+                if (status === 200) {
+                    Swal.close()
+                    resolve(message);
+                } else {
+                    Swal.close()
+                    reject(message);
+                }
+            });
         })
     }
 

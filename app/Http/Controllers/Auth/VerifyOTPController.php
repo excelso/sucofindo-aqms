@@ -3,19 +3,12 @@
     namespace App\Http\Controllers\Auth;
 
     use App\Http\Controllers\Controller;
-    use App\Http\Requests\Auth\LoginRequest;
     use App\Mail\MailRequestOTP;
-    use App\Models\Master\Karyawan\User;
     use App\Models\RequestOTP;
-    use App\Providers\RouteServiceProvider;
     use Carbon\Carbon;
     use Exception;
-    use Illuminate\Http\RedirectResponse;
     use Illuminate\Http\Request;
-    use Illuminate\Support\Facades\Auth;
-    use Illuminate\Support\Facades\Cookie;
     use Illuminate\Support\Facades\Mail;
-    use Illuminate\View\View;
     use Throwable;
 
     class VerifyOTPController extends Controller {
