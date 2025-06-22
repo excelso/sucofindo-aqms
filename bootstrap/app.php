@@ -1,8 +1,10 @@
 <?php
 
     use App\Http\Middleware\Authenticate;
+    use App\Http\Middleware\CheckOtpVerification;
     use App\Http\Middleware\DetectDevice;
     use App\Http\Middleware\DetectRole;
+    use App\Http\Middleware\RedirectIfAuthenticated;
     use Carbon\Carbon;
     use Illuminate\Foundation\Application;
     use Illuminate\Foundation\Configuration\Exceptions;
@@ -25,6 +27,8 @@
         ->withMiddleware(function (Middleware $middleware) {
             $middleware->web(append: [
                 DetectDevice::class,
+                CheckOtpVerification::class,
+                RedirectIfAuthenticated::class
             ]);
 
             $middleware->alias([
@@ -34,6 +38,8 @@
                 'localeCookieRedirect' => LocaleCookieRedirect::class,
                 'localeViewPath' => LaravelLocalizationViewPath::class,
                 'detectDevice' => DetectDevice::class,
+                'guest.v2' => RedirectIfAuthenticated::class,
+                'otp.verified' => CheckOtpVerification::class,
             ]);
         })
         ->withExceptions(function (Exceptions $exceptions) {

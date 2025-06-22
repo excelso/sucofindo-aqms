@@ -22,8 +22,8 @@
                 ], 401));
             } else {
                 if (!$request->expectsJson()) {
-                    return redirect()->route('dashboard');
-                    // return redirect()->route('login');
+                    // return redirect()->route('dashboard');
+                    return redirect()->route('login');
                 }
             }
 

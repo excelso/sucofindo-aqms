@@ -3,15 +3,15 @@
     <x-auth-session-status class="mb-4" :status="session('status')"/>
     <div class="login">
         <div class="login-left-container">
-            <div class="login-box">
+            <div class="login-box flex-col justify-center">
                 <div class="login-header">
-                    <img src="{{url('/images/logo-color.png')}}" class="mx-auto w-[150px]" alt="Logo"/>
+                    <img src="{{url('/images/logo-color.png')}}" class="mx-auto w-[250px]" alt="Logo"/>
                     <div class="mt-7">
                         <div class="font-bold text-5xl">
-                            Welcome Back
+                            BeAQMS
                         </div>
                         <div class="font-normal text-sm">
-                            Please Login to your Account
+                            Welcome Back, Please Login to your Account
                         </div>
                     </div>
                 </div>
@@ -85,7 +85,7 @@
 
                 <div class="login-footer">
                     <div>AQMS @2025</div>
-                    <div>Powered By SUCOFINDO</div>
+                    <div>Powered By PT. Berau Coal</div>
                 </div>
             </div>
         </div>
