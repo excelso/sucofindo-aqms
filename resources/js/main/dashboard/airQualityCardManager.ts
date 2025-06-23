@@ -354,6 +354,20 @@ class AirQualityCardManager {
             return;
         }
 
+        const getAQIColor = (aqiValue) => {
+            const categories = [
+                {min: 0, max: 50, color: '#22C55E'},      // Baik
+                {min: 51, max: 100, color: '#EAB308'},    // Sedang
+                {min: 101, max: 150, color: '#F97316'},   // Tidak sehat sensitif
+                {min: 151, max: 200, color: '#EF4444'},   // Tidak sehat
+                {min: 201, max: 300, color: '#DC2626'},   // Sangat tidak sehat
+                {min: 301, max: 500, color: '#B91C1C'},   // Berbahaya
+            ];
+
+            const category = categories.find(cat => aqiValue >= cat.min && aqiValue <= cat.max);
+            return category ? category.color : '#7F1D1D'; // Default untuk >500
+        };
+
         // Default data with Unix timestamps (current time and hourly intervals)
         const now = Math.floor(new Date().setHours(0, 1, 0, 0) / 1000);
         const defaultData = data || Array.from({length: 144}, (_, i) => ({
@@ -438,7 +452,8 @@ class AirQualityCardManager {
                 gridLineWidth: 1,
                 gridLineColor: '#eee',
                 gridLineDashStyle: 'Dash',
-                min: 0
+                min: 0,
+                // max: 500
             },
             legend: {enabled: false},
             tooltip: {
@@ -476,11 +491,15 @@ class AirQualityCardManager {
                 name: 'AQI Forecast',
                 data: chartData,
                 color: {
-                    linearGradient: {x1: 0, x2: 0, y1: 0, y2: 1},
+                    linearGradient: {x1: 0, x2: 0, y1: 1, y2: 0}, // vertical gradient
                     stops: [
-                        [0, '#F44336'],
-                        [0.5, '#FFC107'],
-                        [1, '#4CAF50']
+                        [0, '#22C55E'],
+                        [0.1, '#EAB308'],
+                        [0.2, '#F97316'],
+                        [0.3, '#EF4444'],
+                        [0.4, '#DC2626'],
+                        [0.6, '#B91C1C'],
+                        [1, '#7F1D1D']
                     ]
                 },
                 marker: {
@@ -493,13 +512,17 @@ class AirQualityCardManager {
             }]
         }, function (chart) {
             const series = chart.series[0];
-            const lastPointIndex = series.data.length - 1;
-            if (series.data[lastPointIndex]) {
-                series.data[lastPointIndex].update({
+            const lastPoint = series.data[series.data.length - 1];
+
+            if (lastPoint) {
+                const aqiValue = lastPoint.y;
+                const markerColor = getAQIColor(aqiValue);
+
+                lastPoint.update({
                     marker: {
                         enabled: true,
                         radius: 6,
-                        fillColor: '#4CAF50',
+                        fillColor: markerColor,
                         lineWidth: 2,
                         lineColor: 'white'
                     }
