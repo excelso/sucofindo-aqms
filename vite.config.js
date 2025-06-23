@@ -28,11 +28,11 @@ export default defineConfig({
         chunkSizeWarningLimit: 1600,
     },
     server: {
-        host: '0.0.0.0',
+        host: '127.0.0.1',
         port: 5175,
         hmr: {
             protocol: 'ws',
-            host: 'localhost',
+            host: '127.0.0.1',
         },
     },
     resolve: {

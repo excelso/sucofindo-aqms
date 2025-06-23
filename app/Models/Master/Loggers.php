@@ -17,14 +17,14 @@
             'uid',
             'pm_10',
             'pm_25',
-            'pm_1',
+            'tsp',
             'noise',
             'temp',
             'datetime_unix',
         ];
 
-        public function scopeLastData(Builder $builder, $uid): void {
+        public function scopeLoggerData(Builder $builder, $uid, $direction = 'ASC'): void {
             $builder->where('uid', $uid);
-            $builder->orderBy('datetime_unix', 'DESC');
+            $builder->orderBy('datetime_unix', $direction);
         }
     }

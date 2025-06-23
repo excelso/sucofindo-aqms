@@ -41,7 +41,8 @@ document.addEventListener('DOMContentLoaded', function () {
         batchSize: 50,
         enableLazyLoading: true,
         enableCharts: true,
-        chartUpdateInterval: 5000, // Update every 5 seconds
+        realTimeUpdateInterval: 15000,
+        apiEndpoint: '/dashboard/platforms',
         onCctvClick: (id, cctvLink) => {
             showModalDialog(modalCctv, `
                 <div class="flex items-center">
@@ -58,58 +59,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    function generateMockData(count: number): AirQualityData[] {
-        const statuses: Array<'Very Good' | 'Good' | 'Moderate' | 'Unhealthy'> = ['Very Good', 'Good', 'Moderate', 'Unhealthy'];
-        const cctvLinks = [
-            'https://restreamer.kotabogor.go.id/memfs/f87270e1-45f7-4cbd-9e6c-4000b66e39e9.m3u8',
-            'https://restreamer.kotabogor.go.id/memfs/7f86312d-fc35-4700-9bd1-2a624b13d111.m3u8',
-            'https://restreamer.kotabogor.go.id/memfs/aedb3f80-3355-411f-a8fa-08320766c07a.m3u8',
-            'https://restreamer.kotabogor.go.id/memfs/3b117452-5d6e-4291-9500-0ac9294532f4.m3u8',
-            'https://restreamer.kotabogor.go.id/memfs/e24f5b08-0783-417c-ac7c-9d92f546abe9.m3u8',
-            'https://restreamer.kotabogor.go.id/memfs/c048edf7-bce5-4bd2-8329-668ee45734b8.m3u8',
-        ];
-
-        return Array.from({length: count}, (_, i) => {
-            const now = Math.floor(Date.now() / 1000); // Current Unix timestamp
-            const ids = `AQ-BC-${String(i + 1).padStart(3, '0')}`;
-
-            return {
-                uid: ids,
-                status: statuses[Math.floor(Math.random() * statuses.length)],
-                isOnline: Math.random() > 0.1,
-                metrics: {
-                    pm10: {
-                        value: Math.floor(Math.random() * 50) + 20,
-                        bml: 50,
-                        buffer: 30
-                    },
-                    pm25: {
-                        value: Math.floor(Math.random() * 40) + 15,
-                        bml: 50,
-                        buffer: 20
-                    },
-                    pm1: {
-                        value: Math.floor(Math.random() * 30) + 10,
-                        bml: 50,
-                        buffer: 30
-                    },
-                    noise: {
-                        value: Math.floor(Math.random() * 60) + 40,
-                        bml: 50,
-                        buffer: 20
-                    }
-                },
-                lastUpdated: new Date(Date.now() - Math.random() * 86400000),
-                forecastData: Array.from({length: 6}, (_, j) => ({
-                    timestamp: now + (j * 3600), // Add 1 hour intervals
-                    value: Math.floor(Math.random() * 50) + 20
-                })),
-                cctvLink: cctvLinks[Math.floor(Math.random() * cctvLinks.length)]
-            };
-        });
-    }
-
-    const mockData = generateMockData(6);
     manager.loadData('/dashboard/platforms').then(() => {
         manager.renderAll();
     });

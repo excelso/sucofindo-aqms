@@ -1,10 +1,13 @@
 import Highcharts from 'highcharts'
 import "highcharts/highcharts-more";
 import "highcharts/modules/solid-gauge";
+import {data} from "autoprefixer";
 
 interface AirQualityData {
     uid: string;
-    status: 'Very Good' | 'Good' | 'Moderate' | 'Unhealthy';
+    status: string;
+    emoji?: string;
+    colorCode?: string;
     isOnline: boolean;
     cctvIconPath?: string;
     metrics?: {
@@ -18,7 +21,7 @@ interface AirQualityData {
             bml?: number,
             buffer?: number
         };
-        pm1?: {
+        tsp?: {
             value?: number,
             bml?: number,
             buffer?: number
@@ -134,7 +137,7 @@ class AirQualityCardManager {
     }
 
     // Create Gauge Chart
-    private createGaugeChart(id: string, element: HTMLElement, title: string, type: 'pm10' | 'pm25' | 'pm1' | 'noise', bml: number, buffer: number, initialValue: number, cardId: string, metricCard: HTMLElement): void {
+    private createGaugeChart(id: string, element: HTMLElement, title: string, type: 'pm10' | 'pm25' | 'tsp' | 'noise', bml: number, buffer: number, initialValue: number, cardId: string, metricCard: HTMLElement): void {
         if (!this.options.enableCharts || typeof Highcharts === 'undefined') {
             return;
         }
@@ -151,14 +154,14 @@ class AirQualityCardManager {
         const unitMap = {
             pm10: 'µg/m³',
             pm25: 'µg/m³',
-            pm1: 'µg/m³',
+            tsp: 'µg/m³',
             noise: 'db'
         };
 
         const suffixMap = {
             pm10: ' PM10',
             pm25: ' PM2.5',
-            pm1: ' PM1.0',
+            tsp: ' TSP',
             noise: ' dB'
         };
 
@@ -303,42 +306,43 @@ class AirQualityCardManager {
         // Store chart instance
         this.chartInstances.set(`${cardId}-${type}`, chart);
 
-        // Setup auto-update interval
-        if (this.options.chartUpdateInterval && this.options.chartUpdateInterval > 0) {
-            const interval = setInterval(() => {
-                if (chart && chart.series && chart.series[0]) {
-                    const series = chart.series[0];
-                    const newValue = Math.random() * (75.5 - 20.5) + 20.5;
-
-                    const currentValue = series.points[0].y;
-                    let step = 0;
-                    const steps = 30;
-
-                    const animationInterval = setInterval(() => {
-                        step++;
-                        const interpolated = currentValue + (newValue - currentValue) * (step / steps);
-                        series.points[0].update(interpolated, true, false);
-
-                        if (step >= steps) {
-                            clearInterval(animationInterval);
-                            series.setData([newValue], true, {duration: 0});
-
-                            if (this.options.onMetricsClick) {
-                                metricCard.addEventListener('click', () => this.options.onMetricsClick!(id, {
-                                    title: title,
-                                    type: type,
-                                    value: newValue,
-                                    bml: bml,
-                                    buffer: buffer
-                                }));
-                            }
-                        }
-                    }, 1000 / steps);
-                }
-            }, this.options.chartUpdateInterval);
-
-            this.chartIntervals.set(`${cardId}-${type}`, interval);
-        }
+        // region Setup auto-update interval (Testing Only)
+        // if (this.options.chartUpdateInterval && this.options.chartUpdateInterval > 0) {
+        //     const interval = setInterval(() => {
+        //         if (chart && chart.series && chart.series[0]) {
+        //             const series = chart.series[0];
+        //             const newValue = Math.random() * (75.5 - 20.5) + 20.5;
+        //
+        //             const currentValue = series.points[0].y;
+        //             let step = 0;
+        //             const steps = 30;
+        //
+        //             const animationInterval = setInterval(() => {
+        //                 step++;
+        //                 const interpolated = currentValue + (newValue - currentValue) * (step / steps);
+        //                 series.points[0].update(interpolated, true, false);
+        //
+        //                 if (step >= steps) {
+        //                     clearInterval(animationInterval);
+        //                     series.setData([newValue], true, {duration: 0});
+        //
+        //                     if (this.options.onMetricsClick) {
+        //                         metricCard.addEventListener('click', () => this.options.onMetricsClick!(id, {
+        //                             title: title,
+        //                             type: type,
+        //                             value: newValue,
+        //                             bml: bml,
+        //                             buffer: buffer
+        //                         }));
+        //                     }
+        //                 }
+        //             }, 1000 / steps);
+        //         }
+        //     }, this.options.chartUpdateInterval);
+        //
+        //     this.chartIntervals.set(`${cardId}-${type}`, interval);
+        // }
+        // endregion
     }
 
     // Create Forecast Chart
@@ -351,9 +355,9 @@ class AirQualityCardManager {
         }
 
         // Default data with Unix timestamps (current time and hourly intervals)
-        const now = Math.floor(Date.now() / 1000); // Current Unix timestamp
-        const defaultData = data || Array.from({length: 6}, (_, i) => ({
-            timestamp: now + (i * 3600), // Add 1-hour intervals
+        const now = Math.floor(new Date().setHours(0, 1, 0, 0) / 1000);
+        const defaultData = data || Array.from({length: 144}, (_, i) => ({
+            timestamp: now + (i * 300), // Add 1-hour intervals
             value: Math.floor(Math.random() * 50) + 20
         }));
 
@@ -389,8 +393,8 @@ class AirQualityCardManager {
             chart: {
                 renderTo: element,
                 type: 'spline',
-                marginLeft: 0,
-                marginRight: 10,
+                marginLeft: 45,
+                // marginRight: 10,
                 height: 150,
                 style: {
                     fontFamily: 'Arial, sans-serif'
@@ -413,19 +417,27 @@ class AirQualityCardManager {
                 },
                 lineWidth: 0,
                 tickWidth: 0,
-                gridLineWidth: 1,
+                gridLineWidth: 0,
                 gridLineColor: '#eee',
                 gridLineDashStyle: 'Dash',
-                tickInterval: 3600 * 1000, // 1-hour intervals in milliseconds
-                min: chartData[0]?.x,
-                max: chartData[chartData.length - 1]?.x
+                tickInterval: 3600 * 2000, // 1-hour intervals in milliseconds
+                // min: chartData[0]?.x,
+                // max: chartData[chartData.length - 1]?.x
             },
             yAxis: {
                 title: {
-                    text: 'Forcast Value'
+                    text: null
                 },
-                labels: {enabled: false},
-                gridLineWidth: 0,
+                labels: {
+                    enabled: true,
+                    style: {
+                        fontSize: '10px',
+                        color: '#666'
+                    }
+                },
+                gridLineWidth: 1,
+                gridLineColor: '#eee',
+                gridLineDashStyle: 'Dash',
                 min: 0
             },
             legend: {enabled: false},
@@ -512,7 +524,8 @@ class AirQualityCardManager {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
-                const newData: AirQualityData[] = await response.json();
+                const {data} = await response.json();
+                const newData: AirQualityData[] = data;
                 await this.updateExistingData(newData);
 
                 this.lastUpdateTime = new Date();
@@ -573,7 +586,8 @@ class AirQualityCardManager {
 
         // Update status badge if changed
         if (oldData.status !== newData.status) {
-            this.updateStatusBadge(cardElement, newData.status);
+            console.log(newData)
+            this.updateStatusBadge(cardElement, newData);
         }
 
         // Update online status if changed
@@ -583,12 +597,12 @@ class AirQualityCardManager {
 
         // Update charts with new metric values
         if (newData.metrics) {
-            console.log(Object.entries(newData.metrics))
-            // Object.entries(newData.metrics).forEach(([metric, value]) => {
-            //     if (value !== undefined && oldData.metrics?.[metric as keyof typeof oldData.metrics] !== value) {
-            //         this.updateChartValue(`card-${cardId}-${this.getCardIndex(cardId)}`, metric as any, value);
-            //     }
-            // });
+            // console.log(Object.entries(newData.metrics))
+            Object.entries(newData.metrics).forEach(([metric, data]) => {
+                if (data !== undefined && oldData.metrics?.[metric as keyof typeof oldData.metrics] !== data) {
+                    this.updateChartValue(`card-${cardId}-${this.getCardIndex(cardId)}`, metric as any, data.value);
+                }
+            });
         }
 
         // Update forecast chart if data changed
@@ -607,19 +621,19 @@ class AirQualityCardManager {
         return this.data.findIndex(item => item.uid === cardId);
     }
 
-    private updateStatusBadge(cardElement: HTMLElement, newStatus: string): void {
+    private updateStatusBadge(cardElement: HTMLElement, data: AirQualityData): void {
         const badge = cardElement.querySelector('.status-badge');
+        console.log(badge)
         if (!badge) return;
 
-        const statusConfig = this.getStatusConfig(newStatus);
         const emoji = badge.querySelector('div:first-child');
         const text = badge.querySelector('div:last-child');
 
-        if (emoji) emoji.textContent = statusConfig.emoji;
-        if (text) text.textContent = newStatus;
+        if (emoji) emoji.textContent = data.emoji;
+        if (text) text.textContent = data.status;
 
         // Update background color
-        badge.className = badge.className.replace(/bg-\w+-200/g, statusConfig.bgColor);
+        badge.className = badge.className.replace(/bg-\w+-200/g, data.colorCode);
     }
 
     private updateOnlineStatus(cardElement: HTMLElement, isOnline: boolean): void {
@@ -877,7 +891,6 @@ class AirQualityCardManager {
     }
 
     private createSingleCard(data: AirQualityData, index: number): HTMLElement {
-        const statusConfig = this.getStatusConfig(data.status);
         const cardId = `card-${data.uid}-${index}`;
 
         // Main card container
@@ -900,9 +913,9 @@ class AirQualityCardManager {
         const statusContainer = this.createElement('div', 'flex items-center gap-4');
 
         // Status badge
-        const badge = this.createElement('div', `inline-flex items-center rounded-full gap-1 px-[4px] py-[3px] ${statusConfig.bgColor} text-[12px] font-bold`);
+        const badge = this.createElement('div', `status-badge inline-flex items-center rounded-full gap-1 px-[4px] py-[3px] ${data.colorCode} text-[12px] font-bold`);
         const emoji = this.createElement('div');
-        emoji.textContent = statusConfig.emoji;
+        emoji.textContent = data.emoji;
         const statusText = this.createElement('div', 'mr-1', data.status);
         badge.appendChild(emoji);
         badge.appendChild(statusText);
@@ -956,11 +969,11 @@ class AirQualityCardManager {
                 buffer: data.metrics?.pm25.buffer
             },
             {
-                title: 'PM1.0',
-                type: 'pm1' as const,
-                value: data.metrics?.pm1?.value || Math.random() * 30 + 10,
-                bml: data.metrics?.pm1?.bml,
-                buffer: data.metrics?.pm1.buffer
+                title: 'TSP',
+                type: 'tsp' as const,
+                value: data.metrics?.tsp?.value || Math.random() * 30 + 10,
+                bml: data.metrics?.tsp?.bml,
+                buffer: data.metrics?.tsp.buffer
             },
             {
                 title: 'Noise',
@@ -995,7 +1008,7 @@ class AirQualityCardManager {
 
         // Forecast section
         const forecastSection = this.createElement('div', 'mt-4');
-        const forecastTitle = this.createElement('div', 'font-bold text-[14px]', 'Air Quality Forecast');
+        const forecastTitle = this.createElement('div', 'font-bold text-[14px] mb-4', 'Air Quality Forecast');
         const forecastChart = this.createElement('div', 'chart-one');
         forecastChart.id = `${cardId}-forecast`;
 
@@ -1066,8 +1079,6 @@ class AirQualityCardManager {
         }
 
         this.container.innerHTML = '';
-
-        console.log(this.data)
 
         const batchSize = this.options.batchSize || 20;
         const initialBatch = this.data.slice(0, batchSize);
