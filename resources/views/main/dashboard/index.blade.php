@@ -1,6 +1,6 @@
 @section('title', 'Beranda')
 <x-app-layout>
-    <div class="content-main relative">
+    <div class="content-main-dashboard relative">
         <div class="absolute left-0 right-0 z-0">
             <div class="relative !h-[calc(100vh/2)] overflow-hidden">
                 <div class="absolute inset-0 bg-sky-200/60 z-10"></div>
@@ -11,7 +11,7 @@
 
         <div class="relative px-8 py-4">
             <div class="py-8">
-                <div class="text-[28px] font-bold">Good Morning, Tata</div>
+                <div class="text-[28px] font-bold">Good Morning, {{ Common::ambilNama(Auth::user()->nama_lengkap) }}</div>
                 <div class="text-[15px] font-normal text-gray-500">Let's dive into air quality awareness.</div>
             </div>
             <div class="mt-5 flex items-center justify-between">

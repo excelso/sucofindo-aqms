@@ -41,6 +41,37 @@
                     </li>
                 </ul>
             </li>
+            <li class="navItem {{Request::segment(1) == 'master' ? 'mm-active' : ''}}">
+                <a class="navLink {{Request::segment(1) == 'master' ? 'navLinkActive' : ''}}">
+                    <div class="flex items-center justify-start">
+                        <div class="navIcon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <div class="navText">
+                            <p>Master</p>
+                        </div>
+                    </div>
+                    <div class="navArrowDown">
+                        <i class="fa fa-caret-right"></i>
+                    </div>
+                </a>
+                <ul class="navTreeview">
+                    <li class="navItem">
+                        <a class="navLink {{Request::segment(1) == 'master' && Request::segment(2) == 'sites' ? 'navLinkActive' : ''}}" href="/master/sites">
+                            <div class="navText">
+                                <p>Sites</p>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="navItem">
+                        <a class="navLink {{Request::segment(1) == 'master' && Request::segment(2) == 'platform-loggers' ? 'navLinkActive' : ''}}" href="/master/platform-loggers">
+                            <div class="navText">
+                                <p>Platform Loggers</p>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </li>
         </ul>
     </div>
 </aside>

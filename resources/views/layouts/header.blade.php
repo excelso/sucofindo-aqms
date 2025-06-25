@@ -51,26 +51,23 @@
                     <div id="dropdownAvatarButton" data-dropdown-toggle="dropdownAvatar" data-dropdown-offset-skidding="-60" class="dropdown-button cursor-pointer" type="button">
                         <span class="sr-only">Open user menu</span>
                         <div class="avatar">
-                            {{-- <span>{{ substr(Auth::user()->nama_lengkap, 0, 1)}}</span> --}}
-                            <span>{{ substr("Tata", 0, 1)}}</span>
+                             <span>{{ substr(Auth::user()->nama_lengkap, 0, 1)}}</span>
                         </div>
                     </div>
 
                     <div id="dropdownAvatar" class="dropdown-panel w-[250px]">
                         <div class="dropdown-header">
                             <div class="font-medium truncate">
-                                {{-- {{ Auth::user()->nama_lengkap }} --}}
-                                Tata
+                                 {{ Auth::user()->nama_lengkap }}
                             </div>
-                            {{-- <div class="truncate">{{Auth::user()->email}}</div> --}}
-                            <div class="truncate">tata@gmail.com</div>
+                             <div class="truncate">{{Auth::user()->email}}</div>
                         </div>
                         <ul aria-labelledby="dropdown">
                             <li>
                                 <a href="/">Dashboard</a>
                             </li>
                             <li>
-                                {{-- <a href="{{ route('settings.change-password') }}">Ganti Password</a> --}}
+                                 <a href="{{ route('settings.change-password') }}">Ganti Password</a>
                             </li>
                         </ul>
                         <div class="dropdown-footer">

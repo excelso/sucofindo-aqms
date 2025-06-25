@@ -159,4 +159,21 @@
                 'durasi_menit' => $nilai_durasi / 60
             ];
         }
+
+        public static function ambilNama($namaLengkap): false|string {
+            $bagianNama = array_filter(explode(' ', trim($namaLengkap)));
+
+            if (count($bagianNama) == 1) {
+                return $bagianNama[0];
+            }
+
+            foreach ($bagianNama as $nama) {
+                if (strlen($nama) > 2 ||
+                    (strlen($nama) == 2 && !str_ends_with($nama, '.'))) {
+                    return $nama;
+                }
+            }
+
+            return end($bagianNama);
+        }
     }

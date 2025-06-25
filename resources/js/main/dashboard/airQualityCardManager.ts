@@ -509,23 +509,43 @@ class AirQualityCardManager {
                 }
             }]
         }, function (chart) {
-            const series = chart.series[0];
-            const lastPoint = series.data[series.data.length - 1];
+            if (data && data.length > 0) {
+                const series = chart.series[0];
+                const lastPoint = series.data[series.data.length - 1];
 
-            if (lastPoint) {
-                const aqiValue = lastPoint.y;
-                const markerColor = getAQIColor(aqiValue);
+                if (lastPoint) {
+                    const aqiValue = lastPoint.y;
+                    const markerColor = getAQIColor(aqiValue);
 
-                lastPoint.update({
-                    marker: {
-                        enabled: true,
-                        radius: 6,
-                        fillColor: markerColor,
-                        lineWidth: 2,
-                        lineColor: 'white'
-                    }
-                }, false);
-                chart.redraw();
+                    lastPoint.update({
+                        marker: {
+                            enabled: true,
+                            radius: 6,
+                            fillColor: markerColor,
+                            lineWidth: 2,
+                            lineColor: 'white'
+                        }
+                    }, false);
+                    chart.redraw();
+                }
+            } else {
+                const centerX = chart.plotLeft + (chart.plotWidth / 2);
+                const centerY = chart.plotTop + (chart.plotHeight / 2);
+
+                chart.renderer.text(
+                    'No forecast data available',
+                    centerX,
+                    centerY
+                ).attr({
+                    align: 'center',
+                    'text-anchor': 'middle',
+                    zIndex: 999
+                }).css({
+                    color: '#999999',
+                    fontSize: '12px',
+                    fontWeight: 'normal',
+                    textAlign: 'center'
+                }).add();
             }
         });
 

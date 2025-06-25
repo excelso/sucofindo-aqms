@@ -1,6 +1,7 @@
 <?php
 
     use App\Http\Controllers\Dashboard\ControllerDashboard;
+    use App\Http\Controllers\Master\ControllerSites;
     use App\Http\Controllers\Settings\ControllerChangePassword;
     use App\Http\Helper\ExImage;
     use Illuminate\Support\Facades\Route;
@@ -49,6 +50,12 @@
             Route::get('/', [ControllerDashboard::class, 'index'])->name('dashboard');
             Route::group(['prefix' => 'dashboard'], function () {
                 Route::get('platforms', [ControllerDashboard::class, 'getDataPlatforms']);
+            });
+
+            Route::group(['prefix' => 'master'], function () {
+                Route::group(['prefix' => 'sites'], function () {
+                    Route::get('/', [ControllerSites::class, 'index']);
+                });
             });
 
             Route::group(['prefix' => 'settings'], function () {

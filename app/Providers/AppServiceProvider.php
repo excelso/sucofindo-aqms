@@ -2,6 +2,7 @@
 
     namespace App\Providers;
 
+    use App\Http\Helper\Common;
     use App\Http\Helper\ExHash;
     use App\Http\Helper\ExImage;
     use Illuminate\Foundation\AliasLoader;
@@ -17,6 +18,7 @@
             $loader = AliasLoader::getInstance();
             $loader->alias('ExHash', ExHash::class);
             $loader->alias('ExImage', ExImage::class);
+            $loader->alias('Common', Common::class);
         }
 
         /**

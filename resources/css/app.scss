@@ -415,12 +415,16 @@
     }
 
     .content-wrapper .content-main {
-        //@apply px-4 pb-4 max-w-[1440px] ml-auto mr-auto;
+        @apply px-4 pb-4 max-w-[1440px] ml-auto mr-auto;
+    }
+
+    .content-wrapper .content-main-dashboard {
         @apply pb-4 max-w-[1440px] ml-auto mr-auto;
     }
 
     .content-wrapper .content-main .content-header {
-        @apply flex flex-row justify-between sm:justify-end px-4 pt-4 pb-4 mb-2 transition-all;
+        //@apply flex flex-row justify-between sm:justify-end px-4 pt-4 pb-4 mb-2 transition-all;
+        @apply flex flex-row justify-between sm:justify-end pt-4 pb-4 mb-2 transition-all;
     }
 
     .content-wrapper .content-main .content-header.active {
