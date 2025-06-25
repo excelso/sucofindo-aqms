@@ -29,7 +29,6 @@
                     <div class="leading-[2px] text-[10px]">Watchlist (12)</div>
                 </div>
             </div>
-
             <div class="mt-5">
                 <div class="airQualityParent grid grid-cols-3 gap-4"></div>
             </div>

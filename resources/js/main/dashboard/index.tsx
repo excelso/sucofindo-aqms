@@ -1,8 +1,7 @@
-import {AirQualityCardManager, AirQualityData, MetricsData} from "@/js/main/dashboard/airQualityCardManager";
-import Highcharts from 'highcharts'
-import "highcharts/highcharts-more";
-import {closeModalDialog, showModalDialog} from "@/js/plugins/modal";
 import Hls from "hls.js";
+import {closeModalDialog, showModalDialog} from "@/js/plugins/modal";
+import {AirQualityCardManager, MetricsData} from "@/js/main/dashboard/airQualityCardManager";
+import Highcharts from "highcharts";
 
 document.addEventListener('DOMContentLoaded', function () {
     const modalCctv = document.querySelector('.modalCctv')
@@ -11,23 +10,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const bodyChart: HTMLElement = modalDetailParameter.querySelector('.bodyChart')
     const closeModalForm = document.querySelectorAll('.closeModalForm')
 
+    // Store active WebRTC connections
+    const activeWebRTCStreams: Map<HTMLVideoElement, WebRTCStreamManager> = new Map();
+
     //region Handle Close Menu
     closeModalForm.forEach((elm) => {
         elm.addEventListener('click', function () {
             closeModalDialog(modalCctv, () => {
-                const videos = modalBody.querySelectorAll('video');
-                videos.forEach(video => {
-                    if ((video as any).hlsInstance) {
-                        (video as any).hlsInstance.destroy();
-                        (video as any).hlsInstance = null;
-                    }
+                // Clear all video elements and connections
+                modalBody.innerHTML = '';
 
-                    // Stop video sebelum remove
-                    video.pause();
-                    video.src = '';
-                    video.load(); // Reset video element
-                    video.remove();
+                // Stop all WebRTC connections
+                activeWebRTCStreams.forEach((manager, video) => {
+                    manager.stop();
                 });
+                activeWebRTCStreams.clear();
             })
 
             closeModalDialog(modalDetailParameter)
@@ -49,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${id}
                 </div>
             `, () => {
-                modalBody.appendChild(createVideoElementWithAutoplay(cctvLink))
+                createVideoElementWithAutoplay(cctvLink, 'camera1')
             })
         },
         onMetricsClick: (id, metrics) => {
@@ -64,38 +61,212 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     //endregion
 
-    //region Handle Create Video Element
-    function createVideoElementWithAutoplay(streamUrl: string): HTMLVideoElement {
-        const video = document.createElement('video') as HTMLVideoElement;
+    //region Handle Create Video Element with WebRTC and HLS Fallback
+    function createVideoElementWithAutoplay(streamUrl: string, cameraId: string): void {
+        // Clear existing content
+        modalBody.innerHTML = '';
 
-        video.autoplay = false; // Set false dulu
-        video.width = 900;
-        video.controls = true;
-        video.style.height = 'auto';
-        video.muted = true; // WAJIB untuk autoplay di Chrome
+        // Detect protocol based on port in URL
+        const isWebRTC = streamUrl.includes(':8889');
+        const isHLS = streamUrl.includes(':8888') || streamUrl.includes('.m3u8') || streamUrl.includes('/hls/');
 
-        if (Hls.isSupported()) {
-            const hls = new Hls();
-            hls.loadSource(streamUrl);
-            hls.attachMedia(video);
-            (video as any).hlsInstance = hls;
+        console.log('Stream URL:', streamUrl);
+        console.log('Detected protocol:', { isWebRTC, isHLS });
 
-            // Autoplay setelah manifest ready
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                console.log('HLS ready, starting autoplay...');
-                video.play().catch(error => {
-                    console.warn('Autoplay failed:', error);
-                });
-            });
+        // Create container
+        const container = document.createElement('div');
+        container.style.cssText = `
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+        `;
 
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = streamUrl;
-            video.autoplay = true; // Safari support autoplay lebih baik
+        // Create content area
+        const contentArea = document.createElement('div');
+        contentArea.style.cssText = `
+            position: relative;
+            width: 100%;
+            min-height: 500px;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        `;
+
+        const statusContainer = document.createElement('div');
+        statusContainer.className = 'flex items-center absolute top-[15px] right-[15px] gap-3'
+
+        // Create status indicator
+        const statusDiv = document.createElement('div');
+        statusDiv.style.cssText = `
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 7px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        `;
+
+        // Protocol indicator
+        const protocolDiv = document.createElement('div');
+        protocolDiv.style.cssText = `
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        `;
+
+        contentArea.appendChild(statusContainer);
+        statusContainer.appendChild(statusDiv);
+        statusContainer.appendChild(protocolDiv);
+        container.appendChild(contentArea);
+        modalBody.appendChild(container);
+
+        // Status update function
+        const updateStatus = (text: string, color: string = 'white') => {
+            statusDiv.textContent = text;
+            statusDiv.style.color = color;
+        };
+
+        // Auto-select protocol based on URL
+        if (isWebRTC) {
+            // WebRTC via iframe (port 8889)
+            loadWebRTCIframe();
+        } else if (isHLS) {
+            // HLS video player (port 8888 or .m3u8)
+            loadHLSPlayer();
+        } else {
+            // Default to HLS for unknown URLs
+            console.log('Unknown protocol, defaulting to HLS');
+            loadHLSPlayer();
         }
 
-        return video;
-    }
+        function loadWebRTCIframe() {
+            updateStatus('Loading WebRTC...', '#ffa500');
+            protocolDiv.textContent = 'WebRTC';
+            protocolDiv.style.background = 'rgba(0,123,255,0.8)';
 
+            let iframeUrl: string;
+
+            if (streamUrl.includes(':8889')) {
+                // Use the URL as-is if it already contains 8889
+                iframeUrl = streamUrl;
+            } else {
+                // Construct WebRTC URL from camera ID
+                iframeUrl = `http://103.127.132.72:8889/${cameraId || 'camera1'}/`;
+            }
+
+            console.log('WebRTC iframe URL:', iframeUrl);
+
+            const iframe = document.createElement('iframe');
+            iframe.src = iframeUrl;
+            iframe.style.cssText = `
+                width: 100%;
+                height: 500px;
+                border: none;
+                border-radius: 8px;
+            `;
+
+            iframe.onload = () => {
+                updateStatus('WebRTC Connected ✓', '#00ff00');
+            };
+
+            iframe.onerror = () => {
+                updateStatus('WebRTC Load Failed', '#ff0000');
+                console.error('WebRTC iframe failed to load');
+            };
+
+            contentArea.appendChild(iframe);
+        }
+
+        function loadHLSPlayer() {
+            updateStatus('Loading HLS...', '#ffa500');
+            protocolDiv.textContent = 'HLS';
+            protocolDiv.style.background = 'rgba(255,193,7,0.8)';
+
+            const video = document.createElement('video') as HTMLVideoElement;
+            video.style.cssText = `
+                width: 100%;
+                height: 500px;
+                object-fit: contain;
+            `;
+            video.controls = true;
+            video.muted = true;
+            video.autoplay = false;
+
+            contentArea.appendChild(video);
+
+            // Determine HLS URL
+            let hlsUrl: string;
+
+            if (streamUrl.includes('.m3u8') || streamUrl.includes(':8888')) {
+                // Use the URL as-is if it's already HLS
+                hlsUrl = streamUrl;
+            } else {
+                // Construct HLS URL from camera ID
+                hlsUrl = `http://103.127.132.72:8888/${cameraId || 'camera1'}/index.m3u8`;
+            }
+
+            console.log('HLS URL:', hlsUrl);
+
+            if (Hls.isSupported()) {
+                const hls = new Hls({
+                    debug: false,
+                    lowLatencyMode: true,
+                    backBufferLength: 10,
+                    maxBufferLength: 5,
+                    maxMaxBufferLength: 8,
+                    autoStartLoad: true,
+                    startPosition: -1,
+                });
+
+                hls.loadSource(hlsUrl);
+                hls.attachMedia(video);
+                (video as any).hlsInstance = hls;
+
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    updateStatus('HLS Connected ✓', '#00ff00');
+                    video.play().catch(error => {
+                        console.warn('HLS Autoplay failed:', error);
+                        updateStatus('HLS Ready - Click to Play', '#00aa00');
+                    });
+                });
+
+                hls.on(Hls.Events.ERROR, (event, data) => {
+                    console.error('HLS Error:', data);
+                    updateStatus(`HLS Error: ${data.type}`, '#ff0000');
+                });
+
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // Safari native HLS support
+                video.src = hlsUrl;
+                video.addEventListener('loadstart', () => {
+                    updateStatus('HLS Connected (Native) ✓', '#00ff00');
+                });
+                video.addEventListener('error', () => {
+                    updateStatus('HLS Stream Error', '#ff0000');
+                });
+                video.play().catch(console.warn);
+            } else {
+                updateStatus('HLS Not Supported', '#ff0000');
+            }
+
+            // Click to play functionality
+            video.addEventListener('click', () => {
+                if (video.paused) {
+                    video.play().catch(console.warn);
+                } else {
+                    video.pause();
+                }
+            });
+        }
+    }
     //endregion
 
     function handleDetailChart(metric: MetricsData) {
@@ -127,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }));
 
         const chartData = defaultData.map(item => ({
-            x: item.timestamp * 1000, // Highcharts expects milliseconds
+            x: item.timestamp * 1000,
             y: item.value,
             timestamp: item.timestamp
         }));
@@ -152,7 +323,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 type: 'datetime',
                 labels: {
                     formatter: function () {
-                        // Format as HH:MM for display
                         const value = (this as any).value as number;
                         return formatTimestamp(value / 1000, 'time');
                     },
@@ -164,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 gridLineWidth: 1,
                 gridLineColor: '#eee',
                 gridLineDashStyle: 'Dash',
-                tickInterval: 3600 * 1000, // 1 hour intervals in milliseconds
+                tickInterval: 3600 * 1000,
             },
             yAxis: {
                 title: {

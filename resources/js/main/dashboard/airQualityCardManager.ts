@@ -491,15 +491,13 @@ class AirQualityCardManager {
                 name: 'AQI Forecast',
                 data: chartData,
                 color: {
-                    linearGradient: {x1: 0, x2: 0, y1: 1, y2: 0}, // vertical gradient
+                    linearGradient: {x1: 0, x2: 0, y1: 0, y2: 1},
                     stops: [
-                        [0, '#22C55E'],
-                        [0.1, '#EAB308'],
-                        [0.2, '#F97316'],
-                        [0.3, '#EF4444'],
-                        [0.4, '#DC2626'],
-                        [0.6, '#B91C1C'],
-                        [1, '#7F1D1D']
+                        [0, '#DC2626'],      // Atas = Merah (500)
+                        [0.2, '#F97316'],    // Orange (300)
+                        [0.4, '#EAB308'],    // Kuning (150)
+                        [0.8, '#22C55E'],    // Hijau (50)
+                        [1, '#22C55E']       // Bawah = Hijau (0)
                     ]
                 },
                 marker: {
@@ -976,32 +974,33 @@ class AirQualityCardManager {
         const metricsContainer = this.createElement('div', 'mt-4');
         const metricsGrid = this.createElement('div', 'grid grid-cols-4 gap-2');
 
+        //  || Math.random() * 50 + 20
         const metrics = [
             {
                 title: 'PM10',
                 type: 'pm10' as const,
-                value: data.metrics?.pm10?.value || Math.random() * 50 + 20,
+                value: data.metrics?.pm10?.value || 0,
                 bml: data.metrics?.pm10?.bml,
                 buffer: data.metrics?.pm10.buffer
             },
             {
                 title: 'PM2.5',
                 type: 'pm25' as const,
-                value: data.metrics?.pm25?.value || Math.random() * 40 + 15,
+                value: data.metrics?.pm25?.value || 0,
                 bml: data.metrics?.pm25?.bml,
                 buffer: data.metrics?.pm25.buffer
             },
             {
                 title: 'TSP',
                 type: 'tsp' as const,
-                value: data.metrics?.tsp?.value || Math.random() * 30 + 10,
+                value: data.metrics?.tsp?.value || 0,
                 bml: data.metrics?.tsp?.bml,
                 buffer: data.metrics?.tsp.buffer
             },
             {
                 title: 'Noise',
                 type: 'noise' as const,
-                value: data.metrics?.noise?.value || Math.random() * 60 + 40,
+                value: data.metrics?.noise?.value || 0,
                 bml: data.metrics?.noise?.bml,
                 buffer: data.metrics?.noise.buffer
             }

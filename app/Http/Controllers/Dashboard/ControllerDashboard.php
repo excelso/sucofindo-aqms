@@ -32,7 +32,7 @@
                 $dataPlatforms = Platforms::all();
                 $dataPlatforms = $dataPlatforms->transform(function ($platform) {
                     $dataLastLoggers = Loggers::loggerData($platform->uid, 'DESC')->first();
-                    $dataAqiPm25 = AqiCategories::dataAqiPm25($dataLastLoggers->pm_25)->first();
+                    $dataAqiPm25 = AqiCategories::dataAqiPm25($dataLastLoggers->pm_25 ?? 0)->first();
 
                     $platform->status = $dataAqiPm25->category_name_en;
                     $platform->emoji = $dataAqiPm25->emoji;
