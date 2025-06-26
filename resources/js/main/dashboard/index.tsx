@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
         modalBody.innerHTML = '';
 
         // Detect protocol based on port in URL
-        const isWebRTC = streamUrl.includes(':8889');
+        const isWebRTC = streamUrl.includes(':8889') || streamUrl.includes('/rtc/');
         const isHLS = streamUrl.includes(':8888') || streamUrl.includes('.m3u8') || streamUrl.includes('/hls/');
 
         console.log('Stream URL:', streamUrl);
@@ -140,22 +140,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Auto-select protocol based on URL
         if (isWebRTC) {
-            // Check for mixed content issue
-            const isHTTPS = window.location.protocol === 'https:';
-            const isHTTPStream = streamUrl.startsWith('http:');
-
-            if (isHTTPS && isHTTPStream) {
-                console.log('🔒 Mixed content detected, using alternative method...');
-                updateStatus('Mixed content detected, using proxy...', '#ffaa00');
-
-                // Option 1: Use proxy (recommended)
-                loadWebRTCViaProxy(streamUrl);
-
-                // Option 2: Use direct WebRTC (alternative)
-                // loadWebRTCViaEmbedded(streamUrl);
-            } else {
-                loadWebRTCIframe();
-            }
+            loadWebRTCIframe();
         } else if (isHLS) {
             loadHLSPlayer();
         } else {
@@ -173,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const isHTTPS = currentProtocol === 'https:';
 
             let iframeUrl: string;
-            if (streamUrl.includes(':8889')) {
+            if (streamUrl.includes(':8889') || streamUrl.includes('/rtc/')) {
                 iframeUrl = streamUrl;
             } else {
                 iframeUrl = `http://103.127.132.72:8889/${cameraId || 'camera1'}/`;
@@ -259,12 +244,12 @@ document.addEventListener('DOMContentLoaded', function () {
             // Determine HLS URL
             let hlsUrl: string;
 
-            if (streamUrl.includes('.m3u8') || streamUrl.includes(':8888')) {
+            if (streamUrl.includes('.m3u8') || streamUrl.includes(':8888') || streamUrl.includes('/hls/')) {
                 // Use the URL as-is if it's already HLS
                 hlsUrl = streamUrl;
             } else {
                 // Construct HLS URL from camera ID
-                hlsUrl = `http://103.127.132.72:8888/${cameraId || 'camera1'}/index.m3u8`;
+                hlsUrl = `http://103.127.132.72:8888/${cameraId || 'ubt1'}/index.m3u8`;
             }
 
             console.log('HLS URL:', hlsUrl);

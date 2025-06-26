@@ -5,6 +5,7 @@
     use App\Http\Controllers\Controller;
     use GuzzleHttp\Client;
     use Illuminate\Http\Request;
+    use Log;
 
     class WebRTCProxyController extends Controller {
         private Client $client;
@@ -36,9 +37,9 @@
             }
 
             try {
-                \Log::info('WebRTC Proxy GET request', ['url' => $streamUrl]);
+                Log::info('WebRTC Proxy GET request', ['url' => $streamUrl]);
 
-                $response = $this->client->get($streamUrl, [
+                $response = $this->client->post($streamUrl, [
                     'headers' => [
                         'User-Agent' => 'Mozilla/5.0 (compatible; WebRTC-Proxy/1.0)',
                         'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
@@ -49,7 +50,7 @@
                 $contentType = $response->getHeaderLine('Content-Type') ?: 'text/html';
                 $body = $response->getBody()->getContents();
 
-                \Log::info('WebRTC Proxy response', [
+                Log::info('WebRTC Proxy response', [
                     'status' => $statusCode,
                     'content_type' => $contentType,
                     'body_length' => strlen($body)
@@ -71,7 +72,7 @@
                     ->header('Expires', '0');
 
             } catch (RequestException $e) {
-                \Log::error('WebRTC Proxy Error', [
+                Log::error('WebRTC Proxy Error', [
                     'url' => $streamUrl,
                     'error' => $e->getMessage(),
                     'code' => $e->getCode()
@@ -102,7 +103,7 @@
             }
 
             try {
-                \Log::info('WebRTC WHEP Proxy request', ['url' => $targetUrl]);
+                Log::info('WebRTC WHEP Proxy request', ['url' => $targetUrl]);
 
                 $response = $this->client->post($targetUrl, [
                     'headers' => [
@@ -116,7 +117,7 @@
                 $body = $response->getBody()->getContents();
                 $contentType = $response->getHeaderLine('Content-Type') ?: 'application/sdp';
 
-                \Log::info('WebRTC WHEP response', [
+                Log::info('WebRTC WHEP response', [
                     'status' => $statusCode,
                     'content_type' => $contentType,
                     'body_length' => strlen($body)
@@ -129,7 +130,7 @@
                     ->header('Access-Control-Allow-Headers', 'Content-Type');
 
             } catch (RequestException $e) {
-                \Log::error('WebRTC WHEP Proxy Error', [
+                Log::error('WebRTC WHEP Proxy Error', [
                     'url' => $targetUrl,
                     'error' => $e->getMessage()
                 ]);
