@@ -8,6 +8,7 @@
     use Carbon\Carbon;
     use Illuminate\Foundation\AliasLoader;
     use Illuminate\Foundation\Support\Providers\RouteServiceProvider;
+    use Illuminate\Support\Facades\Auth;
     use Illuminate\Support\ServiceProvider;
     use \Mcamara\LaravelLocalization\Traits\LoadsTranslatedCachedRoutes;
 
@@ -27,6 +28,9 @@
          * Bootstrap any application services.
          */
         public function boot(): void {
+            Auth::provider('external-api', function ($app, array $config) {
+                return new ExternalApiUserProvider();
+            });
             // RouteServiceProvider::loadCachedRoutesUsing(fn() => $this->loadCachedRoutes());
         }
     }

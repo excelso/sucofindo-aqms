@@ -26,7 +26,7 @@
                                     <i class="far fa-envelope"></i>
                                 </span>
                                 <label>
-                                    <input type="text" name="login" class="form-control input email" placeholder="name@mail.com"/>
+                                    <input type="text" name="email" class="form-control input email" placeholder="name@mail.com"/>
                                 </label>
                             </div>
                             @if(count($errors) != 0 && isset($errors->get('email')[0]))

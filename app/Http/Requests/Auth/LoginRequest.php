@@ -4,6 +4,8 @@
 
     use App\Models\Companies\Companies;
     use App\Models\Employee\Employee;
+    use App\Models\Users\User;
+    use Carbon\Carbon;
     use Illuminate\Auth\Events\Lockout;
     use Illuminate\Foundation\Http\FormRequest;
     use Illuminate\Support\Facades\Auth;
@@ -27,7 +29,7 @@
          */
         public function rules(): array {
             return [
-                'login' => [
+                'email' => [
                     'required'
                 ],
                 'password' => [
@@ -45,17 +47,28 @@
         public function authenticate(): void {
             $this->ensureIsNotRateLimited();
 
-            $login_type = filter_var($this->input('login'), FILTER_VALIDATE_EMAIL ) ? 'email' : 'username';
-            $this->merge([
-                $login_type => $this->input('login')
-            ]);
-
-            if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+            if (!Auth::attempt($this->only('email', 'password'), $this->input('remember'))) {
                 RateLimiter::hit($this->throttleKey());
 
                 throw ValidationException::withMessages([
                     'login-failed' => trans('auth.failed'),
                 ]);
+            } else {
+                $user = (new User)->select('t_users.*')
+                    ->where('email', $this->input('email'))
+                    ->orWhere('sid_code', $this->input('email'))
+                    ->where('t_users.status_user', 'Active')
+                    ->get()->first();
+
+                (new User)->where('email', $this->input('email'))->update([
+                    'last_login' => Carbon::now()
+                ]);
+
+                if ($user == null) {
+                    throw ValidationException::withMessages([
+                        'login-failed' => 'Akun anda telah di nonaktifkan!'
+                    ]);
+                }
             }
 
             RateLimiter::clear($this->throttleKey());
