@@ -19,7 +19,9 @@ export default defineConfig({
                 'resources/js/login/index.tsx',
                 'resources/js/login/index.tsx',
                 'resources/js/main/dashboard/index.tsx',
-                'resources/js/main/settings/change-password/index.tsx'
+                'resources/js/main/settings/change-password/index.tsx',
+                'resources/js/main/master/data-platform-loggers/index.tsx',
+                'resources/js/main/master/data-sites/index.tsx'
             ],
             refresh: true,
         }),
