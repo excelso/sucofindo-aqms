@@ -168,11 +168,11 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('Page is HTTPS:', isHTTPS);
 
             // Jika halaman HTTPS dan URL WebRTC HTTP, gunakan proxy
-            if (isHTTPS && iframeUrl.startsWith('http:')) {
-                console.log('🔒 Mixed content detected, using proxy...');
-                loadWebRTCViaProxy(iframeUrl);
-                return;
-            }
+            // if (isHTTPS && iframeUrl.startsWith('http:')) {
+            //     console.log('🔒 Mixed content detected, using proxy...');
+            //     loadWebRTCViaProxy(iframeUrl);
+            //     return;
+            // }
 
             // Proceed dengan iframe normal
             createWebRTCIframe(iframeUrl);
