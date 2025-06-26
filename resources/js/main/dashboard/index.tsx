@@ -159,14 +159,14 @@ document.addEventListener('DOMContentLoaded', function () {
             let iframeUrl: string;
 
             if (streamUrl.includes(':8889')) {
-                // Use the URL as-is if it already contains 8889
                 iframeUrl = streamUrl;
             } else {
-                // Construct WebRTC URL from camera ID
                 iframeUrl = `http://103.127.132.72:8889/${cameraId || 'camera1'}/`;
             }
 
             console.log('WebRTC iframe URL:', iframeUrl);
+            console.log('Current page protocol:', window.location.protocol);
+            console.log('Current page host:', window.location.host);
 
             const iframe = document.createElement('iframe');
             iframe.src = iframeUrl;
@@ -177,16 +177,64 @@ document.addEventListener('DOMContentLoaded', function () {
                 border-radius: 8px;
             `;
 
+            // Tambahkan allow attributes untuk WebRTC
+            iframe.setAttribute('allow', 'camera; microphone; autoplay; encrypted-media');
+            iframe.setAttribute('allowfullscreen', 'true');
+
+            // Debugging event handlers
             iframe.onload = () => {
-                updateStatus('WebRTC Connected ✓', '#00ff00');
+                updateStatus('WebRTC iframe loaded', '#00aa00');
+                console.log('✅ WebRTC iframe loaded successfully');
+
+                // Check if iframe content is accessible
+                try {
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                    if (iframeDoc) {
+                        console.log('✅ Iframe content accessible');
+                        updateStatus('WebRTC Connected ✓', '#00ff00');
+                    } else {
+                        console.warn('⚠️ Iframe content not accessible (CORS?)');
+                        updateStatus('WebRTC Loaded (Content may be blocked)', '#ffaa00');
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Cannot access iframe content:', error);
+                    updateStatus('WebRTC Loaded (Cross-origin)', '#ffaa00');
+                }
             };
 
-            iframe.onerror = () => {
+            iframe.onerror = (error) => {
                 updateStatus('WebRTC Load Failed', '#ff0000');
-                console.error('WebRTC iframe failed to load');
+                console.error('❌ WebRTC iframe failed to load:', error);
             };
+
+            // Test network connectivity
+            testWebRTCConnection(iframeUrl).then(result => {
+                console.log('Network test result:', result);
+                if (!result.success) {
+                    updateStatus(`Network Error: ${result.error}`, '#ff0000');
+                }
+            });
 
             contentArea.appendChild(iframe);
+        }
+
+        async function testWebRTCConnection(url: string): Promise<{success: boolean, error?: string}> {
+            try {
+                // Test basic connectivity
+                const response = await fetch(url, {
+                    method: 'HEAD',
+                    mode: 'no-cors', // Bypass CORS for connectivity test
+                    cache: 'no-cache'
+                });
+
+                return { success: true };
+            } catch (error) {
+                console.error('Network test failed:', error);
+                return {
+                    success: false,
+                    error: error instanceof Error ? error.message : 'Unknown error'
+                };
+            }
         }
 
         function loadHLSPlayer() {
@@ -220,15 +268,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('HLS URL:', hlsUrl);
 
             if (Hls.isSupported()) {
-                const hls = new Hls({
-                    debug: false,
-                    lowLatencyMode: true,
-                    backBufferLength: 10,
-                    maxBufferLength: 5,
-                    maxMaxBufferLength: 8,
-                    autoStartLoad: true,
-                    startPosition: -1,
-                });
+                const hls = new Hls();
 
                 hls.loadSource(hlsUrl);
                 hls.attachMedia(video);
