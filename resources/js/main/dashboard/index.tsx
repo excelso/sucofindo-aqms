@@ -140,13 +140,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Auto-select protocol based on URL
         if (isWebRTC) {
-            // WebRTC via iframe (port 8889)
-            loadWebRTCIframe();
+            // Check for mixed content issue
+            const isHTTPS = window.location.protocol === 'https:';
+            const isHTTPStream = streamUrl.startsWith('http:');
+
+            if (isHTTPS && isHTTPStream) {
+                console.log('🔒 Mixed content detected, using alternative method...');
+                updateStatus('Mixed content detected, using proxy...', '#ffaa00');
+
+                // Option 1: Use proxy (recommended)
+                loadWebRTCViaProxy(streamUrl);
+
+                // Option 2: Use direct WebRTC (alternative)
+                // loadWebRTCViaEmbedded(streamUrl);
+            } else {
+                loadWebRTCIframe();
+            }
         } else if (isHLS) {
-            // HLS video player (port 8888 or .m3u8)
             loadHLSPlayer();
         } else {
-            // Default to HLS for unknown URLs
             console.log('Unknown protocol, defaulting to HLS');
             loadHLSPlayer();
         }
@@ -156,20 +168,34 @@ document.addEventListener('DOMContentLoaded', function () {
             protocolDiv.textContent = 'WebRTC';
             protocolDiv.style.background = 'rgba(0,123,255,0.8)';
 
-            let iframeUrl: string;
+            // Deteksi mixed content issue
+            const currentProtocol = window.location.protocol;
+            const isHTTPS = currentProtocol === 'https:';
 
+            let iframeUrl: string;
             if (streamUrl.includes(':8889')) {
                 iframeUrl = streamUrl;
             } else {
                 iframeUrl = `http://103.127.132.72:8889/${cameraId || 'camera1'}/`;
             }
 
-            console.log('WebRTC iframe URL:', iframeUrl);
-            console.log('Current page protocol:', window.location.protocol);
-            console.log('Current page host:', window.location.host);
+            console.log('Original WebRTC URL:', iframeUrl);
+            console.log('Page is HTTPS:', isHTTPS);
 
+            // Jika halaman HTTPS dan URL WebRTC HTTP, gunakan proxy
+            if (isHTTPS && iframeUrl.startsWith('http:')) {
+                console.log('🔒 Mixed content detected, using proxy...');
+                loadWebRTCViaProxy(iframeUrl);
+                return;
+            }
+
+            // Proceed dengan iframe normal
+            createWebRTCIframe(iframeUrl);
+        }
+
+        function createWebRTCIframe(url: string) {
             const iframe = document.createElement('iframe');
-            iframe.src = iframeUrl;
+            iframe.src = url;
             iframe.style.cssText = `
                 width: 100%;
                 height: 500px;
@@ -177,64 +203,40 @@ document.addEventListener('DOMContentLoaded', function () {
                 border-radius: 8px;
             `;
 
-            // Tambahkan allow attributes untuk WebRTC
+            // Tambahkan security attributes
             iframe.setAttribute('allow', 'camera; microphone; autoplay; encrypted-media');
             iframe.setAttribute('allowfullscreen', 'true');
+            iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
 
-            // Debugging event handlers
             iframe.onload = () => {
-                updateStatus('WebRTC iframe loaded', '#00aa00');
+                updateStatus('WebRTC Connected ✓', '#00ff00');
                 console.log('✅ WebRTC iframe loaded successfully');
-
-                // Check if iframe content is accessible
-                try {
-                    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-                    if (iframeDoc) {
-                        console.log('✅ Iframe content accessible');
-                        updateStatus('WebRTC Connected ✓', '#00ff00');
-                    } else {
-                        console.warn('⚠️ Iframe content not accessible (CORS?)');
-                        updateStatus('WebRTC Loaded (Content may be blocked)', '#ffaa00');
-                    }
-                } catch (error) {
-                    console.warn('⚠️ Cannot access iframe content:', error);
-                    updateStatus('WebRTC Loaded (Cross-origin)', '#ffaa00');
-                }
             };
 
-            iframe.onerror = (error) => {
+            iframe.onerror = () => {
                 updateStatus('WebRTC Load Failed', '#ff0000');
-                console.error('❌ WebRTC iframe failed to load:', error);
-            };
+                console.error('❌ WebRTC iframe failed to load');
 
-            // Test network connectivity
-            testWebRTCConnection(iframeUrl).then(result => {
-                console.log('Network test result:', result);
-                if (!result.success) {
-                    updateStatus(`Network Error: ${result.error}`, '#ff0000');
-                }
-            });
+                // Fallback ke HLS
+                setTimeout(() => {
+                    console.log('🔄 Falling back to HLS...');
+                    iframe.remove();
+                    loadHLSPlayer();
+                }, 2000);
+            };
 
             contentArea.appendChild(iframe);
         }
 
-        async function testWebRTCConnection(url: string): Promise<{success: boolean, error?: string}> {
-            try {
-                // Test basic connectivity
-                const response = await fetch(url, {
-                    method: 'HEAD',
-                    mode: 'no-cors', // Bypass CORS for connectivity test
-                    cache: 'no-cache'
-                });
+        function loadWebRTCViaProxy(originalUrl: string) {
+            updateStatus('Loading via proxy...', '#ffa500');
 
-                return { success: true };
-            } catch (error) {
-                console.error('Network test failed:', error);
-                return {
-                    success: false,
-                    error: error instanceof Error ? error.message : 'Unknown error'
-                };
-            }
+            // Gunakan endpoint proxy di backend Laravel Anda
+            const proxyUrl = `/dashboard/webrtc-proxy?stream=${encodeURIComponent(originalUrl)}`;
+
+            console.log('🔄 Using proxy URL:', proxyUrl);
+
+            createWebRTCIframe(proxyUrl);
         }
 
         function loadHLSPlayer() {

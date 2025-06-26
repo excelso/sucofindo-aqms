@@ -4,6 +4,7 @@
     use App\Http\Controllers\Master\ControllerPlatformLoggers;
     use App\Http\Controllers\Master\ControllerSites;
     use App\Http\Controllers\Settings\ControllerChangePassword;
+    use App\Http\Controllers\Settings\WebRTCProxyController;
     use App\Http\Helper\ExImage;
     use Illuminate\Support\Facades\Route;
     use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
@@ -52,6 +53,7 @@
             Route::group(['prefix' => 'dashboard'], function () {
                 Route::get('platforms', [ControllerDashboard::class, 'getDataPlatforms']);
                 Route::get('detail-metric/{uid}', [ControllerDashboard::class, 'detailMetric']);
+                Route::get('webrtc-proxy', [WebRTCProxyController::class, 'proxyGet']);
             });
 
             Route::group(['prefix' => 'master'], function () {

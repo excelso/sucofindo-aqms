@@ -13,8 +13,13 @@
 
     class VerifyOTPController extends Controller {
         public function index() {
+            // Jika sudah verify OTP, redirect ke dashboard
             if (session()->has('otp_verified')) {
                 return redirect()->route('dashboard');
+            }
+
+            if (!auth()->check()) {
+                return redirect()->route('login');
             }
 
             return view('auth.verify-otp');

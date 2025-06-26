@@ -42,7 +42,12 @@
             <div class="flex justify-center">
                 <div>
                     <span>Kembali ke</span>
-                    <a href="{{ route('login') }}" class="text-blue-500">Login</a>
+                    <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                        @csrf
+                        <button type="submit" class="text-blue-500 underline bg-transparent border-none cursor-pointer">
+                            Login
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
