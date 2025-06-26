@@ -2,8 +2,6 @@
 
     namespace App\Http\Requests\Auth;
 
-    use App\Models\Companies\Companies;
-    use App\Models\Employee\Employee;
     use App\Models\Users\User;
     use Carbon\Carbon;
     use Illuminate\Auth\Events\Lockout;
