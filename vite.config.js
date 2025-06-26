@@ -18,6 +18,7 @@ export default defineConfig({
                 'resources/css/experiment-exmenu.scss',
                 'resources/js/login/index.tsx',
                 'resources/js/login/index.tsx',
+                'resources/js/login/verify-otp.tsx',
                 'resources/js/main/dashboard/index.tsx',
                 'resources/js/main/settings/change-password/index.tsx',
                 'resources/js/main/master/data-platform-loggers/index.tsx',
