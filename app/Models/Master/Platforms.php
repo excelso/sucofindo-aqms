@@ -13,7 +13,8 @@
 
         protected $table = 't_platforms';
         protected $fillable = [
+            'site_id',
             'uid',
-            'cctv_link'
+            'cctv_link',
         ];
     }

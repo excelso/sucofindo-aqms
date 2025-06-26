@@ -12,6 +12,8 @@
     class Loggers extends Model {
         use SoftDeletes;
 
+        protected $keyType = 'string';
+        public $incrementing = false;
         protected $table = 't_loggers';
         protected $fillable = [
             'uid',

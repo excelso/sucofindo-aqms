@@ -30,61 +30,62 @@
             try {
 
                 $dataPlatforms = Platforms::all();
-                $dataPlatforms = $dataPlatforms->transform(function ($platform) {
-                    $dataLastLoggers = Loggers::loggerData($platform->uid, 'DESC')->first();
+
+                $dataPlatformsTemp = [];
+                foreach ($dataPlatforms as $item) {
+                    $dataLastLoggers = Loggers::loggerData($item->uid, 'DESC')->first();
                     $dataAqiPm25 = AqiCategories::dataAqiPm25($dataLastLoggers->pm_25 ?? 0)->first();
 
-                    $platform->status = $dataAqiPm25->category_name_en;
-                    $platform->emoji = $dataAqiPm25->emoji;
-                    $platform->colorCode = $dataAqiPm25->color_code;
-                    $platform->metrics = [
-                        'pm10' => [
-                            'value' => $dataLastLoggers->pm_10 ?? 0,
-                            'bml' => 20,
-                            'buffer' => 10
-                        ],
-                        'pm25' => [
-                            'value' => $dataLastLoggers->pm_25 ?? 0,
-                            'bml' => 20,
-                            'buffer' => 10
-                        ],
-                        'tsp' => [
-                            'value' => $dataLastLoggers->tsp ?? 0,
-                            'bml' => 20,
-                            'buffer' => 10
-                        ],
-                        'noise' => [
-                            'value' => $dataLastLoggers->noise ?? 0,
-                            'bml' => 20,
-                            'buffer' => 10
-                        ]
-                    ];
-
-                    $platform->isOnline = true;
-                    $platform->cctvLink = $platform->cctv_link;
-
-                    $dataLoggers = Loggers::loggerData($platform->uid)->get();
+                    $dataLoggers = Loggers::loggerData($item->uid)->get();
                     $dataLoggersTemp = [];
-                    foreach ($dataLoggers as $item) {
-                        $aqiCat = AqiCategories::dataAqiPm25($item->pm_25)->first();
+                    foreach ($dataLoggers as $itemLogger) {
+                        $aqiCat = AqiCategories::dataAqiPm25($itemLogger->pm_25)->first();
 
                         // (AQI max - AQI min / AQI PM2.5 max - AQI PM2.5 min) x (Curr PM2.5 - AQI PM2.5 min) + AQI min
                         $formula_1 = ($aqiCat->aqi_max - $aqiCat->aqi_min) / ($aqiCat->pm25_max - $aqiCat->pm25_min);
-                        $formula_2 = ($item->pm_25 - $aqiCat->pm25_min) + $aqiCat->aqi_min;
+                        $formula_2 = ($itemLogger->pm_25 - $aqiCat->pm25_min) + $aqiCat->aqi_min;
                         $formula_3 = $formula_1 * $formula_2;
 
                         $dataLoggersTemp[] = [
-                            'timestamp' => $item->datetime_unix,
+                            'timestamp' => $itemLogger->datetime_unix,
                             'value' => (float) number_format($formula_3, 1),
                         ];
                     }
-                    $platform->forecastData = $dataLoggersTemp;
 
-                    return $platform;
-                });
+                    $dataPlatformsTemp[] = [
+                        'status' => $dataAqiPm25->category_name_en,
+                        'emoji' => $dataAqiPm25->emoji,
+                        'colorCode' => $dataAqiPm25->color_code,
+                        'metrics' => [
+                            'pm10' => [
+                                'value' => $dataLastLoggers->pm_10 ?? 0,
+                                'bml' => 20,
+                                'buffer' => 10
+                            ],
+                            'pm25' => [
+                                'value' => $dataLastLoggers->pm_25 ?? 0,
+                                'bml' => 20,
+                                'buffer' => 10
+                            ],
+                            'tsp' => [
+                                'value' => $dataLastLoggers->tsp ?? 0,
+                                'bml' => 20,
+                                'buffer' => 10
+                            ],
+                            'noise' => [
+                                'value' => $dataLastLoggers->noise ?? 0,
+                                'bml' => 20,
+                                'buffer' => 10
+                            ]
+                        ],
+                        'isOnline' => true,
+                        'cctvLink' => $item->cctv_link,
+                        'forecastData' => $dataLoggersTemp,
+                    ];
+                }
 
                 return response()->json([
-                    'data' => $dataPlatforms,
+                    'data' => $dataPlatformsTemp,
                     'responseTime' => Carbon::now()
                 ]);
             } catch (Exception $exception) {
