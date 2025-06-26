@@ -1,6 +1,7 @@
 <?php
 
     use App\Http\Controllers\Dashboard\ControllerDashboard;
+    use App\Http\Controllers\Master\ControllerPlatformLoggers;
     use App\Http\Controllers\Master\ControllerSites;
     use App\Http\Controllers\Settings\ControllerChangePassword;
     use App\Http\Helper\ExImage;
@@ -50,11 +51,23 @@
             Route::get('/', [ControllerDashboard::class, 'index'])->name('dashboard');
             Route::group(['prefix' => 'dashboard'], function () {
                 Route::get('platforms', [ControllerDashboard::class, 'getDataPlatforms']);
+                Route::get('detail-metric/{uid}', [ControllerDashboard::class, 'detailMetric']);
             });
 
             Route::group(['prefix' => 'master'], function () {
                 Route::group(['prefix' => 'sites'], function () {
                     Route::get('/', [ControllerSites::class, 'index']);
+                    Route::post('store', [ControllerSites::class, 'store']);
+                    Route::get('data-site', [ControllerSites::class, 'handleDataSite']);
+                });
+            });
+
+            Route::group(['prefix' => 'master'], function () {
+                Route::group(['prefix' => 'platform-loggers'], function () {
+                    Route::get('/', [ControllerPlatformLoggers::class, 'index']);
+                    Route::post('store', [ControllerPlatformLoggers::class, 'store']);
+                    Route::get('detail/{platformId}', [ControllerPlatformLoggers::class, 'handleDetailPlatform']);
+                    Route::put('update/{platformId}', [ControllerPlatformLoggers::class, 'update']);
                 });
             });
 

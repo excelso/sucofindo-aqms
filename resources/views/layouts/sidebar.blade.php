@@ -6,7 +6,7 @@
     <div class="sidebar">
         <ul class="metismenu" id="menu">
             <li class="navItem">
-                <a href="/" class="navLink {{Request::segment(1) == '' || Request::segment(1) == 'summary' ? 'navLinkActive' : ''}}">
+                <a href="/" class="navLink {{Request::segment(2) == '' || Request::segment(2) == 'summary' ? 'navLinkActive' : ''}}">
                     <div class="flex items-center justify-start">
                         <div class="navIcon">
                             <i class="fas fa-house"></i>
@@ -17,8 +17,8 @@
                     </div>
                 </a>
             </li>
-            <li class="navItem {{Request::segment(1) == 'reports' ? 'mm-active' : ''}}">
-                <a class="navLink {{Request::segment(1) == 'reports' ? 'navLinkActive' : ''}}">
+            <li class="navItem {{Request::segment(2) == 'reports' ? 'mm-active' : ''}}">
+                <a class="navLink {{Request::segment(2) == 'reports' ? 'navLinkActive' : ''}}">
                     <div class="flex items-center justify-start">
                         <div class="navIcon">
                             <i class="fas fa-file-circle-check"></i>
@@ -33,7 +33,7 @@
                 </a>
                 <ul class="navTreeview">
                     <li class="navItem">
-                        <a class="navLink {{Request::segment(1) == 'reports' && Request::segment(2) == 'logs-parameter' ? 'navLinkActive' : ''}}" href="/reports/logs-parameter">
+                        <a class="navLink {{Request::segment(2) == 'reports' && Request::segment(3) == 'logs-parameter' ? 'navLinkActive' : ''}}" href="/reports/logs-parameter">
                             <div class="navText">
                                 <p>Logs Parameter</p>
                             </div>
@@ -41,8 +41,8 @@
                     </li>
                 </ul>
             </li>
-            <li class="navItem {{Request::segment(1) == 'master' ? 'mm-active' : ''}}">
-                <a class="navLink {{Request::segment(1) == 'master' ? 'navLinkActive' : ''}}">
+            <li class="navItem {{Request::segment(2) == 'master' ? 'mm-active' : ''}}">
+                <a class="navLink {{Request::segment(2) == 'master' ? 'navLinkActive' : ''}}">
                     <div class="flex items-center justify-start">
                         <div class="navIcon">
                             <i class="fas fa-briefcase"></i>
@@ -57,14 +57,14 @@
                 </a>
                 <ul class="navTreeview">
                     <li class="navItem">
-                        <a class="navLink {{Request::segment(1) == 'master' && Request::segment(2) == 'sites' ? 'navLinkActive' : ''}}" href="/master/sites">
+                        <a class="navLink {{Request::segment(2) == 'master' && Request::segment(3) == 'sites' ? 'navLinkActive' : ''}}" href="/master/sites">
                             <div class="navText">
                                 <p>Sites</p>
                             </div>
                         </a>
                     </li>
                     <li class="navItem">
-                        <a class="navLink {{Request::segment(1) == 'master' && Request::segment(2) == 'platform-loggers' ? 'navLinkActive' : ''}}" href="/master/platform-loggers">
+                        <a class="navLink {{Request::segment(2) == 'master' && Request::segment(3) == 'platform-loggers' ? 'navLinkActive' : ''}}" href="/master/platform-loggers">
                             <div class="navText">
                                 <p>Platform Loggers</p>
                             </div>

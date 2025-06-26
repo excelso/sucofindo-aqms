@@ -3,13 +3,15 @@
     namespace App\Http\Controllers\Master;
 
     use App\Http\Controllers\Controller;
-    use App\Models\Master\Geo\GeoCity;
-    use App\Models\Users\User;
+    use App\Models\Master\Companies;
+    use App\Models\Master\CompaniesSites;
     use Carbon\Carbon;
+    use DB;
     use Exception;
     use Illuminate\Http\Request;
     use Illuminate\Support\Facades\Validator;
     use Illuminate\View\View;
+    use Throwable;
 
     class ControllerSites extends Controller {
         protected string $viewPath;
@@ -19,6 +21,74 @@
         }
 
         public function index(): View {
-            return view($this->viewPath . '/index');
+            $dataCompanies = Companies::all();
+            $dataSites = CompaniesSites::dataSites();
+            return view($this->viewPath . '/index', [
+                'items' => $dataSites->paginate(20)->onEachSide(1),
+                'companies' => $dataCompanies,
+            ]);
+        }
+
+        //region Handle Store
+        public function store(Request $request) {
+            $validator = Validator::make($request->all(), [
+                'site_name' => 'required',
+            ], [], [
+                'site_name' => 'Site Name',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'errorValidation' => $validator->errors(),
+                    'responseTime' => now()
+                ], 400);
+            }
+
+            try {
+                DB::transaction(function () use ($request) {
+                    return CompaniesSites::create([
+                        'company_id' => $request->input('company_id'),
+                        'site_name' => $request->input('site_name'),
+                    ]);
+                });
+
+                return response()->json([
+                    'message' => 'New Site data saved successfully',
+                    'responseTime' => Carbon::now()
+                ]);
+
+            } catch (Exception $exception) {
+                return response()->json([
+                    'message' => $exception->getMessage() . ' on line ' . $exception->getLine(),
+                    'file' => $exception->getFile(),
+                    'responseTime' => Carbon::now()
+                ], 500);
+            } catch (Throwable $exception) {
+                return response()->json([
+                    'message' => $exception->getMessage() . ' on line ' . $exception->getLine(),
+                    'file' => $exception->getFile(),
+                    'responseTime' => Carbon::now()
+                ], 500);
+            }
+        }
+        //endregion
+
+        public function handleDataSite(Request $request) {
+            try {
+
+                $dataSites = CompaniesSites::dataSitesByCompanyId($request->input('company_id'))->get();
+
+                return response()->json([
+                    'message' => 'Load Success!',
+                    'data' => $dataSites,
+                    'responseTime' => Carbon::now()
+                ]);
+            } catch (Exception $exception) {
+                return response()->json([
+                    'message' => $exception->getMessage() . ' on line ' . $exception->getLine(),
+                    'file' => $exception->getFile(),
+                    'responseTime' => Carbon::now()
+                ], 500);
+            }
         }
     }

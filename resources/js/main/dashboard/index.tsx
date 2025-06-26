@@ -2,8 +2,12 @@ import Hls from "hls.js";
 import {closeModalDialog, showModalDialog} from "@/js/plugins/modal";
 import {AirQualityCardManager, MetricsData} from "@/js/main/dashboard/airQualityCardManager";
 import Highcharts from "highcharts";
+import {getMetaContent} from "@/js/plugins/functions";
+import {failureAlert} from "@/js/plugins/sweet-alert";
 
 document.addEventListener('DOMContentLoaded', function () {
+    const csrfToken = getMetaContent('csrf-token')
+
     const modalCctv = document.querySelector('.modalCctv')
     const modalBody = modalCctv.querySelector('.modal-body')
     const modalDetailParameter = document.querySelector('.modalDetailParameter')
@@ -49,9 +53,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 createVideoElementWithAutoplay(cctvLink, 'camera1')
             })
         },
-        onMetricsClick: (id, metrics) => {
-            showModalDialog(modalDetailParameter, `<i class="fas fa-file mr-2"></i> ${id}`, () => {
-                handleDetailChart(metrics)
+        onMetricsClick: (uid, metrics) => {
+            showModalDialog(modalDetailParameter, `<i class="fas fa-file mr-2"></i> ${uid}`, () => {
+                handleDetailChart(uid, metrics)
             })
         }
     });
@@ -269,9 +273,26 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     //endregion
 
-    function handleDetailChart(metric: MetricsData) {
-        console.log(metric.bml)
-        const now = Math.floor(new Date().setHours(0, 1, 0, 0) / 1000);
+    async function handleDetailChart(uid: string, metric: MetricsData) {
+
+        const response = await fetch(`/dashboard/detail-metric/${uid}?metric=${metric.type}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+        })
+
+        const {status} = response
+        const {message, data} = await response.json()
+        if (status !== 200) {
+            failureAlert({
+                html: message
+            })
+            return
+        }
+
+        console.log(metric)
         const formatTimestamp = (timestamp: number, format: 'time' | 'datetime' = 'time'): string => {
             const date = new Date(timestamp * 1000);
 
@@ -292,12 +313,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         };
 
-        const defaultData = Array.from({length: 144}, (_, j) => ({
-            timestamp: now + (j * 300),
-            value: Math.floor(Math.random() * ((metric.bml - 5) - (metric.buffer - 15)) + (metric.buffer - 15))
-        }));
-
-        const chartData = defaultData.map(item => ({
+        const chartData = data.map((item) => ({
             x: item.timestamp * 1000,
             y: item.value,
             timestamp: item.timestamp

@@ -7,6 +7,7 @@
     use App\Models\Master\AqiCategories;
     use App\Models\Master\Loggers;
     use App\Models\Master\Platforms;
+    use Cache;
     use Carbon\Carbon;
     use Exception;
     use Illuminate\Http\RedirectResponse;
@@ -26,61 +27,48 @@
             return view($this->viewPath . '.index');
         }
 
+        //region Handle Data Platforms
         public function getDataPlatforms(Request $request) {
             try {
 
-                $dataPlatforms = Platforms::all();
-
+                $platforms = Platforms::orderBy('created_at', 'ASC')->get();
                 $dataPlatformsTemp = [];
-                foreach ($dataPlatforms as $item) {
-                    $dataLastLoggers = Loggers::loggerData($item->uid, 'DESC')->first();
-                    $dataAqiPm25 = AqiCategories::dataAqiPm25($dataLastLoggers->pm_25 ?? 0)->first();
-
-                    $dataLoggers = Loggers::loggerData($item->uid)->get();
-                    $dataLoggersTemp = [];
-                    foreach ($dataLoggers as $itemLogger) {
-                        $aqiCat = AqiCategories::dataAqiPm25($itemLogger->pm_25)->first();
-
-                        // (AQI max - AQI min / AQI PM2.5 max - AQI PM2.5 min) x (Curr PM2.5 - AQI PM2.5 min) + AQI min
-                        $formula_1 = ($aqiCat->aqi_max - $aqiCat->aqi_min) / ($aqiCat->pm25_max - $aqiCat->pm25_min);
-                        $formula_2 = ($itemLogger->pm_25 - $aqiCat->pm25_min) + $aqiCat->aqi_min;
-                        $formula_3 = $formula_1 * $formula_2;
-
-                        $dataLoggersTemp[] = [
-                            'timestamp' => $itemLogger->datetime_unix,
-                            'value' => (float) number_format($formula_3, 1),
-                        ];
-                    }
+                foreach ($platforms as $platform) {
+                    $dataLastLogger = Loggers::loggerData($platform->uid, 'DESC')->first();
+                    $aqiCat = AqiCategories::dataAqiPm25($dataLastLogger->pm_25 ?? 0)->first();
 
                     $dataPlatformsTemp[] = [
-                        'status' => $dataAqiPm25->category_name_en,
-                        'emoji' => $dataAqiPm25->emoji,
-                        'colorCode' => $dataAqiPm25->color_code,
+                        'uid' => $platform->uid,
+                        'siteName' => $platform->sites->site_name,
+                        'status' => $dataLastLogger != null ? $aqiCat->category_name_en : 'Unknown',
+                        'emoji' => $dataLastLogger ? mb_convert_encoding($aqiCat->emoji, 'UTF-8', 'HTML-ENTITIES') : mb_convert_encoding('&#x2753;', 'UTF-8', 'HTML-ENTITIES'),
+                        'colorCode' => $dataLastLogger ? $aqiCat->color_code : 'bg-gray-200',
                         'metrics' => [
                             'pm10' => [
-                                'value' => $dataLastLoggers->pm_10 ?? 0,
+                                'value' => $dataLastLogger->pm_10 ?? 0,
                                 'bml' => 20,
                                 'buffer' => 10
                             ],
                             'pm25' => [
-                                'value' => $dataLastLoggers->pm_25 ?? 0,
+                                'value' => $dataLastLogger->pm_25 ?? 0,
                                 'bml' => 20,
                                 'buffer' => 10
                             ],
                             'tsp' => [
-                                'value' => $dataLastLoggers->tsp ?? 0,
+                                'value' => $dataLastLogger->tsp ?? 0,
                                 'bml' => 20,
                                 'buffer' => 10
                             ],
                             'noise' => [
-                                'value' => $dataLastLoggers->noise ?? 0,
+                                'value' => $dataLastLogger->noise ?? 0,
                                 'bml' => 20,
                                 'buffer' => 10
                             ]
                         ],
-                        'isOnline' => true,
-                        'cctvLink' => $item->cctv_link,
-                        'forecastData' => $dataLoggersTemp,
+                        'isOnline' => !!$dataLastLogger,
+                        'cctvLink' => $platform->cctv_link,
+                        'forecastData' => $this->processLoggerData($platform->uid, $aqiCat),
+                        'lastUpdated' => $dataLastLogger ? Carbon::createFromTimestampUTC($dataLastLogger->datetime_unix)->timezone('Asia/Jakarta')->format('d M Y H:i:s') : null
                     ];
                 }
 
@@ -91,8 +79,83 @@
             } catch (Exception $exception) {
                 return response()->json([
                     'message' => $exception->getMessage() . ' on line ' . $exception->getLine(),
+                    'file' => $exception->getFile(),
                     'responseTime' => Carbon::now()
                 ], 500);
             }
         }
+
+        private function processLoggerData($uid, AqiCategories $aqiCat) {
+            $loggers = Loggers::loggerData($uid)->get();
+            $dataLoggersTemp = [];
+            foreach ($loggers as $logger) {
+                // Optimized AQI calculation dengan pengecekan division by zero
+                $pmRange = $aqiCat->pm25_max - $aqiCat->pm25_min;
+                if ($pmRange == 0) {
+                    $aqiValue = $aqiCat->aqi_min;
+                } else {
+                    $formula_1 = ($aqiCat->aqi_max - $aqiCat->aqi_min) / $pmRange;
+                    $formula_2 = ($logger->pm_25 - $aqiCat->pm25_min);
+                    $aqiValue = ($formula_1 * $formula_2) + $aqiCat->aqi_min;
+                }
+
+                $dataLoggersTemp[] = [
+                    'timestamp' => $logger->datetime_unix,
+                    'value' => (float) number_format($aqiValue, 1),
+                ];
+            }
+
+            return $dataLoggersTemp;
+        }
+        //endregion
+
+        public function detailMetric(Request $request, $uid) {
+            try {
+
+                $dataLogger = Loggers::loggerData($uid)->get();
+                $dataLoggerTemp = [];
+                foreach ($dataLogger as $item) {
+                    if ($request->input('metric') == 'pm10') {
+                        $dataLoggerTemp[] = [
+                            'timestamp' => $item->datetime_unix,
+                            'value' => (float)number_format($item->pm_10, 1),
+                        ];
+                    }
+
+                    if ($request->input('metric') == 'pm25') {
+                        $dataLoggerTemp[] = [
+                            'timestamp' => $item->datetime_unix,
+                            'value' => (float)number_format($item->pm_25, 1),
+                        ];
+                    }
+
+                    if ($request->input('metric') == 'tsp') {
+                        $dataLoggerTemp[] = [
+                            'timestamp' => $item->datetime_unix,
+                            'value' => (float)number_format($item->tsp, 1),
+                        ];
+                    }
+
+                    if ($request->input('metric') == 'noise') {
+                        $dataLoggerTemp[] = [
+                            'timestamp' => $item->datetime_unix,
+                            'value' => (float)number_format($item->noise, 1),
+                        ];
+                    }
+                }
+
+                return response()->json([
+                    'data' => $dataLoggerTemp,
+                    'responseTime' => Carbon::now()
+                ]);
+
+            } catch (Exception $exception) {
+                return response()->json([
+                    'message' => $exception->getMessage() . ' on line ' . $exception->getLine(),
+                    'file' => $exception->getFile(),
+                    'responseTime' => Carbon::now()
+                ], 500);
+            }
+        }
+
     }

@@ -1,7 +1,6 @@
 import {ExBoxInterfaces, ExBoxOptionData} from "@/js/experiment/ex-box/interfaces";
 import {Configs} from "@/js/experiment/ex-box/configs";
 import {inArray} from "@/js/plugins/functions";
-import {s} from "vite/dist/node/types.d-aGj9QkWt";
 
 export class Select extends Configs {
     protected element: HTMLInputElement | HTMLSelectElement
@@ -16,9 +15,14 @@ export class Select extends Configs {
     protected currentFocus: number = 0
     protected options: ExBoxInterfaces = {
         autoWidth: false,
-        placeholder: 'Data not found!'
+        placeholder: 'Data not found!',
+        maxWidth: undefined,
+        dropdownAutoPosition: true
     }
     protected randId: string
+    protected ajaxCache: Map<string, ExBoxOptionData[]> = new Map()
+    protected isLoading: boolean = false
+    protected searchTimeout: ReturnType<typeof setTimeout> | null = null
 
     constructor(element: HTMLInputElement | HTMLSelectElement, options?: ExBoxInterfaces) {
         super()
@@ -99,7 +103,15 @@ export class Select extends Configs {
 
         if (!this.isExBoxVisible) {
             this.createResult()
-            this.createOptionSelect()
+
+            // Jika menggunakan AJAX, jangan create option dari elemen select
+            if (!this.options.ajax) {
+                this.createOptionSelect()
+            } else {
+                // Untuk AJAX, tampilkan loading atau placeholder
+                this.showLoadingOrPlaceholder()
+            }
+
             this.handleOptionSearch()
 
             this.updatePosition()
@@ -115,26 +127,190 @@ export class Select extends Configs {
 
     //endregion
 
+    //region Handle Show Loading or Placeholder for AJAX
+    protected showLoadingOrPlaceholder() {
+        const exBoxResultOptions = document.querySelector(`#ex-box-result-options-${this.randId}`)
+        exBoxResultOptions.innerHTML = ''
+
+        const optionSelect = document.createElement('li')
+        optionSelect.classList.add('ex-box-result-options-select', 'loading-placeholder')
+
+        if (this.options.ajax?.minimumInputLength && this.options.ajax.minimumInputLength > 0) {
+            optionSelect.textContent = `Please enter ${this.options.ajax.minimumInputLength} or more characters`
+        } else {
+            optionSelect.textContent = 'Start typing to search...'
+        }
+
+        exBoxResultOptions.appendChild(optionSelect)
+    }
+
+    //endregion
+
+    //region Handle AJAX Request
+    protected async performAjaxRequest(searchTerm: string): Promise<ExBoxOptionData[]> {
+        if (!this.options.ajax) {
+            return []
+        }
+
+        const ajaxConfig = this.options.ajax
+
+        // Check cache if enabled
+        if (ajaxConfig.cache && this.ajaxCache.has(searchTerm)) {
+            return this.ajaxCache.get(searchTerm)!
+        }
+
+        try {
+            this.isLoading = true
+            this.showLoadingState()
+
+            // Prepare request data
+            let requestData: Record<string, any> = {}
+            if (ajaxConfig.data) {
+                if (typeof ajaxConfig.data === 'function') {
+                    requestData = ajaxConfig.data(searchTerm)
+                } else {
+                    requestData = {...ajaxConfig.data, q: searchTerm}
+                }
+            } else {
+                requestData = {q: searchTerm}
+            }
+
+            // Prepare fetch options
+            const fetchOptions: RequestInit = {
+                method: ajaxConfig.method || 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...ajaxConfig.headers
+                }
+            }
+
+            let url = ajaxConfig.url
+
+            if (fetchOptions.method === 'GET') {
+                // For GET requests, append data as query parameters
+                const params = new URLSearchParams(requestData).toString()
+                url += (url.includes('?') ? '&' : '?') + params
+            } else {
+                // For POST requests, send data in body
+                fetchOptions.body = JSON.stringify(requestData)
+            }
+
+            const response = await fetch(url, fetchOptions)
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`)
+            }
+
+            const data = await response.json()
+
+            // Process results
+            let processedData: ExBoxOptionData[]
+            if (ajaxConfig.processResults) {
+                processedData = ajaxConfig.processResults(data)
+            } else {
+                // Default processing - assumes data is array of objects with value and label
+                if (Array.isArray(data)) {
+                    processedData = data.map(item => ({
+                        value: item.value || item.id || '',
+                        label: item.label || item.text || item.name || '',
+                        additional: item.additional,
+                        infos: item.infos
+                    }))
+                } else if (data.results && Array.isArray(data.results)) {
+                    processedData = data.results.map(item => ({
+                        value: item.value || item.id || '',
+                        label: item.label || item.text || item.name || '',
+                        additional: item.additional,
+                        infos: item.infos
+                    }))
+                } else {
+                    processedData = []
+                }
+            }
+
+            // Cache results if enabled
+            if (ajaxConfig.cache) {
+                this.ajaxCache.set(searchTerm, processedData)
+            }
+
+            this.isLoading = false
+            return processedData
+
+        } catch (error) {
+            console.error('AJAX request failed:', error)
+            this.isLoading = false
+            this.showErrorState()
+            return []
+        }
+    }
+
+    //endregion
+
+    //region Handle Show Loading State
+    protected showLoadingState() {
+        const exBoxResultOptions = document.querySelector(`#ex-box-result-options-${this.randId}`)
+        exBoxResultOptions.innerHTML = ''
+
+        const loadingOption = document.createElement('li')
+        loadingOption.classList.add('ex-box-result-options-select', 'loading-state')
+        loadingOption.textContent = 'Loading...'
+        exBoxResultOptions.appendChild(loadingOption)
+    }
+
+    //endregion
+
+    //region Handle Show Error State
+    protected showErrorState() {
+        const exBoxResultOptions = document.querySelector(`#ex-box-result-options-${this.randId}`)
+        exBoxResultOptions.innerHTML = ''
+
+        const errorOption = document.createElement('li')
+        errorOption.classList.add('ex-box-result-options-select', 'error-state')
+        errorOption.textContent = 'Error loading data. Please try again.'
+        exBoxResultOptions.appendChild(errorOption)
+    }
+
+    //endregion
+
     //region Handle Update Position
     protected updatePosition() {
         const inputPosition = this.exBox.getBoundingClientRect()
         const scrollY = window.scrollY
         const windowHeight = window.innerHeight
+        const windowWidth = window.innerWidth
 
         if (this.exBoxContainerResult) {
+            // Set initial position
             this.exBoxContainerResult.style.top = `${inputPosition.bottom + scrollY - 3}px`
             this.exBoxContainerResult.style.left = `${inputPosition.left - 1}px`
             this.exBoxContainerResult.style.minWidth = `${inputPosition.width + 2}px`
+
+            // Handle width settings
             if (this.options.autoWidth) {
                 this.exBoxContainerResult.style.maxWidth = `${inputPosition.width + 2}px`
+            } else if (this.options.maxWidth) {
+                // Apply custom maxWidth
+                this.exBoxContainerResult.style.maxWidth = typeof this.options.maxWidth === 'number'
+                    ? `${this.options.maxWidth}px`
+                    : this.options.maxWidth
             }
 
             this.exBoxContainerResult.style.zIndex = `9999`
+
+            // Get position after initial setup
             const exBoxResultPosition = this.exBoxContainerResult.getBoundingClientRect()
 
+            // Handle horizontal positioning (auto position if enabled)
+            if (this.options.dropdownAutoPosition && Math.ceil(exBoxResultPosition.right) > windowWidth) {
+                // Dropdown extends beyond right edge, position it to the left
+                const newLeft = inputPosition.right - exBoxResultPosition.width + 1
+                this.exBoxContainerResult.style.left = `${Math.max(10, newLeft)}px` // Ensure minimum 10px from left edge
+            }
+
+            // Handle vertical positioning
             if (Math.ceil(exBoxResultPosition.bottom) > windowHeight) {
                 this.exBoxContainerResult.style.top = `${inputPosition.top - exBoxResultPosition.height + scrollY}px`
-                this.exBoxContainerResult.style.left = `${inputPosition.left - 1}px`
+
                 if (this.exBoxContainerResult.classList.contains('on-bottom')) {
                     this.exBoxContainerResult.classList.remove('on-bottom')
                 }
@@ -143,8 +319,16 @@ export class Select extends Configs {
                 const inputParent = this.getElementParent(this.element) as HTMLElement
                 if (inputParent) {
                     this.exBoxContainerResult.style.top = `${inputPosition.top - exBoxResultPosition.height + scrollY + 5}px`
-                    this.exBoxContainerResult.style.left = `${inputPosition.left - 1}px`
                     this.exBoxContainerResult.style.zIndex = `9999`
+                }
+
+                // Re-check horizontal position after vertical adjustment
+                if (this.options.dropdownAutoPosition) {
+                    const updatedPosition = this.exBoxContainerResult.getBoundingClientRect()
+                    if (Math.ceil(updatedPosition.right) > windowWidth) {
+                        const newLeft = inputPosition.right - updatedPosition.width + 1
+                        this.exBoxContainerResult.style.left = `${Math.max(10, newLeft)}px`
+                    }
                 }
             } else {
                 if (this.exBoxContainerResult.classList.contains('on-top')) {
@@ -167,6 +351,12 @@ export class Select extends Configs {
 
     //region Handle Remove ExBox
     protected removeExBox() {
+        // Clear timeout if exists
+        if (this.searchTimeout) {
+            clearTimeout(this.searchTimeout)
+            this.searchTimeout = null
+        }
+
         if (this.exBoxContainerResult) {
             this.exBoxContainerResult.remove();
             this.exBoxContainerResult = null;
@@ -267,7 +457,7 @@ export class Select extends Configs {
         exBoxResultOptions.innerHTML = ''
 
         const optionDatas = optionData ?? this.createOptionData()
-        if (optionDatas.length !== 0) {
+        if (optionDatas && optionDatas.length !== 0) {
             optionDatas.map((item) => {
                 const {
                     value,
@@ -312,6 +502,14 @@ export class Select extends Configs {
     //region Handle Option Click
     protected handleOptionClick(event: Event) {
         const clickedOption = event.currentTarget as HTMLOptionElement
+
+        // Don't allow clicking on loading, error, or placeholder states
+        if (clickedOption.classList.contains('loading-state') ||
+            clickedOption.classList.contains('error-state') ||
+            clickedOption.classList.contains('loading-placeholder')) {
+            return
+        }
+
         if (this.element instanceof HTMLSelectElement) {
             if (this.activeOption) {
                 this.activeOption.classList.remove('selected')
@@ -327,7 +525,15 @@ export class Select extends Configs {
                 }
             })
 
-            const option: HTMLOptionElement = this.element.querySelector(`#ex-box-select-${this.randId} option[value="${optionValue}"]`)
+            // For AJAX, create option element if it doesn't exist
+            let option: HTMLOptionElement = this.element.querySelector(`#ex-box-select-${this.randId} option[value="${optionValue}"]`)
+            if (!option) {
+                option = document.createElement('option')
+                option.value = optionValue
+                option.textContent = optionLabel
+                this.element.appendChild(option)
+            }
+
             if (option) {
                 this.removeAllSelectedAttribute()
                 option.setAttribute('selected', 'selected')
@@ -345,23 +551,51 @@ export class Select extends Configs {
 
     //region Handle Option Search and Move Selection
     protected handleOptionSearch() {
-        const optionDatas = this.createOptionData()
         const searchOption = document.querySelector(`#ex-box-search-field-${this.randId}`)
-        searchOption.addEventListener('keyup', (evt: KeyboardEvent) => {
+        searchOption.addEventListener('keyup', async (evt: KeyboardEvent) => {
             if (!inArray(['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter'], evt.key)) {
                 const target = evt.target as HTMLInputElement
-                const filtered = optionDatas.filter(element => {
-                    for (const value of Object.values(element)) {
-                        if (value) {
-                            if (value.toString().toLowerCase().includes(target.value.toLowerCase())) return true;
-                        }
-                    }
-                })
+                const searchTerm = target.value
 
-                this.createOptionSelect(filtered)
-                this.updatePosition()
+                // Clear previous timeout
+                if (this.searchTimeout) {
+                    clearTimeout(this.searchTimeout)
+                }
+
+                if (this.options.ajax) {
+                    // Handle AJAX search
+                    const minimumLength = this.options.ajax.minimumInputLength || 0
+
+                    if (searchTerm.length < minimumLength) {
+                        this.showLoadingOrPlaceholder()
+                        return
+                    }
+
+                    // Set delay for AJAX requests
+                    const delay = this.options.ajax.delay || 300
+
+                    this.searchTimeout = setTimeout(async () => {
+                        const results = await this.performAjaxRequest(searchTerm)
+                        this.createOptionSelect(results)
+                        this.updatePosition()
+                    }, delay)
+
+                } else {
+                    // Handle local search
+                    const optionDatas = this.createOptionData()
+                    const filtered = optionDatas.filter(element => {
+                        for (const value of Object.values(element)) {
+                            if (value) {
+                                if (value.toString().toLowerCase().includes(searchTerm.toLowerCase())) return true;
+                            }
+                        }
+                    })
+
+                    this.createOptionSelect(filtered)
+                    this.updatePosition()
+                }
             } else {
-                const optionItem: NodeListOf<HTMLElement> = document.querySelectorAll('.ex-box-result-options-select')
+                const optionItem: NodeListOf<HTMLElement> = document.querySelectorAll('.ex-box-result-options-select:not(.loading-state):not(.error-state):not(.loading-placeholder)')
                 switch (evt.key) {
                     case 'ArrowDown':
                         this.currentFocus++
@@ -384,7 +618,7 @@ export class Select extends Configs {
 
     //region Handle Option Enter
     protected handleOptionEnter(elm: NodeListOf<HTMLElement>) {
-        if (this.element instanceof HTMLSelectElement) {
+        if (this.element instanceof HTMLSelectElement && elm.length > 0) {
 
             if (this.activeOption) {
                 this.activeOption.classList.remove('selected')
@@ -395,7 +629,15 @@ export class Select extends Configs {
             const optionValue = elm[this.currentFocus].getAttribute('data-value')
             const optionLabel = elm[this.currentFocus].textContent
 
-            const option: HTMLOptionElement = this.element.querySelector(`#ex-box-select-${this.randId} option[value="${optionValue}"]`)
+            // For AJAX, create option element if it doesn't exist
+            let option: HTMLOptionElement = this.element.querySelector(`#ex-box-select-${this.randId} option[value="${optionValue}"]`)
+            if (!option) {
+                option = document.createElement('option')
+                option.value = optionValue
+                option.textContent = optionLabel
+                this.element.appendChild(option)
+            }
+
             if (option) {
                 this.removeAllSelectedAttribute()
                 option.setAttribute('selected', 'selected')
@@ -413,7 +655,7 @@ export class Select extends Configs {
 
     //region Handle Move Selection
     protected moveSelection(elm: NodeListOf<Element>) {
-        if (!elm) return false;
+        if (!elm || elm.length === 0) return false;
         this.removeActiveSelection(elm)
         if (this.currentFocus >= elm.length) this.currentFocus = 0
         if (this.currentFocus < 0) this.currentFocus = (elm.length - 1)
@@ -503,6 +745,13 @@ export class Select extends Configs {
                 this.element.value = val
             }
         }
+    }
+
+    //endregion
+
+    //region Public method to clear cache
+    public clearCache() {
+        this.ajaxCache.clear()
     }
 
     //endregion

@@ -1,0 +1,37 @@
+<?php
+
+    namespace App\Models\Master;
+
+    use Illuminate\Database\Eloquent\Builder;
+    use Illuminate\Database\Eloquent\Model;
+    use Illuminate\Database\Eloquent\Relations\BelongsTo;
+    use Illuminate\Database\Eloquent\SoftDeletes;
+
+    class CompaniesSites extends Model {
+        use SoftDeletes;
+
+        protected $keyType = 'string';
+        public $incrementing = false;
+        protected $table = 't_companies_sites';
+        protected $fillable = [
+            'company_id',
+            'site_name',
+        ];
+        protected $primaryKey = 'id';
+        protected $hidden = ['deleted_at'];
+
+        public function companies(): BelongsTo {
+            return $this->belongsTo(Companies::class, 'company_id', 'id');
+        }
+
+        public function scopeDataSites(Builder $builder, $options = []): void {
+            $builder->select('*');
+            $builder->orderBy('created_at');
+        }
+
+        public function scopeDataSitesByCompanyId(Builder $builder, $companyId): void {
+            $builder->select('*');
+            $builder->where('company_id', $companyId);
+            $builder->orderBy('created_at');
+        }
+    }

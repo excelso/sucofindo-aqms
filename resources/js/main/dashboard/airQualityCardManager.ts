@@ -5,6 +5,7 @@ import {data} from "autoprefixer";
 
 interface AirQualityData {
     uid: string;
+    siteName: string;
     status: string;
     emoji?: string;
     colorCode?: string;
@@ -345,6 +346,20 @@ class AirQualityCardManager {
         // endregion
     }
 
+    private getAQIColor(aqiValue: number): string {
+        const categories = [
+            {min: 0, max: 50, color: '#22C55E'},      // Baik
+            {min: 51, max: 100, color: '#EAB308'},    // Sedang
+            {min: 101, max: 150, color: '#F97316'},   // Tidak sehat sensitif
+            {min: 151, max: 200, color: '#EF4444'},   // Tidak sehat
+            {min: 201, max: 300, color: '#DC2626'},   // Sangat tidak sehat
+            {min: 301, max: 500, color: '#B91C1C'},   // Berbahaya
+        ];
+
+        const category = categories.find(cat => aqiValue >= cat.min && aqiValue <= cat.max);
+        return category ? category.color : '#7F1D1D'; // Default untuk >500
+    }
+
     // Create Forecast Chart
     private createForecastChart(element: HTMLElement, data: Array<{
         timestamp: number;
@@ -353,20 +368,6 @@ class AirQualityCardManager {
         if (!this.options.enableCharts || typeof Highcharts === 'undefined') {
             return;
         }
-
-        const getAQIColor = (aqiValue) => {
-            const categories = [
-                {min: 0, max: 50, color: '#22C55E'},      // Baik
-                {min: 51, max: 100, color: '#EAB308'},    // Sedang
-                {min: 101, max: 150, color: '#F97316'},   // Tidak sehat sensitif
-                {min: 151, max: 200, color: '#EF4444'},   // Tidak sehat
-                {min: 201, max: 300, color: '#DC2626'},   // Sangat tidak sehat
-                {min: 301, max: 500, color: '#B91C1C'},   // Berbahaya
-            ];
-
-            const category = categories.find(cat => aqiValue >= cat.min && aqiValue <= cat.max);
-            return category ? category.color : '#7F1D1D'; // Default untuk >500
-        };
 
         // Default data with Unix timestamps (current time and hourly intervals)
         const now = Math.floor(new Date().setHours(0, 1, 0, 0) / 1000);
@@ -515,7 +516,7 @@ class AirQualityCardManager {
 
                 if (lastPoint) {
                     const aqiValue = lastPoint.y;
-                    const markerColor = getAQIColor(aqiValue);
+                    const markerColor = this.getAQIColor(aqiValue);
 
                     lastPoint.update({
                         marker: {
@@ -547,7 +548,7 @@ class AirQualityCardManager {
                     textAlign: 'center'
                 }).add();
             }
-        });
+        }.bind(this))
 
         this.chartInstances.set(`${cardId}-forecast`, chart);
     }
@@ -598,7 +599,7 @@ class AirQualityCardManager {
                 const oldItem = this.data[existingIndex];
 
                 // Update data array
-                this.data[existingIndex] = {...newItem, lastUpdated: new Date()};
+                this.data[existingIndex] = {...newItem, lastUpdated: newItem.lastUpdated};
 
                 // Update cache
                 this.dataCache.set(newItem.uid, this.data[existingIndex]);
@@ -691,15 +692,32 @@ class AirQualityCardManager {
     }
 
     private updateForecastChart(cardId: string, forecastData: Array<{ timestamp: number; value: number }>): void {
+
         const chartKey = `${cardId}-forecast`;
         const chart = this.chartInstances.get(chartKey);
 
         if (chart && chart.series && chart.series[0]) {
+            // Ambil nilai AQI dari data terakhir yang baru (bukan dari chart lama)
+            const lastDataPoint = forecastData[forecastData.length - 1];
+            const aqiValue = lastDataPoint ? lastDataPoint.value : 0;
+            const markerColor = this.getAQIColor(aqiValue);
+
             // Convert forecast data to Highcharts format
-            const chartData = forecastData.map(item => ({
-                x: item.timestamp * 1000, // Convert to milliseconds
+            const chartData = forecastData.map((item, index) => ({
+                x: item.timestamp * 1000,
                 y: item.value,
-                timestamp: item.timestamp
+                timestamp: item.timestamp,
+                // Hanya point terakhir yang punya marker dengan warna sesuai AQI
+                marker: index === forecastData.length - 1 ? {
+                    enabled: true,
+                    radius: 6,
+                    fillColor: markerColor,
+                    lineWidth: 2,
+                    lineColor: 'white'
+                } : {
+                    enabled: false,
+                    radius: 0
+                }
             }));
 
             // Update series data
@@ -713,24 +731,6 @@ class AirQualityCardManager {
                     true
                 );
             }
-
-            // Highlight the last point
-            setTimeout(() => {
-                const series = chart.series[0];
-                const lastPointIndex = series.data.length - 1;
-                if (series.data[lastPointIndex]) {
-                    series.data[lastPointIndex].update({
-                        marker: {
-                            enabled: true,
-                            radius: 6,
-                            fillColor: '#4CAF50',
-                            lineWidth: 2,
-                            lineColor: 'white'
-                        }
-                    }, false);
-                    chart.redraw();
-                }
-            }, 100);
         }
     }
 
@@ -968,8 +968,17 @@ class AirQualityCardManager {
         onlineContainer.appendChild(indicator);
         onlineContainer.appendChild(onlineText);
 
+        // Site
+        const siteContainer = this.createElement('div', 'flex items-center gap-2 text-[14px]')
+        const siteIcon = this.createElement('i', 'fas fa-location-dot')
+        const siteText = this.createElement('div')
+        siteText.textContent = data.siteName
+        siteContainer.appendChild(siteIcon)
+        siteContainer.appendChild(siteText)
+
         statusContainer.appendChild(badge);
         statusContainer.appendChild(onlineContainer);
+        statusContainer.appendChild(siteContainer);
         leftSection.appendChild(idTitle);
         leftSection.appendChild(statusContainer);
 
@@ -977,14 +986,23 @@ class AirQualityCardManager {
         const rightSection = this.createElement('div', 'flex justify-end');
         const cctvLink = this.createElement('a', 'cursor-pointer') as HTMLAnchorElement;
         const cctvImg = document.createElement('img');
-        cctvImg.src = data.cctvIconPath || '/images/vector/icons8-cctv-100.png';
+        if (!data.cctvLink) {
+            cctvImg.src = data.cctvIconPath || '/images/vector/icons8-cctv-disabled-100.png';
+            cctvLink.className = 'cursor-not-allowed'
+        } else {
+            cctvImg.src = data.cctvIconPath || '/images/vector/icons8-cctv-100.png';
+            cctvLink.className = 'cursor-pointer'
+        }
+
         cctvImg.width = 24;
         cctvImg.alt = 'cctv';
         cctvLink.appendChild(cctvImg);
         rightSection.appendChild(cctvLink);
 
-        if (this.options.onCctvClick) {
-            cctvLink.addEventListener('click', () => this.options.onCctvClick!(data.uid, data.cctvLink));
+        if (data.cctvLink) {
+            if (this.options.onCctvClick) {
+                cctvLink.addEventListener('click', () => this.options.onCctvClick!(data.uid, data.cctvLink));
+            }
         }
 
         headerFlex.appendChild(leftSection);
@@ -1063,7 +1081,7 @@ class AirQualityCardManager {
         }, 200);
 
         if (data.lastUpdated) {
-            const lastUpdatedDiv = this.createElement('div', 'text-[10px] text-gray-400 mt-2 last-updated',
+            const lastUpdatedDiv = this.createElement('div', 'text-[10px] text-gray-400 mt-4 last-updated',
                 `Last updated: ${data.lastUpdated.toLocaleString()}`);
             forecastSection.appendChild(lastUpdatedDiv);
         }

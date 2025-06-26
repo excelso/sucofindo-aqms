@@ -5,6 +5,7 @@
     use App\Http\Helper\Common;
     use App\Http\Helper\ExHash;
     use App\Http\Helper\ExImage;
+    use Carbon\Carbon;
     use Illuminate\Foundation\AliasLoader;
     use Illuminate\Foundation\Support\Providers\RouteServiceProvider;
     use Illuminate\Support\ServiceProvider;
@@ -19,6 +20,7 @@
             $loader->alias('ExHash', ExHash::class);
             $loader->alias('ExImage', ExImage::class);
             $loader->alias('Common', Common::class);
+            $loader->alias('Carbon', Carbon::class);
         }
 
         /**

@@ -1,11 +1,11 @@
-@section('title', 'Data Sites')
+@section('title', 'Data Platform Loggers')
 <x-app-layout>
     <div class="content-main">
         <div class="content-header">
             <div class="content-title">
                 <div>
                     <p class="font-bold text-[22px]">
-                        Data Sites
+                        Data Platform Loggers
                     </p>
                     <nav aria-label="Breadcrumb">
                         <ul class="breadcrumb truncate">
@@ -17,7 +17,7 @@
                                 </a>
                             </li>
                             <li>Master</li>
-                            <li>Data Sites</li>
+                            <li>Data Platform Loggers</li>
                         </ul>
                     </nav>
                 </div>
@@ -30,7 +30,7 @@
                 </div>
                 <div class="mr-2">
                     <a class="btn btn-primary btnCreate ml-2">
-                        <i class="fas fa-plus-circle mr-2"></i> New Sites
+                        <i class="fas fa-plus-circle mr-2"></i> New Platform
                     </a>
                 </div>
             </div>
@@ -50,6 +50,8 @@
                             <thead>
                                 <tr class="sticky-header">
                                     <th class="text-center w-[50px]">No.</th>
+                                    <th class="text-center w-[150px]">UID</th>
+                                    <th class="text-left w-[150px]">CCTV Link</th>
                                     <th class="text-left w-[150px]">Site Name</th>
                                     <th class="text-left w-[150px]">Company Name</th>
                                     <th class="text-center w-[130px]">Update Date</th>
@@ -62,8 +64,10 @@
                                     @foreach($items as $item)
                                         <tr class="data-tables" data-id="{{ $item->id }}">
                                             <td class="text-center">{{$i++}}</td>
-                                            <td class="text-left">{{ $item->site_name }}</td>
-                                            <td class="text-left">{{ $item->companies->company_name }}</td>
+                                            <td class="text-center">{{ $item->uid ?? '' }}</td>
+                                            <td class="text-left">{{ $item->cctv_link ?? '-' }}</td>
+                                            <td class="text-left">{{ $item->sites->site_name ?? '' }}</td>
+                                            <td class="text-left">{{ $item->sites->companies->company_name ?? '' }}</td>
                                             <td class="text-center">{{ Carbon::parse($item->updated_at)->translatedFormat('d M Y H:i') }}</td>
                                             <td class="text-center">
                                                 <a href="javascript:void(0)" class="btnEdit">
@@ -78,7 +82,7 @@
                     </div>
                     @if(isset($items) && count($items) === 0)
                         <div class="not-found">
-                            <div>No Sites data found</div>
+                            <div>No Platform data found</div>
                         </div>
                     @endif
                 </div>
@@ -88,8 +92,8 @@
         </div>
 
         {{-- Bagian Include (Modal) --}}
-        @include('main.master.data-sites.popup.form')
+        @include('main.master.data-platform-loggers.popup.form')
     </div>
 </x-app-layout>
 
-@vite(['resources/js/main/master/data-sites/index.tsx'])
+@vite(['resources/js/main/master/data-platform-loggers/index.tsx'])

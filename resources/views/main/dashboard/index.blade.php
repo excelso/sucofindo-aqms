@@ -24,9 +24,9 @@
 
                 <div class="flex items-center gap-2 text-[15px] font-bold">
                     <div>
-                        <i class="fas fa-eye"></i>
+                        <i class="fas fa-sort"></i>
                     </div>
-                    <div class="leading-[2px] text-[10px]">Watchlist (12)</div>
+                    <div class="leading-[2px]">Filter</div>
                 </div>
             </div>
             <div class="mt-5">
