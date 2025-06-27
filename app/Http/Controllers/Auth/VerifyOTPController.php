@@ -19,6 +19,7 @@
             }
 
             if (!auth()->check()) {
+                session()->forget('otp_verified');
                 return redirect()->route('login');
             }
 

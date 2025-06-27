@@ -22,7 +22,7 @@
                 ], 401));
             } else {
                 if (!$request->expectsJson()) {
-                    // return redirect()->route('dashboard');
+                    session()->forget('otp_verified');
                     return redirect()->route('login');
                 }
             }
