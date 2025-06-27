@@ -76,8 +76,8 @@ document.addEventListener('DOMContentLoaded', function () {
         modalBody.innerHTML = '';
 
         // Detect protocol based on port in URL
-        const isWebRTC = streamUrl.includes(':8889') || streamUrl.includes('/rtc/');
-        const isHLS = streamUrl.includes(':8888') || streamUrl.includes('.m3u8') || streamUrl.includes('/hls/');
+        const isWebRTC = streamUrl.includes(':8889') || streamUrl.includes('/rtc/') || streamUrl.includes('/hls/');
+        const isHLS = streamUrl.includes(':8888') || streamUrl.includes('.m3u8');
 
         console.log('Stream URL:', streamUrl);
         console.log('Detected protocol:', { isWebRTC, isHLS });
@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
             protocolDiv.style.background = 'rgba(0,123,255,0.8)';
 
             let iframeUrl: string;
-            if (streamUrl.includes(':8889') || streamUrl.includes('/rtc/')) {
+            if (streamUrl.includes(':8889') || streamUrl.includes('/rtc/') || streamUrl.includes('/hls/')) {
                 iframeUrl = streamUrl;
             } else {
                 iframeUrl = `http://103.127.132.72:8889/${cameraId || 'camera1'}/`;
