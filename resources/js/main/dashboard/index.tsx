@@ -21,14 +21,19 @@ document.addEventListener('DOMContentLoaded', function () {
     closeModalForm.forEach((elm) => {
         elm.addEventListener('click', function () {
             closeModalDialog(modalCctv, () => {
-                // Clear all video elements and connections
-                modalBody.innerHTML = '';
+                const videos = modalBody.querySelectorAll('video');
+                videos.forEach(video => {
+                    if ((video as any).hlsInstance) {
+                        (video as any).hlsInstance.destroy();
+                        (video as any).hlsInstance = null;
+                    }
 
-                // Stop all WebRTC connections
-                activeWebRTCStreams.forEach((manager, video) => {
-                    manager.stop();
+                    // Stop video sebelum remove
+                    video.pause();
+                    video.src = '';
+                    video.load(); // Reset video element
+                    video.remove();
                 });
-                activeWebRTCStreams.clear();
             })
 
             closeModalDialog(modalDetailParameter)
@@ -144,7 +149,6 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (isHLS) {
             loadHLSPlayer();
         } else {
-            console.log('Unknown protocol, defaulting to HLS');
             loadHLSPlayer();
         }
 
@@ -153,10 +157,6 @@ document.addEventListener('DOMContentLoaded', function () {
             protocolDiv.textContent = 'WebRTC';
             protocolDiv.style.background = 'rgba(0,123,255,0.8)';
 
-            // Deteksi mixed content issue
-            const currentProtocol = window.location.protocol;
-            const isHTTPS = currentProtocol === 'https:';
-
             let iframeUrl: string;
             if (streamUrl.includes(':8889') || streamUrl.includes('/rtc/')) {
                 iframeUrl = streamUrl;
@@ -164,17 +164,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 iframeUrl = `http://103.127.132.72:8889/${cameraId || 'camera1'}/`;
             }
 
-            console.log('Original WebRTC URL:', iframeUrl);
-            console.log('Page is HTTPS:', isHTTPS);
-
-            // Jika halaman HTTPS dan URL WebRTC HTTP, gunakan proxy
-            // if (isHTTPS && iframeUrl.startsWith('http:')) {
-            //     console.log('🔒 Mixed content detected, using proxy...');
-            //     loadWebRTCViaProxy(iframeUrl);
-            //     return;
-            // }
-
-            // Proceed dengan iframe normal
             createWebRTCIframe(iframeUrl);
         }
 
@@ -213,93 +202,46 @@ document.addEventListener('DOMContentLoaded', function () {
             contentArea.appendChild(iframe);
         }
 
-        function loadWebRTCViaProxy(originalUrl: string) {
-            updateStatus('Loading via proxy...', '#ffa500');
-
-            // Gunakan endpoint proxy di backend Laravel Anda
-            const proxyUrl = `/dashboard/webrtc-proxy?stream=${encodeURIComponent(originalUrl)}`;
-
-            console.log('🔄 Using proxy URL:', proxyUrl);
-
-            createWebRTCIframe(proxyUrl);
-        }
-
         function loadHLSPlayer() {
             updateStatus('Loading HLS...', '#ffa500');
             protocolDiv.textContent = 'HLS';
             protocolDiv.style.background = 'rgba(255,193,7,0.8)';
 
             const video = document.createElement('video') as HTMLVideoElement;
-            video.style.cssText = `
-                width: 100%;
-                height: 500px;
-                object-fit: contain;
-            `;
-            video.controls = true;
-            video.muted = true;
+
             video.autoplay = false;
-
-            contentArea.appendChild(video);
-
-            // Determine HLS URL
-            let hlsUrl: string;
-
-            if (streamUrl.includes('.m3u8') || streamUrl.includes(':8888') || streamUrl.includes('/hls/')) {
-                // Use the URL as-is if it's already HLS
-                hlsUrl = streamUrl;
-            } else {
-                // Construct HLS URL from camera ID
-                hlsUrl = `http://103.127.132.72:8888/${cameraId || 'ubt1'}/index.m3u8`;
-            }
-
-            console.log('HLS URL:', hlsUrl);
+            video.width = 900;
+            video.controls = true;
+            video.style.height = '500px';
+            video.muted = true; // WAJIB untuk autoplay di Chrome
 
             if (Hls.isSupported()) {
                 const hls = new Hls();
-
-                hls.loadSource(hlsUrl);
+                hls.loadSource(streamUrl);
                 hls.attachMedia(video);
                 (video as any).hlsInstance = hls;
 
+                // Autoplay setelah manifest ready
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
                     updateStatus('HLS Connected ✓', '#00ff00');
+                    console.log('HLS ready, starting autoplay...')
                     video.play().catch(error => {
-                        console.warn('HLS Autoplay failed:', error);
-                        updateStatus('HLS Ready - Click to Play', '#00aa00');
-                    });
-                });
-
-                hls.on(Hls.Events.ERROR, (event, data) => {
-                    console.error('HLS Error:', data);
-                    updateStatus(`HLS Error: ${data.type}`, '#ff0000');
-                });
+                        updateStatus('HLS Load Failed', '#ff0000');
+                        console.warn('Autoplay failed:', error)
+                    })
+                })
 
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                // Safari native HLS support
-                video.src = hlsUrl;
-                video.addEventListener('loadstart', () => {
-                    updateStatus('HLS Connected (Native) ✓', '#00ff00');
-                });
-                video.addEventListener('error', () => {
-                    updateStatus('HLS Stream Error', '#ff0000');
-                });
-                video.play().catch(console.warn);
-            } else {
-                updateStatus('HLS Not Supported', '#ff0000');
+                video.src = streamUrl;
+                video.autoplay = true;
             }
 
-            // Click to play functionality
-            video.addEventListener('click', () => {
-                if (video.paused) {
-                    video.play().catch(console.warn);
-                } else {
-                    video.pause();
-                }
-            });
+            contentArea.appendChild(video);
         }
     }
     //endregion
 
+    //region Handle Chart Detail
     async function handleDetailChart(uid: string, metric: MetricsData) {
 
         const response = await fetch(`/dashboard/detail-metric/${uid}?metric=${metric.type}`, {
@@ -457,4 +399,5 @@ document.addEventListener('DOMContentLoaded', function () {
 
         });
     }
+    //endregion
 })
