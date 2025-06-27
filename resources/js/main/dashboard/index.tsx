@@ -76,125 +76,117 @@ document.addEventListener('DOMContentLoaded', function () {
         modalBody.innerHTML = '';
 
         // Detect protocol based on port in URL
-        const isWebRTC = streamUrl.includes(':8889') || streamUrl.includes('/rtc/') || streamUrl.includes('/hls/');
-        const isHLS = streamUrl.includes(':8888') || streamUrl.includes('.m3u8');
+        const isWebRTCPath = streamUrl.includes('/rtc/') || streamUrl.includes('/hls/');
+        const isWebRTCPort = streamUrl.includes(':8889') && !streamUrl.includes('.m3u8');
+        const isHLSPort = streamUrl.includes(':8888') && !streamUrl.includes('.m3u8');
+        const isHLSFile = streamUrl.includes('.m3u8');
+
+        // Determine if you should use iframe or HLS player
+        const shouldUseIframe = isWebRTCPath || isWebRTCPort || isHLSPort;
+        const shouldUseHLSPlayer = isHLSFile;
 
         console.log('Stream URL:', streamUrl);
-        console.log('Detected protocol:', { isWebRTC, isHLS });
-
-        // Create container
-        const container = document.createElement('div');
-        container.style.cssText = `
-            width: 100%;
-            max-width: 900px;
-            margin: 0 auto;
-            position: relative;
-        `;
-
-        // Create content area
-        const contentArea = document.createElement('div');
-        contentArea.style.cssText = `
-            position: relative;
-            width: 100%;
-            min-height: 500px;
-            background: #000;
-            border-radius: 8px;
-            overflow: hidden;
-        `;
-
-        const statusContainer = document.createElement('div');
-        statusContainer.className = 'flex items-center absolute top-[15px] right-[15px] gap-3'
-
-        // Create status indicator
-        const statusDiv = document.createElement('div');
-        statusDiv.style.cssText = `
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 7px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
-            z-index: 1000;
-            backdrop-filter: blur(4px);
-        `;
-
-        // Protocol indicator
-        const protocolDiv = document.createElement('div');
-        protocolDiv.style.cssText = `
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 6px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
-            z-index: 1000;
-            backdrop-filter: blur(4px);
-        `;
-
-        contentArea.appendChild(statusContainer);
-        statusContainer.appendChild(statusDiv);
-        statusContainer.appendChild(protocolDiv);
-        container.appendChild(contentArea);
-        modalBody.appendChild(container);
-
-        // Status update function
-        const updateStatus = (text: string, color: string = 'white') => {
-            statusDiv.textContent = text;
-            statusDiv.style.color = color;
-        };
+        console.log('Protocol detection:', {
+            isWebRTCPath,
+            isWebRTCPort,
+            isHLSPort,
+            isHLSFile,
+            shouldUseIframe,
+            shouldUseHLSPlayer
+        });
 
         // Auto-select protocol based on URL
-        if (isWebRTC) {
-            loadWebRTCIframe();
-        } else if (isHLS) {
+        if (!isHLSFile && shouldUseIframe) {
+            loadIframeWithContainer();
+        } else if (shouldUseHLSPlayer) {
             loadHLSPlayer();
         } else {
+            // Default fallback to HLS player
             loadHLSPlayer();
         }
 
-        function loadWebRTCIframe() {
-            updateStatus('Loading WebRTC...', '#ffa500');
-            protocolDiv.textContent = 'WebRTC';
-            protocolDiv.style.background = 'rgba(0,123,255,0.8)';
+        function loadIframeWithContainer() {
+            // Create container for iframe (keep the container logic for iframe)
+            const container = document.createElement('div');
+            container.className = 'w-full max-w-[900px] mx-auto relative'
 
-            let iframeUrl: string;
-            if (streamUrl.includes(':8889') || streamUrl.includes('/rtc/') || streamUrl.includes('/hls/')) {
-                iframeUrl = streamUrl;
-            } else {
-                iframeUrl = `http://103.127.132.72:8889/${cameraId || 'camera1'}/`;
+            // Create content area
+            const contentArea = document.createElement('div');
+            contentArea.className = 'relative w-full bg-black rounded-sm overflow-hidden min-h-[300px]'
+
+            const statusContainer = document.createElement('div');
+            statusContainer.className = 'flex items-center absolute top-[15px] right-[15px] gap-3'
+
+            // Create status indicator
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'bg-[rgba(0,0,0,0.8)] text-white px-[10px] py-[7px] rounded-sm text-[11px] font-bold z-[1000] backdrop-opacity-[4px]'
+
+            // Protocol indicator
+            const protocolDiv = document.createElement('div');
+            protocolDiv.className = 'bg-[rgba(0,0,0,0.8)] text-white px-[10px] py-[7px] rounded-sm text-[11px] font-bold z-[1000] backdrop-opacity-[4px]'
+
+            contentArea.appendChild(statusContainer);
+            statusContainer.appendChild(statusDiv);
+            statusContainer.appendChild(protocolDiv);
+            container.appendChild(contentArea);
+            modalBody.appendChild(container);
+
+            // Status update function
+            const updateStatus = (text: string, color: string = 'white') => {
+                statusDiv.textContent = text;
+                statusDiv.style.color = color;
+            };
+
+            // Determine a protocol type for display
+            let protocolType = 'WebRTC';
+            let protocolColor = 'rgba(0,123,255,0.8)';
+
+            if (isWebRTCPath) {
+                protocolType = streamUrl.includes('/rtc/') ? 'WebRTC' : 'WebRTC/HLS';
+            } else if (isWebRTCPort) {
+                protocolType = 'WebRTC';
+            } else if (isHLSPort) {
+                protocolType = 'HLS Stream';
+                protocolColor = 'rgba(255,193,7,0.8)';
             }
 
-            createWebRTCIframe(iframeUrl);
-        }
+            updateStatus(`Loading ${protocolType}...`, '#ffa500');
+            protocolDiv.textContent = protocolType;
+            protocolDiv.style.background = protocolColor;
 
-        function createWebRTCIframe(url: string) {
             const iframe = document.createElement('iframe');
-            iframe.src = url;
+            iframe.src = streamUrl;
+
             iframe.style.cssText = `
                 width: 100%;
-                height: 500px;
+                height: auto;
+                min-height: 400px;
+                max-height: 70vh;
                 border: none;
                 border-radius: 8px;
+                aspect-ratio: 16/9;
             `;
 
-            // Tambahkan security attributes
+            // Add security attributes
             iframe.setAttribute('allow', 'camera; microphone; autoplay; encrypted-media');
             iframe.setAttribute('allowfullscreen', 'true');
             iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
 
             iframe.onload = () => {
-                updateStatus('WebRTC Connected ✓', '#00ff00');
-                console.log('✅ WebRTC iframe loaded successfully');
+                const protocolType = protocolDiv.textContent || 'Stream';
+                updateStatus(`${protocolType} Connected ✓`, '#00ff00');
+                console.log(`✅ ${protocolType} iframe loaded successfully`);
             };
 
             iframe.onerror = () => {
-                updateStatus('WebRTC Load Failed', '#ff0000');
-                console.error('❌ WebRTC iframe failed to load');
+                const protocolType = protocolDiv.textContent || 'Stream';
+                updateStatus(`${protocolType} Load Failed`, '#ff0000');
+                console.error(`❌ ${protocolType} iframe failed to load`);
 
-                // Fallback ke HLS
+                // Fallback to HLS player
                 setTimeout(() => {
-                    console.log('🔄 Falling back to HLS...');
-                    iframe.remove();
+                    console.log('🔄 Falling back to HLS player...');
+                    modalBody.innerHTML = '';
                     loadHLSPlayer();
                 }, 2000);
             };
@@ -203,17 +195,43 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function loadHLSPlayer() {
-            updateStatus('Loading HLS...', '#ffa500');
+            modalBody.classList.add('relative')
+            const statusContainer = document.createElement('div');
+            statusContainer.className = 'flex items-center absolute top-[20px] right-[20px] gap-3'
+
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'bg-[rgba(0,0,0,0.8)] text-white px-[10px] py-[7px] rounded-sm text-[11px] font-bold z-[1000] backdrop-opacity-[4px]'
+
+            const protocolDiv = document.createElement('div');
+            protocolDiv.className = 'bg-[rgba(0,0,0,0.8)] text-white px-[10px] py-[7px] rounded-sm text-[11px] font-bold z-[1000] backdrop-opacity-[4px]'
+
+            statusContainer.appendChild(statusDiv)
+            statusContainer.appendChild(protocolDiv)
+            modalBody.appendChild(statusContainer)
+
+            const updateStatus = (text: string, color: string = 'white') => {
+                statusDiv.textContent = text;
+                statusDiv.style.color = color;
+            };
+
+            updateStatus('Load HLS Player...', '#f8bf31')
             protocolDiv.textContent = 'HLS';
-            protocolDiv.style.background = 'rgba(255,193,7,0.8)';
+            protocolDiv.style.background = '#f8bf31';
 
             const video = document.createElement('video') as HTMLVideoElement;
 
             video.autoplay = false;
-            video.width = 900;
             video.controls = true;
-            video.style.height = '500px';
             video.muted = true; // WAJIB untuk autoplay di Chrome
+
+            video.style.cssText = `
+                width: 100%;
+                height: 500px;
+                max-height: 70vh;
+                object-fit: contain;
+                border-radius: 8px;
+                background: #000;
+            `;
 
             if (Hls.isSupported()) {
                 const hls = new Hls();
@@ -223,10 +241,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Autoplay setelah manifest ready
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                    updateStatus('HLS Connected ✓', '#00ff00');
                     console.log('HLS ready, starting autoplay...')
+                    updateStatus(`HLS Connected ✓`, '#00ff00');
                     video.play().catch(error => {
-                        updateStatus('HLS Load Failed', '#ff0000');
+                        updateStatus(`HLS Load Failed`, '#ff0000');
                         console.warn('Autoplay failed:', error)
                     })
                 })
@@ -236,7 +254,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 video.autoplay = true;
             }
 
-            contentArea.appendChild(video);
+            modalBody.appendChild(video);
         }
     }
     //endregion
