@@ -36,7 +36,7 @@
                 'localeCookieRedirect' => LocaleCookieRedirect::class,
                 'localeViewPath' => LaravelLocalizationViewPath::class,
                 'detectDevice' => DetectDevice::class,
-                'guest.v2' => RedirectIfAuthenticated::class,
+                'guest.custom' => RedirectIfAuthenticated::class,
                 'otp.verified' => CheckOtpVerification::class,
             ]);
         })

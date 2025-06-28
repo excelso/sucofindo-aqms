@@ -2,16 +2,7 @@
 
     namespace App\Models\Users;
 
-    // use Illuminate\Contracts\Auth\MustVerifyEmail;
-    use App\Models\Companies\Companies;
-    use App\Models\Employee\EmployeeAllowance;
-    use App\Models\Employee\Employee;
-    use App\Models\Employee\EmployeeRollingShift;
-    use Illuminate\Database\Eloquent\Builder;
     use Illuminate\Database\Eloquent\Factories\HasFactory;
-    use Illuminate\Database\Eloquent\Relations\BelongsTo;
-    use Illuminate\Database\Eloquent\Relations\HasMany;
-    use Illuminate\Database\Eloquent\Relations\HasOne;
     use Illuminate\Foundation\Auth\User as Authenticatable;
     use Illuminate\Notifications\Notifiable;
 

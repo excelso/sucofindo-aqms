@@ -12,7 +12,7 @@ use App\Http\Controllers\Auth\VerifyEmailController;
     use App\Http\Controllers\Auth\VerifyOTPController;
     use Illuminate\Support\Facades\Route;
 
-Route::middleware('guest.v2')->group(function () {
+Route::middleware('guest.custom')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
                 ->name('register');
 

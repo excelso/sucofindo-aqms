@@ -23,10 +23,12 @@
             foreach ($guards as $guard) {
                 if (Auth::guard($guard)->check()) {
                     if (!session()->has('otp_verified')) {
-                        return redirect()->route('verify-otp');
+                        if (config('app.env') != 'local') {
+                            return redirect()->route('verify-otp');
+                        }
                     }
 
-                    return redirect('/dashboard');
+                    return redirect('/');
                 }
             }
 

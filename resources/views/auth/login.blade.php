@@ -59,9 +59,9 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between mt-4">
+                    <div class="items-center justify-between mt-4 !hidden">
                         <label for="remember_me" class="inline-flex items-center cursor-pointer">
-                            <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-primary shadow-sm focus:ring-primary" name="remember" checked>
+                            <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-primary shadow-sm focus:ring-primary" name="remember">
                             <span class="ml-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
                         </label>
                         <div class="inline-flex items-center">
