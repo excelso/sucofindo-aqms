@@ -935,23 +935,23 @@ class AirQualityCardManager {
         const cardId = `card-${data.uid}-${index}`;
 
         // Main card container
-        const card = this.createElement('div', 'card mb-4 cursor-pointer');
+        const card = this.createElement('div', 'card !mb-0 cursor-pointer');
         card.dataset.index = index.toString();
         card.id = cardId;
 
         const cardBody = this.createElement('div', 'card-body');
 
         // Header section
-        const headerFlex = this.createElement('div', 'flex items-center');
-        const leftSection = this.createElement('div', 'flex-1');
-        const idTitle = this.createElement('div', 'text-[20px] font-bold', data.uid);
+        const headerFlex = this.createElement('div', 'card-dashboard-header');
+        const leftSection = this.createElement('div', 'left-section');
+        const idTitle = this.createElement('div', 'idle-title', data.uid);
 
         if (data.location) {
             const locationDiv = this.createElement('div', 'text-[12px] text-gray-500', data.location);
             leftSection.appendChild(locationDiv);
         }
 
-        const statusContainer = this.createElement('div', 'flex items-center gap-4');
+        const statusContainer = this.createElement('div', 'status');
 
         // Status badge
         const badge = this.createElement('div', `status-badge inline-flex items-center rounded-full gap-1 px-[4px] py-[3px] ${data.colorCode} text-[12px] font-bold`);
@@ -962,8 +962,8 @@ class AirQualityCardManager {
         badge.appendChild(statusText);
 
         // Online status
-        const onlineContainer = this.createElement('div', 'flex items-center gap-2');
-        const indicator = this.createElement('div', `h-[10px] w-[10px] rounded-full ${data.isOnline ? 'bg-green-500' : 'bg-red-500'}`);
+        const onlineContainer = this.createElement('div', 'online-status-container');
+        const indicator = this.createElement('div', `${data.isOnline ? 'online' : 'offline'}`);
         const onlineText = this.createElement('div', 'text-[14px]', data.isOnline ? 'Online' : 'Offline');
         onlineContainer.appendChild(indicator);
         onlineContainer.appendChild(onlineText);
@@ -983,7 +983,7 @@ class AirQualityCardManager {
         leftSection.appendChild(statusContainer);
 
         // Right side - CCTV icon
-        const rightSection = this.createElement('div', 'flex justify-end');
+        const rightSection = this.createElement('div', 'right-section');
         const cctvLink = this.createElement('a', 'cursor-pointer') as HTMLAnchorElement;
         const cctvImg = document.createElement('img');
         if (!data.cctvLink) {
