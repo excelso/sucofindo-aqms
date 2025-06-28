@@ -14,9 +14,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const bodyChart: HTMLElement = modalDetailParameter.querySelector('.bodyChart')
     const closeModalForm = document.querySelectorAll('.closeModalForm')
 
-    // Store active WebRTC connections
-    const activeWebRTCStreams: Map<HTMLVideoElement, WebRTCStreamManager> = new Map();
-
     //region Handle Close Menu
     closeModalForm.forEach((elm) => {
         elm.addEventListener('click', function () {
