@@ -70,6 +70,38 @@
                             </div>
                         </a>
                     </li>
+                    <li class="navItem">
+                        <a class="navLink {{Request::segment(2) == 'master' && Request::segment(3) == 'users' ? 'navLinkActive' : ''}}" href="/master/users">
+                            <div class="navText">
+                                <p>Users</p>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <li class="navItem {{Request::segment(2) == 'settings' ? 'mm-active' : ''}}">
+                <a class="navLink {{Request::segment(2) == 'settings' ? 'navLinkActive' : ''}}">
+                    <div class="flex items-center justify-start">
+                        <div class="navIcon">
+                            <i class="fas fa-wrench"></i>
+                        </div>
+                        <div class="navText">
+                            <p>Settings</p>
+                        </div>
+                    </div>
+                    <div class="navArrowDown">
+                        <i class="fa fa-caret-right"></i>
+                    </div>
+                </a>
+                <ul class="navTreeview">
+                    <li class="navItem">
+                        <a class="navLink {{Request::segment(2) == 'settings' && Request::segment(3) == 'change-password' ? 'navLinkActive' : ''}}" href="/settings/change-password">
+                            <div class="navText">
+                                <p>{{ __('Change Password') }}</p>
+                            </div>
+                        </a>
+                    </li>
                 </ul>
             </li>
         </ul>

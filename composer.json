@@ -8,6 +8,7 @@
         "php": "^8.3",
         "ext-gd": "*",
         "avadim/fast-excel-writer": "^5.8",
+        "awobaz/compoships": "^2.4",
         "erusev/parsedown": "^1.7",
         "intervention/image": "^3.9",
         "jenssegers/agent": "^2.6",

@@ -5,6 +5,7 @@
     use Illuminate\Database\Eloquent\Builder;
     use Illuminate\Database\Eloquent\Model;
     use Illuminate\Database\Eloquent\Relations\BelongsTo;
+    use Illuminate\Database\Eloquent\Relations\HasMany;
     use Illuminate\Database\Eloquent\SoftDeletes;
 
     class CompaniesSites extends Model {
@@ -22,6 +23,11 @@
 
         public function companies(): BelongsTo {
             return $this->belongsTo(Companies::class, 'company_id', 'id');
+        }
+
+        public function platforms(): HasMany {
+            return $this->hasMany(Platforms::class, 'company_site_id', 'id')
+                ->orderBy('created_at', 'ASC');
         }
 
         public function scopeDataSites(Builder $builder, $options = []): void {

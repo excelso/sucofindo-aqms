@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     //endregion
 
+    //region Handle Update & Delete
     if (dataTables) {
         dataTables.forEach((elm) => {
             const platformId = elm.getAttribute('data-id')
@@ -143,6 +144,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         })
     }
+    //endregion
 
     //region Handle Response
     const handleResponse = async (response: Response) => {

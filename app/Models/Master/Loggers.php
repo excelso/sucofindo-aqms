@@ -8,6 +8,7 @@
     use Illuminate\Database\Eloquent\Builder;
     use Illuminate\Database\Eloquent\Model;
     use Illuminate\Database\Eloquent\Relations\BelongsTo;
+    use Illuminate\Database\Eloquent\Relations\HasOne;
     use Illuminate\Database\Eloquent\SoftDeletes;
 
     class Loggers extends Model {
@@ -25,6 +26,10 @@
             'temp',
             'datetime_unix',
         ];
+
+        public function limit(): HasOne|Loggers|Builder {
+            return $this->hasOne(LoggersLimit::class, 'uid', 'uid');
+        }
 
         public function scopeLoggerData(Builder $builder, $uids, $direction = 'ASC'): void {
             $builder->where('uid', $uids);

@@ -3,6 +3,7 @@
     use App\Http\Controllers\Dashboard\ControllerDashboard;
     use App\Http\Controllers\Master\ControllerPlatformLoggers;
     use App\Http\Controllers\Master\ControllerSites;
+    use App\Http\Controllers\Master\ControllerUsers;
     use App\Http\Controllers\Settings\ControllerChangePassword;
     use App\Http\Controllers\Settings\WebRTCProxyController;
     use App\Http\Helper\ExImage;
@@ -62,14 +63,21 @@
                     Route::post('store', [ControllerSites::class, 'store']);
                     Route::get('data-site', [ControllerSites::class, 'handleDataSite']);
                 });
-            });
 
-            Route::group(['prefix' => 'master'], function () {
                 Route::group(['prefix' => 'platform-loggers'], function () {
                     Route::get('/', [ControllerPlatformLoggers::class, 'index']);
                     Route::post('store', [ControllerPlatformLoggers::class, 'store']);
                     Route::get('detail/{platformId}', [ControllerPlatformLoggers::class, 'handleDetailPlatform']);
                     Route::put('update/{platformId}', [ControllerPlatformLoggers::class, 'update']);
+                });
+
+                Route::group(['prefix' => 'users'], function () {
+                    Route::get('/', [ControllerUsers::class, 'index']);
+                    Route::get('get-user-sso', [ControllerUsers::class, 'getUserSSO']);
+                    Route::post('store', [ControllerUsers::class, 'store']);
+                    Route::get('detail/{userId}', [ControllerUsers::class, 'handleDetailUser']);
+                    Route::put('update/{userId}', [ControllerUsers::class, 'update']);
+                    Route::delete('delete/{userId}', [ControllerUsers::class, 'delete']);
                 });
             });
 
