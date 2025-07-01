@@ -316,7 +316,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 text: `${metric.title}`
             },
             subtitle: {
-                text: `Range: ${metric.buffer} - ${metric.bml}`
+                text: `Range: ${metric.bml_max_buffer} - ${metric.bml_max}`
             },
             credits: {enabled: false},
             xAxis: {
@@ -346,13 +346,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 min: 0,
                 plotLines: [
                     {
-                        value: metric.bml,
+                        value: metric.bml_max,
                         width: 2,
                         dashStyle: 'Solid',
                         color: 'rgb(255,0,0)'
                     },
                     {
-                        value: metric.buffer,
+                        value: metric.bml_max_buffer,
                         width: 2,
                         dashStyle: 'Solid',
                         color: 'rgb(228,186,47)'
@@ -394,21 +394,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 name: `${metric.title}`,
                 showInLegend: false,
                 data: chartData,
-                color: {
-                    linearGradient: { x1: 0, x2: 0, y1: 1, y2: 0 },
-                    stops: [
-                        [0, '#ffffff'],
-                        [1, '#0079ff']
-                    ]
-                },
+                // color: {
+                //     linearGradient: { x1: 0, x2: 0, y1: 1, y2: 0 },
+                //     stops: [
+                //         [0, '#ffffff'],
+                //         [1, '#0079ff']
+                //     ]
+                // },
             }, {
                 type: 'line',
-                name: 'BML',
-                color: 'rgb(255,0,0)'
-            }, {
-                type: 'line',
-                name: 'Buffer',
+                name: `Buffer (${metric.bml_max_buffer} ${metric.type})`,
                 color: 'rgb(228,186,47)'
+            }, {
+                type: 'line',
+                name: `BML (${metric.bml_max})`,
+                color: 'rgb(255,0,0)'
             }]
         }, function (chart) {
 

@@ -14,23 +14,31 @@ interface AirQualityData {
     metrics?: {
         pm10?: {
             value?: number,
-            bml?: number,
-            buffer?: number
+            bml_min?: number,
+            bml_min_buffer?: number,
+            bml_max_buffer?: number,
+            bml_max?: number
         };
         pm25?: {
             value?: number,
-            bml?: number,
-            buffer?: number
+            bml_min?: number,
+            bml_min_buffer?: number,
+            bml_max_buffer?: number,
+            bml_max?: number
         };
         tsp?: {
             value?: number,
-            bml?: number,
-            buffer?: number
+            bml_min?: number,
+            bml_min_buffer?: number,
+            bml_max_buffer?: number,
+            bml_max?: number
         };
         noise?: {
             value?: number,
-            bml?: number,
-            buffer?: number
+            bml_min?: number,
+            bml_min_buffer?: number,
+            bml_max_buffer?: number,
+            bml_max?: number
         };
     };
     location?: string;
@@ -43,8 +51,10 @@ interface MetricsData {
     title: string;
     type: string;
     value: number;
-    bml: number;
-    buffer: number
+    bml_min: number;
+    bml_min_buffer: number,
+    bml_max_buffer: number,
+    bml_max: number
 }
 
 interface CardManagerOptions {
@@ -1018,29 +1028,37 @@ class AirQualityCardManager {
                 title: 'PM10',
                 type: 'pm10' as const,
                 value: data.metrics?.pm10?.value || 0,
-                bml: data.metrics?.pm10?.bml,
-                buffer: data.metrics?.pm10.buffer
+                bml_min: data.metrics?.pm10?.bml_min,
+                bml_min_buffer: data.metrics?.pm10?.bml_min_buffer,
+                bml_max_buffer: data.metrics?.pm10?.bml_max_buffer,
+                bml_max: data.metrics?.pm10?.bml_max
             },
             {
                 title: 'PM2.5',
                 type: 'pm25' as const,
                 value: data.metrics?.pm25?.value || 0,
-                bml: data.metrics?.pm25?.bml,
-                buffer: data.metrics?.pm25.buffer
+                bml_min: data.metrics?.pm25?.bml_min,
+                bml_min_buffer: data.metrics?.pm25?.bml_min_buffer,
+                bml_max_buffer: data.metrics?.pm25?.bml_max_buffer,
+                bml_max: data.metrics?.pm25?.bml_max
             },
             {
                 title: 'TSP',
                 type: 'tsp' as const,
                 value: data.metrics?.tsp?.value || 0,
-                bml: data.metrics?.tsp?.bml,
-                buffer: data.metrics?.tsp.buffer
+                bml_min: data.metrics?.tsp?.bml_min,
+                bml_min_buffer: data.metrics?.tsp?.bml_min_buffer,
+                bml_max_buffer: data.metrics?.tsp?.bml_max_buffer,
+                bml_max: data.metrics?.tsp?.bml_max
             },
             {
                 title: 'Noise',
                 type: 'noise' as const,
                 value: data.metrics?.noise?.value || 0,
-                bml: data.metrics?.noise?.bml,
-                buffer: data.metrics?.noise.buffer
+                bml_min: data.metrics?.noise?.bml_min,
+                bml_min_buffer: data.metrics?.noise?.bml_min_buffer,
+                bml_max_buffer: data.metrics?.noise?.bml_max_buffer,
+                bml_max: data.metrics?.noise?.bml_max
             }
         ];
 
@@ -1060,7 +1078,7 @@ class AirQualityCardManager {
 
             // Create gauge chart after DOM insertion
             setTimeout(() => {
-                this.createGaugeChart(data.uid, chartDiv, metric.title, metric.type, metric.bml, metric.buffer, metric.value, cardId, metricCard);
+                this.createGaugeChart(data.uid, chartDiv, metric.title, metric.type, metric.bml_min, metric.bml_max, metric.value, cardId, metricCard);
             }, 100);
         });
 

@@ -34,7 +34,9 @@
                 $platforms = Platforms::orderBy('created_at', 'ASC')->get();
                 $dataPlatformsTemp = [];
                 foreach ($platforms as $platform) {
-                    $dataLastLogger = Loggers::loggerData($platform->uid, 'DESC')->first();
+                    $dataLastLogger = Loggers::loggerData($platform->uid, 'DESC')
+                        ->with('limit')->first();
+
                     $aqiCat = AqiCategories::dataAqiPm25($dataLastLogger->pm_25 ?? 0)->first();
 
                     $dataPlatformsTemp[] = [
@@ -46,23 +48,31 @@
                         'metrics' => [
                             'pm10' => [
                                 'value' => $dataLastLogger->pm_10 ?? 0,
-                                'bml' => 20,
-                                'buffer' => 10
+                                'bml_min' => $dataLastLogger->limit->pm10_min ?? 0,
+                                'bml_min_buffer' => $dataLastLogger->limit->pm10_min_buffer ?? 0,
+                                'bml_max_buffer' => $dataLastLogger->limit->pm10_max_buffer ?? 0,
+                                'bml_max' => $dataLastLogger->limit->pm10_max ?? 0,
                             ],
                             'pm25' => [
                                 'value' => $dataLastLogger->pm_25 ?? 0,
-                                'bml' => 20,
-                                'buffer' => 10
+                                'bml_min' => $dataLastLogger->limit->pm25_min ?? 0,
+                                'bml_min_buffer' => $dataLastLogger->limit->pm25_min_buffer ?? 0,
+                                'bml_max_buffer' => $dataLastLogger->limit->pm25_max_buffer ?? 0,
+                                'bml_max' => $dataLastLogger->limit->pm25_max ?? 0,
                             ],
                             'tsp' => [
                                 'value' => $dataLastLogger->tsp ?? 0,
-                                'bml' => 20,
-                                'buffer' => 10
+                                'bml_min' => $dataLastLogger->limit->tsp_min ?? 0,
+                                'bml_min_buffer' => $dataLastLogger->limit->tsp_min_buffer ?? 0,
+                                'bml_max_buffer' => $dataLastLogger->limit->tsp_max_buffer ?? 0,
+                                'bml_max' => $dataLastLogger->limit->tsp_max ?? 0,
                             ],
                             'noise' => [
                                 'value' => $dataLastLogger->noise ?? 0,
-                                'bml' => 20,
-                                'buffer' => 10
+                                'bml_min' => $dataLastLogger->limit->noise_min ?? 0,
+                                'bml_min_buffer' => $dataLastLogger->limit->noise_min_buffer ?? 0,
+                                'bml_max_buffer' => $dataLastLogger->limit->noise_max_buffer ?? 0,
+                                'bml_max' => $dataLastLogger->limit->noise_max ?? 0,
                             ]
                         ],
                         'isOnline' => !!$dataLastLogger,
