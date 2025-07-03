@@ -42,11 +42,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     //endregion
 
-    StartTextAnimation([
-        "PRESENT",
-        "AQMS  @2025",
-        "BY SUCOFINDO",
-    ], 0)
+    // StartTextAnimation([
+    //     "PRESENT",
+    //     "AQMS  @2025",
+    //     "BY SUCOFINDO",
+    // ], 0)
 
     //region Setting Content Wrapper Height
     const contentWrapper = document.querySelector<HTMLElement>('.content-wrapper')

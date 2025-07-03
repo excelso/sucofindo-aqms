@@ -1424,6 +1424,54 @@
     .card-body .card-dashboard-header .right-section {
         @apply flex justify-end
     }
+
+    //region Carousel
+    .tw-carousel {
+        @apply relative w-full h-full
+    }
+
+    .tw-carousel .tw-carousel-body {
+        @apply relative h-full overflow-hidden
+    }
+
+    .tw-carousel .tw-carousel-body .tw-carousel-item img {
+        @apply absolute left-1/2 top-1/2 block w-full -translate-x-1/2 -translate-y-1/2 h-full object-cover
+    }
+
+    .tw-carousel .tw-carousel-indicator {
+        @apply absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 space-x-3 rtl:space-x-reverse
+    }
+
+    .tw-carousel .tw-carousel-indicator .tw-carousel-indicator-item {
+        @apply h-3 w-3 rounded-full
+    }
+
+    .tw-slider {
+        @apply h-screen
+    }
+
+    .tw-slider .tw-slider-item {
+        @apply h-full w-full hidden
+    }
+
+    .tw-slider .tw-slider-item.active {
+        @apply h-full w-full block animate-fadeOpacity
+    }
+
+    .tw-slider .tw-slider-item img {
+        @apply w-full h-full object-cover
+    }
+
+    @keyframes fadeAnimation {
+        0%{
+            opacity: 0;
+        }
+        100%{
+            opacity: 1;
+            transition: opacity linear;
+        }
+    }
+    //endregion
 }
 
 .clip-circle-0 {

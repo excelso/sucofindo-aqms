@@ -46,6 +46,8 @@ document.addEventListener('DOMContentLoaded', function () {
         enableCharts: true,
         realTimeUpdateInterval: 15000,
         apiEndpoint: '/dashboard/platforms',
+        enableSocketIO: true,
+        socketIOUrl: 'ws://127.0.0.1:3100',
         onCctvClick: (id, cctvLink) => {
             showModalDialog(modalCctv, `
                 <div class="flex items-center">
@@ -59,12 +61,20 @@ document.addEventListener('DOMContentLoaded', function () {
             showModalDialog(modalDetailParameter, `<i class="fas fa-file mr-2"></i> ${uid}`, () => {
                 handleDetailChart(uid, metrics)
             })
+        },
+        onDataUpdate: (updatedData) => {
+            console.log('Data updated:', updatedData.length, 'stations');
+        },
+        onConnectionStatus: (status) => {
+            console.log('Connection status:', status);
         }
     });
 
-    manager.loadData('/dashboard/platforms').then(() => {
-        manager.renderAll();
-    });
+    manager.startRealTimeMode();
+    // manager.loadData('/dashboard/platforms').then(() => {
+    //     manager.renderAll();
+    //
+    // });
     //endregion
 
     //region Handle Create Video Element with WebRTC and HLS Fallback

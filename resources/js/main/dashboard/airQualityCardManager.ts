@@ -2,6 +2,7 @@ import Highcharts from 'highcharts'
 import "highcharts/highcharts-more";
 import "highcharts/modules/solid-gauge";
 import {data} from "autoprefixer";
+import { io, Socket } from 'socket.io-client';
 
 interface AirQualityData {
     uid: string;
@@ -66,12 +67,27 @@ interface CardManagerOptions {
     chartUpdateInterval?: number;
     realTimeUpdateInterval?: number;
     apiEndpoint?: string;
-    enableWebSocket?: boolean;
-    webSocketUrl?: string;
+    enableSocketIO?: boolean;
+    socketIOUrl?: string;
+    socketIOOptions?: any;
     onCctvClick?: (id: string, cctvLink: string) => void;
     onMetricsClick?: (id: string, metrics: MetricsData) => void;
     onDataUpdate?: (updatedData: AirQualityData[]) => void;
     onConnectionStatus?: (status: 'connected' | 'disconnected' | 'error') => void;
+}
+
+interface LoggerEventData {
+    uid: string;
+    pm_10: number;
+    pm_25: number;
+    tsp: number;
+    noise: number;
+    temp?: number;
+    datetime_unix: number;
+    // Optional forecast data untuk update chart forecast
+    forecastData?: Array<{ timestamp: number; value: number }>;
+    // Atau bisa menggunakan AQI value untuk generate forecast point baru
+    aqi_value?: number;
 }
 
 class AirQualityCardManager {
@@ -83,11 +99,12 @@ class AirQualityCardManager {
     private chartInstances: Map<string, any> = new Map();
     private chartIntervals: Map<string, any> = new Map();
     private realTimeInterval?: number;
-    private webSocket?: WebSocket;
+    private socket?: Socket;
     private connectionStatus: 'connected' | 'disconnected' | 'error' = 'disconnected';
     private lastUpdateTime: Date = new Date();
     private dataCache: Map<string, AirQualityData> = new Map();
 
+    // region Constructor
     constructor(options: CardManagerOptions = {}) {
         this.options = {
             batchSize: 20,
@@ -95,8 +112,15 @@ class AirQualityCardManager {
             enableLazyLoading: true,
             enableCharts: true,
             chartUpdateInterval: 0, // Disable auto-update, use real-time instead
-            realTimeUpdateInterval: 120000, // 2 minutes default
-            enableWebSocket: false,
+            realTimeUpdateInterval: 0, // Disable when using Socket.IO
+            enableSocketIO: false,
+            socketIOOptions: {
+                autoConnect: true,
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionAttempts: 5,
+                timeout: 20000,
+            },
             ...options
         };
 
@@ -104,18 +128,24 @@ class AirQualityCardManager {
             this.container = document.querySelector(options.containerSelector);
         }
 
-        // Initialize real-time updates if configured
-        if (this.options.apiEndpoint && this.options.realTimeUpdateInterval) {
+        // Auto-load initial data if API endpoint is provided
+        if (this.options.apiEndpoint) {
+            this.loadInitialData();
+        }
+
+        // Initialize Socket.IO if configured (for real-time updates)
+        if (this.options.enableSocketIO && this.options.socketIOUrl) {
+            this.initSocketIO();
+        }
+
+        // Initialize periodic updates only if Socket.IO is disabled
+        if (this.options.apiEndpoint && this.options.realTimeUpdateInterval && !this.options.enableSocketIO) {
             this.startRealTimeUpdates();
         }
-
-        // Initialize WebSocket if configured
-        if (this.options.enableWebSocket && this.options.webSocketUrl) {
-            this.initWebSocket();
-        }
     }
+    // endregion
 
-    // Chart Helper Functions
+    // region Chart Helper Functions
     private getGradientColor(valuePct: number, stops: [number, string][]): string {
         for (let i = 1; i < stops.length; i++) {
             const [prevStop, prevColor] = stops[i - 1];
@@ -127,7 +157,9 @@ class AirQualityCardManager {
         }
         return stops[stops.length - 1][1];
     }
+    // endregion
 
+    // region Color Interpolation
     private interpolateColor(color1: string, color2: string, factor: number): string {
         const c1 = this.hexToRgb(color1);
         const c2 = this.hexToRgb(color2);
@@ -136,7 +168,9 @@ class AirQualityCardManager {
         const b = Math.round(c1.b + (c2.b - c1.b) * factor);
         return `rgb(${r}, ${g}, ${b})`;
     }
+    // endregion
 
+    // region Hex to RGB Conversion
     private hexToRgb(hex: string): { r: number; g: number; b: number } {
         const value = hex.replace('#', '');
         const bigint = parseInt(value, 16);
@@ -146,8 +180,9 @@ class AirQualityCardManager {
             b: bigint & 255
         };
     }
+    // endregion
 
-    // Create Gauge Chart
+    // region Create Gauge Chart
     private createGaugeChart(id: string, element: HTMLElement, title: string, type: 'pm10' | 'pm25' | 'tsp' | 'noise', bml: number, buffer: number, initialValue: number, cardId: string, metricCard: HTMLElement): void {
         if (!this.options.enableCharts || typeof Highcharts === 'undefined') {
             return;
@@ -292,7 +327,6 @@ class AirQualityCardManager {
                     backgroundColor: '#41a6d9',
                     radius: 0
                 },
-                // tooltip: { valueSuffix: suffixMap[type] },
                 dataLabels: {
                     formatter: function () {
                         const decimals = type === 'noise' ? 0 : 1;
@@ -316,46 +350,10 @@ class AirQualityCardManager {
 
         // Store chart instance
         this.chartInstances.set(`${cardId}-${type}`, chart);
-
-        // region Setup auto-update interval (Testing Only)
-        // if (this.options.chartUpdateInterval && this.options.chartUpdateInterval > 0) {
-        //     const interval = setInterval(() => {
-        //         if (chart && chart.series && chart.series[0]) {
-        //             const series = chart.series[0];
-        //             const newValue = Math.random() * (75.5 - 20.5) + 20.5;
-        //
-        //             const currentValue = series.points[0].y;
-        //             let step = 0;
-        //             const steps = 30;
-        //
-        //             const animationInterval = setInterval(() => {
-        //                 step++;
-        //                 const interpolated = currentValue + (newValue - currentValue) * (step / steps);
-        //                 series.points[0].update(interpolated, true, false);
-        //
-        //                 if (step >= steps) {
-        //                     clearInterval(animationInterval);
-        //                     series.setData([newValue], true, {duration: 0});
-        //
-        //                     if (this.options.onMetricsClick) {
-        //                         metricCard.addEventListener('click', () => this.options.onMetricsClick!(id, {
-        //                             title: title,
-        //                             type: type,
-        //                             value: newValue,
-        //                             bml: bml,
-        //                             buffer: buffer
-        //                         }));
-        //                     }
-        //                 }
-        //             }, 1000 / steps);
-        //         }
-        //     }, this.options.chartUpdateInterval);
-        //
-        //     this.chartIntervals.set(`${cardId}-${type}`, interval);
-        // }
-        // endregion
     }
+    // endregion
 
+    // region Get AQI Color
     private getAQIColor(aqiValue: number): string {
         const categories = [
             {min: 0, max: 50, color: '#22C55E'},      // Baik
@@ -369,8 +367,9 @@ class AirQualityCardManager {
         const category = categories.find(cat => aqiValue >= cat.min && aqiValue <= cat.max);
         return category ? category.color : '#7F1D1D'; // Default untuk >500
     }
+    // endregion
 
-    // Create Forecast Chart
+    // region Create Forecast Chart
     private createForecastChart(element: HTMLElement, data: Array<{
         timestamp: number;
         value: number
@@ -419,7 +418,6 @@ class AirQualityCardManager {
                 renderTo: element,
                 type: 'spline',
                 marginLeft: 45,
-                // marginRight: 10,
                 height: 150,
                 style: {
                     fontFamily: 'Arial, sans-serif'
@@ -446,8 +444,6 @@ class AirQualityCardManager {
                 gridLineColor: '#eee',
                 gridLineDashStyle: 'Dash',
                 tickInterval: 3600 * 2000, // 1-hour intervals in milliseconds
-                // min: chartData[0]?.x,
-                // max: chartData[chartData.length - 1]?.x
             },
             yAxis: {
                 title: {
@@ -464,7 +460,6 @@ class AirQualityCardManager {
                 gridLineColor: '#eee',
                 gridLineDashStyle: 'Dash',
                 min: 0,
-                // max: 500
             },
             legend: {enabled: false},
             tooltip: {
@@ -562,8 +557,57 @@ class AirQualityCardManager {
 
         this.chartInstances.set(`${cardId}-forecast`, chart);
     }
+    // endregion
 
-    // Real-time Data Management
+    // region Load Initial Data
+    private async loadInitialData(): Promise<void> {
+        try {
+            console.log('🔄 Loading initial data from API...');
+            const response = await fetch(this.options.apiEndpoint!);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+
+            // Handle both direct array and object with data property
+            const initialData: AirQualityData[] = Array.isArray(result) ? result : result.data || [];
+
+            // Set initial data and cache
+            this.data = initialData.map(item => ({
+                ...item,
+                lastUpdated: item.lastUpdated || new Date()
+            }));
+
+            // Update cache
+            this.data.forEach(item => {
+                this.dataCache.set(item.uid, item);
+            });
+
+            this.lastUpdateTime = new Date();
+            this.updateConnectionStatus('connected');
+
+            console.log(`✅ Loaded ${this.data.length} stations successfully`);
+
+            // Auto-render if container is available
+            if (this.container) {
+                this.renderAll();
+            }
+
+            // Trigger callback if provided
+            if (this.options.onDataUpdate) {
+                this.options.onDataUpdate(this.data);
+            }
+
+        } catch (error) {
+            console.error('❌ Error loading initial data:', error);
+            this.updateConnectionStatus('error');
+            this.data = [];
+        }
+    }
+    // endregion
+
     private async startRealTimeUpdates(): Promise<void> {
         if (!this.options.apiEndpoint) return;
 
@@ -597,7 +641,9 @@ class AirQualityCardManager {
         // Setup periodic updates
         this.realTimeInterval = window.setInterval(updateData, this.options.realTimeUpdateInterval!);
     }
+    // endregion
 
+    // region Update Existing Data
     private async updateExistingData(newData: AirQualityData[]): Promise<void> {
         const updatedCards: string[] = [];
 
@@ -631,7 +677,9 @@ class AirQualityCardManager {
 
         console.log(`📊 Updated ${updatedCards.length} cards: ${updatedCards.join(', ')}`);
     }
+    // endregion
 
+    // region Update Card UI
     private updateCardUI(cardId: string, oldData: AirQualityData, newData: AirQualityData): void {
         const cardElement = document.getElementById(`card-${cardId}-${this.getCardIndex(cardId)}`);
         if (!cardElement) return;
@@ -649,7 +697,6 @@ class AirQualityCardManager {
 
         // Update charts with new metric values
         if (newData.metrics) {
-            // console.log(Object.entries(newData.metrics))
             Object.entries(newData.metrics).forEach(([metric, data]) => {
                 if (data !== undefined && oldData.metrics?.[metric as keyof typeof oldData.metrics] !== data) {
                     this.updateChartValue(`card-${cardId}-${this.getCardIndex(cardId)}`, metric as any, data.value);
@@ -668,11 +715,15 @@ class AirQualityCardManager {
             lastUpdatedElement.textContent = `Last updated: ${newData.lastUpdated.toLocaleString()}`;
         }
     }
+    // endregion
 
+    // region Get Card Index
     private getCardIndex(cardId: string): number {
         return this.data.findIndex(item => item.uid === cardId);
     }
+    // endregion
 
+    // region Update Status Badge
     private updateStatusBadge(cardElement: HTMLElement, data: AirQualityData): void {
         const badge = cardElement.querySelector('.status-badge');
         console.log(badge)
@@ -687,7 +738,9 @@ class AirQualityCardManager {
         // Update background color
         badge.className = badge.className.replace(/bg-\w+-200/g, data.colorCode);
     }
+    // endregion
 
+    // region Update Online Status
     private updateOnlineStatus(cardElement: HTMLElement, isOnline: boolean): void {
         const indicator = cardElement.querySelector('.online-indicator');
         const text = cardElement.querySelector('.online-text');
@@ -700,9 +753,10 @@ class AirQualityCardManager {
             text.textContent = isOnline ? 'Online' : 'Offline';
         }
     }
+    // endregion
 
+    // region Update Forecast Chart
     private updateForecastChart(cardId: string, forecastData: Array<{ timestamp: number; value: number }>): void {
-
         const chartKey = `${cardId}-forecast`;
         const chart = this.chartInstances.get(chartKey);
 
@@ -743,78 +797,207 @@ class AirQualityCardManager {
             }
         }
     }
+    // endregion
 
-    // WebSocket Implementation
-    private initWebSocket(): void {
-        if (!this.options.webSocketUrl) return;
+    // region Socket.IO Implementation
+    private initSocketIO(): void {
+        if (!this.options.socketIOUrl) return;
 
         try {
-            this.webSocket = new WebSocket(this.options.webSocketUrl);
+            // Initialize Socket.IO connection
+            this.socket = io(this.options.socketIOUrl, this.options.socketIOOptions);
 
-            this.webSocket.onopen = () => {
-                console.log('🔌 WebSocket connected');
+            // Connection event handlers
+            this.socket.on('connect', () => {
+                console.log('🔌 Socket.IO connected to server');
+                console.log('Socket ID:', this.socket?.id);
                 this.updateConnectionStatus('connected');
-            };
+            });
 
-            this.webSocket.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    this.handleWebSocketMessage(data);
-                } catch (error) {
-                    console.error('❌ Error parsing WebSocket message:', error);
-                }
-            };
-
-            this.webSocket.onclose = () => {
-                console.log('🔌 WebSocket disconnected');
+            this.socket.on('disconnect', (reason) => {
+                console.log('🔌 Socket.IO disconnected:', reason);
                 this.updateConnectionStatus('disconnected');
+            });
 
-                // Auto-reconnect after 5 seconds
-                setTimeout(() => {
-                    if (this.options.enableWebSocket) {
-                        this.initWebSocket();
-                    }
-                }, 5000);
-            };
-
-            this.webSocket.onerror = (error) => {
-                console.error('❌ WebSocket error:', error);
+            this.socket.on('connect_error', (error) => {
+                console.error('❌ Socket.IO connection error:', error);
                 this.updateConnectionStatus('error');
-            };
+            });
+
+            this.socket.on('reconnect', (attemptNumber) => {
+                console.log(`🔌 Socket.IO reconnected after ${attemptNumber} attempts`);
+                this.updateConnectionStatus('connected');
+            });
+
+            this.socket.on('reconnect_error', (error) => {
+                console.error('❌ Socket.IO reconnection error:', error);
+                this.updateConnectionStatus('error');
+            });
+
+            this.socket.on('reconnect_failed', () => {
+                console.error('❌ Socket.IO failed to reconnect');
+                this.updateConnectionStatus('error');
+            });
+
+            // Listen for logger data events (dari saveEvent API)
+            this.socket.on('logger_data', (loggerData: LoggerEventData) => {
+                console.log('📡 Received logger data:', loggerData);
+                this.handleLoggerDataUpdate(loggerData);
+            });
+
+            // Listen for bulk data updates
+            this.socket.on('bulk_data_update', (bulkData: AirQualityData[]) => {
+                console.log('📡 Received bulk data update:', bulkData);
+                this.updateExistingData(bulkData);
+            });
+
+            // Listen for station status changes
+            this.socket.on('station_status_change', (data: {uid: string, status: string, isOnline: boolean}) => {
+                console.log('📡 Received station status change:', data);
+                this.updateStationStatus(data.uid, data.status, data.isOnline);
+            });
+
+            // Heartbeat to keep connection alive
+            this.socket.on('heartbeat', () => {
+                this.lastUpdateTime = new Date();
+                console.log('💓 Heartbeat received');
+            });
 
         } catch (error) {
-            console.error('❌ Failed to initialize WebSocket:', error);
+            console.error('❌ Failed to initialize Socket.IO:', error);
             this.updateConnectionStatus('error');
         }
     }
+    // endregion
 
-    private handleWebSocketMessage(message: any): void {
-        switch (message.type) {
-            case 'STATION_UPDATE':
-                // Update single station
-                this.updateSingleStation(message.data);
-                break;
+    // region Handle Logger Data Update
+    private handleLoggerDataUpdate(loggerData: LoggerEventData): void {
+        // Find the corresponding air quality data
+        const existingIndex = this.data.findIndex(item => item.uid === loggerData.uid);
 
-            case 'BULK_UPDATE':
-                // Update multiple stations
-                this.updateExistingData(message.data);
-                break;
+        if (existingIndex !== -1) {
+            const oldData = { ...this.data[existingIndex] };
 
-            case 'STATUS_CHANGE':
-                // Handle status changes
-                this.updateStationStatus(message.stationId, message.status, message.isOnline);
-                break;
+            // Calculate AQI from PM2.5 if not provided
+            const aqiValue = loggerData.aqi_value || this.calculateAQIFromPM25(loggerData.pm_25);
 
-            case 'HEARTBEAT':
-                // Handle heartbeat to keep the connection alive
-                this.lastUpdateTime = new Date();
-                break;
+            // Update forecast data with new point
+            const updatedForecastData = this.updateForecastData(
+                oldData.forecastData || [],
+                loggerData.datetime_unix,
+                aqiValue
+            );
 
-            default:
-                console.warn('Unknown WebSocket message type:', message.type);
+            // Update metrics with new logger data
+            const updatedData: AirQualityData = {
+                ...this.data[existingIndex],
+                metrics: {
+                    ...this.data[existingIndex].metrics,
+                    pm10: {
+                        ...this.data[existingIndex].metrics?.pm10,
+                        value: loggerData.pm_10
+                    },
+                    pm25: {
+                        ...this.data[existingIndex].metrics?.pm25,
+                        value: loggerData.pm_25
+                    },
+                    tsp: {
+                        ...this.data[existingIndex].metrics?.tsp,
+                        value: loggerData.tsp
+                    },
+                    noise: {
+                        ...this.data[existingIndex].metrics?.noise,
+                        value: loggerData.noise
+                    }
+                },
+                forecastData: loggerData.forecastData || updatedForecastData,
+                lastUpdated: new Date(loggerData.datetime_unix * 1000),
+                isOnline: true // Update online status when receiving data
+            };
+
+            // Update data array
+            this.data[existingIndex] = updatedData;
+
+            // Update cache
+            this.dataCache.set(loggerData.uid, updatedData);
+
+            // Update UI for this specific card (including forecast chart)
+            this.updateCardUI(loggerData.uid, oldData, updatedData);
+
+            // Trigger callback if provided
+            if (this.options.onDataUpdate) {
+                this.options.onDataUpdate([updatedData]);
+            }
+
+            console.log(`📊 Updated station ${loggerData.uid} with real-time logger data and forecast`);
+        } else {
+            console.warn(`⚠️ Station ${loggerData.uid} not found in current data`);
         }
     }
+    // endregion
 
+    // region Calculate AQI from PM2.5
+    private calculateAQIFromPM25(pm25: number): number {
+        // AQI calculation based on PM2.5 concentration
+        // Based on US EPA standard
+        const breakpoints = [
+            { cLow: 0, cHigh: 12, aqiLow: 0, aqiHigh: 50 },      // Good
+            { cLow: 12.1, cHigh: 35.4, aqiLow: 51, aqiHigh: 100 }, // Moderate
+            { cLow: 35.5, cHigh: 55.4, aqiLow: 101, aqiHigh: 150 }, // Unhealthy for Sensitive
+            { cLow: 55.5, cHigh: 150.4, aqiLow: 151, aqiHigh: 200 }, // Unhealthy
+            { cLow: 150.5, cHigh: 250.4, aqiLow: 201, aqiHigh: 300 }, // Very Unhealthy
+            { cLow: 250.5, cHigh: 350.4, aqiLow: 301, aqiHigh: 400 }, // Hazardous
+            { cLow: 350.5, cHigh: 500.4, aqiLow: 401, aqiHigh: 500 }  // Hazardous
+        ];
+
+        for (const bp of breakpoints) {
+            if (pm25 >= bp.cLow && pm25 <= bp.cHigh) {
+                const aqi = ((bp.aqiHigh - bp.aqiLow) / (bp.cHigh - bp.cLow)) * (pm25 - bp.cLow) + bp.aqiLow;
+                return Math.round(aqi);
+            }
+        }
+
+        // If concentration is above the highest breakpoint
+        return 500;
+    }
+    // endregion
+
+    // region Update Forecast Data
+    private updateForecastData(
+        existingForecast: Array<{ timestamp: number; value: number }>,
+        newTimestamp: number,
+        newValue: number
+    ): Array<{ timestamp: number; value: number }> {
+
+        // Create a copy of existing forecast data
+        let updatedForecast = [...existingForecast];
+
+        // Add new data point
+        updatedForecast.push({
+            timestamp: newTimestamp,
+            value: newValue
+        });
+
+        // Sort by timestamp
+        updatedForecast.sort((a, b) => a.timestamp - b.timestamp);
+
+        // Keep only last 144 points (12 hours with 5-minute intervals)
+        // or adjust based on your requirements
+        const maxPoints = 144;
+        if (updatedForecast.length > maxPoints) {
+            updatedForecast = updatedForecast.slice(-maxPoints);
+        }
+
+        // Remove duplicates based on timestamp
+        const uniqueForecast = updatedForecast.filter((item, index, array) =>
+            index === 0 || item.timestamp !== array[index - 1].timestamp
+        );
+
+        return uniqueForecast;
+    }
+    // endregion
+
+    // region Handle Update Single Station
     private updateSingleStation(stationData: AirQualityData): void {
         const existingIndex = this.data.findIndex(item => item.uid === stationData.uid);
 
@@ -824,7 +1007,9 @@ class AirQualityCardManager {
             this.updateCardUI(stationData.uid, oldData, this.data[existingIndex]);
         }
     }
+    // endregion
 
+    // region Update Station Status
     private updateStationStatus(stationId: string, status: string, isOnline: boolean): void {
         const stationIndex = this.data.findIndex(item => item.uid === stationId);
 
@@ -840,7 +1025,9 @@ class AirQualityCardManager {
             this.updateCardUI(stationId, oldData, this.data[stationIndex]);
         }
     }
+    // endregion
 
+    // region Update Connection Status
     private updateConnectionStatus(status: 'connected' | 'disconnected' | 'error'): void {
         this.connectionStatus = status;
 
@@ -851,7 +1038,9 @@ class AirQualityCardManager {
         // Update UI indicator if exists
         this.updateConnectionIndicator(status);
     }
+    // endregion
 
+    // region Update Connection Indicator
     private updateConnectionIndicator(status: 'connected' | 'disconnected' | 'error'): void {
         const indicator = document.querySelector('.connection-status');
         if (!indicator) return;
@@ -866,15 +1055,18 @@ class AirQualityCardManager {
         indicator.className = `connection-status flex items-center gap-2 ${config.color}`;
         indicator.textContent = config.text;
     }
+    // endregion
 
-    // Public API Methods
+    // region Public API Methods
     public startRealTimeMode(): void {
-        if (this.options.apiEndpoint && this.options.realTimeUpdateInterval) {
-            this.startRealTimeUpdates();
+        // Start Socket.IO for real-time updates if configured
+        if (this.options.enableSocketIO && this.options.socketIOUrl) {
+            this.initSocketIO();
         }
 
-        if (this.options.enableWebSocket && this.options.webSocketUrl) {
-            this.initWebSocket();
+        // Start periodic polling only if Socket.IO is not enabled
+        if (this.options.apiEndpoint && this.options.realTimeUpdateInterval) {
+            this.startRealTimeUpdates();
         }
     }
 
@@ -884,9 +1076,15 @@ class AirQualityCardManager {
             this.realTimeInterval = undefined;
         }
 
-        if (this.webSocket) {
-            this.webSocket.close();
-            this.webSocket = undefined;
+        if (this.socket) {
+            this.socket.disconnect();
+            this.socket = undefined;
+        }
+    }
+
+    public async refreshData(): Promise<void> {
+        if (this.options.apiEndpoint) {
+            await this.loadInitialData();
         }
     }
 
@@ -902,11 +1100,41 @@ class AirQualityCardManager {
         if (this.options.apiEndpoint) {
             return fetch(this.options.apiEndpoint)
                 .then(response => response.json())
-                .then(data => this.updateExistingData(data));
+                .then(result => {
+                    const data = Array.isArray(result) ? result : result.data || [];
+                    return this.updateExistingData(data);
+                });
         }
         return Promise.resolve();
     }
 
+    public emitToServer(event: string, data: any): void {
+        if (this.socket && this.socket.connected) {
+            this.socket.emit(event, data);
+            console.log(`📤 Emitted event '${event}' to server:`, data);
+        } else {
+            console.warn('⚠️ Socket.IO not connected. Cannot emit event:', event);
+        }
+    }
+
+    public getSocketId(): string | undefined {
+        return this.socket?.id;
+    }
+
+    public isSocketConnected(): boolean {
+        return this.socket?.connected || false;
+    }
+
+    public getStationCount(): number {
+        return this.data.length;
+    }
+
+    public getOnlineStationCount(): number {
+        return this.data.filter(station => station.isOnline).length;
+    }
+    // endregion
+
+    // region Load Data
     async loadData(dataSource: AirQualityData[] | string | (() => Promise<AirQualityData[]>)): Promise<void> {
         try {
             if (Array.isArray(dataSource)) {
@@ -923,7 +1151,9 @@ class AirQualityCardManager {
             this.data = [];
         }
     }
+    // endregion
 
+    // region Get Status Config
     private getStatusConfig(status: string) {
         const statusConfigs = {
             'Very Good': {emoji: '😍', bgColor: 'bg-green-400/50'},
@@ -933,14 +1163,18 @@ class AirQualityCardManager {
         };
         return statusConfigs[status] || statusConfigs['Moderate'];
     }
+    // endregion
 
+    // region Create Element
     private createElement(tag: string, className?: string, textContent?: string): HTMLElement {
         const element = document.createElement(tag);
         if (className) element.className = className;
         if (textContent) element.textContent = textContent;
         return element;
     }
+    // endregion
 
+    // region Create Single Card
     private createSingleCard(data: AirQualityData, index: number): HTMLElement {
         const cardId = `card-${data.uid}-${index}`;
 
@@ -1022,7 +1256,6 @@ class AirQualityCardManager {
         const metricsContainer = this.createElement('div', 'mt-4');
         const metricsGrid = this.createElement('div', 'grid grid-cols-4 gap-2');
 
-        //  || Math.random() * 50 + 20
         const metrics = [
             {
                 title: 'PM10',
@@ -1112,8 +1345,9 @@ class AirQualityCardManager {
 
         return card;
     }
+    // endregion
 
-    // Update chart value
+    // region Update Chart Value
     updateChartValue(cardId: string, chartType: 'pm10' | 'pm25' | 'pm1' | 'noise', newValue: number): void {
         const chartKey = `${cardId}-${chartType}`;
         const chart = this.chartInstances.get(chartKey);
@@ -1136,8 +1370,9 @@ class AirQualityCardManager {
             }, 1000 / steps);
         }
     }
+    // endregion
 
-    // Other methods remain the same...
+    // region Render Batch
     renderBatch(batch: AirQualityData[], startIndex: number): void {
         if (!this.container) return;
 
@@ -1149,7 +1384,9 @@ class AirQualityCardManager {
 
         this.container.appendChild(fragment);
     }
+    // endregion
 
+    // region Render All
     renderAll(): void {
         if (!this.container) {
             console.error('Container not found. Please set container or use setContainer()');
@@ -1169,7 +1406,9 @@ class AirQualityCardManager {
             this.renderBatch(remainingBatch, batchSize);
         }
     }
+    // endregion
 
+    // region Setup Infinite Scroll
     private setupInfiniteScroll(): void {
         let currentBatch = 1;
         const batchSize = this.options.batchSize || 20;
@@ -1195,14 +1434,17 @@ class AirQualityCardManager {
 
         sentinelObserver.observe(sentinel);
     }
+    // endregion
 
+    // region Set Container
     setContainer(container: HTMLElement | string): void {
         this.container = typeof container === 'string'
             ? document.querySelector(container)
             : container;
     }
+    // endregion
 
-    // Cleanup method
+    // region Destroy
     destroy(): void {
         // Stop real-time updates
         this.stopRealTimeMode();
@@ -1228,7 +1470,9 @@ class AirQualityCardManager {
         this.dataCache.clear();
         this.visibleCards.clear();
     }
+    // endregion
 
+    // region Filter
     filter(predicate: (data: AirQualityData) => boolean): void {
         const filteredData = this.data.filter(predicate);
         const originalData = [...this.data];
@@ -1236,7 +1480,9 @@ class AirQualityCardManager {
         this.renderAll();
         this.data = originalData;
     }
+    // endregion
 
+    // region Search
     search(query: string): void {
         const searchResults = this.data.filter(item =>
             item.uid.toLowerCase().includes(query.toLowerCase()) ||
@@ -1249,10 +1495,13 @@ class AirQualityCardManager {
         this.renderAll();
         this.data = originalData;
     }
+    // endregion
 
+    // region Get Data Count
     getDataCount(): number {
         return this.data.length;
     }
+    // endregion
 }
 
-export {AirQualityCardManager, type AirQualityData, type CardManagerOptions, type MetricsData};
+export {AirQualityCardManager, type AirQualityData, type CardManagerOptions, type MetricsData, type LoggerEventData};

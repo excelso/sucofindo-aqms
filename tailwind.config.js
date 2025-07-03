@@ -39,6 +39,20 @@ export default {
                 "dark-2": '#151623',
                 "purple-1": '#b1b5f1',
             },
+            keyframes: {
+                fadeOpacity: {
+                    '0%': {
+                        opacity: 0
+                    },
+                    '100%': {
+                        opacity: 1,
+                        transition: 'opacity linear'
+                    },
+                }
+            },
+            animation: {
+                fadeOpacity: 'fadeOpacity 1.5s',
+            }
         },
     },
     plugins: [
