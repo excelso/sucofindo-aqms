@@ -1,7 +1,6 @@
 import Highcharts from 'highcharts'
 import "highcharts/highcharts-more";
 import "highcharts/modules/solid-gauge";
-import {data} from "autoprefixer";
 import {io, Socket} from 'socket.io-client';
 
 interface AirQualityData {
@@ -637,7 +636,7 @@ class AirQualityCardManager {
 
             const result = await response.json();
 
-            // Handle both direct array and object with data property
+            // Handle both a direct array and object with data property
             const initialData: AirQualityData[] = Array.isArray(result) ? result : result.data || [];
 
             // Set initial data and cache
@@ -948,7 +947,7 @@ class AirQualityCardManager {
                 this.updateStationStatus(data.uid, data.status, data.isOnline);
             });
 
-            // Heartbeat to keep connection alive
+            // Heartbeat to keep the connection alive
             this.socket.on('heartbeat', () => {
                 this.lastUpdateTime = new Date();
                 console.log('💓 Heartbeat received');
@@ -1032,7 +1031,7 @@ class AirQualityCardManager {
     // region Calculate AQI from PM2.5
     private calculateAQIFromPM25(pm25: number): number {
         // AQI calculation based on PM2.5 concentration
-        // Based on US EPA standard
+        // Based on a US EPA standard
         const breakpoints = [
             {cLow: 0, cHigh: 12, aqiLow: 0, aqiHigh: 50},      // Good
             {cLow: 12.1, cHigh: 35.4, aqiLow: 51, aqiHigh: 100}, // Moderate
@@ -1195,7 +1194,7 @@ class AirQualityCardManager {
         return this.lastUpdateTime;
     }
 
-    public forceUpdate(): Promise<void> {
+    public async forceUpdate(): Promise<void> {
         if (this.options.apiEndpoint) {
             return fetch(this.options.apiEndpoint)
                 .then(response => response.json())
@@ -1250,19 +1249,6 @@ class AirQualityCardManager {
             console.error('Error loading data:', error);
             this.data = [];
         }
-    }
-
-    // endregion
-
-    // region Get Status Config
-    private getStatusConfig(status: string) {
-        const statusConfigs = {
-            'Very Good': {emoji: '😍', bgColor: 'bg-green-400/50'},
-            'Good': {emoji: '😊', bgColor: 'bg-green-200'},
-            'Moderate': {emoji: '😞', bgColor: 'bg-orange-200'},
-            'Unhealthy': {emoji: '😷', bgColor: 'bg-red-200'}
-        };
-        return statusConfigs[status] || statusConfigs['Moderate'];
     }
 
     // endregion
