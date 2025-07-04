@@ -1,5 +1,6 @@
 <?php
 
+    use App\Http\Controllers\ControllerNotification;
     use App\Http\Controllers\Dashboard\ControllerDashboard;
     use App\Http\Controllers\Master\ControllerPlatformLoggers;
     use App\Http\Controllers\Master\ControllerSites;
@@ -50,6 +51,10 @@
     ], function () {
 
         Route::middleware(['auth', 'verified', 'otp.verified'])->group(function () {
+            Route::prefix('notifikasi')->group(function () {
+                Route::get('data-notif', [ControllerNotification::class, 'getDataNotifikasi']);
+            });
+
             Route::get('/', [ControllerDashboard::class, 'index'])->name('dashboard');
             Route::group(['prefix' => 'dashboard'], function () {
                 Route::get('platforms', [ControllerDashboard::class, 'getDataPlatforms']);

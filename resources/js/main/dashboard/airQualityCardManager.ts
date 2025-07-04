@@ -2,7 +2,7 @@ import Highcharts from 'highcharts'
 import "highcharts/highcharts-more";
 import "highcharts/modules/solid-gauge";
 import {data} from "autoprefixer";
-import { io, Socket } from 'socket.io-client';
+import {io, Socket} from 'socket.io-client';
 
 interface AirQualityData {
     uid: string;
@@ -74,6 +74,16 @@ interface CardManagerOptions {
     onMetricsClick?: (id: string, metrics: MetricsData) => void;
     onDataUpdate?: (updatedData: AirQualityData[]) => void;
     onConnectionStatus?: (status: 'connected' | 'disconnected' | 'error') => void;
+    onClickForcastPoint?: (events: any, pointData: {
+        cardId: string;
+        timestamp: number;
+        value: number;
+        pointIndex: number;
+        isLastPoint: boolean;
+        isHighValue?: boolean;
+        formattedDate: string;
+        formattedTime: string;
+    }) => void;
 }
 
 interface LoggerEventData {
@@ -88,6 +98,7 @@ interface LoggerEventData {
     forecastData?: Array<{ timestamp: number; value: number }>;
     // Atau bisa menggunakan AQI value untuk generate forecast point baru
     aqi_value?: number;
+    link_video_recorded: string
 }
 
 class AirQualityCardManager {
@@ -143,6 +154,7 @@ class AirQualityCardManager {
             this.startRealTimeUpdates();
         }
     }
+
     // endregion
 
     // region Chart Helper Functions
@@ -157,6 +169,7 @@ class AirQualityCardManager {
         }
         return stops[stops.length - 1][1];
     }
+
     // endregion
 
     // region Color Interpolation
@@ -168,6 +181,7 @@ class AirQualityCardManager {
         const b = Math.round(c1.b + (c2.b - c1.b) * factor);
         return `rgb(${r}, ${g}, ${b})`;
     }
+
     // endregion
 
     // region Hex to RGB Conversion
@@ -180,6 +194,7 @@ class AirQualityCardManager {
             b: bigint & 255
         };
     }
+
     // endregion
 
     // region Create Gauge Chart
@@ -351,6 +366,7 @@ class AirQualityCardManager {
         // Store chart instance
         this.chartInstances.set(`${cardId}-${type}`, chart);
     }
+
     // endregion
 
     // region Get AQI Color
@@ -367,6 +383,7 @@ class AirQualityCardManager {
         const category = categories.find(cat => aqiValue >= cat.min && aqiValue <= cat.max);
         return category ? category.color : '#7F1D1D'; // Default untuk >500
     }
+
     // endregion
 
     // region Create Forecast Chart
@@ -530,10 +547,58 @@ class AirQualityCardManager {
                             fillColor: markerColor,
                             lineWidth: 2,
                             lineColor: 'white'
+                        },
+                        events: {
+                            click: (event: any) => {
+                                if (this.options.onClickForcastPoint) {
+                                    this.options.onClickForcastPoint(event, {
+                                        cardId: cardId || 'unknown',
+                                        timestamp: lastPoint.x ? lastPoint.x / 1000 : Date.now() / 1000,
+                                        value: lastPoint.y,
+                                        pointIndex: series.data.length - 1,
+                                        isLastPoint: true,
+                                        formattedDate: new Date(lastPoint.x || Date.now()).toLocaleDateString(),
+                                        formattedTime: new Date(lastPoint.x || Date.now()).toLocaleTimeString()
+                                    });
+                                }
+                            }
                         }
                     }, false);
                     chart.redraw();
                 }
+
+                series.data.forEach((item: any, index: number) => {
+                    if (item.y > 100) {
+                        const markerColor = this.getAQIColor(item.y);
+
+                        item.update({
+                            marker: {
+                                enabled: true,
+                                radius: 6,
+                                fillColor: markerColor,
+                                lineWidth: 2,
+                                lineColor: 'white'
+                            },
+                            events: {
+                                click: (event: any) => {
+                                    if (this.options.onClickForcastPoint) {
+                                        this.options.onClickForcastPoint(event, {
+                                            cardId: cardId || 'unknown',
+                                            timestamp: item.x ? item.x / 1000 : Date.now() / 1000,
+                                            value: item.y,
+                                            pointIndex: index,
+                                            isLastPoint: false,
+                                            isHighValue: true, // Karena item.y > 100
+                                            formattedDate: new Date(item.x || Date.now()).toLocaleDateString(),
+                                            formattedTime: new Date(item.x || Date.now()).toLocaleTimeString()
+                                        });
+                                    }
+                                }
+                            }
+                        }, false);
+                        chart.redraw();
+                    }
+                })
             } else {
                 const centerX = chart.plotLeft + (chart.plotWidth / 2);
                 const centerY = chart.plotTop + (chart.plotHeight / 2);
@@ -557,6 +622,7 @@ class AirQualityCardManager {
 
         this.chartInstances.set(`${cardId}-forecast`, chart);
     }
+
     // endregion
 
     // region Load Initial Data
@@ -606,8 +672,10 @@ class AirQualityCardManager {
             this.data = [];
         }
     }
+
     // endregion
 
+    // region Handle Start RealTime Updates
     private async startRealTimeUpdates(): Promise<void> {
         if (!this.options.apiEndpoint) return;
 
@@ -641,6 +709,7 @@ class AirQualityCardManager {
         // Setup periodic updates
         this.realTimeInterval = window.setInterval(updateData, this.options.realTimeUpdateInterval!);
     }
+
     // endregion
 
     // region Update Existing Data
@@ -677,6 +746,7 @@ class AirQualityCardManager {
 
         console.log(`📊 Updated ${updatedCards.length} cards: ${updatedCards.join(', ')}`);
     }
+
     // endregion
 
     // region Update Card UI
@@ -715,12 +785,14 @@ class AirQualityCardManager {
             lastUpdatedElement.textContent = `Last updated: ${newData.lastUpdated.toLocaleString()}`;
         }
     }
+
     // endregion
 
     // region Get Card Index
     private getCardIndex(cardId: string): number {
         return this.data.findIndex(item => item.uid === cardId);
     }
+
     // endregion
 
     // region Update Status Badge
@@ -738,6 +810,7 @@ class AirQualityCardManager {
         // Update background color
         badge.className = badge.className.replace(/bg-\w+-200/g, data.colorCode);
     }
+
     // endregion
 
     // region Update Online Status
@@ -753,6 +826,7 @@ class AirQualityCardManager {
             text.textContent = isOnline ? 'Online' : 'Offline';
         }
     }
+
     // endregion
 
     // region Update Forecast Chart
@@ -781,6 +855,22 @@ class AirQualityCardManager {
                 } : {
                     enabled: false,
                     radius: 0
+                },
+
+                events: {
+                    click: (event: any) => {
+                        if (this.options.onClickForcastPoint) {
+                            this.options.onClickForcastPoint(event, {
+                                cardId,
+                                timestamp: item.timestamp,
+                                value: item.value,
+                                formattedDate: new Date(item.timestamp * 1000).toLocaleDateString(),
+                                formattedTime: new Date(item.timestamp * 1000).toLocaleTimeString(),
+                                pointIndex: 0,
+                                isLastPoint: false
+                            });
+                        }
+                    }
                 }
             }));
 
@@ -797,6 +887,7 @@ class AirQualityCardManager {
             }
         }
     }
+
     // endregion
 
     // region Socket.IO Implementation
@@ -852,7 +943,7 @@ class AirQualityCardManager {
             });
 
             // Listen for station status changes
-            this.socket.on('station_status_change', (data: {uid: string, status: string, isOnline: boolean}) => {
+            this.socket.on('station_status_change', (data: { uid: string, status: string, isOnline: boolean }) => {
                 console.log('📡 Received station status change:', data);
                 this.updateStationStatus(data.uid, data.status, data.isOnline);
             });
@@ -868,6 +959,7 @@ class AirQualityCardManager {
             this.updateConnectionStatus('error');
         }
     }
+
     // endregion
 
     // region Handle Logger Data Update
@@ -876,7 +968,7 @@ class AirQualityCardManager {
         const existingIndex = this.data.findIndex(item => item.uid === loggerData.uid);
 
         if (existingIndex !== -1) {
-            const oldData = { ...this.data[existingIndex] };
+            const oldData = {...this.data[existingIndex]};
 
             // Calculate AQI from PM2.5 if not provided
             const aqiValue = loggerData.aqi_value || this.calculateAQIFromPM25(loggerData.pm_25);
@@ -934,6 +1026,7 @@ class AirQualityCardManager {
             console.warn(`⚠️ Station ${loggerData.uid} not found in current data`);
         }
     }
+
     // endregion
 
     // region Calculate AQI from PM2.5
@@ -941,13 +1034,13 @@ class AirQualityCardManager {
         // AQI calculation based on PM2.5 concentration
         // Based on US EPA standard
         const breakpoints = [
-            { cLow: 0, cHigh: 12, aqiLow: 0, aqiHigh: 50 },      // Good
-            { cLow: 12.1, cHigh: 35.4, aqiLow: 51, aqiHigh: 100 }, // Moderate
-            { cLow: 35.5, cHigh: 55.4, aqiLow: 101, aqiHigh: 150 }, // Unhealthy for Sensitive
-            { cLow: 55.5, cHigh: 150.4, aqiLow: 151, aqiHigh: 200 }, // Unhealthy
-            { cLow: 150.5, cHigh: 250.4, aqiLow: 201, aqiHigh: 300 }, // Very Unhealthy
-            { cLow: 250.5, cHigh: 350.4, aqiLow: 301, aqiHigh: 400 }, // Hazardous
-            { cLow: 350.5, cHigh: 500.4, aqiLow: 401, aqiHigh: 500 }  // Hazardous
+            {cLow: 0, cHigh: 12, aqiLow: 0, aqiHigh: 50},      // Good
+            {cLow: 12.1, cHigh: 35.4, aqiLow: 51, aqiHigh: 100}, // Moderate
+            {cLow: 35.5, cHigh: 55.4, aqiLow: 101, aqiHigh: 150}, // Unhealthy for Sensitive
+            {cLow: 55.5, cHigh: 150.4, aqiLow: 151, aqiHigh: 200}, // Unhealthy
+            {cLow: 150.5, cHigh: 250.4, aqiLow: 201, aqiHigh: 300}, // Very Unhealthy
+            {cLow: 250.5, cHigh: 350.4, aqiLow: 301, aqiHigh: 400}, // Hazardous
+            {cLow: 350.5, cHigh: 500.4, aqiLow: 401, aqiHigh: 500}  // Hazardous
         ];
 
         for (const bp of breakpoints) {
@@ -960,6 +1053,7 @@ class AirQualityCardManager {
         // If concentration is above the highest breakpoint
         return 500;
     }
+
     // endregion
 
     // region Update Forecast Data
@@ -995,6 +1089,7 @@ class AirQualityCardManager {
 
         return uniqueForecast;
     }
+
     // endregion
 
     // region Handle Update Single Station
@@ -1007,6 +1102,7 @@ class AirQualityCardManager {
             this.updateCardUI(stationData.uid, oldData, this.data[existingIndex]);
         }
     }
+
     // endregion
 
     // region Update Station Status
@@ -1025,6 +1121,7 @@ class AirQualityCardManager {
             this.updateCardUI(stationId, oldData, this.data[stationIndex]);
         }
     }
+
     // endregion
 
     // region Update Connection Status
@@ -1038,6 +1135,7 @@ class AirQualityCardManager {
         // Update UI indicator if exists
         this.updateConnectionIndicator(status);
     }
+
     // endregion
 
     // region Update Connection Indicator
@@ -1055,6 +1153,7 @@ class AirQualityCardManager {
         indicator.className = `connection-status flex items-center gap-2 ${config.color}`;
         indicator.textContent = config.text;
     }
+
     // endregion
 
     // region Public API Methods
@@ -1132,6 +1231,7 @@ class AirQualityCardManager {
     public getOnlineStationCount(): number {
         return this.data.filter(station => station.isOnline).length;
     }
+
     // endregion
 
     // region Load Data
@@ -1151,6 +1251,7 @@ class AirQualityCardManager {
             this.data = [];
         }
     }
+
     // endregion
 
     // region Get Status Config
@@ -1163,6 +1264,7 @@ class AirQualityCardManager {
         };
         return statusConfigs[status] || statusConfigs['Moderate'];
     }
+
     // endregion
 
     // region Create Element
@@ -1172,6 +1274,7 @@ class AirQualityCardManager {
         if (textContent) element.textContent = textContent;
         return element;
     }
+
     // endregion
 
     // region Create Single Card
@@ -1345,6 +1448,7 @@ class AirQualityCardManager {
 
         return card;
     }
+
     // endregion
 
     // region Update Chart Value
@@ -1370,6 +1474,7 @@ class AirQualityCardManager {
             }, 1000 / steps);
         }
     }
+
     // endregion
 
     // region Render Batch
@@ -1384,6 +1489,7 @@ class AirQualityCardManager {
 
         this.container.appendChild(fragment);
     }
+
     // endregion
 
     // region Render All
@@ -1406,6 +1512,7 @@ class AirQualityCardManager {
             this.renderBatch(remainingBatch, batchSize);
         }
     }
+
     // endregion
 
     // region Setup Infinite Scroll
@@ -1434,6 +1541,7 @@ class AirQualityCardManager {
 
         sentinelObserver.observe(sentinel);
     }
+
     // endregion
 
     // region Set Container
@@ -1442,6 +1550,7 @@ class AirQualityCardManager {
             ? document.querySelector(container)
             : container;
     }
+
     // endregion
 
     // region Destroy
@@ -1470,6 +1579,7 @@ class AirQualityCardManager {
         this.dataCache.clear();
         this.visibleCards.clear();
     }
+
     // endregion
 
     // region Filter
@@ -1480,6 +1590,7 @@ class AirQualityCardManager {
         this.renderAll();
         this.data = originalData;
     }
+
     // endregion
 
     // region Search
@@ -1495,12 +1606,14 @@ class AirQualityCardManager {
         this.renderAll();
         this.data = originalData;
     }
+
     // endregion
 
     // region Get Data Count
     getDataCount(): number {
         return this.data.length;
     }
+
     // endregion
 }
 

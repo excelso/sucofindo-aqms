@@ -58,8 +58,8 @@ document.addEventListener('DOMContentLoaded', function () {
             })
         },
         onMetricsClick: (uid, metrics) => {
-            showModalDialog(modalDetailParameter, `<i class="fas fa-file mr-2"></i> ${uid}`, () => {
-                handleDetailChart(uid, metrics)
+            showModalDialog(modalDetailParameter, `<i class="fas fa-file mr-2"></i> ${uid}`, async () => {
+                await handleDetailChart(uid, metrics)
             })
         },
         onDataUpdate: (updatedData) => {
@@ -67,6 +67,9 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         onConnectionStatus: (status) => {
             console.log('Connection status:', status);
+        },
+        onClickForcastPoint: (events, pointData) => {
+            console.log('Forecast point clicked:', pointData);
         }
     });
 
