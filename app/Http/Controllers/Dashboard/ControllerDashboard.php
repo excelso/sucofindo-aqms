@@ -115,20 +115,26 @@
                     $aqiValue = $this->calculateAQIFromPM25($logger->pm_25, $aqiCat);
 
                     $dataLoggersTemp[] = [
+                        'logger_id' => $logger->id,
                         'timestamp' => $logger->datetime_unix,
                         'value' => (float) number_format($aqiValue, 1),
+                        'link_video_id' => $logger->link_video_id ?? null,
+                        'link_video_status' => $logger->link_video_status ?? null,
                         'link_video_recorded' => $logger->link_video_recorded ?? null,
                         'pm25' => $logger->pm_25,
                         'category' => $aqiCat->category_name_en ?? 'Unknown',
                         'category_id' => $aqiCat->id, // 🔍 For debugging
-                        'category_range' => "[{$aqiCat->pm25_min}, {$aqiCat->pm25_max}]" // 🔍 For debugging
+                        'category_range' => "[{$aqiCat->pm25_min}, {$aqiCat->pm25_max}]",
                     ];
                 } catch (Exception $e) {
                     Log::error("AQI calculation failed for logger {$logger->id}: " . $e->getMessage());
 
                     $dataLoggersTemp[] = [
+                        'logger_id' => $logger->id,
                         'timestamp' => $logger->datetime_unix,
                         'value' => null,
+                        'link_video_id' => $logger->link_video_id ?? null,
+                        'link_video_status' => $logger->link_video_status ?? null,
                         'link_video_recorded' => $logger->link_video_recorded ?? null,
                         'pm25' => $logger->pm_25,
                         'category' => 'Error',

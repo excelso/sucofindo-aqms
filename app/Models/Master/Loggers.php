@@ -24,8 +24,10 @@
             'tsp',
             'noise',
             'temp',
+            'link_video_id',
+            'link_video_status',
+            'link_video_recorded',
             'datetime_unix',
-            'link_video_recorded'
         ];
 
         public function limit(): HasOne|Loggers|Builder {

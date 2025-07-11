@@ -2,6 +2,7 @@ import Highcharts from 'highcharts'
 import "highcharts/highcharts-more";
 import "highcharts/modules/solid-gauge";
 import {io, Socket} from 'socket.io-client';
+import {SocketClient, SocketEventCallbacks} from "@/js/plugins/SocketClient";
 
 interface AirQualityData {
     uid: string;
@@ -43,7 +44,7 @@ interface AirQualityData {
     };
     location?: string;
     lastUpdated?: Date;
-    forecastData?: Array<{ timestamp: number; value: number; link_video_recorded?: string; }>; // Unix timestamp
+    forecastData?: Array<{ timestamp: number; value: number; link_video_id?: string; link_video_status?: string; link_video_recorded?: string; }>; // Unix timestamp
     cctvLink?: string;
 }
 
@@ -68,6 +69,7 @@ interface CardManagerOptions {
     apiEndpoint?: string;
     enableSocketIO?: boolean;
     socketIOUrl?: string;
+    socketInstanceName?: string; // Unique name for socket instance
     socketIOOptions?: any;
     onCctvClick?: (id: string, cctvLink: string) => void;
     onMetricsClick?: (id: string, metrics: MetricsData) => void;
@@ -82,7 +84,7 @@ interface CardManagerOptions {
         isHighValue?: boolean;
         formattedDate: string;
         formattedTime: string;
-        linkVideoRecorded?: string
+        linkVideo?: any;
     }) => void;
 }
 
@@ -113,6 +115,7 @@ class AirQualityCardManager {
     private connectionStatus: 'connected' | 'disconnected' | 'error' = 'disconnected';
     private lastUpdateTime: Date = new Date();
     private dataCache: Map<string, AirQualityData> = new Map();
+    private socketClient: SocketClient;
 
     // region Constructor
     constructor(options: CardManagerOptions = {}) {
@@ -124,6 +127,7 @@ class AirQualityCardManager {
             chartUpdateInterval: 0, // Disable auto-update, use real-time instead
             realTimeUpdateInterval: 0, // Disable when using Socket.IO
             enableSocketIO: false,
+            socketInstanceName: 'air-quality-default',
             socketIOOptions: {
                 autoConnect: true,
                 reconnection: true,
@@ -551,6 +555,7 @@ class AirQualityCardManager {
                             click: (event: any) => {
                                 if (lastPoint.y > 100) {
                                     if (this.options.onClickForcastPoint) {
+                                        const linkVideoPoint = this.getVideoLinkForPoint(cardId, lastPoint.x)
                                         this.options.onClickForcastPoint(event, {
                                             cardId: cardId || 'unknown',
                                             timestamp: lastPoint.x ? lastPoint.x / 1000 : Date.now() / 1000,
@@ -559,7 +564,7 @@ class AirQualityCardManager {
                                             isLastPoint: true,
                                             formattedDate: new Date(lastPoint.x || Date.now()).toLocaleDateString(),
                                             formattedTime: new Date(lastPoint.x || Date.now()).toLocaleTimeString(),
-                                            linkVideoRecorded: this.getVideoLinkForPoint(cardId, lastPoint.x)
+                                            linkVideo: linkVideoPoint
                                         });
                                     }
                                 }
@@ -584,6 +589,7 @@ class AirQualityCardManager {
                             events: {
                                 click: (event: any) => {
                                     if (this.options.onClickForcastPoint) {
+                                        const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.x)
                                         this.options.onClickForcastPoint(event, {
                                             cardId: cardId || 'unknown',
                                             timestamp: item.x ? item.x / 1000 : Date.now() / 1000,
@@ -593,7 +599,7 @@ class AirQualityCardManager {
                                             isHighValue: true, // Karena item.y > 100
                                             formattedDate: new Date(item.x || Date.now()).toLocaleDateString(),
                                             formattedTime: new Date(item.x || Date.now()).toLocaleTimeString(),
-                                            linkVideoRecorded: this.getVideoLinkForPoint(cardId, item.x)
+                                            linkVideo: linkVideoPoint
                                         });
                                     }
                                 }
@@ -698,7 +704,7 @@ class AirQualityCardManager {
                 this.lastUpdateTime = new Date();
                 this.updateConnectionStatus('connected');
 
-                console.log(`✅ Data updated successfully at ${this.lastUpdateTime.toLocaleTimeString()}`);
+                // console.log(`✅ Data updated successfully at ${this.lastUpdateTime.toLocaleTimeString()}`);
 
             } catch (error) {
                 console.error('❌ Error fetching real-time data:', error);
@@ -747,7 +753,7 @@ class AirQualityCardManager {
             this.options.onDataUpdate(this.data);
         }
 
-        console.log(`📊 Updated ${updatedCards.length} cards: ${updatedCards.join(', ')}`);
+        // console.log(`📊 Updated ${updatedCards.length} cards: ${updatedCards.join(', ')}`);
     }
 
     // endregion
@@ -876,6 +882,7 @@ class AirQualityCardManager {
                         click: (event: any) => {
                             if (isHighValue) {
                                 if (this.options.onClickForcastPoint) {
+                                    const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.timestamp * 1000)
                                     this.options.onClickForcastPoint(event, {
                                         cardId,
                                         timestamp: item.timestamp,
@@ -885,7 +892,7 @@ class AirQualityCardManager {
                                         isHighValue,
                                         formattedDate: new Date(item.timestamp * 1000).toLocaleDateString(),
                                         formattedTime: new Date(item.timestamp * 1000).toLocaleTimeString(),
-                                        linkVideoRecorded: this.getVideoLinkForPoint(cardId, item.timestamp * 1000)
+                                        linkVideo: linkVideoPoint
                                     });
                                 }
                             }
@@ -909,85 +916,81 @@ class AirQualityCardManager {
     }
     // endregion
 
-    private getVideoLinkForPoint(cardId: string, timestamp: number): string | undefined {
+    private getVideoLinkForPoint(cardId: string, timestamp: number): {linkVideoId: string, linkVideoStatus: string, linkVideoRecorded: string} {
         const cardData = this.data.find(item => item.uid === cardId.replace(/card-|-\d+$/g, ''));
-        return cardData?.forecastData?.find(point => point.timestamp === (timestamp/1000))?.link_video_recorded;
+        const cardDataPoint = cardData?.forecastData?.find(point => point.timestamp === (timestamp/1000))
+        return {
+            linkVideoId: cardDataPoint?.link_video_id,
+            linkVideoStatus: cardDataPoint?.link_video_status,
+            linkVideoRecorded: cardDataPoint?.link_video_recorded
+        };
     }
 
     // region Socket.IO Implementation
     private initSocketIO(): void {
-        if (!this.options.socketIOUrl) return;
+        if (!this.options.socketIOUrl || !this.options.socketInstanceName) return;
 
         try {
-            // Initialize Socket.IO connection
-            this.socket = io(this.options.socketIOUrl, this.options.socketIOOptions);
+            // Setup callbacks for socket events
+            const socketCallbacks: SocketEventCallbacks = {
+                onConnect: (socketId) => {
+                    this.updateConnectionStatus('connected');
+                },
+                onDisconnect: (reason) => {
+                    this.updateConnectionStatus('disconnected');
+                },
+                onConnectError: (error) => {
+                    this.updateConnectionStatus('error');
+                },
+                onReconnect: (attemptNumber) => {
+                    this.updateConnectionStatus('connected');
+                },
+                onReconnectError: (error) => {
+                    this.updateConnectionStatus('error');
+                },
+                onReconnectFailed: () => {
+                    this.updateConnectionStatus('error');
+                },
+                onLoggerData: (loggerData) => {
+                    this.handleLoggerDataUpdate(loggerData);
+                },
+                onBulkDataUpdate: (bulkData) => {
+                    this.updateExistingData(bulkData);
+                },
+                onStationStatusChange: (data) => {
+                    this.updateStationStatus(data.uid, data.status, data.isOnline);
+                },
+                onHeartbeat: () => {
+                    this.lastUpdateTime = new Date();
+                    console.log('💓 Heartbeat received');
+                },
+                onNotification: (data) => {
+                    console.log('📢 Notification:', data);
+                },
+                onConnectionStatusChange: (status) => {
+                    this.connectionStatus = status;
+                    if (this.options.onConnectionStatus) {
+                        this.options.onConnectionStatus(status);
+                    }
+                    this.updateConnectionIndicator(status);
+                }
+            };
 
-            // Connection event handlers
-            this.socket.on('connect', () => {
-                console.log('🔌 Socket.IO connected to server');
-                console.log('Socket ID:', this.socket?.id);
-                this.updateConnectionStatus('connected');
-            });
+            // Get or create socket instance
+            this.socketClient = SocketClient.getInstance(
+                this.options.socketInstanceName,
+                this.options.socketIOUrl,
+                this.options.socketIOOptions,
+                socketCallbacks
+            );
 
-            this.socket.on('disconnect', (reason) => {
-                console.log('🔌 Socket.IO disconnected:', reason);
-                this.updateConnectionStatus('disconnected');
-            });
-
-            this.socket.on('connect_error', (error) => {
-                console.error('❌ Socket.IO connection error:', error);
-                this.updateConnectionStatus('error');
-            });
-
-            this.socket.on('reconnect', (attemptNumber) => {
-                console.log(`🔌 Socket.IO reconnected after ${attemptNumber} attempts`);
-                this.updateConnectionStatus('connected');
-            });
-
-            this.socket.on('reconnect_error', (error) => {
-                console.error('❌ Socket.IO reconnection error:', error);
-                this.updateConnectionStatus('error');
-            });
-
-            this.socket.on('reconnect_failed', () => {
-                console.error('❌ Socket.IO failed to reconnect');
-                this.updateConnectionStatus('error');
-            });
-
-            // Listen for logger data events (dari saveEvent API)
-            this.socket.on('logger_data', (loggerData: LoggerEventData) => {
-                console.log('📡 Received logger data:', loggerData);
-                this.handleLoggerDataUpdate(loggerData);
-            });
-
-            // Listen for bulk data updates
-            this.socket.on('bulk_data_update', (bulkData: AirQualityData[]) => {
-                console.log('📡 Received bulk data update:', bulkData);
-                this.updateExistingData(bulkData);
-            });
-
-            // Listen for station status changes
-            this.socket.on('station_status_change', (data: { uid: string, status: string, isOnline: boolean }) => {
-                console.log('📡 Received station status change:', data);
-                this.updateStationStatus(data.uid, data.status, data.isOnline);
-            });
-
-            // Heartbeat to keep the connection alive
-            this.socket.on('heartbeat', () => {
-                this.lastUpdateTime = new Date();
-                console.log('💓 Heartbeat received');
-            });
-
-            this.socket.on('notification', (data: any) => {
-                console.log('Notification:', data);
-            });
+            console.log(`🔌 Socket.IO initialized for Air Quality Manager with instance: ${this.options.socketInstanceName}`);
 
         } catch (error) {
-            console.error('❌ Failed to initialize Socket.IO:', error);
+            console.error('❌ Failed to initialize Socket.IO for Air Quality Manager:', error);
             this.updateConnectionStatus('error');
         }
     }
-
     // endregion
 
     // region Handle Logger Data Update

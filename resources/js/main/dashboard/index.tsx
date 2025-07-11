@@ -4,6 +4,7 @@ import {AirQualityCardManager, MetricsData} from "@/js/main/dashboard/airQuality
 import Highcharts from "highcharts";
 import {getMetaContent} from "@/js/plugins/functions";
 import {failureAlert} from "@/js/plugins/sweet-alert";
+import {SocketClient} from "@/js/plugins/SocketClient";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
@@ -13,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalDetailParameter = document.querySelector('.modalDetailParameter')
     const bodyChart: HTMLElement = modalDetailParameter.querySelector('.bodyChart')
     const closeModalForm = document.querySelectorAll('.closeModalForm')
+    const socket = SocketClient.getInstance('dashboard', 'ws://127.0.0.1:3300')
 
     //region Handle Close Menu
     closeModalForm.forEach((elm) => {
@@ -62,20 +64,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 await handleDetailChart(uid, metrics)
             })
         },
-        onDataUpdate: (updatedData) => {
-            console.log('Data updated:', updatedData.length, 'stations');
-        },
         onConnectionStatus: (status) => {
             console.log('Connection status:', status);
         },
         onClickForcastPoint: (events, pointData) => {
-            showModalDialog(modalCctv, `
-                <div class="flex items-center">
-                    <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${pointData.cardId}
-                </div>
-            `, () => {
-                createVideoElementWithAutoplay(pointData.linkVideoRecorded)
+            socket.emit('req-video', {
+                recordingId: pointData.linkVideo.linkVideoId,
             })
+            // showModalDialog(modalCctv, `
+            //     <div class="flex items-center">
+            //         <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${pointData.cardId}
+            //     </div>
+            // `, () => {
+            //
+            //     createVideoElementWithAutoplay(pointData.linkVideoRecorded)
+            // })
         }
     });
 
