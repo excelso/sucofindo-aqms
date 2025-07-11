@@ -47,14 +47,14 @@ document.addEventListener('DOMContentLoaded', function () {
         realTimeUpdateInterval: 15000,
         apiEndpoint: '/dashboard/platforms',
         enableSocketIO: true,
-        socketIOUrl: 'ws://127.0.0.1:3100',
+        socketIOUrl: 'ws://127.0.0.1:3300',
         onCctvClick: (id, cctvLink) => {
             showModalDialog(modalCctv, `
                 <div class="flex items-center">
                     <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${id}
                 </div>
             `, () => {
-                createVideoElementWithAutoplay(cctvLink, 'camera1')
+                createVideoElementWithAutoplay(cctvLink)
             })
         },
         onMetricsClick: (uid, metrics) => {
@@ -69,7 +69,13 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('Connection status:', status);
         },
         onClickForcastPoint: (events, pointData) => {
-            console.log('Forecast point clicked:', pointData);
+            showModalDialog(modalCctv, `
+                <div class="flex items-center">
+                    <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${pointData.cardId}
+                </div>
+            `, () => {
+                createVideoElementWithAutoplay(pointData.linkVideoRecorded)
+            })
         }
     });
 
@@ -81,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function () {
     //endregion
 
     //region Handle Create Video Element with WebRTC and HLS Fallback
-    function createVideoElementWithAutoplay(streamUrl: string, cameraId: string): void {
+    function createVideoElementWithAutoplay(streamUrl: string): void {
         // Clear existing content
         modalBody.innerHTML = '';
 
@@ -90,6 +96,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const isWebRTCPort = streamUrl.includes(':8889') && !streamUrl.includes('.m3u8');
         const isHLSPort = streamUrl.includes(':8888') && !streamUrl.includes('.m3u8');
         const isHLSFile = streamUrl.includes('.m3u8');
+        const isMp4File = streamUrl.includes('.mp4');
 
         // Determine if you should use iframe or HLS player
         const shouldUseIframe = isWebRTCPath || isWebRTCPort || isHLSPort;
@@ -110,6 +117,8 @@ document.addEventListener('DOMContentLoaded', function () {
             loadIframeWithContainer();
         } else if (shouldUseHLSPlayer) {
             loadHLSPlayer();
+        } else if (isMp4File) {
+            loadMP4Player();
         } else {
             // Default fallback to HLS player
             loadHLSPlayer();
@@ -265,6 +274,204 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             modalBody.appendChild(video);
+        }
+
+        function loadMP4Player() {
+            modalBody.classList.add('relative')
+            const statusContainer = document.createElement('div');
+            statusContainer.className = 'flex items-center absolute top-[20px] right-[20px] gap-3'
+
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'bg-[rgba(0,0,0,0.8)] text-white px-[10px] py-[7px] rounded-sm text-[11px] font-bold z-[1000] backdrop-opacity-[4px]'
+
+            const protocolDiv = document.createElement('div');
+            protocolDiv.className = 'bg-[rgba(0,0,0,0.8)] text-white px-[10px] py-[7px] rounded-sm text-[11px] font-bold z-[1000] backdrop-opacity-[4px]'
+
+            statusContainer.appendChild(statusDiv)
+            statusContainer.appendChild(protocolDiv)
+            modalBody.appendChild(statusContainer)
+
+            const updateStatus = (text: string, color: string = 'white') => {
+                statusDiv.textContent = text;
+                statusDiv.style.color = color;
+            };
+
+            updateStatus('Loading MP4 Player...', '#f8bf31')
+            protocolDiv.textContent = 'MP4';
+            protocolDiv.style.background = '#007bff';
+
+            const video = document.createElement('video') as HTMLVideoElement;
+
+            video.autoplay = false;
+            video.controls = true;
+            video.muted = true;
+            video.preload = 'metadata';
+
+            video.style.cssText = `
+                width: 100%;
+                height: 500px;
+                max-height: 70vh;
+                object-fit: contain;
+                border-radius: 8px;
+                background: #000;
+            `;
+
+            // Tracking variables
+            let errorCount = 0;
+            let hasStartedPlaying = false;
+            let isRetrying = false;
+            let errorTimeout: number | null = null;
+
+            // Success state tracking
+            const trackSuccessStates = () => {
+                if (video.readyState >= 1) { // HAVE_METADATA
+                    hasStartedPlaying = true;
+                    console.log('✅ Video has metadata, considering it working');
+                }
+
+                if (video.currentTime > 0) {
+                    hasStartedPlaying = true;
+                    console.log('✅ Video is playing, ignoring future errors');
+                }
+            };
+
+            // Debounced error handler - only act on error if video truly isn't working
+            const handleVideoError = (e: Event) => {
+                errorCount++;
+
+                // If video is already playing successfully, ignore errors
+                if (hasStartedPlaying || video.currentTime > 0 || video.readyState >= 2) {
+                    console.log('🔇 Ignoring error - video is working fine');
+                    return;
+                }
+
+                const error = video.error;
+                console.log(`📍 Error attempt ${errorCount}:`, {
+                    errorCode: error?.code,
+                    readyState: video.readyState,
+                    networkState: video.networkState,
+                    currentTime: video.currentTime,
+                    hasStartedPlaying
+                });
+
+                // Clear existing timeout
+                if (errorTimeout) {
+                    clearTimeout(errorTimeout);
+                }
+
+                // Wait before acting on error (give video time to recover)
+                errorTimeout = setTimeout(() => {
+                    // Double-check if video is still broken
+                    if (video.readyState === 0 && video.currentTime === 0 && !hasStartedPlaying) {
+                        handleActualError(error);
+                    } else {
+                        console.log('✅ Video recovered, no action needed');
+                        updateStatus('MP4 Ready ✓', '#00ff00');
+                    }
+                }, 2000); // Wait 2 seconds before considering it a real error
+            };
+
+            // Only handle error if video is truly broken
+            const handleActualError = (error: MediaError | null) => {
+                if (isRetrying) return; // Prevent multiple retries
+
+                console.error('🚨 Confirmed video error after debounce:', error?.code);
+
+                if (error?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED && errorCount <= 2) {
+                    isRetrying = true;
+                    updateStatus('Retrying different approach...', '#f8bf31');
+
+                    setTimeout(() => {
+                        console.log('🔄 Retry attempt without crossOrigin');
+                        video.crossOrigin = null;
+                        video.preload = 'none';
+                        video.load();
+                        isRetrying = false;
+                        errorCount = 0;
+                    }, 1000);
+
+                } else if (errorCount > 3) {
+                    updateStatus('MP4 Load Failed', '#ff0000');
+                    console.error('❌ Too many errors, giving up');
+                }
+            };
+
+            // Success event handlers
+            video.addEventListener('loadstart', () => {
+                updateStatus('Connecting to video...', '#f8bf31');
+                console.log('📡 Load started');
+            });
+
+            video.addEventListener('loadedmetadata', () => {
+                hasStartedPlaying = true;
+                updateStatus('Video metadata loaded', '#00ff00');
+                console.log('📋 Metadata loaded - video should work');
+
+                // Clear any pending error timeouts
+                if (errorTimeout) {
+                    clearTimeout(errorTimeout);
+                    errorTimeout = null;
+                }
+            });
+
+            video.addEventListener('canplay', () => {
+                hasStartedPlaying = true;
+                updateStatus('MP4 Ready ✓', '#00ff00');
+
+                // Auto play
+                video.play().catch(playError => {
+                    console.warn('Autoplay failed:', playError);
+                    updateStatus('MP4 Ready (Click to play)', '#00ff00');
+                });
+            });
+
+            video.addEventListener('playing', () => {
+                hasStartedPlaying = true;
+                updateStatus('Playing MP4 ✓', '#00ff00');
+                console.log('▶️ Video playing successfully');
+            });
+
+            video.addEventListener('timeupdate', () => {
+                // Track that video is actually working
+                if (video.currentTime > 0) {
+                    hasStartedPlaying = true;
+                    trackSuccessStates();
+                }
+            });
+
+            video.addEventListener('waiting', () => {
+                if (hasStartedPlaying) {
+                    updateStatus('Buffering...', '#f8bf31');
+                }
+            });
+
+            video.addEventListener('progress', () => {
+                trackSuccessStates();
+            });
+
+            // Use debounced error handler
+            video.addEventListener('error', handleVideoError);
+
+            // Additional safety check
+            video.addEventListener('stalled', () => {
+                if (!hasStartedPlaying) {
+                    console.warn('⚠️ Video stalled before playing');
+                }
+            });
+
+            // Set source and load
+            video.src = streamUrl;
+            video.load();
+
+            modalBody.appendChild(video);
+
+            // Safety timeout - if video doesn't start in 10 seconds, consider it failed
+            setTimeout(() => {
+                if (!hasStartedPlaying && video.readyState === 0) {
+                    console.log('⏰ Timeout - video didn\'t start in 10 seconds');
+                    updateStatus('Video load timeout', '#ff0000');
+                }
+            }, 10000);
         }
     }
     //endregion

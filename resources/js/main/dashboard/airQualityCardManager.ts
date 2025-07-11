@@ -43,7 +43,7 @@ interface AirQualityData {
     };
     location?: string;
     lastUpdated?: Date;
-    forecastData?: Array<{ timestamp: number; value: number }>; // Unix timestamp
+    forecastData?: Array<{ timestamp: number; value: number; link_video_recorded?: string; }>; // Unix timestamp
     cctvLink?: string;
 }
 
@@ -82,6 +82,7 @@ interface CardManagerOptions {
         isHighValue?: boolean;
         formattedDate: string;
         formattedTime: string;
+        linkVideoRecorded?: string
     }) => void;
 }
 
@@ -97,7 +98,6 @@ interface LoggerEventData {
     forecastData?: Array<{ timestamp: number; value: number }>;
     // Atau bisa menggunakan AQI value untuk generate forecast point baru
     aqi_value?: number;
-    link_video_recorded: string
 }
 
 class AirQualityCardManager {
@@ -549,16 +549,19 @@ class AirQualityCardManager {
                         },
                         events: {
                             click: (event: any) => {
-                                if (this.options.onClickForcastPoint) {
-                                    this.options.onClickForcastPoint(event, {
-                                        cardId: cardId || 'unknown',
-                                        timestamp: lastPoint.x ? lastPoint.x / 1000 : Date.now() / 1000,
-                                        value: lastPoint.y,
-                                        pointIndex: series.data.length - 1,
-                                        isLastPoint: true,
-                                        formattedDate: new Date(lastPoint.x || Date.now()).toLocaleDateString(),
-                                        formattedTime: new Date(lastPoint.x || Date.now()).toLocaleTimeString()
-                                    });
+                                if (lastPoint.y > 100) {
+                                    if (this.options.onClickForcastPoint) {
+                                        this.options.onClickForcastPoint(event, {
+                                            cardId: cardId || 'unknown',
+                                            timestamp: lastPoint.x ? lastPoint.x / 1000 : Date.now() / 1000,
+                                            value: lastPoint.y,
+                                            pointIndex: series.data.length - 1,
+                                            isLastPoint: true,
+                                            formattedDate: new Date(lastPoint.x || Date.now()).toLocaleDateString(),
+                                            formattedTime: new Date(lastPoint.x || Date.now()).toLocaleTimeString(),
+                                            linkVideoRecorded: this.getVideoLinkForPoint(cardId, lastPoint.x)
+                                        });
+                                    }
                                 }
                             }
                         }
@@ -589,7 +592,8 @@ class AirQualityCardManager {
                                             isLastPoint: false,
                                             isHighValue: true, // Karena item.y > 100
                                             formattedDate: new Date(item.x || Date.now()).toLocaleDateString(),
-                                            formattedTime: new Date(item.x || Date.now()).toLocaleTimeString()
+                                            formattedTime: new Date(item.x || Date.now()).toLocaleTimeString(),
+                                            linkVideoRecorded: this.getVideoLinkForPoint(cardId, item.x)
                                         });
                                     }
                                 }
@@ -858,16 +862,18 @@ class AirQualityCardManager {
 
                 events: {
                     click: (event: any) => {
-                        if (this.options.onClickForcastPoint) {
-                            this.options.onClickForcastPoint(event, {
-                                cardId,
-                                timestamp: item.timestamp,
-                                value: item.value,
-                                formattedDate: new Date(item.timestamp * 1000).toLocaleDateString(),
-                                formattedTime: new Date(item.timestamp * 1000).toLocaleTimeString(),
-                                pointIndex: 0,
-                                isLastPoint: false
-                            });
+                        if (aqiValue > 100) {
+                            if (this.options.onClickForcastPoint) {
+                                this.options.onClickForcastPoint(event, {
+                                    cardId,
+                                    timestamp: item.timestamp,
+                                    value: item.value,
+                                    formattedDate: new Date(item.timestamp * 1000).toLocaleDateString(),
+                                    formattedTime: new Date(item.timestamp * 1000).toLocaleTimeString(),
+                                    pointIndex: 0,
+                                    isLastPoint: false
+                                });
+                            }
                         }
                     }
                 }
@@ -888,6 +894,11 @@ class AirQualityCardManager {
     }
 
     // endregion
+
+    private getVideoLinkForPoint(cardId: string, timestamp: number): string | undefined {
+        const cardData = this.data.find(item => item.uid === cardId.replace(/card-|-\d+$/g, ''));
+        return cardData?.forecastData?.find(point => point.timestamp === (timestamp/1000))?.link_video_recorded;
+    }
 
     // region Socket.IO Implementation
     private initSocketIO(): void {
@@ -951,6 +962,10 @@ class AirQualityCardManager {
             this.socket.on('heartbeat', () => {
                 this.lastUpdateTime = new Date();
                 console.log('💓 Heartbeat received');
+            });
+
+            this.socket.on('notification', (data: any) => {
+                console.log('Notification:', data);
             });
 
         } catch (error) {
@@ -1082,11 +1097,9 @@ class AirQualityCardManager {
         }
 
         // Remove duplicates based on timestamp
-        const uniqueForecast = updatedForecast.filter((item, index, array) =>
+        return updatedForecast.filter((item, index, array) =>
             index === 0 || item.timestamp !== array[index - 1].timestamp
         );
-
-        return uniqueForecast;
     }
 
     // endregion

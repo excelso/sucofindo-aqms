@@ -13,8 +13,11 @@
     use Illuminate\Http\RedirectResponse;
     use Illuminate\Http\Request;
     use Illuminate\Support\Facades\Auth;
+    use Illuminate\Support\Facades\Log;
     use Illuminate\Support\Facades\Redirect;
     use Illuminate\View\View;
+    use InvalidArgumentException;
+    use OutOfRangeException;
 
     class ControllerDashboard extends Controller {
 
@@ -77,7 +80,7 @@
                         ],
                         'isOnline' => !!$dataLastLogger,
                         'cctvLink' => $platform->cctv_link,
-                        'forecastData' => $this->processLoggerData($platform->uid, $aqiCat),
+                        'forecastData' => $this->processLoggerData($platform->uid),
                         'lastUpdated' => $dataLastLogger ? Carbon::createFromTimestampUTC($dataLastLogger->datetime_unix)->timezone('Asia/Jakarta')->format('d M Y H:i:s') : null
                     ];
                 }
@@ -95,27 +98,79 @@
             }
         }
 
-        private function processLoggerData($uid, AqiCategories $aqiCat) {
+        private function processLoggerData($uid) {
             $loggers = Loggers::loggerData($uid)->get();
             $dataLoggersTemp = [];
-            foreach ($loggers as $logger) {
-                // Optimized AQI calculation dengan pengecekan division by zero
-                $pmRange = $aqiCat->pm25_max - $aqiCat->pm25_min;
-                if ($pmRange == 0) {
-                    $aqiValue = $aqiCat->aqi_min;
-                } else {
-                    $formula_1 = ($aqiCat->aqi_max - $aqiCat->aqi_min) / $pmRange;
-                    $formula_2 = ($logger->pm_25 - $aqiCat->pm25_min);
-                    $aqiValue = ($formula_1 * $formula_2) + $aqiCat->aqi_min;
-                }
 
-                $dataLoggersTemp[] = [
-                    'timestamp' => $logger->datetime_unix,
-                    'value' => (float) number_format($aqiValue, 1),
-                ];
+            foreach ($loggers as $logger) {
+                try {
+                    $aqiCat = AqiCategories::where('pm25_min', '<=', $logger->pm_25)
+                        ->where('pm25_max', '>=', $logger->pm_25)
+                        ->first();
+
+                    if (!$aqiCat) {
+                        throw new Exception("No AQI category found for PM2.5: {$logger->pm_25}");
+                    }
+
+                    $aqiValue = $this->calculateAQIFromPM25($logger->pm_25, $aqiCat);
+
+                    $dataLoggersTemp[] = [
+                        'timestamp' => $logger->datetime_unix,
+                        'value' => (float) number_format($aqiValue, 1),
+                        'link_video_recorded' => $logger->link_video_recorded ?? null,
+                        'pm25' => $logger->pm_25,
+                        'category' => $aqiCat->category_name_en ?? 'Unknown',
+                        'category_id' => $aqiCat->id, // 🔍 For debugging
+                        'category_range' => "[{$aqiCat->pm25_min}, {$aqiCat->pm25_max}]" // 🔍 For debugging
+                    ];
+                } catch (Exception $e) {
+                    Log::error("AQI calculation failed for logger {$logger->id}: " . $e->getMessage());
+
+                    $dataLoggersTemp[] = [
+                        'timestamp' => $logger->datetime_unix,
+                        'value' => null,
+                        'link_video_recorded' => $logger->link_video_recorded ?? null,
+                        'pm25' => $logger->pm_25,
+                        'category' => 'Error',
+                        'error' => $e->getMessage()
+                    ];
+                }
             }
 
             return $dataLoggersTemp;
+        }
+
+        private function calculateAQIFromPM25($pm25, AqiCategories $aqiCat) {
+            // Validate input
+            if (!is_numeric($pm25) || $pm25 < 0) {
+                throw new InvalidArgumentException("Invalid PM2.5 value: {$pm25}");
+            }
+
+            // Check if PM2.5 is within category range
+            if ($pm25 < $aqiCat->pm25_min || $pm25 > $aqiCat->pm25_max) {
+                throw new OutOfRangeException(
+                    "PM2.5 value {$pm25} is outside category range [{$aqiCat->pm25_min}, {$aqiCat->pm25_max}]"
+                );
+            }
+
+            // Calculate PM range
+            $pmRange = $aqiCat->pm25_max - $aqiCat->pm25_min;
+
+            // Handle edge case where min and max are the same
+            if ($pmRange == 0) {
+                return $aqiCat->aqi_min;
+            }
+
+            // Linear interpolation formula (EPA standard)
+            $aqiRange = $aqiCat->aqi_max - $aqiCat->aqi_min;
+            $pmOffset = $pm25 - $aqiCat->pm25_min;
+
+            $aqiValue = (($aqiRange / $pmRange) * $pmOffset) + $aqiCat->aqi_min;
+
+            // Ensure result is within expected AQI range
+            $aqiValue = max($aqiCat->aqi_min, min($aqiCat->aqi_max, $aqiValue));
+
+            return round($aqiValue, 1);
         }
         //endregion
 

@@ -25,6 +25,7 @@
             'noise',
             'temp',
             'datetime_unix',
+            'link_video_recorded'
         ];
 
         public function limit(): HasOne|Loggers|Builder {
