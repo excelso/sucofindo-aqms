@@ -10,8 +10,8 @@ export default {
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
-        './resources/**/*.tsx',
-        './resources/**/*.ts',
+        './resources/js/**/*.tsx',
+        './resources/js/**/*.ts',
         './node_modules/flowbite/**/*.js',
     ],
     theme: {

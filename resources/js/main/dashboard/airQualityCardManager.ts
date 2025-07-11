@@ -810,8 +810,21 @@ class AirQualityCardManager {
         if (emoji) emoji.textContent = data.emoji;
         if (text) text.textContent = data.status;
 
+        let colorCode = 'bg-green-200';
+        if (data.colorCode === 'bg-yellow-200') {
+            colorCode = 'bg-yellow-200';
+        } else if (data.colorCode === 'bg-orange-200') {
+            colorCode = 'bg-orange-200';
+        } else if (data.status === 'bg-red-200') {
+            colorCode = 'bg-red-200';
+        } else if (data.status === 'bg-red-300') {
+            colorCode = 'bg-red-300';
+        } else if (data.status === 'bg-red-400') {
+            colorCode = 'bg-red-400';
+        }
+
         // Update background color
-        badge.className = badge.className.replace(/bg-\w+-200/g, data.colorCode);
+        badge.className = badge.className.replace(/bg-\w+-200/g, colorCode);
     }
 
     // endregion
@@ -838,46 +851,48 @@ class AirQualityCardManager {
         const chart = this.chartInstances.get(chartKey);
 
         if (chart && chart.series && chart.series[0]) {
-            // Ambil nilai AQI dari data terakhir yang baru (bukan dari chart lama)
-            const lastDataPoint = forecastData[forecastData.length - 1];
-            const aqiValue = lastDataPoint ? lastDataPoint.value : 0;
-            const markerColor = this.getAQIColor(aqiValue);
-
             // Convert forecast data to Highcharts format
-            const chartData = forecastData.map((item, index) => ({
-                x: item.timestamp * 1000,
-                y: item.value,
-                timestamp: item.timestamp,
-                // Hanya point terakhir yang punya marker dengan warna sesuai AQI
-                marker: index === forecastData.length - 1 ? {
-                    enabled: true,
-                    radius: 6,
-                    fillColor: markerColor,
-                    lineWidth: 2,
-                    lineColor: 'white'
-                } : {
-                    enabled: false,
-                    radius: 0
-                },
+            const chartData = forecastData.map((item, index) => {
+                const markerColor = this.getAQIColor(item.value);
+                const isLastPoint = index === forecastData.length - 1;
+                const isHighValue = item.value > 100;
 
-                events: {
-                    click: (event: any) => {
-                        if (aqiValue > 100) {
-                            if (this.options.onClickForcastPoint) {
-                                this.options.onClickForcastPoint(event, {
-                                    cardId,
-                                    timestamp: item.timestamp,
-                                    value: item.value,
-                                    formattedDate: new Date(item.timestamp * 1000).toLocaleDateString(),
-                                    formattedTime: new Date(item.timestamp * 1000).toLocaleTimeString(),
-                                    pointIndex: 0,
-                                    isLastPoint: false
-                                });
+                return {
+                    x: item.timestamp * 1000,
+                    y: item.value,
+                    timestamp: item.timestamp,
+                    // Enable marker untuk point terakhir dan point dengan nilai tinggi
+                    marker: (isLastPoint || isHighValue) ? {
+                        enabled: true,
+                        radius: 6,
+                        fillColor: markerColor,
+                        lineWidth: 2,
+                        lineColor: 'white'
+                    } : {
+                        enabled: false,
+                        radius: 0
+                    },
+                    events: {
+                        click: (event: any) => {
+                            if (isHighValue) {
+                                if (this.options.onClickForcastPoint) {
+                                    this.options.onClickForcastPoint(event, {
+                                        cardId,
+                                        timestamp: item.timestamp,
+                                        value: item.value,
+                                        pointIndex: index,
+                                        isLastPoint,
+                                        isHighValue,
+                                        formattedDate: new Date(item.timestamp * 1000).toLocaleDateString(),
+                                        formattedTime: new Date(item.timestamp * 1000).toLocaleTimeString(),
+                                        linkVideoRecorded: this.getVideoLinkForPoint(cardId, item.timestamp * 1000)
+                                    });
+                                }
                             }
                         }
                     }
-                }
-            }));
+                };
+            });
 
             // Update series data
             chart.series[0].setData(chartData, true);
@@ -892,7 +907,6 @@ class AirQualityCardManager {
             }
         }
     }
-
     // endregion
 
     private getVideoLinkForPoint(cardId: string, timestamp: number): string | undefined {
