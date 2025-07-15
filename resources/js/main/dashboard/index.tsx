@@ -75,16 +75,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 }, async (response) => {
                     await waitLoader('Please wait...', 'Loading Recorded Video', () => {
                         const {status, videoUrl} = response.status;
-                        if (status === 'completed') {
-                            Swal.close()
+                        if (status) {
+                            if (status === 'completed') {
+                                Swal.close()
 
-                            showModalDialog(modalCctv, `
+                                showModalDialog(modalCctv, `
                                 <div class="flex items-center">
                                     <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${pointData.cardId}
                                 </div>
                             `, () => {
-                                createVideoElementWithAutoplay(videoUrl)
-                            })
+                                    createVideoElementWithAutoplay(videoUrl)
+                                })
+                            }
                         } else {
                             createVideoElementWithAutoplay(pointData.linkVideo.linkVideoRecorded)
                         }
