@@ -3,8 +3,9 @@ import {closeModalDialog, showModalDialog} from "@/js/plugins/modal";
 import {AirQualityCardManager, MetricsData} from "@/js/main/dashboard/airQualityCardManager";
 import Highcharts from "highcharts";
 import {getMetaContent} from "@/js/plugins/functions";
-import {failureAlert} from "@/js/plugins/sweet-alert";
+import {failureAlert, waitLoader} from "@/js/plugins/sweet-alert";
 import {SocketClient} from "@/js/plugins/SocketClient";
+import Swal from "sweetalert2";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
@@ -67,18 +68,26 @@ document.addEventListener('DOMContentLoaded', function () {
         onConnectionStatus: (status) => {
             console.log('Connection status:', status);
         },
-        onClickForcastPoint: (events, pointData) => {
+        onClickForcastPoint: async (events, pointData) => {
             socket.emit('req-video', {
                 recordingId: pointData.linkVideo.linkVideoId,
+            }, async (response) => {
+                await waitLoader('Please wait...', 'Loading Recorded Video', () => {
+                    const {status, videoUrl} = response.status;
+                    if (status === 'completed') {
+                        Swal.close()
+
+                        showModalDialog(modalCctv, `
+                            <div class="flex items-center">
+                                <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${pointData.cardId}
+                            </div>
+                        `, () => {
+
+                            createVideoElementWithAutoplay(videoUrl)
+                        })
+                    }
+                })
             })
-            // showModalDialog(modalCctv, `
-            //     <div class="flex items-center">
-            //         <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${pointData.cardId}
-            //     </div>
-            // `, () => {
-            //
-            //     createVideoElementWithAutoplay(pointData.linkVideoRecorded)
-            // })
         }
     });
 

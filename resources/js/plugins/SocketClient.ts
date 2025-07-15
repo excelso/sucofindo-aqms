@@ -259,12 +259,25 @@ export class SocketClient {
     /**
      * Emit event to server
      */
-    public emit(event: string, data: any): void {
+    public emit(event: string, data: any, callback?: (response: any) => void): void {
         if (this.socket && this.socket.connected) {
-            this.socket.emit(event, data);
-            console.log(`📤 Emitted event '${event}' to server:`, data);
+            if (callback) {
+                // Emit dengan callback
+                this.socket.emit(event, data, callback);
+                console.log(`📤 Emitted event '${event}' with callback to server:`, data);
+            } else {
+                // Emit tanpa callback (backward compatibility)
+                this.socket.emit(event, data);
+                console.log(`📤 Emitted event '${event}' to server:`, data);
+            }
         } else {
             console.warn('⚠️ Socket.IO not connected. Cannot emit event:', event);
+            if (callback) {
+                callback({
+                    success: false,
+                    error: 'Socket not connected'
+                });
+            }
         }
     }
 
