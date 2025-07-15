@@ -69,25 +69,37 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('Connection status:', status);
         },
         onClickForcastPoint: async (events, pointData) => {
-            socket.emit('req-video', {
-                recordingId: pointData.linkVideo.linkVideoId,
-            }, async (response) => {
-                await waitLoader('Please wait...', 'Loading Recorded Video', () => {
-                    const {status, videoUrl} = response.status;
-                    if (status === 'completed') {
-                        Swal.close()
+            if (socket.isConnected()) {
+                socket.emit('req-video', {
+                    recordingId: pointData.linkVideo.linkVideoId,
+                }, async (response) => {
+                    await waitLoader('Please wait...', 'Loading Recorded Video', () => {
+                        const {status, videoUrl} = response.status;
+                        if (status === 'completed') {
+                            Swal.close()
 
-                        showModalDialog(modalCctv, `
-                            <div class="flex items-center">
-                                <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${pointData.cardId}
-                            </div>
-                        `, () => {
-
-                            createVideoElementWithAutoplay(videoUrl)
-                        })
-                    }
+                            showModalDialog(modalCctv, `
+                                <div class="flex items-center">
+                                    <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${pointData.cardId}
+                                </div>
+                            `, () => {
+                                createVideoElementWithAutoplay(videoUrl)
+                            })
+                        } else {
+                            createVideoElementWithAutoplay(pointData.linkVideo.linkVideoRecorded)
+                        }
+                    })
                 })
-            })
+            } else {
+                showModalDialog(modalCctv, `
+                    <div class="flex items-center">
+                        <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${pointData.cardId}
+                    </div>
+                `, () => {
+
+                    createVideoElementWithAutoplay(pointData.linkVideo.linkVideoRecorded)
+                })
+            }
         }
     });
 
@@ -486,6 +498,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }, 10000);
         }
     }
+
     //endregion
 
     //region Handle Chart Detail
@@ -646,5 +659,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         });
     }
+
     //endregion
 })
