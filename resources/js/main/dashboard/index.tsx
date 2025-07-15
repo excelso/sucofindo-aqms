@@ -101,34 +101,44 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     }
 
-    const handleRecordingProgress = (recordingId, cardId) => {
+    const handleRecordingProgress = (recordingId: string, cardId: string) => {
         // Listen untuk recording progress
         socket.on('recording:progress', (data) => {
             if (data.id === recordingId) {
                 const { progress, status } = data
 
                 if (status === 'recording') {
-                    // Update progress di UI
                     Swal.update({
                         title: 'Recording in Progress',
-                        text: `Progress: ${progress}%`,
+                        html: `
+                            <div class="text-md mb-3">Progress: ${progress}%</div>
+                            <div class="text-sm text-gray-600">Please wait while we record the video...</div>
+                        `,
                         showConfirmButton: false,
-                        allowOutsideClick: false
-                    })
-                } else if (status === 'completed') {
-                    // Recording selesai, request video lagi
-                    socket.off('recording:progress') // Remove listener
-                    requestVideo(recordingId, cardId)
+                        allowOutsideClick: false,
+                        allowEscapeKey: false
+                    });
+
+                    // Simple loading spinner
+                    Swal.showLoading();
                 }
+
+                if (progress === 99) {
+                    socket.off('recording:progress')
+                }
+            }
+        })
+
+        socket.on('recording:completed', (data) => {
+            if (data.id === recordingId) {
+                socket.off('recording:completed')
+                requestVideo(recordingId, cardId)
             }
         })
     }
 
     const requestVideo = (recordingId: string, cardId: string, fallbackVideoUrl = null) => {
-        console.log(recordingId)
         socket.emit('req-video', { recordingId }, async (response) => {
-            console.log(response)
-
             if (response.status) {
                 const { status, videoUrl } = response.status
 
@@ -136,7 +146,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     Swal.close()
                     showVideoModal(cardId, videoUrl)
                 } else if (status === 'recording') {
-                    // Masih recording, listen untuk progress
                     await waitLoader('Recording in progress...', 'Please wait while video is being recorded', () => {
                         handleRecordingProgress(recordingId, cardId)
                     })

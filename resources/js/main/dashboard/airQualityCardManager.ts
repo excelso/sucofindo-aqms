@@ -96,6 +96,7 @@ interface LoggerEventData {
     noise: number;
     temp?: number;
     datetime_unix: number;
+    link_video_id?: string;
     // Optional forecast data untuk update chart forecast
     forecastData?: Array<{ timestamp: number; value: number }>;
     // Atau bisa menggunakan AQI value untuk generate forecast point baru
@@ -1008,7 +1009,8 @@ class AirQualityCardManager {
             const updatedForecastData = this.updateForecastData(
                 oldData.forecastData || [],
                 loggerData.datetime_unix,
-                aqiValue
+                aqiValue,
+                loggerData.link_video_id
             );
 
             // Update metrics with new logger data
@@ -1089,25 +1091,30 @@ class AirQualityCardManager {
 
     // region Update Forecast Data
     private updateForecastData(
-        existingForecast: Array<{ timestamp: number; value: number }>,
+        existingForecast: Array<{ timestamp: number; value: number; link_video_id?: string; link_video_status?: string; link_video_recorded?: string; }>,
         newTimestamp: number,
-        newValue: number
-    ): Array<{ timestamp: number; value: number }> {
+        newValue: number,
+        linkVideoId?: string
+    ): Array<{ timestamp: number; value: number; link_video_id?: string; link_video_status?: string; link_video_recorded?: string; }> {
 
         // Create a copy of existing forecast data
         let updatedForecast = [...existingForecast];
 
-        // Add new data point
-        updatedForecast.push({
+        // Add new data point with video information
+        const newDataPoint = {
             timestamp: newTimestamp,
-            value: newValue
-        });
+            value: newValue,
+            link_video_id: linkVideoId,
+            link_video_status: linkVideoId ? 'pending' : undefined, // Set initial status jika ada video
+            link_video_recorded: undefined // Will be updated when recording completes
+        };
+
+        updatedForecast.push(newDataPoint);
 
         // Sort by timestamp
         updatedForecast.sort((a, b) => a.timestamp - b.timestamp);
 
         // Keep only last 144 points (12 hours with 5-minute intervals)
-        // or adjust based on your requirements
         const maxPoints = 144;
         if (updatedForecast.length > maxPoints) {
             updatedForecast = updatedForecast.slice(-maxPoints);

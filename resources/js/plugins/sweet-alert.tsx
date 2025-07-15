@@ -25,7 +25,7 @@ export const confirmAlert = (options: SweetAlertOptions, isConfirmFn?: () => voi
     })
 }
 
-export const waitLoader = (title: string, html: string, didOpenCallback: () => void) => {
+export const waitLoader = (title: string, html: string, didOpenCallback?: () => void) => {
     return Swal.fire({
         html: `
             <div class="mt-4"><b>${title}</b></div>
@@ -43,7 +43,9 @@ export const waitLoader = (title: string, html: string, didOpenCallback: () => v
         },
         didOpen: async function () {
             Swal.showLoading();
-            didOpenCallback()
+            if (didOpenCallback) {
+                didOpenCallback()
+            }
         }
     })
 }
