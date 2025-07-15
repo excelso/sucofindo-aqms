@@ -69,48 +69,85 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('Connection status:', status);
         },
         onClickForcastPoint: async (events, pointData) => {
-            if (socket.isConnected()) {
-                socket.emit('req-video', {
-                    recordingId: pointData.linkVideo.linkVideoId,
-                }, async (response) => {
-                    await waitLoader('Please wait...', 'Loading Recorded Video', () => {
-                        const {status, videoUrl} = response.status;
-                        if (status) {
-                            if (status === 'completed') {
-                                Swal.close()
+            const { cardId, linkVideo } = pointData
+            const { linkVideoId, linkVideoRecorded } = linkVideo
 
-                                showModalDialog(modalCctv, `
-                                <div class="flex items-center">
-                                    <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${pointData.cardId}
-                                </div>
-                            `, () => {
-                                    createVideoElementWithAutoplay(videoUrl)
-                                })
-                            }
-                        } else {
-                            createVideoElementWithAutoplay(pointData.linkVideo.linkVideoRecorded)
-                        }
-                    })
+            if (socket.isConnected()) {
+                await waitLoader('Please wait...', 'Loading Recorded Video', () => {
+                    requestVideo(linkVideoId, cardId, linkVideoRecorded)
                 })
             } else {
-                showModalDialog(modalCctv, `
-                    <div class="flex items-center">
-                        <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${pointData.cardId}
-                    </div>
-                `, () => {
-
-                    createVideoElementWithAutoplay(pointData.linkVideo.linkVideoRecorded)
-                })
+                // Offline mode - gunakan video yang sudah ada
+                showVideoModal(cardId, linkVideoRecorded)
             }
         }
     });
 
     manager.startRealTimeMode();
+    //endregion
+
     // manager.loadData('/dashboard/platforms').then(() => {
     //     manager.renderAll();
     //
     // });
-    //endregion
+
+    const showVideoModal = (cardId, videoUrl) => {
+        showModalDialog(modalCctv, `
+            <div class="flex items-center">
+                <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${cardId}
+            </div>
+        `, () => {
+            createVideoElementWithAutoplay(videoUrl)
+        })
+    }
+
+    const handleRecordingProgress = (recordingId, cardId) => {
+        // Listen untuk recording progress
+        socket.on('recording:progress', (data) => {
+            if (data.id === recordingId) {
+                const { progress, status } = data
+
+                if (status === 'recording') {
+                    // Update progress di UI
+                    Swal.update({
+                        title: 'Recording in Progress',
+                        text: `Progress: ${progress}%`,
+                        showConfirmButton: false,
+                        allowOutsideClick: false
+                    })
+                } else if (status === 'completed') {
+                    // Recording selesai, request video lagi
+                    socket.off('recording:progress') // Remove listener
+                    requestVideo(recordingId, cardId)
+                }
+            }
+        })
+    }
+
+    const requestVideo = (recordingId: string, cardId: string, fallbackVideoUrl = null) => {
+        console.log(recordingId)
+        socket.emit('req-video', { recordingId }, async (response) => {
+            console.log(response)
+
+            if (response.status) {
+                const { status, videoUrl } = response.status
+
+                if (status === 'completed') {
+                    Swal.close()
+                    showVideoModal(cardId, videoUrl)
+                } else if (status === 'recording') {
+                    // Masih recording, listen untuk progress
+                    await waitLoader('Recording in progress...', 'Please wait while video is being recorded', () => {
+                        handleRecordingProgress(recordingId, cardId)
+                    })
+                }
+            } else if (fallbackVideoUrl) {
+                // Fallback ke video yang sudah ada
+                Swal.close()
+                showVideoModal(cardId, fallbackVideoUrl)
+            }
+        })
+    }
 
     //region Handle Create Video Element with WebRTC and HLS Fallback
     function createVideoElementWithAutoplay(streamUrl: string): void {
