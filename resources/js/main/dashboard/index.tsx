@@ -42,8 +42,6 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     //endregion
 
-    console.log((window as any).APP_CONFIG)
-
     //region Handle AQI Card
     const manager = new AirQualityCardManager({
         containerSelector: '.airQualityParent',
@@ -130,8 +128,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         allowOutsideClick: false,
                         allowEscapeKey: false
                     });
-
-                    // Simple loading spinner
                     Swal.showLoading();
                 }
 
@@ -147,16 +143,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (status === 'retrying') {
                     Swal.update({
-                        title: 'Recording in Progress',
+                        title: 'Retrying Record',
                         html: `
-                            <div class="text-sm text-gray-600">Retry Recording Video</div>
+                            <div class="text-md text-gray-600">Please Wait, Retry Recording Video</div>
                         `,
                         showConfirmButton: false,
                         allowOutsideClick: false,
                         allowEscapeKey: false
                     });
-
-                    // Simple loading spinner
                     Swal.showLoading();
                 }
 
