@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
         realTimeUpdateInterval: 15000,
         apiEndpoint: '/dashboard/platforms',
         enableSocketIO: true,
-        socketIOUrl: 'ws://localhost:3300',
+        socketIOUrl: 'https://aqms-api.cloudtrack.id',
         onCctvClick: (id, cctvLink) => {
             showModalDialog(modalCctv, `
                 <div class="flex items-center">
