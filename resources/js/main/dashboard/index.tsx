@@ -10,12 +10,13 @@ import Swal from "sweetalert2";
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
 
+    const appEnv: HTMLInputElement = document.querySelector('.app_env')
     const modalCctv = document.querySelector('.modalCctv')
     const modalBody = modalCctv.querySelector('.modal-body')
     const modalDetailParameter = document.querySelector('.modalDetailParameter')
     const bodyChart: HTMLElement = modalDetailParameter.querySelector('.bodyChart')
     const closeModalForm = document.querySelectorAll('.closeModalForm')
-    const socket = SocketClient.getInstance('dashboard', 'ws://127.0.0.1:3300')
+    const socket = SocketClient.getInstance('dashboard', appEnv.value === 'local' ? 'ws://127.0.0.1:3300' : 'https://aqms-api.cloudtrack.id')
 
     //region Handle Close Menu
     closeModalForm.forEach((elm) => {
@@ -41,6 +42,8 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     //endregion
 
+    console.log((window as any).APP_CONFIG)
+
     //region Handle AQI Card
     const manager = new AirQualityCardManager({
         containerSelector: '.airQualityParent',
@@ -50,7 +53,10 @@ document.addEventListener('DOMContentLoaded', function () {
         realTimeUpdateInterval: 15000,
         apiEndpoint: '/dashboard/platforms',
         enableSocketIO: true,
-        socketIOUrl: 'https://aqms-api.cloudtrack.id',
+        socketIOUrl: appEnv.value === 'local' ? 'ws://127.0.0.1:3300' : 'https://aqms-api.cloudtrack.id',
+        socketIOOptions: {
+            withCredentials: appEnv.value === 'production',
+        },
         onCctvClick: (id, cctvLink) => {
             showModalDialog(modalCctv, `
                 <div class="flex items-center">

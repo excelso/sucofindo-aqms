@@ -27,7 +27,10 @@
         }
 
         public function index(Request $request): View {
-            return view($this->viewPath . '.index');
+            $env = config('app.env');
+            return view($this->viewPath . '.index', [
+                'env' => $env
+            ]);
         }
 
         //region Handle Data Platforms

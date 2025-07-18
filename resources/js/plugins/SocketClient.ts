@@ -6,6 +6,7 @@ export interface SocketOptions {
     reconnectionDelay?: number;
     reconnectionAttempts?: number;
     timeout?: number;
+    withCredentials?: boolean,
 }
 
 export interface LoggerEventData {
@@ -127,7 +128,6 @@ export class SocketClient {
             console.log(`🔌 Connecting to Socket.IO server: ${this.url}`);
             this.socket = io(this.url, {
                 transports: ['websocket', 'polling'],
-                withCredentials: true,
                 ...this.options
             });
             this.setupEventHandlers();

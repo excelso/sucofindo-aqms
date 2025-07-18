@@ -2,7 +2,7 @@ import Highcharts from 'highcharts'
 import "highcharts/highcharts-more";
 import "highcharts/modules/solid-gauge";
 import {io, Socket} from 'socket.io-client';
-import {SocketClient, SocketEventCallbacks} from "@/js/plugins/SocketClient";
+import {SocketClient, SocketEventCallbacks, SocketOptions} from "@/js/plugins/SocketClient";
 
 interface AirQualityData {
     uid: string;
@@ -70,7 +70,7 @@ interface CardManagerOptions {
     enableSocketIO?: boolean;
     socketIOUrl?: string;
     socketInstanceName?: string; // Unique name for socket instance
-    socketIOOptions?: any;
+    socketIOOptions?: SocketOptions;
     onCctvClick?: (id: string, cctvLink: string) => void;
     onMetricsClick?: (id: string, metrics: MetricsData) => void;
     onDataUpdate?: (updatedData: AirQualityData[]) => void;

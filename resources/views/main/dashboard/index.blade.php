@@ -11,6 +11,7 @@
 
         <div class="relative px-8 py-4">
             <div class="py-8">
+                <input type="hidden" class="app_env" value="{{ $env ?? 'local' }}">
                 <div class="text-[28px] font-bold">Good Morning, {{ Common::ambilNama(Auth::user()->nama_lengkap) }}</div>
                 <div class="text-[15px] font-normal text-gray-500">Let's dive into air quality awareness.</div>
             </div>
