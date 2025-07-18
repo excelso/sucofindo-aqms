@@ -127,7 +127,7 @@ export class SocketClient {
         try {
             console.log(`🔌 Connecting to Socket.IO server: ${this.url}`);
             this.socket = io(this.url, {
-                transports: ['polling'],
+                transports: ['websocket', 'polling'],
                 ...this.options
             });
             this.setupEventHandlers();
