@@ -74,7 +74,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (socket.isConnected()) {
                 await waitLoader('Please wait...', 'Loading Recorded Video', () => {
-                    requestVideo(linkVideoId, cardId, linkVideoRecorded)
+                    if (linkVideoId) {
+                        requestVideo(linkVideoId, cardId, linkVideoRecorded)
+                    } else {
+                        failureAlert({
+                            html: 'Video Recorded Not Found',
+                        })
+                    }
                 })
             } else {
                 // Offline mode - gunakan video yang sudah ada

@@ -554,7 +554,7 @@ class AirQualityCardManager {
                         },
                         events: {
                             click: (event: any) => {
-                                if (lastPoint.y > 100) {
+                                if (lastPoint.y > 50) {
                                     if (this.options.onClickForcastPoint) {
                                         const linkVideoPoint = this.getVideoLinkForPoint(cardId, lastPoint.x)
                                         this.options.onClickForcastPoint(event, {
@@ -576,7 +576,7 @@ class AirQualityCardManager {
                 }
 
                 series.data.forEach((item: any, index: number) => {
-                    if (item.y > 100) {
+                    if (item.y > 50) {
                         const markerColor = this.getAQIColor(item.y);
 
                         item.update({
@@ -862,7 +862,7 @@ class AirQualityCardManager {
             const chartData = forecastData.map((item, index) => {
                 const markerColor = this.getAQIColor(item.value);
                 const isLastPoint = index === forecastData.length - 1;
-                const isHighValue = item.value > 100;
+                const isHighValue = item.value > 50;
 
                 return {
                     x: item.timestamp * 1000,
