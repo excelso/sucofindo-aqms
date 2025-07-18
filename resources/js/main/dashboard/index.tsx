@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
         enableSocketIO: true,
         socketIOUrl: appEnv.value === 'local' ? 'ws://127.0.0.1:3300' : 'https://aqms-api.cloudtrack.id',
         socketIOOptions: {
-            withCredentials: appEnv.value === 'production',
+            withCredentials: appEnv.value === 'production' || appEnv.value === 'staging',
         },
         onCctvClick: (id, cctvLink) => {
             showModalDialog(modalCctv, `
