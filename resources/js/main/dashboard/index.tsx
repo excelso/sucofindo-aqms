@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
         realTimeUpdateInterval: 15000,
         apiEndpoint: '/dashboard/platforms',
         enableSocketIO: true,
-        socketIOUrl: 'ws://127.0.0.1:3300',
+        socketIOUrl: 'ws://localhost:3300',
         onCctvClick: (id, cctvLink) => {
             showModalDialog(modalCctv, `
                 <div class="flex items-center">
