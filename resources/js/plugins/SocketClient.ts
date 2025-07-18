@@ -125,7 +125,10 @@ export class SocketClient {
 
         try {
             console.log(`🔌 Connecting to Socket.IO server: ${this.url}`);
-            this.socket = io(this.url, this.options);
+            this.socket = io(this.url, {
+                transports: ['websocket'],
+                ...this.options
+            });
             this.setupEventHandlers();
         } catch (error) {
             console.error('❌ Failed to initialize Socket.IO:', error);
