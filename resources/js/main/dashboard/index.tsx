@@ -141,6 +141,29 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         })
 
+        socket.on('recording:retrying', (data) => {
+            if (data.id === recordingId) {
+                const { status } = data
+
+                if (status === 'retrying') {
+                    Swal.update({
+                        title: 'Recording in Progress',
+                        html: `
+                            <div class="text-sm text-gray-600">Retry Recording Video</div>
+                        `,
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false
+                    });
+
+                    // Simple loading spinner
+                    Swal.showLoading();
+                }
+
+                socket.off('recording:retrying')
+            }
+        })
+
         socket.on('recording:completed', (data) => {
             if (data.id === recordingId) {
                 socket.off('recording:completed')
@@ -160,6 +183,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else if (status === 'recording') {
                     await waitLoader('Recording in progress...', 'Please wait while video is being recorded', () => {
                         handleRecordingProgress(recordingId, cardId)
+                    })
+                } else if (status === 'failed') {
+                    Swal.close();
+                    failureAlert({
+                        html: 'Recording Video is Failed',
                     })
                 }
             } else if (fallbackVideoUrl) {
