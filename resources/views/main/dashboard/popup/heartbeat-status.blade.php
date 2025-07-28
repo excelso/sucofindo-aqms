@@ -16,11 +16,11 @@
             <div class="p-6 flex items-center gap-4">
                 <div>
                     <div class="font-bold text-[14px]">Total Online</div>
-                    <div class="text-[13px]">0%</div>
+                    <div class="text-[13px]">90%</div>
                 </div>
                 <div class="border-l-[2px] border-r-gray-100 pl-4">
                     <div class="font-bold text-[14px]">Total Offline</div>
-                    <div class="text-[13px]">0%</div>
+                    <div class="text-[13px]">10%</div>
                 </div>
             </div>
             <table class="table table-fixed">
