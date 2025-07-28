@@ -44,8 +44,16 @@ interface AirQualityData {
     };
     location?: string;
     lastUpdated?: Date;
-    forecastData?: Array<{ timestamp: number; value: number; link_video_id?: string; link_video_status?: string; link_video_recorded?: string; }>; // Unix timestamp
+    forecastData?: Array<{
+        timestamp: number;
+        value: number;
+        link_video_id?: string;
+        link_video_status?: string;
+        link_video_recorded?: string;
+    }>; // Unix timestamp
     cctvLink?: string;
+    timezone?: string; // Timezone untuk platform ini (e.g., 'Asia/Jakarta', 'Asia/Makassar')
+    locale?: string;   // Locale untuk platform ini (optional, default 'id-ID')
 }
 
 interface MetricsData {
@@ -86,6 +94,7 @@ interface CardManagerOptions {
         formattedTime: string;
         linkVideo?: any;
     }) => void;
+    onHeartbeatStatusClick?: (id: string) => void;
 }
 
 interface LoggerEventData {
@@ -390,6 +399,94 @@ class AirQualityCardManager {
 
     // endregion
 
+    // region Helper Functions for Date Validation
+
+    private isValidTimestamp(timestamp: number | undefined | null): boolean {
+        return timestamp !== undefined &&
+            timestamp !== null &&
+            !isNaN(timestamp) &&
+            isFinite(timestamp) &&
+            timestamp > 0;
+    }
+
+    private isValidDate(date: Date | undefined | null): boolean {
+        return date instanceof Date &&
+            !isNaN(date.getTime()) &&
+            isFinite(date.getTime());
+    }
+
+    private safeFormatTimestamp(timestamp: number | undefined | null, format: 'time' | 'datetime' = 'time', timezone: string = 'Asia/Jakarta', locale: string = 'id-ID', useSecond: boolean = false): string {
+        if (!this.isValidTimestamp(timestamp)) {
+            return format === 'time' ? '--:--' : 'Invalid Date';
+        }
+
+        try {
+            const date = new Date(timestamp! * 1000);
+
+            if (!this.isValidDate(date)) {
+                return format === 'time' ? '--:--' : 'Invalid Date';
+            }
+
+            if (format === 'time') {
+                const dateOptions: Intl.DateTimeFormatOptions = {
+                    timeZone: timezone,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                };
+
+                if (useSecond) {
+                    dateOptions.second = '2-digit';
+                }
+
+                return new Intl.DateTimeFormat(locale, dateOptions).format(date);
+            } else {
+                // Untuk format datetime
+                const dateOptions: Intl.DateTimeFormatOptions = {
+                    timeZone: timezone,
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                };
+
+                if (useSecond) {
+                    dateOptions.second = '2-digit';
+                }
+
+                return new Intl.DateTimeFormat(locale, dateOptions).format(date);
+            }
+        } catch (error) {
+            console.warn('Error formatting timestamp:', error);
+            return format === 'time' ? '--:--' : 'Invalid Date';
+        }
+    }
+
+    private safeFormatDate(date: Date | undefined | null, timezone: string = 'Asia/Jakarta', locale: string = 'id-ID'): string {
+        if (!this.isValidDate(date)) {
+            return 'Invalid Date';
+        }
+
+        try {
+            return new Intl.DateTimeFormat(locale, {
+                timeZone: timezone,
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            }).format(date!);
+        } catch (error) {
+            console.warn('Error formatting date:', error);
+            return 'Invalid Date';
+        }
+    }
+
+// endregion
+
     // region Create Forecast Chart
     private createForecastChart(element: HTMLElement, data: Array<{
         timestamp: number;
@@ -399,33 +496,18 @@ class AirQualityCardManager {
             return;
         }
 
+        const managerInstance = this;
+
+        const platformData = this.data.find(item => item.uid === cardId.replace(/card-|-\d+$/g, ''));
+        const platformTimezone = platformData?.timezone || 'Asia/Jakarta'; // Default WIB
+        const platformLocale = platformData?.locale || 'id-ID';
+
         // Default data with Unix timestamps (current time and hourly intervals)
         const now = Math.floor(new Date().setHours(0, 1, 0, 0) / 1000);
         const defaultData = data || Array.from({length: 144}, (_, i) => ({
             timestamp: now + (i * 300), // Add 1-hour intervals
             value: Math.floor(Math.random() * 50) + 20
         }));
-
-        // Helper function to format Unix timestamp for display
-        const formatTimestamp = (timestamp: number, format: 'time' | 'datetime' = 'time'): string => {
-            const date = new Date(timestamp * 1000);
-
-            if (format === 'time') {
-                return date.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
-                });
-            } else {
-                return date.toLocaleString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
-                });
-            }
-        };
 
         // Prepare chart data
         const chartData = defaultData.map(item => ({
@@ -450,9 +532,9 @@ class AirQualityCardManager {
                 type: 'datetime',
                 labels: {
                     formatter: function () {
-                        // Format as HH:MM for display
-                        const value = (this as any).value as number;
-                        return formatTimestamp(value / 1000, 'time');
+                        const timestampMs = this.value as number;
+                        const timestampSeconds = timestampMs / 1000;
+                        return managerInstance.safeFormatTimestamp(timestampSeconds, 'time', platformTimezone, platformLocale);
                     },
                     style: {
                         fontSize: '10px',
@@ -490,8 +572,11 @@ class AirQualityCardManager {
                 shadow: true,
                 style: {fontSize: '12px'},
                 formatter: function () {
-                    const timestamp = this.x / 1000;
-                    return `<b>Time:</b> ${formatTimestamp(timestamp, 'datetime')}<br><b>AQI:</b> ${this.y}`;
+                    const timestampMs = this.x;
+                    const timestampSeconds = timestampMs / 1000;
+                    const formattedTime = managerInstance.safeFormatTimestamp(timestampSeconds, 'datetime', platformTimezone, platformLocale, true);
+                    const timezoneShort = platformTimezone.split('/')[1] || platformTimezone;
+                    return `<b>Time (${timezoneShort}):</b> ${formattedTime}<br><b>AQI:</b> ${this.y}`;
                 }
             },
             plotOptions: {
@@ -792,7 +877,13 @@ class AirQualityCardManager {
         // Update last updated timestamp
         const lastUpdatedElement = cardElement.querySelector('.last-updated');
         if (lastUpdatedElement && newData.lastUpdated) {
-            lastUpdatedElement.textContent = `Last updated: ${newData.lastUpdated.toLocaleString()}`;
+            const platformTimezone = newData.timezone || 'Asia/Jakarta';
+            const platformLocale = newData.locale || 'id-ID';
+
+            const formattedLastUpdated = this.safeFormatDate(new Date(newData.lastUpdated.toLocaleString()), platformTimezone, platformLocale);
+            const timezoneShort = platformTimezone.split('/')[1] || platformTimezone;
+
+            lastUpdatedElement.textContent = `Last updated: ${formattedLastUpdated} (${timezoneShort})`;
         }
     }
 
@@ -915,11 +1006,16 @@ class AirQualityCardManager {
             }
         }
     }
+
     // endregion
 
-    private getVideoLinkForPoint(cardId: string, timestamp: number): {linkVideoId: string, linkVideoStatus: string, linkVideoRecorded: string} {
+    private getVideoLinkForPoint(cardId: string, timestamp: number): {
+        linkVideoId: string,
+        linkVideoStatus: string,
+        linkVideoRecorded: string
+    } {
         const cardData = this.data.find(item => item.uid === cardId.replace(/card-|-\d+$/g, ''));
-        const cardDataPoint = cardData?.forecastData?.find(point => point.timestamp === (timestamp/1000))
+        const cardDataPoint = cardData?.forecastData?.find(point => point.timestamp === (timestamp / 1000))
         return {
             linkVideoId: cardDataPoint?.link_video_id,
             linkVideoStatus: cardDataPoint?.link_video_status,
@@ -992,6 +1088,7 @@ class AirQualityCardManager {
             this.updateConnectionStatus('error');
         }
     }
+
     // endregion
 
     // region Handle Logger Data Update
@@ -1091,11 +1188,23 @@ class AirQualityCardManager {
 
     // region Update Forecast Data
     private updateForecastData(
-        existingForecast: Array<{ timestamp: number; value: number; link_video_id?: string; link_video_status?: string; link_video_recorded?: string; }>,
+        existingForecast: Array<{
+            timestamp: number;
+            value: number;
+            link_video_id?: string;
+            link_video_status?: string;
+            link_video_recorded?: string;
+        }>,
         newTimestamp: number,
         newValue: number,
         linkVideoId?: string
-    ): Array<{ timestamp: number; value: number; link_video_id?: string; link_video_status?: string; link_video_recorded?: string; }> {
+    ): Array<{
+        timestamp: number;
+        value: number;
+        link_video_id?: string;
+        link_video_status?: string;
+        link_video_recorded?: string;
+    }> {
 
         // Create a copy of existing forecast data
         let updatedForecast = [...existingForecast];
@@ -1375,6 +1484,10 @@ class AirQualityCardManager {
             }
         }
 
+        if (this.options.onHeartbeatStatusClick) {
+            onlineContainer.addEventListener('click', () => this.options.onHeartbeatStatusClick!(data.uid));
+        }
+
         headerFlex.appendChild(leftSection);
         headerFlex.appendChild(rightSection);
 
@@ -1384,15 +1497,6 @@ class AirQualityCardManager {
 
         const metrics = [
             {
-                title: 'PM10',
-                type: 'pm10' as const,
-                value: data.metrics?.pm10?.value || 0,
-                bml_min: data.metrics?.pm10?.bml_min,
-                bml_min_buffer: data.metrics?.pm10?.bml_min_buffer,
-                bml_max_buffer: data.metrics?.pm10?.bml_max_buffer,
-                bml_max: data.metrics?.pm10?.bml_max
-            },
-            {
                 title: 'PM2.5',
                 type: 'pm25' as const,
                 value: data.metrics?.pm25?.value || 0,
@@ -1400,6 +1504,15 @@ class AirQualityCardManager {
                 bml_min_buffer: data.metrics?.pm25?.bml_min_buffer,
                 bml_max_buffer: data.metrics?.pm25?.bml_max_buffer,
                 bml_max: data.metrics?.pm25?.bml_max
+            },
+            {
+                title: 'PM10',
+                type: 'pm10' as const,
+                value: data.metrics?.pm10?.value || 0,
+                bml_min: data.metrics?.pm10?.bml_min,
+                bml_min_buffer: data.metrics?.pm10?.bml_min_buffer,
+                bml_max_buffer: data.metrics?.pm10?.bml_max_buffer,
+                bml_max: data.metrics?.pm10?.bml_max
             },
             {
                 title: 'TSP',
@@ -1445,11 +1558,13 @@ class AirQualityCardManager {
 
         // Forecast section
         const forecastSection = this.createElement('div', 'mt-4');
-        const forecastTitle = this.createElement('div', 'font-bold text-[14px] mb-4', 'Air Quality Forecast');
+        const forecastTitle = this.createElement('div', 'font-bold text-[14px]', 'Air Quality Forecast');
+        const forecastSubTitle = this.createElement('div', 'text-[11px] mb-4', 'Based on PM 2.5');
         const forecastChart = this.createElement('div', 'chart-one');
         forecastChart.id = `${cardId}-forecast`;
 
         forecastSection.appendChild(forecastTitle);
+        forecastSection.appendChild(forecastSubTitle);
         forecastSection.appendChild(forecastChart);
 
         // Create forecast chart after DOM insertion
@@ -1458,8 +1573,14 @@ class AirQualityCardManager {
         }, 200);
 
         if (data.lastUpdated) {
+            const platformTimezone = data.timezone || 'Asia/Jakarta';
+            const platformLocale = data.locale || 'id-ID';
+
+            const formattedLastUpdated = this.safeFormatDate(data.lastUpdated, platformTimezone, platformLocale);
+            const timezoneShort = platformTimezone.split('/')[1] || platformTimezone;
+
             const lastUpdatedDiv = this.createElement('div', 'text-[10px] text-gray-400 mt-4 last-updated',
-                `Last updated: ${data.lastUpdated.toLocaleString()}`);
+                `Last updated: ${formattedLastUpdated} (${timezoneShort})`);
             forecastSection.appendChild(lastUpdatedDiv);
         }
 

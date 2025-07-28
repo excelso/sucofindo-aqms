@@ -7,11 +7,13 @@
     use App\Models\Master\AqiCategories;
     use App\Models\Master\Loggers;
     use App\Models\Master\Platforms;
+    use App\Models\Master\PlatformsHeartbeat;
     use Cache;
     use Carbon\Carbon;
     use Exception;
     use Illuminate\Http\RedirectResponse;
     use Illuminate\Http\Request;
+    use Illuminate\Pagination\LengthAwarePaginator;
     use Illuminate\Support\Facades\Auth;
     use Illuminate\Support\Facades\Log;
     use Illuminate\Support\Facades\Redirect;
@@ -83,8 +85,10 @@
                         ],
                         'isOnline' => !!$dataLastLogger,
                         'cctvLink' => $platform->cctv_link,
+                        'timezone' => $platform->timezone,
+                        'locale' => 'en-US',
                         'forecastData' => $this->processLoggerData($platform->uid),
-                        'lastUpdated' => $dataLastLogger ? Carbon::createFromTimestampUTC($dataLastLogger->datetime_unix)->timezone('Asia/Jakarta')->format('d M Y H:i:s') : null
+                        'lastUpdated' => $dataLastLogger ? Carbon::createFromTimestampUTC($dataLastLogger->datetime_unix)->timezone('Asia/Jakarta')->format('d M Y H:i:s') : null,
                     ];
                 }
 
@@ -126,7 +130,7 @@
                         'link_video_recorded' => $logger->link_video_recorded ?? null,
                         'pm25' => $logger->pm_25,
                         'category' => $aqiCat->category_name_en ?? 'Unknown',
-                        'category_id' => $aqiCat->id, // 🔍 For debugging
+                        'category_id' => $aqiCat->id,
                         'category_range' => "[{$aqiCat->pm25_min}, {$aqiCat->pm25_max}]",
                     ];
                 } catch (Exception $e) {
@@ -183,6 +187,7 @@
         }
         //endregion
 
+        //region Handle Detail Metric
         public function detailMetric(Request $request, $uid) {
             try {
 
@@ -223,6 +228,47 @@
                     'responseTime' => Carbon::now()
                 ]);
 
+            } catch (Exception $exception) {
+                return response()->json([
+                    'message' => $exception->getMessage() . ' on line ' . $exception->getLine(),
+                    'file' => $exception->getFile(),
+                    'responseTime' => Carbon::now()
+                ], 500);
+            }
+        }
+        //endregion
+
+        public function handleDetailPlatformHeartbeat(Request $request, $uid) {
+            try {
+
+                $page = $request->get('page', 1);
+                $perPage = 20;
+
+                // Ambil semua data dulu
+                $allData = PlatformsHeartbeat::getHeartbeatWithGap($uid);
+
+                // Manual pagination
+                $currentPageItems = $allData->slice(($page - 1) * $perPage, $perPage)->values();
+
+                $platformHeartbeat = new LengthAwarePaginator(
+                    $currentPageItems,
+                    $allData->count(),
+                    $perPage,
+                    $page,
+                    [
+                        'path' => $request->url(),
+                        'pageName' => 'page',
+                    ]
+                );
+
+                // Add query parameters for pagination links
+                $platformHeartbeat->appends($request->query());
+
+                return response()->json([
+                    'message' => 'Load Successfully',
+                    'data' => $platformHeartbeat,
+                    'responseTime' => Carbon::now()
+                ], 200);
             } catch (Exception $exception) {
                 return response()->json([
                     'message' => $exception->getMessage() . ' on line ' . $exception->getLine(),

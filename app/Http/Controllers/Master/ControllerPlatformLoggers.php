@@ -5,6 +5,7 @@
     use App\Http\Controllers\Controller;
     use App\Models\Master\Companies;
     use App\Models\Master\CompaniesSites;
+    use App\Models\Master\LoggersLimit;
     use App\Models\Master\Platforms;
     use Carbon\Carbon;
     use DB;
@@ -92,7 +93,8 @@
         public function handleDetailPlatform($platformId) {
             try {
 
-                $detailPlatform = Platforms::dataPlatformsById($platformId)->first();
+                $detailPlatform = Platforms::dataPlatformsById($platformId)
+                    ->with('loggerLimit')->first();
                 return response()->json([
                     'message' => 'Load Success!',
                     'data' => $detailPlatform,
@@ -124,10 +126,14 @@
                     }
                 ],
                 'cctv_link' => 'nullable|url',
+                'cctv_link_hls' => 'nullable|url',
+                'timezone' => 'required',
             ], [], [
                 'company_site_id' => 'Site Name',
                 'uid' => 'UID',
-                'cctv_link' => 'CCTV Link',
+                'cctv_link' => 'CCTV Link (RTC)',
+                'cctv_link_hls' => 'CCTV Link (HLS)',
+                'timezone' => 'Timezone',
             ]);
 
             if ($validator->fails()) {
@@ -138,16 +144,66 @@
             }
 
             try {
+
                 DB::transaction(function () use ($platformId, $request) {
-                    return Platforms::where('id', $platformId)->update([
+                    Platforms::where('id', $platformId)->update([
                         'company_site_id' => $request->input('company_site_id'),
                         'uid' => $request->input('uid'),
                         'cctv_link' => $request->input('cctv_link'),
+                        'cctv_link_hls' => $request->input('cctv_link_hls'),
+                        'timezone' => $request->input('timezone'),
+                    ]);
+
+                    LoggersLimit::where('uid', $request->input('uid'))->update([
+                        'pm10_min' => $request->input('pm10_min'),
+                        'pm10_min_buffer' => $request->input('pm10_min_buffer'),
+                        'pm10_max_buffer' => $request->input('pm10_max_buffer'),
+                        'pm10_max' => $request->input('pm10_max'),
+                        'pm25_min' => $request->input('pm25_min'),
+                        'pm25_min_buffer' => $request->input('pm25_min_buffer'),
+                        'pm25_max_buffer' => $request->input('pm25_max_buffer'),
+                        'pm25_max' => $request->input('pm25_max'),
+                        'tsp_min' => $request->input('tsp_min'),
+                        'tsp_min_buffer' => $request->input('tsp_min_buffer'),
+                        'tsp_max_buffer' => $request->input('tsp_max_buffer'),
+                        'tsp_max' => $request->input('tsp_max'),
+                        'noise_min' => $request->input('noise_min'),
+                        'noise_min_buffer' => $request->input('noise_min_buffer'),
+                        'noise_max_buffer' => $request->input('noise_max_buffer'),
+                        'noise_max' => $request->input('noise_max'),
                     ]);
                 });
 
                 return response()->json([
                     'message' => 'Update Platform data saved successfully',
+                    'responseTime' => Carbon::now()
+                ]);
+
+            } catch (Exception $exception) {
+                return response()->json([
+                    'message' => $exception->getMessage() . ' on line ' . $exception->getLine(),
+                    'file' => $exception->getFile(),
+                    'responseTime' => Carbon::now()
+                ], 500);
+            } catch (Throwable $exception) {
+                return response()->json([
+                    'message' => $exception->getMessage() . ' on line ' . $exception->getLine(),
+                    'file' => $exception->getFile(),
+                    'responseTime' => Carbon::now()
+                ], 500);
+            }
+        }
+        //endregion
+
+        //region Handle Delete
+        public function delete(Request $request, $platformId) {
+            try {
+                DB::transaction(function () use ($platformId, $request) {
+                    return Platforms::where('id', $platformId)->delete();
+                });
+
+                return response()->json([
+                    'message' => 'Platform data deleted successfully',
                     'responseTime' => Carbon::now()
                 ]);
 

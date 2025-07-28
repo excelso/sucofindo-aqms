@@ -47,4 +47,14 @@
                     ->whereIn('uid', $uids)->groupBy('uid');
             });
         }
+
+        public function scopeReportLoggerData(Builder $builder, $uid, $options = []): void {
+            $search = [];
+            if (count($options) != 0) {
+                $search = $options['search'];
+            }
+
+            $builder->where('uid', $uid);
+            $builder->orderBy('datetime_unix', 'ASC');
+        }
     }

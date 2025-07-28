@@ -5,6 +5,7 @@
     use App\Http\Controllers\Master\ControllerPlatformLoggers;
     use App\Http\Controllers\Master\ControllerSites;
     use App\Http\Controllers\Master\ControllerUsers;
+    use App\Http\Controllers\Reports\ControllerReportLogParameter;
     use App\Http\Controllers\Settings\ControllerChangePassword;
     use App\Http\Controllers\Settings\WebRTCProxyController;
     use App\Http\Helper\ExImage;
@@ -60,6 +61,7 @@
                 Route::get('platforms', [ControllerDashboard::class, 'getDataPlatforms']);
                 Route::get('detail-metric/{uid}', [ControllerDashboard::class, 'detailMetric']);
                 Route::get('webrtc-proxy', [WebRTCProxyController::class, 'proxyGet']);
+                Route::get('platform-heartbeat/{uid}', [ControllerDashboard::class, 'handleDetailPlatformHeartbeat']);
             });
 
             Route::group(['prefix' => 'master'], function () {
@@ -74,6 +76,7 @@
                     Route::post('store', [ControllerPlatformLoggers::class, 'store']);
                     Route::get('detail/{platformId}', [ControllerPlatformLoggers::class, 'handleDetailPlatform']);
                     Route::put('update/{platformId}', [ControllerPlatformLoggers::class, 'update']);
+                    Route::delete('delete/{platformId}', [ControllerPlatformLoggers::class, 'delete']);
                 });
 
                 Route::group(['prefix' => 'users'], function () {
@@ -83,6 +86,12 @@
                     Route::get('detail/{userId}', [ControllerUsers::class, 'handleDetailUser']);
                     Route::put('update/{userId}', [ControllerUsers::class, 'update']);
                     Route::delete('delete/{userId}', [ControllerUsers::class, 'delete']);
+                });
+            });
+
+            Route::group(['prefix' => 'reports'], function () {
+                Route::group(['prefix' => 'logs-parameter'], function () {
+                    Route::get('/', [ControllerReportLogParameter::class, 'index']);
                 });
             });
 

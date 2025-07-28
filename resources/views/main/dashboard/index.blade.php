@@ -37,6 +37,7 @@
 
         @include('main.dashboard.popup.cctv')
         @include('main.dashboard.popup.detail-parameter')
+        @include('main.dashboard.popup.heartbeat-status')
     </div>
 </x-app-layout>
 

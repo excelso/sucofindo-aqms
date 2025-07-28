@@ -2,10 +2,18 @@ import Hls from "hls.js";
 import {closeModalDialog, showModalDialog} from "@/js/plugins/modal";
 import {AirQualityCardManager, MetricsData} from "@/js/main/dashboard/airQualityCardManager";
 import Highcharts from "highcharts";
-import {getMetaContent} from "@/js/plugins/functions";
+import {
+    formatter,
+    getMetaContent, handleFixedTd,
+    handleFixedTheadTh,
+    renderPagination,
+    tableTooltip,
+    triggerTableTooltip
+} from "@/js/plugins/functions";
 import {failureAlert, waitLoader} from "@/js/plugins/sweet-alert";
 import {SocketClient} from "@/js/plugins/SocketClient";
 import Swal from "sweetalert2";
+import moment from "moment";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
@@ -14,6 +22,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalCctv = document.querySelector('.modalCctv')
     const modalBody = modalCctv.querySelector('.modal-body')
     const modalDetailParameter = document.querySelector('.modalDetailParameter')
+    const modalHeartbeat = document.querySelector('.modalHeartbeat')
+    const tHeartbeatData = modalHeartbeat.querySelector('.tHeartbeatData')
+    const footerHeartbeat = modalHeartbeat.querySelector('.footerHeartbeat')
     const bodyChart: HTMLElement = modalDetailParameter.querySelector('.bodyChart')
     const closeModalForm = document.querySelectorAll('.closeModalForm')
     const socket = SocketClient.getInstance('dashboard', appEnv.value === 'local' ? 'ws://127.0.0.1:3300' : 'https://aqms-api.cloudtrack.id')
@@ -38,6 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
 
             closeModalDialog(modalDetailParameter)
+            closeModalDialog(modalHeartbeat)
         })
     })
     //endregion
@@ -90,6 +102,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Offline mode - gunakan video yang sudah ada
                 showVideoModal(cardId, linkVideoRecorded)
             }
+        },
+        onHeartbeatStatusClick: (id) => {
+            handleModalHeartbeat(id)
         }
     });
 
@@ -101,7 +116,8 @@ document.addEventListener('DOMContentLoaded', function () {
     //
     // });
 
-    const showVideoModal = (cardId, videoUrl) => {
+    //region Handle Open Video on Forecast Chart
+    const showVideoModal = (cardId: any, videoUrl: string) => {
         showModalDialog(modalCctv, `
             <div class="flex items-center">
                 <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${cardId}
@@ -191,6 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         })
     }
+    //endregion
 
     //region Handle Create Video Element with WebRTC and HLS Fallback
     function createVideoElementWithAutoplay(streamUrl: string): void {
@@ -743,4 +760,107 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     //endregion
+
+    //region Handle Modal Heartbeat Platform
+    function handleModalHeartbeat(uid: string) {
+        showModalDialog(modalHeartbeat, null, async () => {
+            renderData()
+        })
+
+        function renderData(options?: any) {
+            lookupData(options).then(response => {
+                renderBody(response)
+
+                const {dataResponse} = response as any
+                renderPagination(dataResponse, renderData, footerHeartbeat, options)
+            })
+        }
+
+        function lookupData(options: any) {
+            return new Promise(async (resolve, reject) => {
+                const {url: dataLinks} = options || {}
+                const dataUrl = dataLinks ?? `/dashboard/platform-heartbeat/${uid}`
+                const response = await fetch(dataUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                })
+
+                const {status} = response
+                const {message, data} = await response.json()
+                if (status === 200) {
+                    resolve({dataResponse: data})
+                } else {
+                    reject(message)
+                }
+            })
+        }
+
+        function renderBody(response: any) {
+            const {dataResponse} = response
+            const {data} = dataResponse
+            const itemBodies = []
+            if (data.length !== 0) {
+                data.map((item: any, index: number) => {
+                    const {uid, heartbeat_status, gap_readable, updated_at} = item
+
+                    let heartbeatStatus = '<span class="ds-badge ds-badge-outline ds-badge-success !text-[11px]">Online</span>'
+                    if (heartbeat_status === 'Offline') {
+                        heartbeatStatus = '<span class="ds-badge ds-badge-outline ds-badge-error !text-[11px]">Offline</span>'
+                    }
+
+                    let rowColor = ''
+                    let gapDisplay = gap_readable
+                    const isFirstItem = index === 0
+                    if (isFirstItem) {
+                        rowColor = 'bg-green-50'
+
+                        // Hitung durasi dari updated_at sampai sekarang menggunakan moment
+                        const lastUpdate = moment(updated_at)
+                        const now = moment()
+                        const duration = moment.duration(now.diff(lastUpdate))
+
+                        // Format durasi yang readable
+                        gapDisplay = formatDuration(duration)
+                    }
+
+                    itemBodies.push(`
+                        <tr class="data-deduction ${rowColor}">
+                            <td class="text-center">${uid}</td>
+                            <td class="text-left">${heartbeatStatus}</td>
+                            <td class="text-center">${moment(updated_at).format('DD MMM YYYY - HH:mm')}</td>
+                            <td class="text-right">${gapDisplay}</td>
+                        </tr>
+                    `)
+                })
+
+                tHeartbeatData.innerHTML = itemBodies.join('')
+
+                tableTooltip()
+                triggerTableTooltip()
+                handleFixedTheadTh()
+                handleFixedTd()
+            }
+
+            function formatDuration(duration) {
+                const days = Math.floor(duration.asDays())
+                const hours = duration.hours()
+                const minutes = duration.minutes()
+                const seconds = duration.seconds()
+
+                const parts = []
+
+                if (days > 0) parts.push(`${days} hari`)
+                if (hours > 0) parts.push(`${hours} jam`)
+                if (minutes > 0) parts.push(`${minutes} menit`)
+                if (seconds > 0 || parts.length === 0) parts.push(`${seconds} detik`)
+
+                return parts.join(' ')
+            }
+        }
+    }
+    //endregion
+
 })
