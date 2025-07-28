@@ -52,8 +52,8 @@
                                     <th class="text-center w-[50px]">No.</th>
                                     <th class="text-center w-[150px]">UID</th>
                                     <th class="text-center w-[150px]">Date & Time</th>
-                                    <th class="text-right w-[150px]">PM 10</th>
                                     <th class="text-right w-[150px]">PM 2.5</th>
+                                    <th class="text-right w-[150px]">PM 10</th>
                                     <th class="text-right w-[150px]">TSP</th>
                                     <th class="text-right w-[150px]">Noise</th>
                                 </tr>
@@ -66,8 +66,8 @@
                                             <td class="text-center">{{$i++}}</td>
                                             <td class="text-center">{{ $item->uid ?? '' }}</td>
                                             <td class="text-center">{{ Carbon::parse($item->datetime_unix)->setTimezone($platform->timezone)->format('d M Y H:i:s') ?? '' }}</td>
-                                            <td class="text-right">{{ $item->pm_10 ?? '' }}</td>
                                             <td class="text-right">{{ $item->pm_25 ?? '' }}</td>
+                                            <td class="text-right">{{ $item->pm_10 ?? '' }}</td>
                                             <td class="text-right">{{ $item->tsp ?? '' }}</td>
                                             <td class="text-right">{{ $item->noise ?? '' }}</td>
                                         </tr>
