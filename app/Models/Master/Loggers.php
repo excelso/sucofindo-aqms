@@ -39,12 +39,7 @@
             $builder->orderBy('datetime_unix', $direction);
         }
 
-        public function scopeLoggerData5Minutes(Builder $builder, $uid, $options = []): void {
-            $search = [];
-            if (count($options) != 0) {
-                $search = $options['search'];
-            }
-
+        public function scopeLoggerData5Minutes(Builder $builder, $uid): void {
             $builder->withoutGlobalScopes();
             $builder->from(function ($builder) use ($uid) {
                 $builder->select([
@@ -81,7 +76,26 @@
                 $search = $options['search'];
             }
 
-            $builder->where('uid', $uid);
-            $builder->orderBy('datetime_unix', 'ASC');
+            $builder->withoutGlobalScopes();
+            $builder->from(function ($builder) use ($uid) {
+                $builder->select([
+                    'id',
+                    'uid',
+                    'link_video_recorded'
+                ]);
+                $builder->selectRaw('FROM_UNIXTIME(FLOOR(datetime_unix / 300) * 300) AS interval_time');
+                $builder->selectRaw('FLOOR(datetime_unix / 300) * 300 AS datetime_unix');
+                $builder->selectRaw('COUNT(*) AS record_count');
+                $builder->selectRaw('ROUND(AVG(pm_10), 0) AS pm_10');
+                $builder->selectRaw('ROUND(AVG(pm_25), 0) AS pm_25');
+                $builder->selectRaw('ROUND(AVG(tsp), 0) AS tsp');
+                $builder->selectRaw('ROUND(AVG(noise), 2) AS noise');
+                $builder->from('t_loggers');
+                $builder->where('uid', $uid);
+                $builder->groupByRaw('uid, FLOOR(datetime_unix / 300)');
+                $builder->orderByRaw('FLOOR(datetime_unix / 300) * 300');
+            }, 'summary');
+
+            $builder->orderBy('summary.datetime_unix', 'DESC');
         }
     }
