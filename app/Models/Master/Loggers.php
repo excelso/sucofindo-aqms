@@ -39,7 +39,12 @@
             $builder->orderBy('datetime_unix', $direction);
         }
 
-        public function scopeLoggerData5Minutes(Builder $builder, $uid): void {
+        public function scopeLoggerData5Minutes(Builder $builder, $uid, $options = []): void {
+            $search = [];
+            if (count($options) != 0) {
+                $search = $options['search'];
+            }
+
             $builder->withoutGlobalScopes();
             $builder->from(function ($builder) use ($uid) {
                 $builder->select([

@@ -26,7 +26,7 @@
             $dataCompanies = Companies::all();
 
             $dataPlatform = Platforms::orderBy('uid', 'ASC')->first();
-            $dataLogger = Loggers::reportLoggerData($dataPlatform->uid, [
+            $dataLogger = Loggers::loggerData5Minutes($dataPlatform->uid, [
                 'search' => $request->input()
             ]);
 

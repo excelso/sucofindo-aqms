@@ -78,7 +78,7 @@
                     </div>
                     @if(isset($items) && count($items) === 0)
                         <div class="not-found">
-                            <div>No Sites data found</div>
+                            <div>No Logger data found</div>
                         </div>
                     @endif
                 </div>
