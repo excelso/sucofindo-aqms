@@ -1,8 +1,10 @@
 import Highcharts from 'highcharts'
 import "highcharts/highcharts-more";
 import "highcharts/modules/solid-gauge";
+import "highcharts/modules/no-data-to-display";
 import {io, Socket} from 'socket.io-client';
 import {SocketClient, SocketEventCallbacks, SocketOptions} from "@/js/plugins/SocketClient";
+import {createSmoothGradient} from "@/js/main/dashboard/chartHelper";
 
 interface AirQualityData {
     uid: string;
@@ -74,6 +76,7 @@ interface CardManagerOptions {
     enableCharts?: boolean;
     chartUpdateInterval?: number;
     realTimeUpdateInterval?: number;
+    autoLoadInitialData?: boolean;
     apiEndpoint?: string;
     enableSocketIO?: boolean;
     socketIOUrl?: string;
@@ -136,6 +139,7 @@ class AirQualityCardManager {
             enableCharts: true,
             chartUpdateInterval: 0, // Disable auto-update, use real-time instead
             realTimeUpdateInterval: 0, // Disable when using Socket.IO
+            autoLoadInitialData: true,
             enableSocketIO: false,
             socketInstanceName: 'air-quality-default',
             socketIOOptions: {
@@ -154,7 +158,9 @@ class AirQualityCardManager {
 
         // Auto-load initial data if API endpoint is provided
         if (this.options.apiEndpoint) {
-            this.loadInitialData();
+            this.loadInitialData().catch((error) => {
+                console.error(error);
+            });
         }
 
         // Initialize Socket.IO if configured (for real-time updates)
@@ -164,7 +170,9 @@ class AirQualityCardManager {
 
         // Initialize periodic updates only if Socket.IO is disabled
         if (this.options.apiEndpoint && this.options.realTimeUpdateInterval && !this.options.enableSocketIO) {
-            this.startRealTimeUpdates();
+            this.startRealTimeUpdates().catch((error) => {
+                console.error(error);
+            });
         }
     }
 
@@ -385,8 +393,8 @@ class AirQualityCardManager {
     // region Get AQI Color
     private getAQIColor(aqiValue: number): string {
         const categories = [
-            {min: 0, max: 50, color: '#22C55E'},      // Baik
-            {min: 51, max: 100, color: '#EAB308'},    // Sedang
+            {min: 0, max: 49, color: '#22C55E'},      // Baik
+            {min: 50, max: 100, color: '#EAB308'},    // Sedang
             {min: 101, max: 150, color: '#F97316'},   // Tidak sehat sensitif
             {min: 151, max: 200, color: '#EF4444'},   // Tidak sehat
             {min: 201, max: 300, color: '#DC2626'},   // Sangat tidak sehat
@@ -487,7 +495,7 @@ class AirQualityCardManager {
 
 // endregion
 
-    // region Create Forecast Chart
+    // region Create Forecast Chart dengan Adaptive Range
     private createForecastChart(element: HTMLElement, data: Array<{
         timestamp: number;
         value: number
@@ -499,27 +507,53 @@ class AirQualityCardManager {
         const managerInstance = this;
 
         const platformData = this.data.find(item => item.uid === cardId.replace(/card-|-\d+$/g, ''));
-        const platformTimezone = platformData?.timezone || 'Asia/Jakarta'; // Default WIB
+        const platformTimezone = platformData?.timezone || 'Asia/Jakarta';
         const platformLocale = platformData?.locale || 'id-ID';
 
-        // Default data with Unix timestamps (current time and hourly intervals)
+        // Default data with Unix timestamps
         const now = Math.floor(new Date().setHours(0, 1, 0, 0) / 1000);
         const defaultData = data || Array.from({length: 144}, (_, i) => ({
-            timestamp: now + (i * 300), // Add 1-hour intervals
+            timestamp: now + (i * 300),
             value: Math.floor(Math.random() * 50) + 20
         }));
 
         // Prepare chart data
         const chartData = defaultData.map(item => ({
-            x: item.timestamp * 1000, // Highcharts expects milliseconds
+            x: item.timestamp * 1000,
             y: item.value,
-            timestamp: item.timestamp
+            timestamp: item.timestamp,
+            marker: {
+                lineWidth: 2,
+                lineColor: 'white',
+                fillColor: this.getAQIColor(item.value),
+                radius: 0,
+                symbol: 'circle'
+            }
         }));
 
+        const yValues = chartData.map(point => point.y);
+        const dataMinY = Math.min(...yValues);
+        const dataMaxY = Math.max(...yValues);
+
+        // Set range berdasarkan nilai maksimal data
+        const minY = Math.min(0, dataMinY); // Selalu mulai dari 0 atau lebih rendah
+        let maxY: number;
+        if (dataMaxY <= 50) {
+            maxY = Math.max(50, dataMaxY + 5); // Tambah sedikit padding
+        } else if (dataMaxY <= 100) {
+            maxY = Math.max(100, dataMaxY + 10);
+        } else if (dataMaxY <= 150) {
+            maxY = Math.max(150, dataMaxY + 10);
+        } else {
+            maxY = Math.max(300, dataMaxY + 20);
+        }
+
+        // Gunakan helper function dengan range adaptif
+        const gradient = createSmoothGradient(minY, maxY);
         const chart = Highcharts.chart({
             chart: {
                 renderTo: element,
-                type: 'spline',
+                type: 'areaspline',
                 marginLeft: 45,
                 height: 150,
                 style: {
@@ -527,6 +561,9 @@ class AirQualityCardManager {
                 }
             },
             title: {text: null},
+            lang: {
+                noData: "No forecast data available"
+            },
             credits: {enabled: false},
             xAxis: {
                 type: 'datetime',
@@ -546,7 +583,7 @@ class AirQualityCardManager {
                 gridLineWidth: 0,
                 gridLineColor: '#eee',
                 gridLineDashStyle: 'Dash',
-                tickInterval: 3600 * 2000, // 1-hour intervals in milliseconds
+                tickInterval: 3600 * 2000,
             },
             yAxis: {
                 title: {
@@ -562,7 +599,8 @@ class AirQualityCardManager {
                 gridLineWidth: 1,
                 gridLineColor: '#eee',
                 gridLineDashStyle: 'Dash',
-                min: 0,
+                min: minY,
+                // max: maxY, // Gunakan maxY yang adaptif
             },
             legend: {enabled: false},
             tooltip: {
@@ -576,12 +614,14 @@ class AirQualityCardManager {
                     const timestampSeconds = timestampMs / 1000;
                     const formattedTime = managerInstance.safeFormatTimestamp(timestampSeconds, 'datetime', platformTimezone, platformLocale, true);
                     const timezoneShort = platformTimezone.split('/')[1] || platformTimezone;
+
                     return `<b>Time (${timezoneShort}):</b> ${formattedTime}<br><b>AQI:</b> ${this.y}`;
                 }
             },
             plotOptions: {
-                spline: {
-                    lineWidth: 3,
+                areaspline: {
+                    lineWidth: 1,
+                    lineColor: 'transparent',
                     marker: {
                         enabled: false,
                         states: {
@@ -595,76 +635,29 @@ class AirQualityCardManager {
                     },
                     states: {
                         hover: {lineWidth: 3}
-                    }
+                    },
+                    threshold: minY
                 }
             },
             series: [{
                 type: 'areaspline',
                 name: 'AQI Forecast',
                 data: chartData,
-                color: {
-                    linearGradient: {x1: 0, x2: 0, y1: 0, y2: 1},
-                    stops: [
-                        [0, '#DC2626'],      // Atas = Merah (500)
-                        [0.2, '#F97316'],    // Orange (300)
-                        [0.4, '#EAB308'],    // Kuning (150)
-                        [0.8, '#22C55E'],    // Hijau (50)
-                        [1, '#22C55E']       // Bawah = Hijau (0)
-                    ]
-                },
-                marker: {
-                    lineWidth: 2,
-                    lineColor: 'white',
-                    fillColor: '#4CAF50',
-                    radius: 0,
-                    symbol: 'circle'
-                }
+                fillColor: gradient, // Gradient adaptif
             }]
-        }, function (chart) {
+        }, function (chart: any) {
+            // Handle markers untuk point dengan nilai tinggi
             if (data && data.length > 0) {
                 const series = chart.series[0];
                 const lastPoint = series.data[series.data.length - 1];
 
                 if (lastPoint) {
+                    const linkVideoPoint = this.getVideoLinkForPoint(cardId, lastPoint.x)
                     const aqiValue = lastPoint.y;
                     const markerColor = this.getAQIColor(aqiValue);
 
-                    lastPoint.update({
-                        marker: {
-                            enabled: true,
-                            radius: 6,
-                            fillColor: markerColor,
-                            lineWidth: 2,
-                            lineColor: 'white'
-                        },
-                        events: {
-                            click: (event: any) => {
-                                if (lastPoint.y > 50) {
-                                    if (this.options.onClickForcastPoint) {
-                                        const linkVideoPoint = this.getVideoLinkForPoint(cardId, lastPoint.x)
-                                        this.options.onClickForcastPoint(event, {
-                                            cardId: cardId || 'unknown',
-                                            timestamp: lastPoint.x ? lastPoint.x / 1000 : Date.now() / 1000,
-                                            value: lastPoint.y,
-                                            pointIndex: series.data.length - 1,
-                                            isLastPoint: true,
-                                            formattedDate: new Date(lastPoint.x || Date.now()).toLocaleDateString(),
-                                            formattedTime: new Date(lastPoint.x || Date.now()).toLocaleTimeString(),
-                                            linkVideo: linkVideoPoint
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                    }, false);
-                    chart.redraw();
-                }
-
-                series.data.forEach((item: any, index: number) => {
-                    if (item.y > 50) {
-                        const markerColor = this.getAQIColor(item.y);
-
-                        item.update({
+                    if (linkVideoPoint.linkVideoRecorded) {
+                        lastPoint.update({
                             marker: {
                                 enabled: true,
                                 radius: 6,
@@ -674,44 +667,74 @@ class AirQualityCardManager {
                             },
                             events: {
                                 click: (event: any) => {
-                                    if (this.options.onClickForcastPoint) {
-                                        const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.x)
-                                        this.options.onClickForcastPoint(event, {
-                                            cardId: cardId || 'unknown',
-                                            timestamp: item.x ? item.x / 1000 : Date.now() / 1000,
-                                            value: item.y,
-                                            pointIndex: index,
-                                            isLastPoint: false,
-                                            isHighValue: true, // Karena item.y > 100
-                                            formattedDate: new Date(item.x || Date.now()).toLocaleDateString(),
-                                            formattedTime: new Date(item.x || Date.now()).toLocaleTimeString(),
-                                            linkVideo: linkVideoPoint
-                                        });
+                                    if (lastPoint.y > 50) {
+                                        if (this.options.onClickForcastPoint) {
+                                            const linkVideoPoint = this.getVideoLinkForPoint(cardId, lastPoint.x)
+                                            this.options.onClickForcastPoint(event, {
+                                                cardId: cardId || 'unknown',
+                                                timestamp: lastPoint.x ? lastPoint.x / 1000 : Date.now() / 1000,
+                                                value: lastPoint.y,
+                                                pointIndex: series.data.length - 1,
+                                                isLastPoint: true,
+                                                formattedDate: new Date(lastPoint.x || Date.now()).toLocaleDateString(),
+                                                formattedTime: new Date(lastPoint.x || Date.now()).toLocaleTimeString(),
+                                                linkVideo: linkVideoPoint
+                                            });
+                                        }
                                     }
                                 }
                             }
                         }, false);
-                        chart.redraw();
+                    } else {
+                        lastPoint.update({
+                            marker: {
+                                enabled: true,
+                                radius: 6,
+                                fillColor: markerColor,
+                                lineWidth: 2,
+                                lineColor: 'white'
+                            },
+                        }, false);
+                    }
+                    chart.redraw();
+                }
+
+                // Update markers untuk semua point dengan nilai tinggi
+                series.data.forEach((item: any, index: number) => {
+                    const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.x)
+                    if (item.y > 50) {
+                        const markerColor = this.getAQIColor(item.y);
+                        if (linkVideoPoint.linkVideoRecorded) {
+                            item.update({
+                                marker: {
+                                    enabled: true,
+                                    radius: 6,
+                                    fillColor: markerColor,
+                                    lineWidth: 2,
+                                    lineColor: 'white'
+                                },
+                                events: {
+                                    click: (event: any) => {
+                                        if (this.options.onClickForcastPoint) {
+                                            this.options.onClickForcastPoint(event, {
+                                                cardId: cardId || 'unknown',
+                                                timestamp: item.x ? item.x / 1000 : Date.now() / 1000,
+                                                value: item.y,
+                                                pointIndex: index,
+                                                isLastPoint: false,
+                                                isHighValue: true,
+                                                formattedDate: new Date(item.x || Date.now()).toLocaleDateString(),
+                                                formattedTime: new Date(item.x || Date.now()).toLocaleTimeString(),
+                                                linkVideo: linkVideoPoint
+                                            });
+                                        }
+                                    }
+                                }
+                            }, false);
+                            chart.redraw();
+                        }
                     }
                 })
-            } else {
-                const centerX = chart.plotLeft + (chart.plotWidth / 2);
-                const centerY = chart.plotTop + (chart.plotHeight / 2);
-
-                chart.renderer.text(
-                    'No forecast data available',
-                    centerX,
-                    centerY
-                ).attr({
-                    align: 'center',
-                    'text-anchor': 'middle',
-                    zIndex: 999
-                }).css({
-                    color: '#999999',
-                    fontSize: '12px',
-                    fontWeight: 'normal',
-                    textAlign: 'center'
-                }).add();
             }
         }.bind(this))
 
@@ -949,52 +972,71 @@ class AirQualityCardManager {
         const chart = this.chartInstances.get(chartKey);
 
         if (chart && chart.series && chart.series[0]) {
+            const yValues = forecastData.map(item => item.value);
+            const minY = Math.min(0, Math.min(...yValues));
+            const maxY = Math.max(100, Math.max(...yValues));
+            const newGradient = createSmoothGradient(minY, maxY);
+
             // Convert forecast data to Highcharts format
             const chartData = forecastData.map((item, index) => {
                 const markerColor = this.getAQIColor(item.value);
                 const isLastPoint = index === forecastData.length - 1;
                 const isHighValue = item.value > 50;
+                const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.timestamp * 1000);
 
-                return {
-                    x: item.timestamp * 1000,
-                    y: item.value,
-                    timestamp: item.timestamp,
-                    // Enable marker untuk point terakhir dan point dengan nilai tinggi
-                    marker: (isLastPoint || isHighValue) ? {
-                        enabled: true,
-                        radius: 6,
-                        fillColor: markerColor,
-                        lineWidth: 2,
-                        lineColor: 'white'
-                    } : {
-                        enabled: false,
-                        radius: 0
-                    },
-                    events: {
-                        click: (event: any) => {
-                            if (isHighValue) {
-                                if (this.options.onClickForcastPoint) {
-                                    const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.timestamp * 1000)
-                                    this.options.onClickForcastPoint(event, {
-                                        cardId,
-                                        timestamp: item.timestamp,
-                                        value: item.value,
-                                        pointIndex: index,
-                                        isLastPoint,
-                                        isHighValue,
-                                        formattedDate: new Date(item.timestamp * 1000).toLocaleDateString(),
-                                        formattedTime: new Date(item.timestamp * 1000).toLocaleTimeString(),
-                                        linkVideo: linkVideoPoint
-                                    });
+                if (linkVideoPoint.linkVideoRecorded) {
+                    return {
+                        x: item.timestamp * 1000,
+                        y: item.value,
+                        timestamp: item.timestamp,
+                        marker: (isLastPoint || isHighValue) ? {
+                            enabled: true,
+                            radius: 6,
+                            fillColor: markerColor,
+                            lineWidth: 2,
+                            lineColor: 'white'
+                        } : {
+                            enabled: false,
+                            radius: 0
+                        },
+                        events: {
+                            click: (event: any) => {
+                                if (isHighValue) {
+                                    if (this.options.onClickForcastPoint) {
+                                        this.options.onClickForcastPoint(event, {
+                                            cardId,
+                                            timestamp: item.timestamp,
+                                            value: item.value,
+                                            pointIndex: index,
+                                            isLastPoint,
+                                            isHighValue,
+                                            formattedDate: new Date(item.timestamp * 1000).toLocaleDateString(),
+                                            formattedTime: new Date(item.timestamp * 1000).toLocaleTimeString(),
+                                            linkVideo: linkVideoPoint
+                                        });
+                                    }
                                 }
                             }
                         }
+                    };
+                } else {
+                    return {
+                        x: item.timestamp * 1000,
+                        y: item.value,
+                        timestamp: item.timestamp,
                     }
-                };
+                }
             });
 
-            // Update series data
-            chart.series[0].setData(chartData, true);
+            // Update series dengan data dan gradient baru
+            const series = chart.series[0];
+            series.update({
+                data: chartData,
+                fillColor: newGradient // PENTING: Update gradient
+            }, true);
+
+            // Update Y-axis range
+            chart.yAxis[0].setExtremes(minY, maxY, true);
 
             // Update x-axis range
             if (chartData.length > 0) {
@@ -1310,7 +1352,9 @@ class AirQualityCardManager {
 
         // Start periodic polling only if Socket.IO is not enabled
         if (this.options.apiEndpoint && this.options.realTimeUpdateInterval) {
-            this.startRealTimeUpdates();
+            this.startRealTimeUpdates().catch((error) => {
+                console.error(error);
+            })
         }
     }
 

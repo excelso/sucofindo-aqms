@@ -42,7 +42,7 @@
                 $platforms = Platforms::orderBy('created_at', 'ASC')->get();
                 $dataPlatformsTemp = [];
                 foreach ($platforms as $platform) {
-                    $dataLastLogger = Loggers::loggerData($platform->uid, 'DESC')
+                    $dataLastLogger = Loggers::loggerData5Minutes($platform->uid)
                         ->with('limit')->first();
 
                     $aqiCat = AqiCategories::dataAqiPm25($dataLastLogger->pm_25 ?? 0)->first();
@@ -106,7 +106,7 @@
         }
 
         private function processLoggerData($uid) {
-            $loggers = Loggers::loggerData($uid)->get();
+            $loggers = Loggers::loggerData5Minutes($uid)->get();
             $dataLoggersTemp = [];
 
             foreach ($loggers as $logger) {

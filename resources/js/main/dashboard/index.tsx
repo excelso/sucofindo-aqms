@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const footerHeartbeat = modalHeartbeat.querySelector('.footerHeartbeat')
     const bodyChart: HTMLElement = modalDetailParameter.querySelector('.bodyChart')
     const closeModalForm = document.querySelectorAll('.closeModalForm')
-    const socket = SocketClient.getInstance('dashboard', appEnv.value === 'local' ? 'ws://127.0.0.1:3300' : 'https://aqms-api.cloudtrack.id')
+    // const socket = SocketClient.getInstance('dashboard', appEnv.value === 'local' ? 'ws://127.0.0.1:3300' : 'https://aqms-api.cloudtrack.id')
 
     //region Handle Close Menu
     closeModalForm.forEach((elm) => {
@@ -60,13 +60,14 @@ document.addEventListener('DOMContentLoaded', function () {
         batchSize: 50,
         enableLazyLoading: true,
         enableCharts: true,
-        realTimeUpdateInterval: 15000,
+        realTimeUpdateInterval: 60000,
         apiEndpoint: '/dashboard/platforms',
-        enableSocketIO: true,
-        socketIOUrl: appEnv.value === 'local' ? 'ws://127.0.0.1:3300' : 'https://aqms-api.cloudtrack.id',
-        socketIOOptions: {
-            withCredentials: appEnv.value === 'production' || appEnv.value === 'staging',
-        },
+        autoLoadInitialData: false,
+        // enableSocketIO: true,
+        // socketIOUrl: appEnv.value === 'local' ? 'ws://127.0.0.1:3300' : 'https://aqms-api.cloudtrack.id',
+        // socketIOOptions: {
+        //     withCredentials: appEnv.value === 'production' || appEnv.value === 'staging',
+        // },
         onCctvClick: (id, cctvLink) => {
             showModalDialog(modalCctv, `
                 <div class="flex items-center">
@@ -88,18 +89,21 @@ document.addEventListener('DOMContentLoaded', function () {
             const { cardId, linkVideo } = pointData
             const { linkVideoId, linkVideoRecorded } = linkVideo
 
-            if (socket.isConnected()) {
-                await waitLoader('Please wait...', 'Loading Recorded Video', () => {
-                    if (linkVideoId) {
-                        requestVideo(linkVideoId, cardId, linkVideoRecorded)
-                    } else {
-                        failureAlert({
-                            html: 'Video Recorded Not Found',
-                        })
-                    }
-                })
-            } else {
-                // Offline mode - gunakan video yang sudah ada
+            // if (socket.isConnected()) {
+            //     await waitLoader('Please wait...', 'Loading Recorded Video', () => {
+            //         if (linkVideoId) {
+            //             requestVideo(linkVideoId, cardId, linkVideoRecorded)
+            //         } else {
+            //             failureAlert({
+            //                 html: 'Video Recorded Not Found',
+            //             })
+            //         }
+            //     })
+            // } else {
+            //     // Offline mode - gunakan video yang sudah ada
+            // }
+
+            if (linkVideoRecorded) {
                 showVideoModal(cardId, linkVideoRecorded)
             }
         },
@@ -108,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    manager.startRealTimeMode();
+    // manager.startRealTimeMode();
     //endregion
 
     // manager.loadData('/dashboard/platforms').then(() => {
@@ -127,86 +131,86 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     }
 
-    const handleRecordingProgress = (recordingId: string, cardId: string) => {
-        // Listen untuk recording progress
-        socket.on('recording:progress', (data) => {
-            if (data.id === recordingId) {
-                const { progress, status } = data
-
-                if (status === 'recording') {
-                    Swal.update({
-                        title: 'Recording in Progress',
-                        html: `
-                            <div class="text-md mb-3">Progress: ${progress}%</div>
-                            <div class="text-sm text-gray-600">Please wait while we record the video...</div>
-                        `,
-                        showConfirmButton: false,
-                        allowOutsideClick: false,
-                        allowEscapeKey: false
-                    });
-                    Swal.showLoading();
-                }
-
-                if (progress === 99) {
-                    socket.off('recording:progress')
-                }
-            }
-        })
-
-        socket.on('recording:retrying', (data) => {
-            if (data.id === recordingId) {
-                const { status } = data
-
-                if (status === 'retrying') {
-                    Swal.update({
-                        title: 'Retrying Record',
-                        html: `
-                            <div class="text-md text-gray-600">Please Wait, Retry Recording Video</div>
-                        `,
-                        showConfirmButton: false,
-                        allowOutsideClick: false,
-                        allowEscapeKey: false
-                    });
-                    Swal.showLoading();
-                }
-
-                socket.off('recording:retrying')
-            }
-        })
-
-        socket.on('recording:completed', (data) => {
-            if (data.id === recordingId) {
-                socket.off('recording:completed')
-                requestVideo(recordingId, cardId)
-            }
-        })
-    }
-
-    const requestVideo = (recordingId: string, cardId: string, fallbackVideoUrl = null) => {
-        socket.emit('req-video', { recordingId }, async (response) => {
-            if (response.status) {
-                const { status, videoUrl } = response.status
-
-                if (status === 'completed') {
-                    Swal.close()
-                    showVideoModal(cardId, videoUrl)
-                } else if (status === 'recording') {
-                    await waitLoader('Recording in progress...', 'Please wait while video is being recorded', () => {
-                        handleRecordingProgress(recordingId, cardId)
-                    })
-                } else if (status === 'failed') {
-                    Swal.close();
-                    failureAlert({
-                        html: 'Recording Video is Failed',
-                    })
-                }
-            } else if (fallbackVideoUrl) {
-                // Fallback ke video yang sudah ada
-                Swal.close()
-                showVideoModal(cardId, fallbackVideoUrl)
-            }
-        })
-    }
+    // const handleRecordingProgress = (recordingId: string, cardId: string) => {
+    //     // Listen untuk recording progress
+    //     socket.on('recording:progress', (data) => {
+    //         if (data.id === recordingId) {
+    //             const { progress, status } = data
+    //
+    //             if (status === 'recording') {
+    //                 Swal.update({
+    //                     title: 'Recording in Progress',
+    //                     html: `
+    //                         <div class="text-md mb-3">Progress: ${progress}%</div>
+    //                         <div class="text-sm text-gray-600">Please wait while we record the video...</div>
+    //                     `,
+    //                     showConfirmButton: false,
+    //                     allowOutsideClick: false,
+    //                     allowEscapeKey: false
+    //                 });
+    //                 Swal.showLoading();
+    //             }
+    //
+    //             if (progress === 99) {
+    //                 socket.off('recording:progress')
+    //             }
+    //         }
+    //     })
+    //
+    //     socket.on('recording:retrying', (data) => {
+    //         if (data.id === recordingId) {
+    //             const { status } = data
+    //
+    //             if (status === 'retrying') {
+    //                 Swal.update({
+    //                     title: 'Retrying Record',
+    //                     html: `
+    //                         <div class="text-md text-gray-600">Please Wait, Retry Recording Video</div>
+    //                     `,
+    //                     showConfirmButton: false,
+    //                     allowOutsideClick: false,
+    //                     allowEscapeKey: false
+    //                 });
+    //                 Swal.showLoading();
+    //             }
+    //
+    //             socket.off('recording:retrying')
+    //         }
+    //     })
+    //
+    //     socket.on('recording:completed', (data) => {
+    //         if (data.id === recordingId) {
+    //             socket.off('recording:completed')
+    //             requestVideo(recordingId, cardId)
+    //         }
+    //     })
+    // }
+    //
+    // const requestVideo = (recordingId: string, cardId: string, fallbackVideoUrl = null) => {
+    //     socket.emit('req-video', { recordingId }, async (response) => {
+    //         if (response.status) {
+    //             const { status, videoUrl } = response.status
+    //
+    //             if (status === 'completed') {
+    //                 Swal.close()
+    //                 showVideoModal(cardId, videoUrl)
+    //             } else if (status === 'recording') {
+    //                 await waitLoader('Recording in progress...', 'Please wait while video is being recorded', () => {
+    //                     handleRecordingProgress(recordingId, cardId)
+    //                 })
+    //             } else if (status === 'failed') {
+    //                 Swal.close();
+    //                 failureAlert({
+    //                     html: 'Recording Video is Failed',
+    //                 })
+    //             }
+    //         } else if (fallbackVideoUrl) {
+    //             // Fallback ke video yang sudah ada
+    //             Swal.close()
+    //             showVideoModal(cardId, fallbackVideoUrl)
+    //         }
+    //     })
+    // }
     //endregion
 
     //region Handle Create Video Element with WebRTC and HLS Fallback
