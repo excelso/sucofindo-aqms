@@ -28,11 +28,6 @@
                         <i class="fas fa-search mr-2"></i> Search
                     </a>
                 </div>
-                <div class="mr-2">
-                    <a class="btn btn-primary btnCreate ml-2">
-                        <i class="fas fa-plus-circle mr-2"></i> New Sites
-                    </a>
-                </div>
             </div>
         </div>
 
