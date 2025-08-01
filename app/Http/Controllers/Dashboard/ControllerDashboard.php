@@ -42,17 +42,41 @@
                 $platforms = Platforms::orderBy('created_at', 'ASC')->get();
                 $dataPlatformsTemp = [];
                 foreach ($platforms as $platform) {
-                    $dataLastLogger = Loggers::loggerData5Minutes($platform->uid)
+                    $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
+                    $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
+                    if ($request->input('startDate')) {
+                        $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
+                        $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
+                    }
+
+                    $dataLastLogger = Loggers::loggerData5Minutes($platform->uid, $minDate, $maxDate, $platform->timezone)
+                        ->orderBy('datetime_unix', 'DESC')
                         ->with('limit')->first();
 
-                    $aqiCat = AqiCategories::dataAqiPm25($dataLastLogger->pm_25 ?? 0)->first();
+                    $aqiCat = null;
+                    $status = 'Unknown';
+                    $emoji = mb_convert_encoding('&#x2753;', 'UTF-8', 'HTML-ENTITIES');
+                    $colorCode = 'bg-gray-200';
+
+                    if ($dataLastLogger && $dataLastLogger->pm_25 !== null) {
+                        $aqiCat = AqiCategories::dataAqiPm25($dataLastLogger->pm_25)->first();
+                        if (!$aqiCat) {
+                            $aqiCat = AqiCategories::orderBy('pm25_max', 'desc')->first();
+                        }
+
+                        if ($aqiCat) {
+                            $status = $aqiCat->category_name_en;
+                            $emoji = mb_convert_encoding($aqiCat->emoji, 'UTF-8', 'HTML-ENTITIES');
+                            $colorCode = $aqiCat->color_code;
+                        }
+                    }
 
                     $dataPlatformsTemp[] = [
                         'uid' => $platform->uid,
                         'siteName' => $platform->sites->site_name,
-                        'status' => $dataLastLogger != null ? $aqiCat->category_name_en : 'Unknown',
-                        'emoji' => $dataLastLogger ? mb_convert_encoding($aqiCat->emoji, 'UTF-8', 'HTML-ENTITIES') : mb_convert_encoding('&#x2753;', 'UTF-8', 'HTML-ENTITIES'),
-                        'colorCode' => $dataLastLogger ? $aqiCat->color_code : 'bg-gray-200',
+                        'status' => $status,
+                        'emoji' => $emoji,
+                        'colorCode' => $colorCode,
                         'metrics' => [
                             'pm10' => [
                                 'value' => $dataLastLogger->pm_10 ?? 0,
@@ -87,7 +111,7 @@
                         'cctvLink' => $platform->cctv_link,
                         'timezone' => $platform->timezone,
                         'locale' => 'en-US',
-                        'forecastData' => $this->processLoggerData($platform->uid),
+                        'forecastData' => $this->processLoggerData($platform->uid, $minDate, $maxDate, $platform->timezone),
                         'lastUpdated' => $dataLastLogger ? Carbon::createFromTimestampUTC($dataLastLogger->datetime_unix)->timezone('Asia/Jakarta')->format('d M Y H:i:s') : null,
                     ];
                 }
@@ -105,20 +129,29 @@
             }
         }
 
-        private function processLoggerData($uid) {
-            $loggers = Loggers::loggerData5Minutes($uid)->get();
+        private function processLoggerData($uid, $minDate, $maxDate, $timezone) {
+            $loggers = Loggers::loggerData5Minutes($uid, $minDate, $maxDate, $timezone)->get();
             $dataLoggersTemp = [];
 
             foreach ($loggers as $logger) {
                 try {
+                    // Pertama cari kategori AQI berdasarkan PM2.5 value
                     $aqiCat = AqiCategories::where('pm25_min', '<=', $logger->pm_25)
                         ->where('pm25_max', '>=', $logger->pm_25)
                         ->first();
 
+                    // Jika tidak ditemukan (nilai PM2.5 > 500), ambil kategori dengan pm25_max tertinggi
                     if (!$aqiCat) {
-                        throw new Exception("No AQI category found for PM2.5: {$logger->pm_25}");
+                        $aqiCat = AqiCategories::orderBy('pm25_max', 'desc')->first();
+
+                        if (!$aqiCat) {
+                            throw new Exception("No AQI categories found in database");
+                        }
+
+                        Log::warning("PM2.5 value {$logger->pm_25} exceeds maximum category range. Using highest category (pm25_max: {$aqiCat->pm25_max})");
                     }
 
+                    // Hitung AQI value dengan handling untuk nilai di atas range
                     $aqiValue = $this->calculateAQIFromPM25($logger->pm_25, $aqiCat);
 
                     $dataLoggersTemp[] = [
@@ -159,10 +192,16 @@
                 throw new InvalidArgumentException("Invalid PM2.5 value: {$pm25}");
             }
 
-            // Check if PM2.5 is within category range
-            if ($pm25 < $aqiCat->pm25_min || $pm25 > $aqiCat->pm25_max) {
+            // Jika PM2.5 melebihi range kategori tertinggi, gunakan AQI maksimum
+            if ($pm25 > $aqiCat->pm25_max) {
+                Log::info("PM2.5 value {$pm25} exceeds category maximum {$aqiCat->pm25_max}. Returning maximum AQI value.");
+                return $aqiCat->aqi_max;
+            }
+
+            // Check if PM2.5 is below minimum category range
+            if ($pm25 < $aqiCat->pm25_min) {
                 throw new OutOfRangeException(
-                    "PM2.5 value {$pm25} is outside category range [{$aqiCat->pm25_min}, {$aqiCat->pm25_max}]"
+                    "PM2.5 value {$pm25} is below category minimum [{$aqiCat->pm25_min}]"
                 );
             }
 

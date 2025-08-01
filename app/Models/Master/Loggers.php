@@ -39,15 +39,16 @@
             $builder->orderBy('datetime_unix', $direction);
         }
 
-        public function scopeLoggerData5Minutes(Builder $builder, $uid): void {
+        public function scopeLoggerData5Minutes(Builder $builder, $uid, $startDate, $untilDate, $timezone): void {
             $builder->withoutGlobalScopes();
-            $builder->from(function ($builder) use ($uid) {
+            $builder->from(function ($builder) use ($uid, $timezone) {
                 $builder->select([
                     'id',
                     'uid',
                     'link_video_recorded'
                 ]);
-                $builder->selectRaw('FROM_UNIXTIME(FLOOR(datetime_unix / 300) * 300) AS interval_time');
+                // Gunakan timezone yang sama dengan parameter
+                $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / 300) * 300), 'UTC', ?) AS interval_time", [$timezone]);
                 $builder->selectRaw('FLOOR(datetime_unix / 300) * 300 AS datetime_unix');
                 $builder->selectRaw('COUNT(*) AS record_count');
                 $builder->selectRaw('ROUND(AVG(pm_10), 0) AS pm_10');
@@ -59,6 +60,8 @@
                 $builder->groupByRaw('uid, FLOOR(datetime_unix / 300)');
                 $builder->orderByRaw('FLOOR(datetime_unix / 300) * 300');
             }, 'summary');
+
+            $builder->whereBetween('summary.interval_time', [$startDate, $untilDate]);
         }
 
         public function scopeLoggerBulkData(Builder $builder, $uids): void {

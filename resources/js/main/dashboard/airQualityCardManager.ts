@@ -493,7 +493,7 @@ class AirQualityCardManager {
         }
     }
 
-// endregion
+    // endregion
 
     // region Create Forecast Chart dengan Adaptive Range
     private createForecastChart(element: HTMLElement, data: Array<{
