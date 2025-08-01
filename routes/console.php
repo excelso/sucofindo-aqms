@@ -11,6 +11,6 @@ Artisan::command('inspire', function () {
 
 Schedule::job(new CloseExpiredJobs())->hourly();
 
-Schedule::command('server:heartbeat')->everyMinute()
+Schedule::command('server:heartbeat')->everyFiveMinutes()
     ->withoutOverlapping()
     ->runInBackground();
