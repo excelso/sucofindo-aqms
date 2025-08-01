@@ -1,0 +1,18 @@
+{
+    "apps": [
+        {
+            "name": "aqms-scheduler",
+            "script": "php",
+            "args": "artisan schedule:work",
+            "instances": 1,
+            "autorestart": true,
+            "watch": false,
+            "max_memory_restart": "200M",
+            "error_file": "storage/logs/scheduler/err.log",
+            "out_file": "storage/logs/scheduler/out.log",
+            "env": {
+                "APP_ENV": "production"
+            }
+        }
+    ]
+}

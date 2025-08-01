@@ -22,6 +22,11 @@
             'cctv_link',
             'cctv_link_hls',
             'timezone',
+            'ssh_host',
+            'ssh_username',
+            'ssh_password',
+            'ssh_port',
+            'is_active',
         ];
 
         public function sites(): BelongsTo {

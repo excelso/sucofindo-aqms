@@ -10,3 +10,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 Schedule::job(new CloseExpiredJobs())->hourly();
+
+Schedule::command('server:heartbeat')->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground();
