@@ -1,16 +1,16 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
-use App\Jobs\CloseExpiredJobs;
-use Illuminate\Support\Facades\Schedule;
+    use Illuminate\Foundation\Inspiring;
+    use Illuminate\Support\Facades\Artisan;
+    use App\Jobs\CloseExpiredJobs;
+    use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote')->hourly();
+    Artisan::command('inspire', function () {
+        $this->comment(Inspiring::quote());
+    })->purpose('Display an inspiring quote')->hourly();
 
-Schedule::job(new CloseExpiredJobs())->hourly();
+    Schedule::job(new CloseExpiredJobs())->hourly();
 
-Schedule::command('server:heartbeat')->everyFiveMinutes()
-    ->withoutOverlapping()
-    ->runInBackground();
+    Schedule::command('server:heartbeat')->everyMinute()
+        ->withoutOverlapping()
+        ->runInBackground();

@@ -21,6 +21,8 @@
         protected $fillable = [
             'uid',
             'heartbeat_status',
+            'error_message',
+            'datetime_unix',
         ];
 
         public function dataPlatformsHeartbeat($uid) {
