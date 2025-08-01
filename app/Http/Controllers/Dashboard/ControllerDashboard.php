@@ -135,36 +135,41 @@
 
             foreach ($loggers as $logger) {
                 try {
-                    // Pertama cari kategori AQI berdasarkan PM2.5 value
-                    $aqiCat = AqiCategories::where('pm25_min', '<=', $logger->pm_25)
+                    // 1. Cari kategori AQI berdasarkan PM2.5 value untuk perhitungan AQI
+                    $aqiCatForCalculation = AqiCategories::where('pm25_min', '<=', $logger->pm_25)
                         ->where('pm25_max', '>=', $logger->pm_25)
                         ->first();
 
-                    // Jika tidak ditemukan (nilai PM2.5 > 500), ambil kategori dengan pm25_max tertinggi
-                    if (!$aqiCat) {
-                        $aqiCat = AqiCategories::orderBy('pm25_max', 'desc')->first();
+                    // 2. Cari kategori untuk display/status (bisa fallback ke kategori tertinggi)
+                    $aqiCatForDisplay = $aqiCatForCalculation;
 
-                        if (!$aqiCat) {
+                    // Jika tidak ditemukan kategori untuk perhitungan (PM2.5 > 500)
+                    if (!$aqiCatForCalculation) {
+                        // Ambil kategori tertinggi untuk perhitungan AQI
+                        $aqiCatForCalculation = AqiCategories::orderBy('pm25_max', 'desc')->first();
+                        $aqiCatForDisplay = $aqiCatForCalculation; // Display juga pakai kategori tertinggi
+
+                        if (!$aqiCatForCalculation) {
                             throw new Exception("No AQI categories found in database");
                         }
 
-                        Log::warning("PM2.5 value {$logger->pm_25} exceeds maximum category range. Using highest category (pm25_max: {$aqiCat->pm25_max})");
+                        Log::warning("PM2.5 value {$logger->pm_25} exceeds maximum category range. Using highest category for calculation and display.");
                     }
 
-                    // Hitung AQI value dengan handling untuk nilai di atas range
-                    $aqiValue = $this->calculateAQIFromPM25($logger->pm_25, $aqiCat);
+                    // 3. Hitung AQI value (bisa lebih dari 500)
+                    $aqiValue = $this->calculateAQIFromPM25($logger->pm_25, $aqiCatForCalculation);
 
                     $dataLoggersTemp[] = [
                         'logger_id' => $logger->id,
                         'timestamp' => $logger->datetime_unix,
-                        'value' => (float) number_format($aqiValue, 1),
+                        'value' => (float) number_format($aqiValue, 1), // AQI real (bisa > 500)
                         'link_video_id' => $logger->link_video_id ?? null,
                         'link_video_status' => $logger->link_video_status ?? null,
                         'link_video_recorded' => $logger->link_video_recorded ?? null,
                         'pm25' => $logger->pm_25,
-                        'category' => $aqiCat->category_name_en ?? 'Unknown',
-                        'category_id' => $aqiCat->id,
-                        'category_range' => "[{$aqiCat->pm25_min}, {$aqiCat->pm25_max}]",
+                        'category' => $aqiCatForDisplay->category_name_en ?? 'Unknown', // Category dari display
+                        'category_id' => $aqiCatForDisplay->id,
+                        'category_range' => "[{$aqiCatForDisplay->pm25_min}, {$aqiCatForDisplay->pm25_max}]",
                     ];
                 } catch (Exception $e) {
                     Log::error("AQI calculation failed for logger {$logger->id}: " . $e->getMessage());
@@ -192,12 +197,6 @@
                 throw new InvalidArgumentException("Invalid PM2.5 value: {$pm25}");
             }
 
-            // Jika PM2.5 melebihi range kategori tertinggi, gunakan AQI maksimum
-            if ($pm25 > $aqiCat->pm25_max) {
-                Log::info("PM2.5 value {$pm25} exceeds category maximum {$aqiCat->pm25_max}. Returning maximum AQI value.");
-                return $aqiCat->aqi_max;
-            }
-
             // Check if PM2.5 is below minimum category range
             if ($pm25 < $aqiCat->pm25_min) {
                 throw new OutOfRangeException(
@@ -218,9 +217,6 @@
             $pmOffset = $pm25 - $aqiCat->pm25_min;
 
             $aqiValue = (($aqiRange / $pmRange) * $pmOffset) + $aqiCat->aqi_min;
-
-            // Ensure result is within expected AQI range
-            $aqiValue = max($aqiCat->aqi_min, min($aqiCat->aqi_max, $aqiValue));
 
             return round($aqiValue, 1);
         }
