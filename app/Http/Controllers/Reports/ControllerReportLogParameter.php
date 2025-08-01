@@ -26,7 +26,14 @@
             $dataCompanies = Companies::all();
 
             $dataPlatform = Platforms::orderBy('uid', 'ASC')->first();
-            $dataLogger = Loggers::reportLoggerData($dataPlatform->uid, [
+            $minDate = Carbon::now()->timezone($dataPlatform->timezone)->format('Y-m-d') . ' 00:00';
+            $maxDate = Carbon::now()->timezone($dataPlatform->timezone)->format('Y-m-d') . ' 23:59';
+            if ($request->input('startDate')) {
+                $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
+                $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
+            }
+
+            $dataLogger = Loggers::reportLoggerData($dataPlatform->uid, $minDate, $maxDate, $dataPlatform->timezone, [
                 'search' => $request->input()
             ]);
 

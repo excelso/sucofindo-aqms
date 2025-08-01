@@ -135,49 +135,44 @@
 
             foreach ($loggers as $logger) {
                 try {
-                    // 1. Cari kategori AQI berdasarkan PM2.5 value untuk perhitungan AQI
-                    $aqiCatForCalculation = AqiCategories::where('pm25_min', '<=', $logger->pm_25)
+                    // 1. Ambil AQI value langsung dari database (sudah dihitung)
+                    $aqiValue = $logger->aqi_index ?? 0;
+
+                    // 2. Cari kategori AQI berdasarkan PM2.5 value untuk display
+                    $aqiCatForDisplay = AqiCategories::where('pm25_min', '<=', $logger->pm_25)
                         ->where('pm25_max', '>=', $logger->pm_25)
                         ->first();
 
-                    // 2. Cari kategori untuk display/status (bisa fallback ke kategori tertinggi)
-                    $aqiCatForDisplay = $aqiCatForCalculation;
+                    // Jika tidak ditemukan kategori (PM2.5 > 500), ambil kategori tertinggi
+                    if (!$aqiCatForDisplay) {
+                        $aqiCatForDisplay = AqiCategories::orderBy('pm25_max', 'desc')->first();
 
-                    // Jika tidak ditemukan kategori untuk perhitungan (PM2.5 > 500)
-                    if (!$aqiCatForCalculation) {
-                        // Ambil kategori tertinggi untuk perhitungan AQI
-                        $aqiCatForCalculation = AqiCategories::orderBy('pm25_max', 'desc')->first();
-                        $aqiCatForDisplay = $aqiCatForCalculation; // Display juga pakai kategori tertinggi
-
-                        if (!$aqiCatForCalculation) {
+                        if (!$aqiCatForDisplay) {
                             throw new Exception("No AQI categories found in database");
                         }
 
-                        Log::warning("PM2.5 value {$logger->pm_25} exceeds maximum category range. Using highest category for calculation and display.");
+                        Log::warning("PM2.5 value {$logger->pm_25} exceeds maximum category range. Using highest category for display.");
                     }
-
-                    // 3. Hitung AQI value (bisa lebih dari 500)
-                    $aqiValue = $this->calculateAQIFromPM25($logger->pm_25, $aqiCatForCalculation);
 
                     $dataLoggersTemp[] = [
                         'logger_id' => $logger->id,
                         'timestamp' => $logger->datetime_unix,
-                        'value' => (float) number_format($aqiValue, 1), // AQI real (bisa > 500)
+                        'value' => (float) number_format($aqiValue, 1), // AQI langsung dari DB
                         'link_video_id' => $logger->link_video_id ?? null,
                         'link_video_status' => $logger->link_video_status ?? null,
                         'link_video_recorded' => $logger->link_video_recorded ?? null,
                         'pm25' => $logger->pm_25,
-                        'category' => $aqiCatForDisplay->category_name_en ?? 'Unknown', // Category dari display
+                        'category' => $aqiCatForDisplay->category_name_en ?? 'Unknown',
                         'category_id' => $aqiCatForDisplay->id,
                         'category_range' => "[{$aqiCatForDisplay->pm25_min}, {$aqiCatForDisplay->pm25_max}]",
                     ];
                 } catch (Exception $e) {
-                    Log::error("AQI calculation failed for logger {$logger->id}: " . $e->getMessage());
+                    Log::error("AQI processing failed for logger {$logger->id}: " . $e->getMessage());
 
                     $dataLoggersTemp[] = [
                         'logger_id' => $logger->id,
                         'timestamp' => $logger->datetime_unix,
-                        'value' => null,
+                        'value' => $logger->aqi_index ? (float) number_format($logger->aqi_index, 1) : null,
                         'link_video_id' => $logger->link_video_id ?? null,
                         'link_video_status' => $logger->link_video_status ?? null,
                         'link_video_recorded' => $logger->link_video_recorded ?? null,

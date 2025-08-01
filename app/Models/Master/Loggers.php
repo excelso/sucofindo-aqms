@@ -55,6 +55,7 @@
                 $builder->selectRaw('ROUND(AVG(pm_25), 0) AS pm_25');
                 $builder->selectRaw('ROUND(AVG(tsp), 0) AS tsp');
                 $builder->selectRaw('ROUND(AVG(noise), 2) AS noise');
+                $builder->selectRaw('ROUND(AVG(aqi_index), 2) AS aqi_index');
                 $builder->from('t_loggers');
                 $builder->where('uid', $uid);
                 $builder->groupByRaw('uid, FLOOR(datetime_unix / 300)');
@@ -73,32 +74,56 @@
             });
         }
 
-        public function scopeReportLoggerData(Builder $builder, $uid, $options = []): void {
+        public function scopeReportLoggerData(Builder $builder, $uid, $startDate, $untilDate, $timezone, $options = []): void {
             $search = [];
             if (count($options) != 0) {
                 $search = $options['search'];
             }
 
             $builder->withoutGlobalScopes();
-            $builder->from(function ($builder) use ($uid) {
+            $builder->from(function ($builder) use ($uid, $timezone) {
                 $builder->select([
                     'id',
                     'uid',
                     'link_video_recorded'
                 ]);
-                $builder->selectRaw('FROM_UNIXTIME(FLOOR(datetime_unix / 300) * 300) AS interval_time');
+                // Gunakan timezone yang sama dengan parameter
+                $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / 300) * 300), 'UTC', ?) AS interval_time", [$timezone]);
                 $builder->selectRaw('FLOOR(datetime_unix / 300) * 300 AS datetime_unix');
                 $builder->selectRaw('COUNT(*) AS record_count');
                 $builder->selectRaw('ROUND(AVG(pm_10), 0) AS pm_10');
                 $builder->selectRaw('ROUND(AVG(pm_25), 0) AS pm_25');
                 $builder->selectRaw('ROUND(AVG(tsp), 0) AS tsp');
                 $builder->selectRaw('ROUND(AVG(noise), 2) AS noise');
+                $builder->selectRaw('ROUND(AVG(aqi_index), 2) AS aqi_index');
                 $builder->from('t_loggers');
                 $builder->where('uid', $uid);
                 $builder->groupByRaw('uid, FLOOR(datetime_unix / 300)');
                 $builder->orderByRaw('FLOOR(datetime_unix / 300) * 300');
             }, 'summary');
 
+            // Join dengan t_aqi_categories untuk mendapatkan kategori
+            $builder->leftJoin('t_aqi_categories', function ($join) {
+                $join->whereRaw('summary.pm_25 >= t_aqi_categories.pm25_min')
+                    ->whereRaw('summary.pm_25 <= t_aqi_categories.pm25_max');
+            });
+
+            // Jika tidak ada kategori yang cocok (PM2.5 > 500), ambil kategori tertinggi
+            $builder->leftJoin(DB::raw('(SELECT * FROM t_aqi_categories ORDER BY pm25_max DESC LIMIT 1) as highest_category'), function ($join) {
+                $join->whereRaw('t_aqi_categories.id IS NULL');
+            });
+
+            $builder->addSelect([
+                'summary.*',
+                DB::raw('COALESCE(t_aqi_categories.category_name_en, highest_category.category_name_en) as category_name_en'),
+                DB::raw('COALESCE(t_aqi_categories.category_name, highest_category.category_name) as category_name'),
+                DB::raw('COALESCE(t_aqi_categories.color_code, highest_category.color_code) as color_code'),
+                DB::raw('COALESCE(t_aqi_categories.emoji, highest_category.emoji) as emoji'),
+                DB::raw('COALESCE(t_aqi_categories.id, highest_category.id) as category_id'),
+                DB::raw('CONCAT("[", COALESCE(t_aqi_categories.pm25_min, highest_category.pm25_min), ", ", COALESCE(t_aqi_categories.pm25_max, highest_category.pm25_max), "]") as category_range')
+            ]);
+
+            $builder->whereBetween('summary.interval_time', [$startDate, $untilDate]);
             $builder->orderBy('summary.datetime_unix', 'DESC');
         }
     }

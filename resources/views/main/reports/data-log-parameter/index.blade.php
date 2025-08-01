@@ -51,11 +51,14 @@
                                 <tr class="sticky-header">
                                     <th class="text-center w-[50px]">No.</th>
                                     <th class="text-center w-[150px]">UID</th>
-                                    <th class="text-center w-[150px]">Date & Time</th>
-                                    <th class="text-right w-[150px]">PM 2.5</th>
-                                    <th class="text-right w-[150px]">PM 10</th>
-                                    <th class="text-right w-[150px]">TSP</th>
-                                    <th class="text-right w-[150px]">Noise</th>
+                                    <th class="text-center w-[180px]">Date & Time</th>
+                                    <th class="text-right w-[120px]">PM 2.5</th>
+                                    <th class="text-right w-[120px]">PM 10</th>
+                                    <th class="text-right w-[120px]">TSP</th>
+                                    <th class="text-right w-[120px]">Noise</th>
+                                    <th class="text-right w-[150px]">AQI Index</th>
+                                    <th class="text-left w-[180px]">AQI Category</th>
+                                    <th class="text-left w-[150px]">CCTV</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -70,6 +73,21 @@
                                             <td class="text-right">{{ $item->pm_10 ?? '' }}</td>
                                             <td class="text-right">{{ $item->tsp ?? '' }}</td>
                                             <td class="text-right">{{ $item->noise ?? '' }}</td>
+                                            <td class="text-right">{{ $item->aqi_index ?? '' }}</td>
+                                            <td class="text-left">
+                                                <span class="status-badge inline-flex items-center rounded-full gap-1 px-[7px] py-[3px] {{ $item->color_code }} text-[12px] font-bold">
+                                                    {{ mb_convert_encoding($item->emoji, 'UTF-8', 'HTML-ENTITIES') }} {{ $item->category_name_en }}
+                                                </span>
+                                            </td>
+                                            <td class="text-left">
+                                                @if($item->link_video_recorded)
+                                                    <a href="{{ $item->link_video_recorded }}" target="_blank">
+                                                        <img src="{{ asset('/images/vector/icons8-cctv-100.png') }}" alt="" width="20">
+                                                    </a>
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
                                         </tr>
                                     @endforeach
                                 @endif
