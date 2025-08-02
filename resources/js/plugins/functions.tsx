@@ -271,7 +271,7 @@ export const renderPagination = (response: any, renderData: (...args: any[]) => 
     const pagiLoopLink = parentModal.querySelector('.pagiLoopLink')
     const pagiNextLink = parentModal.querySelector('.pagiNextLink')
 
-    const {links, next_page_url, prev_page_url, from, to, total} = response
+    const {links, next_page_url, prev_page_url, from, to, total, current_page, last_page} = response
     $(pagiLabelFrom).html(formatter.format(from))
     $(pagiLabelTo).html(formatter.format(to))
     $(pagiLabelTotal).html(formatter.format(total))
@@ -301,7 +301,6 @@ export const renderPagination = (response: any, renderData: (...args: any[]) => 
         pagiPrevActive.forEach((item) => {
             item.addEventListener('click', function () {
                 const dataUrl = this.dataset.url
-
                 renderData({
                     url: dataUrl
                 })
@@ -335,7 +334,6 @@ export const renderPagination = (response: any, renderData: (...args: any[]) => 
         pagiNextActive.forEach((item) => {
             item.addEventListener('click', function () {
                 const dataUrl = this.dataset.url
-
                 renderData({
                     url: dataUrl
                 })
@@ -344,29 +342,99 @@ export const renderPagination = (response: any, renderData: (...args: any[]) => 
     }
     //endregion
 
-    //region Handle Pagination Loop Button
+    //region Handle Pagination Loop Button - SHORTENED VERSION
     const pagiLink = []
-    links.map((item: any, index: number) => {
-        const {url, label, active} = item
-        if (index !== 0 && index !== links.length - 1) {
-            // const loopUrl = url !== null ? url : next_page_url
-            let pLink = `
-                <a data-url="${url}" class="pagiLinkActive cursor-pointer relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-200 leading-5 hover:text-gray-500 focus:z-10 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150" aria-label="{{ __('Go to page :page', ['page' => ${label}]) }}">
-                    ${label}
+    const maxVisiblePages = 5 // Jumlah maksimal halaman yang ditampilkan
+    const currentPage = current_page || 1
+    const lastPage = last_page || 1
+
+    // Helper function untuk membuat link halaman
+    const createPageLink = (pageNum: number, url: string, isActive: boolean = false) => {
+        if (isActive) {
+            return `
+                <span aria-current="page">
+                    <span class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-white bg-blue-600 border border-gray-300 cursor-default leading-5">
+                        ${pageNum}
+                    </span>
+                </span>
+            `
+        } else {
+            return `
+                <a data-url="${url}" class="pagiLinkActive cursor-pointer relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-200 leading-5 hover:text-gray-500 focus:z-10 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150">
+                    ${pageNum}
                 </a>
             `
-            if (active) {
-                pLink = `
-                    <span aria-current="page">
-                        <span class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-white bg-blue-600 border border-gray-300 cursor-default leading-5">
-                            ${label}
-                        </span>
-                    </span>
-                `
-            }
-            pagiLink.push(pLink)
         }
-    })
+    }
+
+    // Helper function untuk membuat ellipsis
+    const createEllipsis = () => {
+        return `
+            <span class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-500 bg-white border border-gray-200 cursor-default leading-5">
+                ...
+            </span>
+        `
+    }
+
+    // Logic untuk menentukan halaman mana yang ditampilkan
+    if (lastPage <= maxVisiblePages) {
+        // Jika total halaman <= maxVisiblePages, tampilkan semua
+        for (let i = 1; i <= lastPage; i++) {
+            const linkData = links.find((link: any) => parseInt(link.label) === i)
+            if (linkData) {
+                pagiLink.push(createPageLink(i, linkData.url, linkData.active))
+            }
+        }
+    } else {
+        // Jika total halaman > maxVisiblePages, gunakan logic pemendekkan
+        if (currentPage <= 3) {
+            // Jika di awal: 1 2 3 4 ... last
+            for (let i = 1; i <= 4; i++) {
+                const linkData = links.find((link: any) => parseInt(link.label) === i)
+                if (linkData) {
+                    pagiLink.push(createPageLink(i, linkData.url, linkData.active))
+                }
+            }
+            pagiLink.push(createEllipsis())
+            const lastLinkData = links.find((link: any) => parseInt(link.label) === lastPage)
+            if (lastLinkData) {
+                pagiLink.push(createPageLink(lastPage, lastLinkData.url, false))
+            }
+        } else if (currentPage >= lastPage - 2) {
+            // Jika di akhir: 1 ... (last-3) (last-2) (last-1) last
+            const firstLinkData = links.find((link: any) => parseInt(link.label) === 1)
+            if (firstLinkData) {
+                pagiLink.push(createPageLink(1, firstLinkData.url, false))
+            }
+            pagiLink.push(createEllipsis())
+            for (let i = lastPage - 3; i <= lastPage; i++) {
+                const linkData = links.find((link: any) => parseInt(link.label) === i)
+                if (linkData) {
+                    pagiLink.push(createPageLink(i, linkData.url, linkData.active))
+                }
+            }
+        } else {
+            // Jika di tengah: 1 ... (current-1) current (current+1) ... last
+            const firstLinkData = links.find((link: any) => parseInt(link.label) === 1)
+            if (firstLinkData) {
+                pagiLink.push(createPageLink(1, firstLinkData.url, false))
+            }
+            pagiLink.push(createEllipsis())
+
+            for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+                const linkData = links.find((link: any) => parseInt(link.label) === i)
+                if (linkData) {
+                    pagiLink.push(createPageLink(i, linkData.url, linkData.active))
+                }
+            }
+
+            pagiLink.push(createEllipsis())
+            const lastLinkData = links.find((link: any) => parseInt(link.label) === lastPage)
+            if (lastLinkData) {
+                pagiLink.push(createPageLink(lastPage, lastLinkData.url, false))
+            }
+        }
+    }
 
     // @ts-ignore
     $(pagiLoopLink).html(pagiLink)
@@ -375,7 +443,7 @@ export const renderPagination = (response: any, renderData: (...args: any[]) => 
         pagiLinkActive.forEach((elm) => {
             const dataUrl = elm.getAttribute('data-url')
 
-            if (dataUrl !== 'null') {
+            if (dataUrl !== 'null' && dataUrl !== null) {
                 elm.addEventListener('click', async function () {
                     renderData({
                         ...options,
