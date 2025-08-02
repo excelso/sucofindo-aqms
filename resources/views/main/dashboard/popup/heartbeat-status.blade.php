@@ -16,11 +16,11 @@
             <div class="p-6 flex items-center gap-4">
                 <div>
                     <div class="font-bold text-[14px]">Total Online</div>
-                    <div class="text-[13px]">90%</div>
+                    <div class="text-[13px] onlinePercentage">0%</div>
                 </div>
                 <div class="border-l-[2px] border-r-gray-100 pl-4">
                     <div class="font-bold text-[14px]">Total Offline</div>
-                    <div class="text-[13px]">10%</div>
+                    <div class="text-[13px] offlinePercentage">0%</div>
                 </div>
             </div>
             <table class="table table-fixed">
@@ -29,7 +29,6 @@
                         <th class="text-center w-[150px]">UID</th>
                         <th class="text-left w-[150px]">Logger Status</th>
                         <th class="text-center w-[130px]">Update Date</th>
-                        <th class="text-right w-[130px]">Duration</th>
                     </tr>
                 </thead>
                 <tbody class="tHeartbeatData"></tbody>

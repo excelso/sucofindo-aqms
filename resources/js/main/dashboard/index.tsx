@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalBody = modalCctv.querySelector('.modal-body')
     const modalDetailParameter = document.querySelector('.modalDetailParameter')
     const modalHeartbeat = document.querySelector('.modalHeartbeat')
+    const onlinePercentage = modalHeartbeat.querySelector('.onlinePercentage')
+    const offlinePercentage = modalHeartbeat.querySelector('.offlinePercentage')
     const tHeartbeatData = modalHeartbeat.querySelector('.tHeartbeatData')
     const footerHeartbeat = modalHeartbeat.querySelector('.footerHeartbeat')
     const bodyChart: HTMLElement = modalDetailParameter.querySelector('.bodyChart')
@@ -114,11 +116,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // manager.startRealTimeMode();
     //endregion
-
-    // manager.loadData('/dashboard/platforms').then(() => {
-    //     manager.renderAll();
-    //
-    // });
 
     //region Handle Open Video on Forecast Chart
     const showVideoModal = (cardId: any, videoUrl: string) => {
@@ -793,9 +790,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
 
                 const {status} = response
-                const {message, data} = await response.json()
+                const {message, onlinePercent, offlinePercent, data} = await response.json()
                 if (status === 200) {
-                    resolve({dataResponse: data})
+                    resolve({
+                        dataResponse: data,
+                        onlinePercent: onlinePercent,
+                        offlinePercent: offlinePercent
+                    })
                 } else {
                     reject(message)
                 }
@@ -803,39 +804,29 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function renderBody(response: any) {
-            const {dataResponse} = response
+            const {dataResponse, onlinePercent, offlinePercent} = response
             const {data} = dataResponse
+
+            console.log(response)
+
+            onlinePercentage.textContent = `${onlinePercent}%`
+            offlinePercentage.textContent = `${offlinePercent}%`
+
             const itemBodies = []
             if (data.length !== 0) {
                 data.map((item: any, index: number) => {
-                    const {uid, heartbeat_status, gap_readable, updated_at} = item
+                    const {uid, heartbeat_status, date_formated} = item
 
                     let heartbeatStatus = '<span class="ds-badge ds-badge-outline ds-badge-success !text-[11px]">Online</span>'
                     if (heartbeat_status === 'Offline') {
                         heartbeatStatus = '<span class="ds-badge ds-badge-outline ds-badge-error !text-[11px]">Offline</span>'
                     }
 
-                    let rowColor = ''
-                    let gapDisplay = gap_readable
-                    const isFirstItem = index === 0
-                    if (isFirstItem) {
-                        rowColor = 'bg-green-50'
-
-                        // Hitung durasi dari updated_at sampai sekarang menggunakan moment
-                        const lastUpdate = moment(updated_at)
-                        const now = moment()
-                        const duration = moment.duration(now.diff(lastUpdate))
-
-                        // Format durasi yang readable
-                        gapDisplay = formatDuration(duration)
-                    }
-
                     itemBodies.push(`
-                        <tr class="data-deduction ${rowColor}">
+                        <tr class="data-deduction">
                             <td class="text-center">${uid}</td>
                             <td class="text-left">${heartbeatStatus}</td>
-                            <td class="text-center">${moment(updated_at).format('DD MMM YYYY - HH:mm')}</td>
-                            <td class="text-right">${gapDisplay}</td>
+                            <td class="text-center">${moment(date_formated).format('DD MMM YYYY - HH:mm')}</td>
                         </tr>
                     `)
                 })
@@ -846,22 +837,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 triggerTableTooltip()
                 handleFixedTheadTh()
                 handleFixedTd()
-            }
-
-            function formatDuration(duration) {
-                const days = Math.floor(duration.asDays())
-                const hours = duration.hours()
-                const minutes = duration.minutes()
-                const seconds = duration.seconds()
-
-                const parts = []
-
-                if (days > 0) parts.push(`${days} hari`)
-                if (hours > 0) parts.push(`${hours} jam`)
-                if (minutes > 0) parts.push(`${minutes} menit`)
-                if (seconds > 0 || parts.length === 0) parts.push(`${seconds} detik`)
-
-                return parts.join(' ')
             }
         }
     }

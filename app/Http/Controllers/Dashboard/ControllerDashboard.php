@@ -268,35 +268,35 @@
         }
         //endregion
 
+        //region Handle Detail Heartbeat Platform
         public function handleDetailPlatformHeartbeat(Request $request, $uid) {
             try {
+                $platform = Platforms::where('uid', $uid)->first();
+                $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
+                $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
+                if ($request->input('startDate')) {
+                    $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
+                    $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
+                }
 
-                $page = $request->get('page', 1);
-                $perPage = 20;
+                $platformHeartbeat = PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone);
+                $totalDataHeartbeat = $platformHeartbeat->count();
+                $totalDataHeartbeatOnline = $platformHeartbeat->get()->where('heartbeat_status', '=', 'Online')->count();
+                $totalDataHeartbeatOffline = $platformHeartbeat->get()->where('heartbeat_status', '=', 'Offline')->count();
 
-                // Ambil semua data dulu
-                $allData = PlatformsHeartbeat::getHeartbeatWithGap($uid);
+                $totalOnlinePercentage = 0;
+                $totalOfflinePercentage = 0;
+                if ($totalDataHeartbeat > 0) {
+                    $totalOnlinePercentage = round((($totalDataHeartbeatOnline / $totalDataHeartbeat) * 100));
+                    $totalOfflinePercentage = round((($totalDataHeartbeatOffline / $totalDataHeartbeat) * 100));
+                }
 
-                // Manual pagination
-                $currentPageItems = $allData->slice(($page - 1) * $perPage, $perPage)->values();
-
-                $platformHeartbeat = new LengthAwarePaginator(
-                    $currentPageItems,
-                    $allData->count(),
-                    $perPage,
-                    $page,
-                    [
-                        'path' => $request->url(),
-                        'pageName' => 'page',
-                    ]
-                );
-
-                // Add query parameters for pagination links
-                $platformHeartbeat->appends($request->query());
-
+                $dataHeartbeat = $platformHeartbeat->paginate(20)->onEachSide(1);
                 return response()->json([
                     'message' => 'Load Successfully',
-                    'data' => $platformHeartbeat,
+                    'onlinePercent' => $totalOnlinePercentage,
+                    'offlinePercent' => $totalOfflinePercentage,
+                    'data' => $dataHeartbeat,
                     'responseTime' => Carbon::now()
                 ], 200);
             } catch (Exception $exception) {
@@ -307,5 +307,6 @@
                 ], 500);
             }
         }
+        //endregion
 
     }
