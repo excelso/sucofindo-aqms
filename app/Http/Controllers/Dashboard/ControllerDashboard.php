@@ -111,6 +111,8 @@
                         'cctvLink' => $platform->cctv_link,
                         'timezone' => $platform->timezone,
                         'locale' => 'en-US',
+                        'lat' => $platform->lat,
+                        'lng' => $platform->lng,
                         'forecastData' => $this->processLoggerData($platform->uid, $minDate, $maxDate, $platform->timezone),
                         'lastUpdated' => $dataLastLogger ? Carbon::createFromTimestampUTC($dataLastLogger->datetime_unix)->timezone('Asia/Jakarta')->format('d M Y H:i:s') : null,
                     ];

@@ -14,6 +14,7 @@ import {failureAlert, waitLoader} from "@/js/plugins/sweet-alert";
 import {SocketClient} from "@/js/plugins/SocketClient";
 import Swal from "sweetalert2";
 import moment from "moment";
+import MapsHelper from "@/js/plugins/mapsHelper";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
@@ -21,13 +22,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const appEnv: HTMLInputElement = document.querySelector('.app_env')
     const modalCctv = document.querySelector('.modalCctv')
     const modalBody = modalCctv.querySelector('.modal-body')
+
     const modalDetailParameter = document.querySelector('.modalDetailParameter')
+    const bodyChart: HTMLElement = modalDetailParameter.querySelector('.bodyChart')
+
     const modalHeartbeat = document.querySelector('.modalHeartbeat')
     const onlinePercentage = modalHeartbeat.querySelector('.onlinePercentage')
     const offlinePercentage = modalHeartbeat.querySelector('.offlinePercentage')
     const tHeartbeatData = modalHeartbeat.querySelector('.tHeartbeatData')
     const footerHeartbeat = modalHeartbeat.querySelector('.footerHeartbeat')
-    const bodyChart: HTMLElement = modalDetailParameter.querySelector('.bodyChart')
+
+    const modalMaps = document.querySelector('.modalMaps')
+    const mapsBody: HTMLDivElement = document.querySelector('#mapsBody')
+
     const closeModalForm = document.querySelectorAll('.closeModalForm')
     // const socket = SocketClient.getInstance('dashboard', appEnv.value === 'local' ? 'ws://127.0.0.1:3300' : 'https://aqms-api.cloudtrack.id')
 
@@ -52,6 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             closeModalDialog(modalDetailParameter)
             closeModalDialog(modalHeartbeat)
+            closeModalDialog(modalMaps)
         })
     })
     //endregion
@@ -111,6 +119,30 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         onHeartbeatStatusClick: (id) => {
             handleModalHeartbeat(id)
+        },
+        onSiteLocationClick: (id, lat, lng) => {
+            showModalDialog(modalMaps, null, () => {
+                const mapsHelper = new MapsHelper();
+                mapsHelper.mapsConfig(mapsBody).then(({map, google}) => {
+                    map.setCenter({lat, lng})
+                    map.setZoom(15);
+                    new google.maps.Marker({
+                        position: {lat, lng},
+                        icon: {
+                            path: 'M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z',
+                            scale: 0.055,
+                            strokeWeight: 0.2,
+                            strokeColor: '#16c901',
+                            strokeOpacity: 1,
+                            fillColor: '#16c901',
+                            fillOpacity: 0.9,
+                            anchor: new google.maps.Point(384 / 2, 512),
+                        },
+                        // title: `${uid} - ${nama_site}`,
+                        map,
+                    });
+                })
+            })
         }
     });
 

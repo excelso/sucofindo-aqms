@@ -25,11 +25,17 @@
                             <i class="fas fa-chart-line mr-2"></i> BML
                         </button>
                     </li>
+                    <li class="mr-2">
+                        <button class="inline-block p-4" data-tabs-target="#maps">
+                            <i class="fas fa-map-location mr-2"></i> Map Location
+                        </button>
+                    </li>
                 </ul>
             </div>
 
             @include('main.master.data-platform-loggers.popup.tabs.tab-platform')
             @include('main.master.data-platform-loggers.popup.tabs.tab-bml')
+            @include('main.master.data-platform-loggers.popup.tabs.tab-maps')
         </div>
         <div class="modal-footer justify-between">
             <div>

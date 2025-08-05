@@ -56,6 +56,8 @@ interface AirQualityData {
     cctvLink?: string;
     timezone?: string; // Timezone untuk platform ini (e.g., 'Asia/Jakarta', 'Asia/Makassar')
     locale?: string;   // Locale untuk platform ini (optional, default 'id-ID')
+    lat?: number;
+    lng?: number;
 }
 
 interface MetricsData {
@@ -98,6 +100,7 @@ interface CardManagerOptions {
         linkVideo?: any;
     }) => void;
     onHeartbeatStatusClick?: (id: string) => void;
+    onSiteLocationClick?: (id: string, lat: number, lng: number) => void;
 }
 
 interface LoggerEventData {
@@ -1530,6 +1533,10 @@ class AirQualityCardManager {
 
         if (this.options.onHeartbeatStatusClick) {
             onlineContainer.addEventListener('click', () => this.options.onHeartbeatStatusClick!(data.uid));
+        }
+
+        if (this.options.onSiteLocationClick) {
+            siteContainer.addEventListener('click', () => this.options.onSiteLocationClick!(data.uid, data.lat, data.lng));
         }
 
         headerFlex.appendChild(leftSection);

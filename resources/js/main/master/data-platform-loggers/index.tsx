@@ -4,6 +4,7 @@ import {confirmAlert, failureAlert, successAlert, waitLoader} from "@/js/plugins
 import DataSitesModel from "@/js/main/master/data-sites/model/DataSitesModel";
 import Swal from "sweetalert2";
 import {TabItem, Tabs} from "flowbite";
+import MapsHelper from "@/js/plugins/mapsHelper";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
@@ -61,6 +62,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const noiseMax: HTMLInputElement = modalForm.querySelector('.noiseMax')
     const noiseMaxError: HTMLElement = modalForm.querySelector('.noiseMaxError')
 
+    const mapsBody: HTMLDivElement = modalForm.querySelector('#mapsBody')
+    const markerImage: HTMLImageElement = modalForm.querySelector('.markerImage')
+    const alamatLat: HTMLInputElement = modalForm.querySelector('.alamatLat')
+    const alamatLng: HTMLInputElement = modalForm.querySelector('.alamatLng')
+
     const btnSave: HTMLElement = modalForm.querySelector('.btnSave')
     const btnDelete: HTMLElement = modalForm.querySelector('.btnDelete')
 
@@ -80,6 +86,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     cctvLinkHls.value = ''
                     platformTimezone.value = ''
                     platformTimezone.dispatchEvent(new Event('exbox.change'));
+
+                    showTab('#platform')
                 })
             }
         })
@@ -132,6 +140,36 @@ document.addEventListener('DOMContentLoaded', function () {
                 inactiveClasses: 'hover:text-gray-900 hover:bg-gray-100 text-gray-400',
                 onShow: (x: any) => {
                     const {id} = x._activeTab
+
+                    if (id === '#maps') {
+                        const mapsHelper = new MapsHelper();
+                        mapsHelper.mapsConfig(mapsBody).then(({map, google}) => {
+                            if (alamatLat.value !== '' && alamatLng.value !== '') {
+                                const latlng = new google.maps.LatLng(parseFloat(alamatLat.value), parseFloat(alamatLng.value))
+                                map.setCenter(latlng)
+                                map.setZoom(13)
+                            }
+
+                            google.maps.event.addListener(map, "idle", function () {
+                                const center = this.getCenter()
+                                const latlng = new google.maps.LatLng(center.lat(), center.lng())
+
+                                alamatLat.value = center.lat()
+                                alamatLng.value = center.lng()
+
+                                const projection = map.getProjection();
+                                const bounds = map.getBounds();
+                                const topRight = projection.fromLatLngToPoint(bounds.getNorthEast());
+                                const bottomLeft = projection.fromLatLngToPoint(bounds.getSouthWest());
+                                const scale = Math.pow(2, map.getZoom());
+                                const worldPoint = projection.fromLatLngToPoint(latlng);
+                                const pixelConvert = [Math.floor((worldPoint.x - bottomLeft.x) * scale), Math.floor((worldPoint.y - topRight.y) * scale)]
+
+                                markerImage.style.left = `${pixelConvert[0] - 16}px`
+                                markerImage.style.top = `${pixelConvert[1] + 87}px`
+                            });
+                        });
+                    }
                 }
             }
 
@@ -180,6 +218,24 @@ document.addEventListener('DOMContentLoaded', function () {
                                         cctv_link: cctvLink.value,
                                         cctv_link_hls: cctvLinkHls.value,
                                         timezone: platformTimezone.value,
+                                        lat: alamatLat.value,
+                                        lng: alamatLng.value,
+                                        pm10_min: pm10Min.value,
+                                        pm10_min_buffer: pm10MinBuffer.value,
+                                        pm10_max_buffer: pm10MaxBuffer.value,
+                                        pm10_max: pm10Max.value,
+                                        pm25_min: pm25Min.value,
+                                        pm25_min_buffer: pm25MinBuffer.value,
+                                        pm25_max_buffer: pm25MaxBuffer.value,
+                                        pm25_max: pm25Max.value,
+                                        tsp_min: tspMin.value,
+                                        tsp_min_buffer: tspMinBuffer.value,
+                                        tsp_max_buffer: tspMaxBuffer.value,
+                                        tsp_max: tspMax.value,
+                                        noise_min: noiseMin.value,
+                                        noise_min_buffer: noiseMinBuffer.value,
+                                        noise_max_buffer: noiseMaxBuffer.value,
+                                        noise_max: noiseMax.value,
                                     })
                                 })
 
@@ -215,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         Swal.close()
 
                         if (status === 200) {
-                            const {company_site_id, uid: data_uid, cctv_link, cctv_link_hls, timezone, logger_limit} = data
+                            const {company_site_id, uid: data_uid, cctv_link, cctv_link_hls, timezone, lat, lng, logger_limit} = data
                             const {
                                 pm10_min,
                                 pm10_min_buffer,
@@ -233,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 noise_min_buffer,
                                 noise_max_buffer,
                                 noise_max,
-                            } = logger_limit
+                            } = logger_limit || {}
 
                             showModalDialog(modalForm, `<i class="fas fa-edit mr-2"></i> Update Platform`, () => {
                                 modelSite.setSelectedValue(company_site_id)
@@ -243,6 +299,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                 cctvLinkHls.value = cctv_link_hls
                                 platformTimezone.value = timezone
                                 platformTimezone.dispatchEvent(new Event('exbox.change'))
+                                alamatLat.value = lat
+                                alamatLng.value = lng
 
                                 pm10Min.value = pm10_min ?? 0
                                 pm10MinBuffer.value = pm10_min_buffer ?? 0
@@ -287,6 +345,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                                         cctv_link: cctvLink.value,
                                                         cctv_link_hls: cctvLinkHls.value,
                                                         timezone: platformTimezone.value,
+                                                        lat: alamatLat.value,
+                                                        lng: alamatLng.value,
                                                         pm10_min: pm10Min.value,
                                                         pm10_min_buffer: pm10MinBuffer.value,
                                                         pm10_max_buffer: pm10MaxBuffer.value,

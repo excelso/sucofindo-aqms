@@ -22,6 +22,8 @@
             'cctv_link',
             'cctv_link_hls',
             'timezone',
+            'lat',
+            'lng',
             'ssh_host',
             'ssh_username',
             'ssh_password',

@@ -61,10 +61,34 @@
 
             try {
                 DB::transaction(function () use ($request) {
-                    return Platforms::create([
+                    Platforms::create([
                         'company_site_id' => $request->input('company_site_id'),
                         'uid' => $request->input('uid'),
                         'cctv_link' => $request->input('cctv_link'),
+                        'cctv_link_hls' => $request->input('cctv_link_hls'),
+                        'timezone' => $request->input('timezone'),
+                        'lat' => $request->input('lat'),
+                        'lng' => $request->input('lng'),
+                    ]);
+
+                    LoggersLimit::create([
+                        'uid', $request->input('uid'),
+                        'pm10_min' => $request->input('pm10_min'),
+                        'pm10_min_buffer' => $request->input('pm10_min_buffer'),
+                        'pm10_max_buffer' => $request->input('pm10_max_buffer'),
+                        'pm10_max' => $request->input('pm10_max'),
+                        'pm25_min' => $request->input('pm25_min'),
+                        'pm25_min_buffer' => $request->input('pm25_min_buffer'),
+                        'pm25_max_buffer' => $request->input('pm25_max_buffer'),
+                        'pm25_max' => $request->input('pm25_max'),
+                        'tsp_min' => $request->input('tsp_min'),
+                        'tsp_min_buffer' => $request->input('tsp_min_buffer'),
+                        'tsp_max_buffer' => $request->input('tsp_max_buffer'),
+                        'tsp_max' => $request->input('tsp_max'),
+                        'noise_min' => $request->input('noise_min'),
+                        'noise_min_buffer' => $request->input('noise_min_buffer'),
+                        'noise_max_buffer' => $request->input('noise_max_buffer'),
+                        'noise_max' => $request->input('noise_max'),
                     ]);
                 });
 
@@ -152,6 +176,8 @@
                         'cctv_link' => $request->input('cctv_link'),
                         'cctv_link_hls' => $request->input('cctv_link_hls'),
                         'timezone' => $request->input('timezone'),
+                        'lat' => $request->input('lat'),
+                        'lng' => $request->input('lng'),
                     ]);
 
                     LoggersLimit::where('uid', $request->input('uid'))->update([
