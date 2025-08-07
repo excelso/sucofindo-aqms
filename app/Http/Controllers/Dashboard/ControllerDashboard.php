@@ -100,7 +100,7 @@
                                 'bml_max' => $dataLastLogger->limit->tsp_max ?? 0,
                             ],
                             'noise' => [
-                                'value' => $dataLastLogger->noise_leq ?? 0,
+                                'value' => (float)number_format($dataLastLogger->noise_leq ?? 0, 2),
                                 'bml_min' => $dataLastLogger->limit->noise_min ?? 0,
                                 'bml_min_buffer' => $dataLastLogger->limit->noise_min_buffer ?? 0,
                                 'bml_max_buffer' => $dataLastLogger->limit->noise_max_buffer ?? 0,

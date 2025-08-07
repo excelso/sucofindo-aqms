@@ -368,7 +368,7 @@ class AirQualityCardManager {
                 },
                 dataLabels: {
                     formatter: function () {
-                        const decimals = type === 'noise' ? 0 : 1;
+                        const decimals = type === 'noise' ? 2 : 1;
                         const format = new Intl.NumberFormat('en-EN', {
                             style: 'decimal',
                             minimumFractionDigits: decimals,
