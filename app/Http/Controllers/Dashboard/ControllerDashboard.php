@@ -53,6 +53,8 @@
                         ->orderBy('datetime_unix', 'DESC')
                         ->with('limit')->first();
 
+                    $platformHeartbeat = PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone)->first();
+
                     $aqiCat = null;
                     $status = 'Unknown';
                     $emoji = mb_convert_encoding('&#x2753;', 'UTF-8', 'HTML-ENTITIES');
@@ -107,7 +109,7 @@
                                 'bml_max' => $dataLastLogger->limit->noise_max ?? 0,
                             ]
                         ],
-                        'isOnline' => !!$dataLastLogger,
+                        'isOnline' => $platformHeartbeat ? $platformHeartbeat->heartbeat_status == 'Online' ? 1 : 0 : 0,
                         'cctvLink' => $platform->cctv_link,
                         'timezone' => $platform->timezone,
                         'locale' => 'en-US',
