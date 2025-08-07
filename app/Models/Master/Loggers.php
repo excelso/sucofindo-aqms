@@ -34,7 +34,7 @@
             return $this->hasOne(LoggersLimit::class, 'uid', 'uid');
         }
 
-        public function scopeLoggerData(Builder $builder, $uids, $direction = 'ASC'): void {
+        public function scopeLoggerData(Builder $builder, $uids, $startDate, $untilDate, $timezone, $direction = 'ASC'): void {
             $builder->where('uid', $uids);
             $builder->orderBy('datetime_unix', $direction);
         }
@@ -48,18 +48,19 @@
                     'link_video_recorded'
                 ]);
                 // Gunakan timezone yang sama dengan parameter
-                $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / 300) * 300), 'UTC', ?) AS interval_time", [$timezone]);
-                $builder->selectRaw('FLOOR(datetime_unix / 300) * 300 AS datetime_unix');
+                $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / 600) * 600), 'UTC', ?) AS interval_time", [$timezone]);
+                $builder->selectRaw('FLOOR(datetime_unix / 600) * 600 AS datetime_unix');
                 $builder->selectRaw('COUNT(*) AS record_count');
                 $builder->selectRaw('ROUND(AVG(pm_10), 0) AS pm_10');
                 $builder->selectRaw('ROUND(AVG(pm_25), 0) AS pm_25');
                 $builder->selectRaw('ROUND(AVG(tsp), 0) AS tsp');
                 $builder->selectRaw('ROUND(AVG(noise), 2) AS noise');
+                $builder->selectRaw('ROUND((10 * LOG10((1/count(*) * SUM(POWER(10, noise / 10))))), 2) AS noise_leq');
                 $builder->selectRaw('ROUND(AVG(aqi_index), 2) AS aqi_index');
                 $builder->from('t_loggers');
                 $builder->where('uid', $uid);
-                $builder->groupByRaw('uid, FLOOR(datetime_unix / 300)');
-                $builder->orderByRaw('FLOOR(datetime_unix / 300) * 300');
+                $builder->groupByRaw('uid, FLOOR(datetime_unix / 600)');
+                $builder->orderByRaw('FLOOR(datetime_unix / 600) * 600');
             }, 'summary');
 
             $builder->whereBetween('summary.interval_time', [$startDate, $untilDate]);
@@ -88,18 +89,19 @@
                     'link_video_recorded'
                 ]);
                 // Gunakan timezone yang sama dengan parameter
-                $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / 300) * 300), 'UTC', ?) AS interval_time", [$timezone]);
-                $builder->selectRaw('FLOOR(datetime_unix / 300) * 300 AS datetime_unix');
+                $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / 600) * 600), 'UTC', ?) AS interval_time", [$timezone]);
+                $builder->selectRaw('FLOOR(datetime_unix / 600) * 600 AS datetime_unix');
                 $builder->selectRaw('COUNT(*) AS record_count');
                 $builder->selectRaw('ROUND(AVG(pm_10), 0) AS pm_10');
                 $builder->selectRaw('ROUND(AVG(pm_25), 0) AS pm_25');
                 $builder->selectRaw('ROUND(AVG(tsp), 0) AS tsp');
                 $builder->selectRaw('ROUND(AVG(noise), 2) AS noise');
+                $builder->selectRaw('ROUND((10 * LOG10((1/count(*) * SUM(POWER(10, noise / 10))))), 2) AS noise_leq');
                 $builder->selectRaw('ROUND(AVG(aqi_index), 2) AS aqi_index');
                 $builder->from('t_loggers');
                 $builder->where('uid', $uid);
-                $builder->groupByRaw('uid, FLOOR(datetime_unix / 300)');
-                $builder->orderByRaw('FLOOR(datetime_unix / 300) * 300');
+                $builder->groupByRaw('uid, FLOOR(datetime_unix / 600)');
+                $builder->orderByRaw('FLOOR(datetime_unix / 600) * 600');
             }, 'summary');
 
             // Join dengan t_aqi_categories untuk mendapatkan kategori

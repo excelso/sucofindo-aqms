@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         onClickForcastPoint: async (events, pointData) => {
             const { cardId, linkVideo } = pointData
-            const { linkVideoId, linkVideoRecorded } = linkVideo
+            const { uid, linkVideoId, linkVideoRecorded } = linkVideo
 
             // if (socket.isConnected()) {
             //     await waitLoader('Please wait...', 'Loading Recorded Video', () => {
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // }
 
             if (linkVideoRecorded) {
-                showVideoModal(cardId, linkVideoRecorded)
+                showVideoModal(uid, linkVideoRecorded)
             }
         },
         onHeartbeatStatusClick: (id) => {
@@ -150,10 +150,10 @@ document.addEventListener('DOMContentLoaded', function () {
     //endregion
 
     //region Handle Open Video on Forecast Chart
-    const showVideoModal = (cardId: any, videoUrl: string) => {
+    const showVideoModal = (uid: any, videoUrl: string) => {
         showModalDialog(modalCctv, `
             <div class="flex items-center">
-                <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${cardId}
+                <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${uid}
             </div>
         `, () => {
             createVideoElementWithAutoplay(videoUrl)
@@ -744,7 +744,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 style: {fontSize: '12px'},
                 formatter: function () {
                     const timestamp = this.x / 1000;
-                    return `<b>Time:</b> ${formatTimestamp(timestamp, 'datetime')}<br><b>AQI:</b> ${this.y}`;
+                    return `<b>Time:</b> ${formatTimestamp(timestamp, 'datetime')}<br><b>${metric.title}:</b> ${this.y}`;
                 }
             },
             plotOptions: {

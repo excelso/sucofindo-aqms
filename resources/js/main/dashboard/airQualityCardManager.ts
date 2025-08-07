@@ -240,14 +240,14 @@ class AirQualityCardManager {
             pm10: 'µg/m³',
             pm25: 'µg/m³',
             tsp: 'µg/m³',
-            noise: 'db'
+            noise: 'dBA'
         };
 
         const suffixMap = {
             pm10: ' PM10',
             pm25: ' PM2.5',
             tsp: ' TSP',
-            noise: ' dB'
+            noise: ' dBA'
         };
 
         // Store reference to manager methods for use in chart events
@@ -672,7 +672,6 @@ class AirQualityCardManager {
                                 click: (event: any) => {
                                     if (lastPoint.y > 50) {
                                         if (this.options.onClickForcastPoint) {
-                                            const linkVideoPoint = this.getVideoLinkForPoint(cardId, lastPoint.x)
                                             this.options.onClickForcastPoint(event, {
                                                 cardId: cardId || 'unknown',
                                                 timestamp: lastPoint.x ? lastPoint.x / 1000 : Date.now() / 1000,
@@ -1055,6 +1054,7 @@ class AirQualityCardManager {
     // endregion
 
     private getVideoLinkForPoint(cardId: string, timestamp: number): {
+        uid: string,
         linkVideoId: string,
         linkVideoStatus: string,
         linkVideoRecorded: string
@@ -1062,6 +1062,7 @@ class AirQualityCardManager {
         const cardData = this.data.find(item => item.uid === cardId.replace(/card-|-\d+$/g, ''));
         const cardDataPoint = cardData?.forecastData?.find(point => point.timestamp === (timestamp / 1000))
         return {
+            uid: cardData?.uid,
             linkVideoId: cardDataPoint?.link_video_id,
             linkVideoStatus: cardDataPoint?.link_video_status,
             linkVideoRecorded: cardDataPoint?.link_video_recorded

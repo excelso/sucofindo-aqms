@@ -100,7 +100,7 @@
                                 'bml_max' => $dataLastLogger->limit->tsp_max ?? 0,
                             ],
                             'noise' => [
-                                'value' => $dataLastLogger->noise ?? 0,
+                                'value' => $dataLastLogger->noise_leq ?? 0,
                                 'bml_min' => $dataLastLogger->limit->noise_min ?? 0,
                                 'bml_min_buffer' => $dataLastLogger->limit->noise_min_buffer ?? 0,
                                 'bml_max_buffer' => $dataLastLogger->limit->noise_max_buffer ?? 0,
@@ -223,7 +223,15 @@
         public function detailMetric(Request $request, $uid) {
             try {
 
-                $dataLogger = Loggers::loggerData($uid)->get();
+                $platform = Platforms::where('uid', $uid)->first();
+                $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
+                $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
+                if ($request->input('startDate')) {
+                    $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
+                    $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
+                }
+
+                $dataLogger = Loggers::loggerData5Minutes($uid, $minDate, $maxDate, $platform->timezone)->get();
                 $dataLoggerTemp = [];
                 foreach ($dataLogger as $item) {
                     if ($request->input('metric') == 'pm10') {
@@ -250,7 +258,7 @@
                     if ($request->input('metric') == 'noise') {
                         $dataLoggerTemp[] = [
                             'timestamp' => $item->datetime_unix,
-                            'value' => (float)number_format($item->noise, 1),
+                            'value' => (float)number_format($item->noise_leq ?? 0, 2),
                         ];
                     }
                 }
