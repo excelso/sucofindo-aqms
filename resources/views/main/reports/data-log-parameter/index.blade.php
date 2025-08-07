@@ -67,7 +67,7 @@
                                             <td class="text-right">{{ $item->pm_25 ?? '' }}</td>
                                             <td class="text-right">{{ $item->pm_10 ?? '' }}</td>
                                             <td class="text-right">{{ $item->tsp ?? '' }}</td>
-                                            <td class="text-right">{{ $item->noise ?? '' }}</td>
+                                            <td class="text-right">{{ $item->noise_leq ?? '' }}</td>
                                             <td class="text-right">{{ $item->aqi_index ?? '' }}</td>
                                             <td class="text-left">
                                                 <span class="status-badge inline-flex items-center rounded-full gap-1 px-[7px] py-[3px] {{ $item->color_code }} text-[12px] font-bold">
