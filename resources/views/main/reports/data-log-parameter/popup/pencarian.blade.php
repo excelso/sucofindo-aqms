@@ -26,20 +26,30 @@
             </div>
             <div class="form-group">
                 <label>Date Range</label>
-                <label class="form-group-control">
+                <div class="form-group-control">
                     <input type="text" class="form-control dateRange datePickerRange" name="dateRange" value="{{ request()->input('dateRange') ?? \Carbon\Carbon::now()->format('Y-m-d') . ' 00:00' . ' - ' . \Carbon\Carbon::now()->format('Y-m-d') . ' 23:59' }}" placeholder="..."/>
-                </label>
+                </div>
             </div>
             <div class="form-group">
                 <label>Status Platform</label>
-                <label class="form-group-control">
-                    <select class="form-control select2-custom" name="statusPlatform">
-                        <option value="">Semua Status</option>
-                        <option value="1" {{ request()->input('statusPlatform') == '1' ? 'selected' : '' }}>Normal</option>
-                        <option value="2" {{ request()->input('statusPlatform') == '2' ? 'selected' : '' }}>Warning</option>
-                        <option value="3" {{ request()->input('statusPlatform') == '3' ? 'selected' : '' }}>Danger</option>
+                <div class="form-group-control">
+                    <select class="form-control select2-custom" name="statusAqi">
+                        <option value="">All Status</option>
+                        @foreach($dataAqiCat as $item)
+                            @php($selected = request()->input('statusAqi') == $item->id ? 'selected' : '')
+                            @php($emoji = mb_convert_encoding($item->emoji, 'UTF-8', 'HTML-ENTITIES'))
+                            @if($item->id == 3)
+                                <option value="{{ $item->id }}" data-additional="{{ $item->category_name }}" {{ $selected }}>
+                                    {{ $emoji }} {{ $item->category_name_en }}
+                                </option>
+                            @else
+                                <option value="{{ $item->id }}" {{ $selected }}>
+                                    {{ $emoji }} {{ $item->category_name_en }}
+                                </option>
+                            @endif
+                        @endforeach
                     </select>
-                </label>
+                </div>
             </div>
         </div>
         <div class="modal-footer justify-between">

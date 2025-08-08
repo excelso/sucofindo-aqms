@@ -3,6 +3,7 @@
     namespace App\Http\Controllers\Reports;
 
     use App\Http\Controllers\Controller;
+    use App\Models\Master\AqiCategories;
     use App\Models\Master\Companies;
     use App\Models\Master\CompaniesSites;
     use App\Models\Master\Loggers;
@@ -28,6 +29,8 @@
             $dataAllPlatform = Platforms::orderBy('uid', 'ASC')
                 ->with('sites')->get();
 
+            $dataAqiCat = AqiCategories::all();
+
             $dataPlatform = Platforms::orderBy('uid', 'ASC')->first();
             $minDate = Carbon::now()->timezone($dataPlatform->timezone)->format('Y-m-d') . ' 00:00';
             $maxDate = Carbon::now()->timezone($dataPlatform->timezone)->format('Y-m-d') . ' 23:59';
@@ -43,6 +46,7 @@
             return view($this->viewPath . '/index', [
                 'items' => $dataLogger->paginate(20)->onEachSide(1),
                 'dataAllPlatform' => $dataAllPlatform,
+                'dataAqiCat' => $dataAqiCat,
                 'platform' => $dataPlatform,
                 'companies' => $dataCompanies,
             ]);

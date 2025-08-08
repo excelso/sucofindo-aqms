@@ -139,6 +139,10 @@
                 $builder->whereBetween('summary.interval_time', [$startDate, $untilDate]);
             }
 
+            if (isset($search['statusAqi']) && $search['statusAqi'] != '') {
+                $builder->where('t_aqi_categories.id', $search['statusAqi']);
+            }
+
             $builder->orderBy('summary.datetime_unix', 'DESC');
         }
     }
