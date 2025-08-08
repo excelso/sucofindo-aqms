@@ -1,13 +1,26 @@
 import {closeModalDialog, showModalDialog} from "@/js/plugins/modal";
 import {getMetaContent, responseMessages} from "@/js/plugins/functions";
 import {confirmAlert, failureAlert, successAlert, waitLoader} from "@/js/plugins/sweet-alert";
+import VideoStreamHandler from "@/js/plugins/videoStreamHandler";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
 
     const closeModalForm: NodeListOf<HTMLElement> = document.querySelectorAll('.closeModalForm')
+    const dataTables: NodeListOf<HTMLElement> = document.querySelectorAll('.data-tables')
     const btnSearch = document.querySelector('.btnSearch')
     const modalPencarian = document.querySelector('.modalPencarian')
+
+    const modalCctv: HTMLElement = document.querySelector('.modalCctv')
+    const modalBody: HTMLElement = modalCctv.querySelector('.modal-body')
+
+    const videoHandler = new VideoStreamHandler({
+        autoplay: true,
+        controls: true,
+        muted: true,
+        maxHeight: '80vh',
+        retryAttempts: 5
+    });
 
     //region Handle Close Modal
     closeModalForm.forEach((elm: Element) => {
@@ -15,6 +28,12 @@ document.addEventListener('DOMContentLoaded', function () {
             if (modalPencarian) {
                 closeModalDialog(modalPencarian, () => {
 
+                })
+            }
+
+            if (modalCctv) {
+                closeModalDialog(modalCctv, () => {
+                    videoHandler.destroy();
                 })
             }
         })
@@ -49,5 +68,23 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     }
     //endregion
+
+    if (dataTables) {
+        dataTables.forEach((elm: Element) => {
+            const btnCCTV: HTMLLinkElement = elm.querySelector('.btnCCTV')
+            const dataUid = elm.getAttribute('data-uid')
+            if (btnCCTV) {
+                btnCCTV.addEventListener('click', function () {
+                    showModalDialog(modalCctv, `
+                        <div class="flex items-center">
+                            <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${dataUid}
+                        </div>
+                    `, () => {
+                        videoHandler.createVideoElement(modalBody, btnCCTV.getAttribute('data-href'));
+                    })
+                })
+            }
+        })
+    }
 
 })

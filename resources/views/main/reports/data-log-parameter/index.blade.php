@@ -60,7 +60,7 @@
                                 @php($i = isset($items) ? $items->firstItem() : 0)
                                 @if(isset($items) && count($items) !== 0)
                                     @foreach($items as $item)
-                                        <tr class="data-tables" data-id="{{ $item->id }}">
+                                        <tr class="data-tables" data-id="{{ $item->id }}" data-uid="{{ $item->uid ?? '' }}">
                                             <td class="text-center">{{$i++}}</td>
                                             <td class="text-center">{{ $item->uid ?? '' }}</td>
                                             <td class="text-center">{{ Carbon::parse($item->datetime_unix)->setTimezone($platform->timezone)->format('d M Y H:i:s') ?? '' }}</td>
@@ -76,7 +76,7 @@
                                             </td>
                                             <td class="text-left">
                                                 @if($item->link_video_recorded)
-                                                    <a href="{{ $item->link_video_recorded }}" target="_blank">
+                                                    <a data-href="{{ $item->link_video_recorded }}" class="btnCCTV">
                                                         <img src="{{ asset('/images/vector/icons8-cctv-100.png') }}" alt="" width="20">
                                                     </a>
                                                 @else
@@ -102,6 +102,7 @@
 
         {{-- Bagian Include (Modal) --}}
         @include('main.reports.data-log-parameter.popup.pencarian')
+        @include('main.reports.data-log-parameter.popup.cctv')
     </div>
 </x-app-layout>
 
