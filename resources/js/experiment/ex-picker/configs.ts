@@ -8,16 +8,34 @@ export class Configs {
             'mm': { month: '2-digit' },
             'dd': { day: '2-digit' },
             'HH': { hour: '2-digit', hour12: false },
+            'hh': { hour: '2-digit', hour12: true },
             'MM': { minute: '2-digit' },
             'SS': { second: '2-digit' }
         };
 
-        return format.replace(/yyyy|yy|mmmm|mmm|mm|dd|HH|MM|SS/gi, (match) => {
+        let formattedString = format
+
+        // Handle special time formats
+        formattedString = formattedString.replace(/HH/g, date.getHours().toString().padStart(2, '0'))
+        formattedString = formattedString.replace(/hh/g, () => {
+            const hours = date.getHours()
+            const displayHour = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours
+            return displayHour.toString().padStart(2, '0')
+        })
+        formattedString = formattedString.replace(/MM/g, date.getMinutes().toString().padStart(2, '0'))
+        formattedString = formattedString.replace(/SS/g, date.getSeconds().toString().padStart(2, '0'))
+        formattedString = formattedString.replace(/aa/g, date.getHours() < 12 ? 'AM' : 'PM')
+
+        // Handle date formats
+        return formattedString.replace(/yyyy|yy|mmmm|mmm|mm|dd/gi, (match) => {
             const options = formatOptions[match];
-            const y = date.getFullYear()
-            const m = date.getMonth() - 1
-            const d = date.getDate()
-            return new Date(y, m, d).toLocaleString(locale, options);
+            if (options) {
+                const y = date.getFullYear()
+                const m = date.getMonth()
+                const d = date.getDate()
+                return new Date(y, m, d).toLocaleString(locale, options);
+            }
+            return match;
         });
     }
 

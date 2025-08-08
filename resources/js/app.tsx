@@ -404,11 +404,47 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     }
 
+    const datetimepickerStart = document.querySelectorAll('.datetimepickerStart')
+    const datetimepickerUntil = document.querySelectorAll('.datetimepickerUntil')
+    if (datetimepickerStart && datetimepickerUntil) {
+        datetimepickerStart.forEach((elm: HTMLInputElement) => {
+            new ExPicker(elm, {
+                autoClose: true,
+                enableTimePicker: true
+            })
+        })
+
+        datetimepickerUntil.forEach((elm: HTMLInputElement) => {
+            const expickerUntil = new ExPicker(elm, {
+                autoClose: true,
+                enableTimePicker: true,
+                onShow: () => {
+                    expickerUntil.setOption({
+                        startDate: $(datetimepickerStart).val() as string,
+                        minDate: $(datetimepickerStart).val() as string
+                    })
+                }
+            })
+        })
+    }
+
     const datePicker = document.querySelectorAll('.datePicker')
     datePicker.forEach((elm: HTMLInputElement) => {
         new ExPicker(elm, {
             dateFormat: 'yyyy-mm-dd',
             firstYear: 1950,
+        })
+    })
+
+    const datePickerRange = document.querySelectorAll('.datePickerRange')
+    datePickerRange.forEach((elm: HTMLInputElement) => {
+        new ExPicker(elm, {
+            autoClose: true,
+            dateFormat: 'yyyy-mm-dd',
+            firstYear: 1950,
+            useRange: true,
+            enableTimePicker: true,
+            useFooterAction: true,
         })
     })
     //endregion

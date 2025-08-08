@@ -91,7 +91,7 @@
                     </div>
                     @if(isset($items) && count($items) === 0)
                         <div class="not-found">
-                            <div>No Logger data found</div>
+                            <div>No Data Logger Found!</div>
                         </div>
                     @endif
                 </div>
@@ -101,8 +101,8 @@
         </div>
 
         {{-- Bagian Include (Modal) --}}
-        @include('main.master.data-sites.popup.form')
+        @include('main.reports.data-log-parameter.popup.pencarian')
     </div>
 </x-app-layout>
 
-@vite(['resources/js/main/master/data-sites/index.tsx'])
+@vite(['resources/js/main/reports/index.tsx'])

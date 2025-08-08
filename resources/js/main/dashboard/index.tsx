@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const mapsHelper = new MapsHelper();
                 mapsHelper.mapsConfig(mapsBody).then(({map, google}) => {
                     map.setCenter({lat, lng})
-                    map.setZoom(15);
+                    map.setZoom(11);
                     new google.maps.Marker({
                         position: {lat, lng},
                         icon: {

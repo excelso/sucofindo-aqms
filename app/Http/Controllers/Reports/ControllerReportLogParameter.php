@@ -25,6 +25,9 @@
         public function index(Request $request): View {
             $dataCompanies = Companies::all();
 
+            $dataAllPlatform = Platforms::orderBy('uid', 'ASC')
+                ->with('sites')->get();
+
             $dataPlatform = Platforms::orderBy('uid', 'ASC')->first();
             $minDate = Carbon::now()->timezone($dataPlatform->timezone)->format('Y-m-d') . ' 00:00';
             $maxDate = Carbon::now()->timezone($dataPlatform->timezone)->format('Y-m-d') . ' 23:59';
@@ -39,6 +42,7 @@
 
             return view($this->viewPath . '/index', [
                 'items' => $dataLogger->paginate(20)->onEachSide(1),
+                'dataAllPlatform' => $dataAllPlatform,
                 'platform' => $dataPlatform,
                 'companies' => $dataCompanies,
             ]);

@@ -125,7 +125,20 @@
                 DB::raw('CONCAT("[", COALESCE(t_aqi_categories.pm25_min, highest_category.pm25_min), ", ", COALESCE(t_aqi_categories.pm25_max, highest_category.pm25_max), "]") as category_range')
             ]);
 
-            $builder->whereBetween('summary.interval_time', [$startDate, $untilDate]);
+            if (isset($search['platformUid']) && $search['platformUid'] != '') {
+                $builder->where('summary.uid', $search['platformUid']);
+            }
+
+            if (isset($search['dateRange']) && $search['dateRange'] != '') {
+                $dateRange = explode(' - ', $search['dateRange']);
+                $minDate = $dateRange[0];
+                $maxDate = $dateRange[1];
+
+                $builder->whereBetween('summary.interval_time', [$minDate, $maxDate]);
+            } else {
+                $builder->whereBetween('summary.interval_time', [$startDate, $untilDate]);
+            }
+
             $builder->orderBy('summary.datetime_unix', 'DESC');
         }
     }

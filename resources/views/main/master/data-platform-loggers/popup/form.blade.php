@@ -1,5 +1,5 @@
 <div class="modal hidden modalForm">
-    <div class="modal-main !w-[calc(1440px-750px)]">
+    <div class="modal-main !w-[calc(1440px-650px)]">
         <div class="modal-head">
             <div class="flex justify-between items-center">
                 <div class="modal-title">

@@ -8,13 +8,37 @@
     --ex-calendar-months-day-other-color: #c3c3c3;
     --ex-day-hover-color: #1f88ba;
     --ex-day-disable-bg-color: #dcf0ff;
-    --ex-month-width: calc(43px * 7);
-    --ex-day-width: 43px;
+    --ex-month-width: calc(33px * 7);
+    --ex-day-width: 33px;
+
+    // Time Picker Variables
+    --ex-time-picker-width: 180px;
+    --ex-time-picker-border-color: #e0e0e0;
+    --ex-time-picker-bg: #ffffff;
+    --ex-time-picker-header-color: #333333;
+    --ex-time-picker-label-color: #666666;
+    --ex-time-select-border-color: #ddddd;
+    --ex-time-select-focus-color: #007bff;
+    --ex-time-select-hover-color: #999999;
 }
 
 .ex-picker .calendar-main {
     display: flex;
     font-family: Nunito, sans-serif;
+}
+
+// Calendar Wrapper for Time Picker Integration
+.ex-picker .calendar-wrapper {
+    display: flex;
+    flex-direction: row;
+
+    &.with-time-picker {
+        gap: 0;
+    }
+
+    &.with-footer {
+        flex-direction: column;
+    }
 }
 
 .ex-picker .calendar-months {
@@ -24,10 +48,20 @@
     -ms-flex-wrap: wrap;
     flex-wrap: wrap;
     background-color: var(--ex-calendar-months-color-bg);
-    border-radius: 5px;
+    border-radius: 5px 5px 5px 5px; // Modified for time picker integration
     -webkit-box-shadow: 0 0 3px var(--ex-calendar-months-box-shadow-color);
-    box-shadow: 0 0 3px var(--ex-calendar-months-box-shadow-color);
+    box-shadow: 0 0 1px var(--ex-calendar-months-box-shadow-color);
     box-sizing: content-box;
+
+    // Reset border radius when no time picker
+    .calendar-wrapper:not(.with-time-picker) & {
+        border-radius: 5px;
+    }
+
+    // When range with time picker, no side time picker, so full radius
+    .calendar-wrapper.with-time-picker & {
+        border-radius: 5px;
+    }
 }
 
 .ex-picker .calendar-months .calendar-months-item {
@@ -35,7 +69,7 @@
 }
 
 .ex-picker .calendar-months .month-item {
-    padding: 15px;
+    padding: 0 12px;
     width: var(--ex-month-width);
     box-sizing: content-box;
 }
@@ -43,7 +77,7 @@
 .ex-picker .calendar-months .month-item .month-item-nav {
     display: flex;
     align-items: center;
-    padding: 10px 5px;
+    padding: 10px 0;
     color: var(--ex-calendar-common-color);
     cursor: default;
 }
@@ -57,7 +91,7 @@
 
 .ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-title .nav-month,
 .ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-title .nav-year {
-    font-size: 14px;
+    font-size: 13px;
     position: relative;
     margin-right: 5px;
 }
@@ -83,7 +117,7 @@
 .ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-control {
     display: flex;
     align-items: center;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .ex-picker .calendar-months .month-item .month-item-nav .month-item-nav-control .btn-today {
@@ -114,7 +148,7 @@
 
 .ex-picker .calendar-months .month-item-weekdays-row > div {
     padding: 5px 0;
-    font-size: 75%;
+    font-size: 11px;
     -webkit-box-flex: 1;
     -ms-flex: 1;
     flex: 1;
@@ -130,9 +164,9 @@
 }
 
 .ex-picker .calendar-months .month-item-days > div {
-    padding: 10px 0;
+    padding: 5px 0;
     width: var(--ex-day-width);
-    font-size: 75%;
+    font-size: 11px;
 }
 
 .ex-picker .calendar-months .month-item-days .day-item.prev-month,
@@ -185,4 +219,1016 @@
 .ex-picker .calendar-months .month-item-days .day-item.next-month:hover:not(.disabled) {
     color: var(--ex-calendar-months-day-other-color);
     box-shadow: inset 0 0 0 1px var(--ex-day-hover-color);
+}
+
+// Range Selection Styles
+.ex-picker .calendar-months .month-item-days .day-item.range-start {
+    background-color: var(--ex-day-hover-color);
+    color: white;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+.ex-picker .calendar-months .month-item-days .day-item.range-end {
+    background-color: var(--ex-day-hover-color);
+    color: white;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+.ex-picker .calendar-months .month-item-days .day-item.in-range {
+    background-color: var(--ex-day-disable-bg-color);
+    color: var(--ex-day-hover-color);
+    border-radius: 0;
+}
+
+// ===== TIME PICKER STYLES (for single date in sidebar) =====
+.ex-picker .time-picker-container {
+    min-width: var(--ex-time-picker-width);
+    max-width: 220px;
+    background: var(--ex-time-picker-bg);
+    border-left: 1px solid var(--ex-time-picker-border-color);
+    border-radius: 0 5px 5px 0;
+    display: flex;
+    flex-direction: column;
+    font-family: Nunito, sans-serif;
+    box-shadow: 0 0 3px var(--ex-calendar-months-box-shadow-color);
+    box-sizing: content-box;
+}
+
+.ex-picker .time-picker-header {
+    padding: 15px;
+    border-bottom: 1px solid var(--ex-time-picker-border-color);
+
+    h4 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ex-time-picker-header-color);
+        text-align: center;
+        font-family: Nunito, sans-serif;
+    }
+}
+
+.ex-picker .time-picker-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+// Quick Time Selection Styles (sidebar)
+.ex-picker .quick-time-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+}
+
+.ex-picker .quick-time-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ex-picker .quick-time-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ex-time-picker-label-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: Nunito, sans-serif;
+}
+
+.ex-picker .quick-time-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    padding-right: 4px;
+
+    // Custom scrollbar
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 2px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--ex-time-picker-border-color);
+        border-radius: 2px;
+
+        &:hover {
+            background: var(--ex-time-select-hover-color);
+        }
+    }
+}
+
+.ex-picker .quick-time-button {
+    padding: 4px 6px;
+    border: 1px solid var(--ex-time-select-border-color);
+    border-radius: 3px;
+    background: var(--ex-time-picker-bg);
+    color: var(--ex-calendar-common-color);
+    font-size: 10px;
+    font-family: Nunito, sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+
+    &:hover {
+        border-color: var(--ex-day-hover-color);
+        background: rgba(31, 136, 186, 0.1);
+    }
+
+    &.selected {
+        background: var(--ex-day-hover-color);
+        color: white;
+        border-color: var(--ex-day-hover-color);
+        font-weight: 600;
+    }
+
+    &:focus {
+        outline: none;
+        border-color: var(--ex-day-hover-color);
+        box-shadow: 0 0 0 2px rgba(31, 136, 186, 0.25);
+    }
+}
+
+// Detailed Time Controls Styles (sidebar)
+.ex-picker .detailed-time-section {
+    border-top: 1px solid var(--ex-time-picker-border-color);
+    padding-top: 15px;
+    //padding-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ex-picker .detailed-time-header {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ex-time-picker-label-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: Nunito, sans-serif;
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.ex-picker .detailed-time-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ex-picker .time-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ex-picker .time-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--ex-time-picker-label-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: Nunito, sans-serif;
+    margin-left: 30px;
+}
+
+.ex-picker .time-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: center;
+    font-family: Nunito, sans-serif;
+}
+
+.ex-picker .time-controls select {
+    padding: 4px 6px;
+    border: 1px solid var(--ex-time-select-border-color);
+    border-radius: 3px;
+    font-size: 10px;
+    background: var(--ex-time-picker-bg);
+    color: var(--ex-calendar-common-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: Nunito, sans-serif;
+
+    &:hover {
+        border-color: var(--ex-time-select-hover-color);
+    }
+
+    &:focus {
+        outline: none;
+        border-color: var(--ex-day-hover-color);
+        box-shadow: 0 0 0 2px rgba(31, 136, 186, 0.25);
+    }
+}
+
+.ex-picker .time-hour-select,
+.ex-picker .time-minute-select,
+.ex-picker .time-ampm-select {
+    width: 42px;
+}
+
+// Time controls separator
+.ex-picker .time-controls > *:not(select) {
+    color: var(--ex-calendar-common-color);
+    font-weight: 600;
+    font-size: 10px;
+}
+
+// Time separator for detailed controls
+.ex-picker .time-separator {
+    color: var(--ex-calendar-common-color);
+    font-weight: 600;
+    font-size: 10px;
+    margin: 0 2px;
+}
+
+// Time input controls (hour/minute inputs)
+.ex-picker .time-hour-input,
+.ex-picker .time-minute-input {
+    width: 38px;
+    padding: 4px 6px;
+    border: 1px solid var(--ex-time-select-border-color);
+    border-radius: 3px;
+    font-size: 10px;
+    background: var(--ex-time-picker-bg);
+    color: var(--ex-calendar-common-color);
+    text-align: center;
+    font-family: Nunito, sans-serif;
+    transition: all 0.2s ease;
+
+    &:hover {
+        border-color: var(--ex-time-select-hover-color);
+    }
+
+    &:focus {
+        outline: none;
+        border-color: var(--ex-day-hover-color);
+        box-shadow: 0 0 0 2px rgba(31, 136, 186, 0.25);
+    }
+
+    // Remove spinner arrows
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    // Firefox
+    &[type=number] {
+        -moz-appearance: textfield;
+    }
+}
+
+// AM/PM toggle controls
+.ex-picker .time-ampm-toggle {
+    display: flex;
+    border: 1px solid var(--ex-time-select-border-color);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-left: 4px;
+}
+
+.ex-picker .ampm-button {
+    padding: 4px 8px;
+    background: var(--ex-time-picker-bg);
+    border: none;
+    font-size: 9px;
+    font-family: Nunito, sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--ex-calendar-common-color);
+    min-width: 28px;
+
+    &:hover {
+        background: rgba(31, 136, 186, 0.1);
+    }
+
+    &.active {
+        background: var(--ex-day-hover-color);
+        color: white;
+    }
+
+    &:focus {
+        outline: none;
+        box-shadow: inset 0 0 0 2px rgba(31, 136, 186, 0.25);
+    }
+
+    // Border between AM and PM
+    &:first-child {
+        border-right: 1px solid var(--ex-time-select-border-color);
+    }
+}
+
+// ===== TIME PICKER IN EACH MONTH STYLES (untuk useRange) =====
+.ex-picker .month-time-picker {
+    margin-top: 15px;
+    padding: 12px 0;
+    border-top: 1px solid var(--ex-time-picker-border-color);
+    background: var(--ex-time-picker-bg);
+    //border-radius: 4px;
+    font-family: Nunito, sans-serif;
+}
+
+.ex-picker .month-time-picker-header {
+    margin-bottom: 10px;
+    text-align: center;
+
+    h5 {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ex-time-picker-header-color);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-family: Nunito, sans-serif;
+    }
+}
+
+.ex-picker .month-time-picker-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+// Quick time selection dalam setiap bulan
+.ex-picker .month-time-picker .quick-time-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 8px;
+}
+
+.ex-picker .month-time-picker .quick-time-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 3px;
+    //max-height: 80px;
+    //overflow-y: auto;
+    padding-right: 2px;
+
+    // Custom scrollbar yang lebih kecil
+    &::-webkit-scrollbar {
+        width: 3px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #f8f8f8;
+        border-radius: 1.5px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--ex-time-picker-border-color);
+        border-radius: 1.5px;
+
+        &:hover {
+            background: var(--ex-time-select-hover-color);
+        }
+    }
+}
+
+.ex-picker .month-time-picker .quick-time-button {
+    padding: 7px 4px;
+    border: 1px solid var(--ex-time-select-border-color);
+    border-radius: 2px;
+    background: var(--ex-time-picker-bg);
+    color: var(--ex-calendar-common-color);
+    font-size: 10px;
+    font-family: Nunito, sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    line-height: 1.2;
+
+    &:hover {
+        border-color: var(--ex-day-hover-color);
+        background: rgba(31, 136, 186, 0.1);
+    }
+
+    &.selected {
+        background: var(--ex-day-hover-color);
+        color: white;
+        border-color: var(--ex-day-hover-color);
+        font-weight: 600;
+    }
+
+    &:focus {
+        outline: none;
+        border-color: var(--ex-day-hover-color);
+        box-shadow: 0 0 0 1px rgba(31, 136, 186, 0.5);
+    }
+}
+
+// Detailed time controls dalam setiap bulan
+.ex-picker .month-time-picker .detailed-time-section {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 8px;
+    margin-top: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ex-picker .month-time-picker .detailed-time-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+}
+
+.ex-picker .month-time-picker .time-controls {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    justify-content: center;
+    font-family: Nunito, sans-serif;
+}
+
+.ex-picker .month-time-picker .time-hour-input,
+.ex-picker .month-time-picker .time-minute-input {
+    width: 32px;
+    padding: 2px 4px;
+    border: 1px solid var(--ex-time-select-border-color);
+    border-radius: 2px;
+    font-size: 11px;
+    background: var(--ex-time-picker-bg);
+    color: var(--ex-calendar-common-color);
+    text-align: center;
+    font-family: Nunito, sans-serif;
+    transition: all 0.2s ease;
+
+    &:hover {
+        border-color: var(--ex-time-select-hover-color);
+    }
+
+    &:focus {
+        outline: none;
+        border-color: var(--ex-day-hover-color);
+        box-shadow: 0 0 0 1px rgba(31, 136, 186, 0.5);
+    }
+
+    // Remove spinner arrows
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    // Firefox
+    &[type=number] {
+        -moz-appearance: textfield;
+    }
+}
+
+.ex-picker .month-time-picker .time-separator {
+    color: var(--ex-calendar-common-color);
+    font-weight: 600;
+    font-size: 11px;
+    margin: 0 1px;
+}
+
+.ex-picker .month-time-picker .time-ampm-toggle {
+    display: flex;
+    border: 1px solid var(--ex-time-select-border-color);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-left: 4px;
+}
+
+.ex-picker .month-time-picker .ampm-button {
+    padding: 2px 6px;
+    background: var(--ex-time-picker-bg);
+    border: none;
+    font-size: 8px;
+    font-family: Nunito, sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--ex-calendar-common-color);
+
+    &:hover {
+        background: rgba(31, 136, 186, 0.1);
+    }
+
+    &.active {
+        background: var(--ex-day-hover-color);
+        color: white;
+    }
+
+    &:focus {
+        outline: none;
+        box-shadow: inset 0 0 0 1px rgba(31, 136, 186, 0.5);
+    }
+
+    // Border between AM and PM
+    &:first-child {
+        border-right: 1px solid var(--ex-time-select-border-color);
+    }
+}
+
+// Adjustments untuk dual month dengan time picker di setiap bulan
+.ex-picker .calendar-months.dual-month {
+    gap: 1px;
+
+    .calendar-months-item {
+        .month-item {
+            min-height: auto;
+        }
+    }
+
+    .calendar-wrapper:not(.with-time-picker) & {
+        gap: 30px; // Original gap when no time picker
+    }
+}
+
+// ===== FOOTER STYLES =====
+.ex-picker .footer-container {
+    background: var(--ex-time-picker-bg);
+    //border-top: 1px solid var(--ex-time-picker-border-color);
+    border-radius: 0 0 5px 5px;
+    padding: 12px 15px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    font-family: Nunito, sans-serif;
+    box-shadow: 0 0 1px var(--ex-calendar-months-box-shadow-color);
+}
+
+.ex-picker .footer-content {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.ex-picker .footer-button {
+    padding: 6px 16px;
+    border: 1px solid var(--ex-time-select-border-color);
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: Nunito, sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    min-width: 60px;
+    text-align: center;
+}
+
+.ex-picker .footer-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.ex-picker .footer-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.ex-picker .footer-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(31, 136, 186, 0.25);
+}
+
+.ex-picker .footer-cancel {
+    background: #ffffff;
+    color: var(--ex-calendar-common-color);
+    border-color: #ddd;
+}
+
+.ex-picker .footer-cancel:hover {
+    background: #f8f9fa;
+    border-color: #999;
+}
+
+.ex-picker .footer-apply {
+    background: var(--ex-day-hover-color);
+    color: white;
+    border-color: var(--ex-day-hover-color);
+}
+
+.ex-picker .footer-apply:hover {
+    background: #1a7ba8;
+    border-color: #1a7ba8;
+}
+
+/* Calendar wrapper adjustments for footer */
+.ex-picker .calendar-wrapper.with-footer {
+    .calendar-months {
+        border-radius: 5px 5px 0 0;
+
+        &.dual-month {
+            border-radius: 5px 0 0 0;
+        }
+    }
+
+    .time-picker-container {
+        border-radius: 0;
+        border-bottom: none;
+    }
+
+    &.with-time-picker .calendar-months {
+        border-radius: 5px 5px 0 0;
+    }
+
+    &:not(.with-time-picker) .footer-container {
+        border-radius: 0 0 5px 5px;
+    }
+}
+
+// ===== RESPONSIVE STYLES =====
+@media (max-width: 768px) {
+    .ex-picker .calendar-wrapper.with-time-picker {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .ex-picker .calendar-months {
+        border-radius: 5px 5px 0 0; // Adjust for mobile stacking
+    }
+
+    .ex-picker .time-picker-container {
+        border-left: none;
+        border-top: 1px solid var(--ex-time-picker-border-color);
+        border-radius: 0 0 5px 5px; // Adjust for mobile stacking
+        min-width: unset;
+        max-width: unset;
+        width: 100%;
+        padding: 12px 15px;
+    }
+
+    // Quick time section adjustments for mobile
+    .ex-picker .quick-time-section {
+        flex-direction: row;
+        gap: 10px;
+
+        // For range selection, stack vertically on very small screens
+        @media (max-width: 480px) {
+            flex-direction: column;
+            gap: 12px;
+        }
+    }
+
+    .ex-picker .quick-time-container {
+        flex: 1;
+    }
+
+    .ex-picker .quick-time-grid {
+        grid-template-columns: repeat(6, 1fr); // More columns on mobile
+        gap: 3px;
+        max-height: 80px; // Smaller max height on mobile
+
+        @media (max-width: 480px) {
+            grid-template-columns: repeat(4, 1fr); // Back to 4 columns on very small screens
+            max-height: 100px;
+        }
+    }
+
+    .ex-picker .quick-time-button {
+        padding: 3px 4px;
+        font-size: 9px;
+    }
+
+    // Detailed time section adjustments
+    .ex-picker .detailed-time-section {
+        border-top: 1px solid var(--ex-time-picker-border-color);
+        padding-top: 12px;
+        margin-top: 8px;
+    }
+
+    .ex-picker .detailed-time-container {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        justify-content: space-between;
+    }
+
+    .ex-picker .time-label {
+        font-size: 9px;
+        min-width: 60px;
+    }
+
+    .ex-picker .time-controls {
+        flex: 1;
+        gap: 3px;
+    }
+
+    .ex-picker .time-controls select {
+        padding: 3px 4px;
+        font-size: 9px;
+    }
+
+    .ex-picker .time-hour-select,
+    .ex-picker .time-minute-select,
+    .ex-picker .time-ampm-select {
+        width: 36px;
+    }
+
+    // Month time picker responsive adjustments
+    .ex-picker .month-time-picker {
+        margin-top: 10px;
+        padding: 8px 0;
+    }
+
+    .ex-picker .month-time-picker-header h5 {
+        font-size: 10px;
+    }
+
+    .ex-picker .month-time-picker .quick-time-grid {
+        grid-template-columns: repeat(8, 1fr);
+        gap: 2px;
+        max-height: 60px;
+    }
+
+    .ex-picker .month-time-picker .quick-time-button {
+        padding: 2px 3px;
+        font-size: 10px;
+    }
+
+    .ex-picker .month-time-picker .time-hour-input,
+    .ex-picker .month-time-picker .time-minute-input {
+        width: 28px;
+        padding: 1px 3px;
+        font-size: 8px;
+    }
+
+    .ex-picker .month-time-picker .time-separator {
+        font-size: 8px;
+    }
+
+    .ex-picker .month-time-picker .ampm-button {
+        padding: 1px 4px;
+        font-size: 7px;
+    }
+
+    // Footer responsive
+    .ex-picker .footer-container {
+        padding: 10px 12px;
+        gap: 6px;
+    }
+
+    .ex-picker .footer-button {
+        padding: 5px 12px;
+        font-size: 11px;
+        min-width: 50px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ex-picker .month-time-picker .quick-time-grid {
+        grid-template-columns: repeat(6, 1fr);
+        max-height: 70px;
+    }
+}
+
+// ===== DARK THEME SUPPORT =====
+.ex-picker.dark-theme {
+    .time-picker-container {
+        background: #2d2d2d;
+        border-left-color: #444444;
+    }
+
+    .time-picker-header h4 {
+        color: #ffffff;
+    }
+
+    .time-label {
+        color: #cccccc;
+    }
+
+    .time-controls select,
+    .time-hour-input,
+    .time-minute-input {
+        background: #3d3d3d;
+        border-color: #555555;
+        color: #ffffff;
+
+        &:hover {
+            border-color: #777777;
+        }
+
+        &:focus {
+            border-color: var(--ex-day-hover-color);
+        }
+    }
+
+    .quick-time-button {
+        background: #3d3d3d;
+        border-color: #555555;
+        color: #ffffff;
+
+        &:hover {
+            background: rgba(31, 136, 186, 0.2);
+        }
+
+        &.selected {
+            background: var(--ex-day-hover-color);
+            color: white;
+        }
+    }
+
+    .ampm-button {
+        background: #3d3d3d;
+        color: #ffffff;
+        border-color: #555555;
+
+        &:hover {
+            background: rgba(31, 136, 186, 0.2);
+        }
+
+        &.active {
+            background: var(--ex-day-hover-color);
+            color: white;
+        }
+    }
+
+    // Month time picker dark theme
+    .month-time-picker {
+        background: #2d2d2d;
+        border-top-color: #444444;
+    }
+
+    .month-time-picker-header h5 {
+        color: #ffffff;
+    }
+
+    .month-time-picker .quick-time-button {
+        background: #3d3d3d;
+        border-color: #555555;
+        color: #ffffff;
+
+        &:hover {
+            background: rgba(31, 136, 186, 0.2);
+        }
+
+        &.selected {
+            background: var(--ex-day-hover-color);
+            color: white;
+        }
+    }
+
+    .month-time-picker .time-hour-input,
+    .month-time-picker .time-minute-input {
+        background: #3d3d3d;
+        border-color: #555555;
+        color: #ffffff;
+
+        &:hover {
+            border-color: #777777;
+        }
+
+        &:focus {
+            border-color: var(--ex-day-hover-color);
+        }
+    }
+
+    .month-time-picker .time-separator {
+        color: #ffffff;
+    }
+
+    .month-time-picker .ampm-button {
+        background: #3d3d3d;
+        color: #ffffff;
+        border-color: #555555;
+
+        &:hover {
+            background: rgba(31, 136, 186, 0.2);
+        }
+
+        &.active {
+            background: var(--ex-day-hover-color);
+            color: white;
+        }
+    }
+}
+
+// ===== ANIMATIONS =====
+.ex-picker .time-picker-container {
+    animation: slideInRight 0.3s ease-out;
+}
+
+.ex-picker .month-time-picker {
+    animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// ===== HIGH DPI SUPPORT =====
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .ex-picker .time-controls select,
+    .ex-picker .time-hour-input,
+    .ex-picker .time-minute-input {
+        border-width: 0.5px;
+    }
+}
+
+// ===== FOCUS MANAGEMENT =====
+.ex-picker .time-picker-container:focus-within {
+    .time-picker-header h4 {
+        color: var(--ex-day-hover-color);
+        transition: color 0.2s ease;
+    }
+}
+
+// ===== PRINT STYLES =====
+@media print {
+    .ex-picker .month-time-picker,
+    .ex-picker .time-picker-container {
+        display: none;
+    }
+}
+
+// ===== ACCESSIBILITY =====
+.ex-picker {
+    // High contrast mode support
+    @media (prefers-contrast: high) {
+        .quick-time-button,
+        .time-hour-input,
+        .time-minute-input,
+        .ampm-button {
+            border-width: 2px;
+        }
+
+        .quick-time-button.selected,
+        .ampm-button.active {
+            border-color: #000000;
+        }
+    }
+
+    // Reduced motion support
+    @media (prefers-reduced-motion: reduce) {
+        .time-picker-container,
+        .month-time-picker,
+        .quick-time-button,
+        .ampm-button {
+            animation: none;
+            transition: none;
+        }
+    }
+}
+
+// ===== UTILITY CLASSES =====
+.ex-picker {
+    // Screen reader only content
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    // Focus visible utility
+    .focus-visible {
+        outline: 2px solid var(--ex-day-hover-color);
+        outline-offset: 2px;
+    }
+}
+
+// ===== ERROR STATES =====
+.ex-picker {
+    .time-hour-input.error,
+    .time-minute-input.error {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+    }
+
+    .error-message {
+        color: #dc3545;
+        font-size: 8px;
+        margin-top: 2px;
+        font-family: Nunito, sans-serif;
+    }
 }

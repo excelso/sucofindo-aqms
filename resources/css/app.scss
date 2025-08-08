@@ -1139,7 +1139,7 @@
 
     //region Not Found
     .not-found {
-        @apply h-[350px] relative
+        @apply flex flex-col items-center justify-center h-[200px] absolute top-0 left-0 right-0 bottom-0 m-auto
     }
 
     .not-found div {
