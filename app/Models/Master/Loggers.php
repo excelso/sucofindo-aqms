@@ -82,7 +82,7 @@
             }
 
             $builder->withoutGlobalScopes();
-            $builder->from(function ($builder) use ($uid, $timezone) {
+            $builder->from(function ($builder) use ($uid, $timezone, $search) {
                 $builder->select([
                     'id',
                     'uid',
@@ -99,7 +99,13 @@
                 $builder->selectRaw('ROUND((10 * LOG10((1/count(*) * SUM(POWER(10, noise / 10))))), 2) AS noise_leq');
                 $builder->selectRaw('ROUND(AVG(aqi_index), 2) AS aqi_index');
                 $builder->from('t_loggers');
-                $builder->where('uid', $uid);
+
+                if (isset($search['platformUid']) && $search['platformUid'] != '') {
+                    $builder->where('uid', $search['platformUid']);
+                } else {
+                    $builder->where('uid', $uid);
+                }
+
                 $builder->groupByRaw('uid, FLOOR(datetime_unix / 600)');
                 $builder->orderByRaw('FLOOR(datetime_unix / 600) * 600');
             }, 'summary');
