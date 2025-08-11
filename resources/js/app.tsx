@@ -17,6 +17,7 @@ import {StartTextAnimation} from "@/js/plugins/text-animation";
 import 'croppie/croppie.css'
 import '@yaireo/tagify/dist/tagify.css'
 import Inputmask from "inputmask"
+import moment from "moment";
 
 declare global {
     interface Window {
@@ -406,26 +407,54 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const datetimepickerStart = document.querySelectorAll('.datetimepickerStart')
     const datetimepickerUntil = document.querySelectorAll('.datetimepickerUntil')
-    if (datetimepickerStart && datetimepickerUntil) {
-        datetimepickerStart.forEach((elm: HTMLInputElement) => {
-            new ExPicker(elm, {
-                autoClose: true,
-                enableTimePicker: true
-            })
-        })
+    if (datetimepickerStart.length > 0 && datetimepickerUntil.length > 0) {
+        // Opsi 1: Jika setiap Start picker memiliki Until picker yang berpasangan
+        datetimepickerStart.forEach((startElm: HTMLInputElement, index: number) => {
+            const untilElm = datetimepickerUntil[index] as HTMLInputElement;
 
-        datetimepickerUntil.forEach((elm: HTMLInputElement) => {
-            const expickerUntil = new ExPicker(elm, {
-                autoClose: true,
-                enableTimePicker: true,
-                onShow: () => {
-                    expickerUntil.setOption({
-                        startDate: $(datetimepickerStart).val() as string,
-                        minDate: $(datetimepickerStart).val() as string
-                    })
-                }
-            })
-        })
+            if (untilElm) {
+                // Buat Start picker
+                const startPicker = new ExPicker(startElm, {
+                    autoClose: true,
+                    disableInput: true,
+                    enableTimePicker: true,
+                    onClick: (date) => {
+                        const untilDate = `${moment(date).format('YYYY-MM-DD')} 23:59`
+                        untilElm.value = moment(untilDate).format('YYYY-MM-DD HH:mm')
+                    },
+                    showBy: '.btnStartDate',
+                });
+
+                // Buat Until picker dengan referensi ke Start picker yang sesuai
+                const untilPicker = new ExPicker(untilElm, {
+                    autoClose: true,
+                    disableInput: true,
+                    enableTimePicker: true,
+                    onShow: () => {
+                        const startValue = startElm.value;
+                        if (startValue !== '') {
+                            untilPicker.setOption({
+                                startDate: moment(startValue).format('YYYY-MM-DD'),
+                                minDate: moment(startValue).format('YYYY-MM-DD')
+                            });
+                        } else {
+                            untilPicker.setOption({
+                                minDate: moment().format('YYYY-MM-DD')
+                            });
+                        }
+                    },
+                    showBy: '.btnUntilDate',
+                });
+
+                // Event listener untuk sinkronisasi
+                startElm.addEventListener('change', () => {
+                    // Reset until date jika start date berubah dan until date lebih kecil
+                    if (untilElm.value !== '' && untilElm.value < startElm.value) {
+                        untilElm.value = '';
+                    }
+                });
+            }
+        });
     }
 
     const datePicker = document.querySelectorAll('.datePicker')

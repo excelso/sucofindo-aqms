@@ -280,48 +280,46 @@
                         ]);
                     }
 
-                    if ($request->input('role_id') != 'super_admin') {
-                        $newPermissions = $request->input('site_permission', []);
+                    $newPermissions = $request->input('site_permission', []);
 
-                        // Get existing permissions untuk user ini
-                        $existingPermissions = UserPlatforms::where('user_id', $userId)->get();
+                    // Get existing permissions untuk user ini
+                    $existingPermissions = UserPlatforms::where('user_id', $userId)->get();
 
-                        // Convert new permissions ke format yang mudah dicari
-                        $newPermissionsMap = [];
-                        foreach ($newPermissions as $permission) {
-                            $key = $permission['platform_id'] . '_' . $permission['type_logger'];
-                            $newPermissionsMap[$key] = $permission;
-                        }
+                    // Convert new permissions ke format yang mudah dicari
+                    $newPermissionsMap = [];
+                    foreach ($newPermissions as $permission) {
+                        $key = $permission['platform_id'] . '_' . $permission['type_logger'];
+                        $newPermissionsMap[$key] = $permission;
+                    }
 
-                        // STEP 1: Update existing permissions
-                        foreach ($existingPermissions as $existing) {
-                            $key = $existing->platform_id . '_' . $existing->type_logger;
+                    // STEP 1: Update existing permissions
+                    foreach ($existingPermissions as $existing) {
+                        $key = $existing->platform_id . '_' . $existing->type_logger;
 
-                            if (isset($newPermissionsMap[$key])) {
-                                // Permission masih dipilih - set is_active = 1
-                                $existing->update([
-                                    'is_active' => 1
-                                ]);
-
-                                // Remove dari map agar tidak diinsert lagi
-                                unset($newPermissionsMap[$key]);
-                            } else {
-                                // Permission tidak dipilih - set is_active = 0
-                                $existing->update([
-                                    'is_active' => 0
-                                ]);
-                            }
-                        }
-
-                        // STEP 2: Insert permissions yang belum ada
-                        foreach ($newPermissionsMap as $permission) {
-                            UserPlatforms::create([
-                                'user_id' => $userId,
-                                'platform_id' => $permission['platform_id'],
-                                'type_logger' => $permission['type_logger'],
+                        if (isset($newPermissionsMap[$key])) {
+                            // Permission masih dipilih - set is_active = 1
+                            $existing->update([
                                 'is_active' => 1
                             ]);
+
+                            // Remove dari map agar tidak diinsert lagi
+                            unset($newPermissionsMap[$key]);
+                        } else {
+                            // Permission tidak dipilih - set is_active = 0
+                            $existing->update([
+                                'is_active' => 0
+                            ]);
                         }
+                    }
+
+                    // STEP 2: Insert permissions yang belum ada
+                    foreach ($newPermissionsMap as $permission) {
+                        UserPlatforms::create([
+                            'user_id' => $userId,
+                            'platform_id' => $permission['platform_id'],
+                            'type_logger' => $permission['type_logger'],
+                            'is_active' => 1
+                        ]);
                     }
                 });
 

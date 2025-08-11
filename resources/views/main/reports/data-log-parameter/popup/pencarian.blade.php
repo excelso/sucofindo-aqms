@@ -24,10 +24,28 @@
                     </select>
                 </div>
             </div>
-            <div class="form-group">
-                <label>Date Range</label>
-                <div class="form-group-control">
-                    <input type="text" class="form-control dateRange datePickerRange" name="dateRange" value="{{ request()->input('dateRange') ?? \Carbon\Carbon::now()->format('Y-m-d') . ' 00:00' . ' - ' . \Carbon\Carbon::now()->format('Y-m-d') . ' 23:59' }}" placeholder="..."/>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <div class="form-group-control">
+                        <input type="text" class="form-control datetimepickerStart" name="startDate" value="{{ request()->input('startDate') ?? \Carbon\Carbon::now()->format('Y-m-d') . ' 00:00' }}" placeholder="..."/>
+                        <div class="form-control-append btnStartDate">
+                            <span class="form-control-append-icon">
+                                <i class="fas fa-calendar"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Until Date</label>
+                    <div class="form-group-control">
+                        <input type="text" class="form-control datetimepickerUntil" name="untilDate" value="{{ request()->input('untilDate') ?? \Carbon\Carbon::now()->format('Y-m-d') . ' 23:59' }}" placeholder="..."/>
+                        <div class="form-control-append btnUntilDate">
+                            <span class="form-control-append-icon">
+                                <i class="fas fa-calendar"></i>
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="form-group">

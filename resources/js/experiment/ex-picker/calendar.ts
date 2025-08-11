@@ -1884,7 +1884,9 @@ export class Calendar extends Configs {
 
     //region Handle Update Position
     protected updatePosition() {
-        const inputPosition = this.element.getBoundingClientRect()
+        // Use trigger button position if available, otherwise use element position
+        const referenceElement = (this as any).triggerButton || this.element
+        const inputPosition = referenceElement.getBoundingClientRect()
         const scrollY = window.scrollY
         const windowHeight = window.innerHeight
         const windowWidth = window.innerWidth
@@ -1902,9 +1904,16 @@ export class Calendar extends Configs {
                 calendarWidth += 200 // Additional width for time picker
             }
 
+            // If using button trigger, position relative to the actual input, not button
+            let positionReference = this.element.getBoundingClientRect()
+            if ((this as any).triggerButton && (this as any).options.showBy) {
+                // Use input position for calendar placement even when triggered by button
+                positionReference = this.element.getBoundingClientRect()
+            }
+
             // Initial positioning - position below input
-            let topPosition = inputPosition.bottom + scrollY + 10
-            let leftPosition = inputPosition.left
+            let topPosition = positionReference.bottom + scrollY + 10
+            let leftPosition = positionReference.left
 
             // Check if calendar goes beyond right edge of viewport
             if (leftPosition + calendarWidth > windowWidth - 20) {
@@ -1926,7 +1935,7 @@ export class Calendar extends Configs {
             const calendarRect = this.calendarContainer.getBoundingClientRect()
             if (calendarRect.bottom > windowHeight - 20) {
                 // Position above input instead
-                topPosition = inputPosition.top + scrollY - calendarRect.height - 10
+                topPosition = positionReference.top + scrollY - calendarRect.height - 10
 
                 // Ensure it doesn't go above viewport
                 if (topPosition < scrollY + 20) {

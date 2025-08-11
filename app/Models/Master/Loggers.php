@@ -135,12 +135,10 @@
                 $builder->where('summary.uid', $search['platformUid']);
             }
 
-            if (isset($search['dateRange']) && $search['dateRange'] != '') {
-                $dateRange = explode(' - ', $search['dateRange']);
-                $minDate = $dateRange[0];
-                $maxDate = $dateRange[1];
-
-                $builder->whereBetween('summary.interval_time', [$minDate, $maxDate]);
+            if (!empty($search['startDate']) && !empty($search['untilDate'])) {
+                $builder->whereBetween('summary.interval_time', [$search['startDate'], $search['untilDate']]);
+            } elseif (!empty($search['startDate'])) {
+                $builder->where('summary.interval_time', '=', $search['startDate']);
             } else {
                 $builder->whereBetween('summary.interval_time', [$startDate, $untilDate]);
             }

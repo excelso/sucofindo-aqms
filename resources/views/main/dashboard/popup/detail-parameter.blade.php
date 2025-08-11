@@ -16,8 +16,9 @@
             <div class="bodyChart !h-[350px]"></div>
             <div class="text-[13px]">
                 <div class="font-bold">Keterangan:</div>
-                <div>BML parameter PM 10, PM 2.5 mengacu ke PP Nomor 22 Tahun 2021 Lampiran VII</div>
-                <div>BML parameter kebisingan mengacu ke KEP-48/MENLH/11/1996 tentang Baku Tingkat Kebisingan</div>
+                <div class="regulationNote"></div>
+                <div class="!hidden">BML parameter PM 10, PM 2.5 mengacu ke PP Nomor 22 Tahun 2021 Lampiran VII</div>
+                <div class="!hidden">BML parameter kebisingan mengacu ke KEP-48/MENLH/11/1996 tentang Baku Tingkat Kebisingan</div>
             </div>
         </div>
     </div>

@@ -14,14 +14,64 @@ export interface ExPickerInterfaces {
     zIndex?: number,
     useRange?: boolean,
     showDualMonth?: boolean,
-    useFooterAction?: boolean, // New option for footer buttons
+    useFooterAction?: boolean,
     enableTimePicker?: boolean,
     timeFormat?: '12' | '24',
     defaultHour?: number,
     defaultMinute?: number,
+
+    // New options for button trigger functionality
+    showBy?: string, // CSS selector for button trigger element
+    disableInput?: boolean, // Disable click on input to open calendar
+
+    // Callback functions
     onClick?: (date: Date, endDate?: Date) => void,
     onShow?: (date: Date) => void,
     onRangeSelect?: (startDate: Date, endDate: Date) => void,
-    onCancel?: () => void, // New callback for cancel button
-    onApply?: (startDate: Date, endDate?: Date) => void, // New callback for apply button
+    onCancel?: () => void,
+    onApply?: (startDate: Date, endDate?: Date) => void,
 }
+
+// Type definitions for better TypeScript support
+export type TriggerMode = 'input' | 'button' | 'both';
+
+export interface ExPickerButtonConfig {
+    selector: string;
+    disableInput?: boolean;
+    buttonClass?: string;
+    activeClass?: string;
+}
+
+// Extended interface for advanced configuration
+export interface ExPickerAdvancedConfig extends ExPickerInterfaces {
+    triggerMode?: TriggerMode;
+    buttonConfig?: ExPickerButtonConfig;
+    accessibility?: {
+        buttonAriaLabel?: string;
+        inputAriaLabel?: string;
+        calendarAriaLabel?: string;
+    };
+}
+
+// Default configuration
+export const DEFAULT_EXPICKER_CONFIG: Partial<ExPickerInterfaces> = {
+    dateFormat: 'yyyy-mm-dd',
+    locale: 'en-EN',
+    firstYear: 1980,
+    lastYear: new Date().getFullYear(),
+    autoClose: true,
+    zIndex: 9999,
+    useRange: false,
+    showDualMonth: false,
+    useFooterAction: false,
+    enableTimePicker: false,
+    timeFormat: '24',
+    defaultHour: 0,
+    defaultMinute: 0,
+    disableInput: false,
+    showBy: null,
+    minDate: null,
+    maxDate: null,
+    startDate: new Date(),
+    endDate: null
+};

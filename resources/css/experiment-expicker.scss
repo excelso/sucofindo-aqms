@@ -69,7 +69,7 @@
 }
 
 .ex-picker .calendar-months .month-item {
-    padding: 0 12px;
+    padding: 0 10px 12px;
     width: var(--ex-month-width);
     box-sizing: content-box;
 }
@@ -363,11 +363,11 @@
 // Detailed Time Controls Styles (sidebar)
 .ex-picker .detailed-time-section {
     border-top: 1px solid var(--ex-time-picker-border-color);
-    padding-top: 15px;
+    padding: 10px 0;
     //padding-bottom: 15px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 0;
 }
 
 .ex-picker .detailed-time-header {
@@ -443,7 +443,7 @@
 .ex-picker .time-controls > *:not(select) {
     color: var(--ex-calendar-common-color);
     font-weight: 600;
-    font-size: 10px;
+    font-size: 13px;
 }
 
 // Time separator for detailed controls

@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const modalDetailParameter = document.querySelector('.modalDetailParameter')
     const bodyChart: HTMLElement = modalDetailParameter.querySelector('.bodyChart')
+    const regulationNote: HTMLDivElement = modalDetailParameter.querySelector('.regulationNote')
 
     const modalHeartbeat = document.querySelector('.modalHeartbeat')
     const onlinePercentage = modalHeartbeat.querySelector('.onlinePercentage')
@@ -80,6 +81,16 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         onMetricsClick: (uid, metrics) => {
             showModalDialog(modalDetailParameter, `<i class="fas fa-file mr-2"></i> ${uid}`, async () => {
+                let regulation = 'Noise: KepmenLH Nomor 48 Tahun 1996'
+                if (metrics.type === 'pm25') {
+                    regulation = 'PM 2.5: PP Nomor 22 Tahun 2021'
+                } else if (metrics.type === 'pm10') {
+                    regulation = 'PM 10: PP Nomor 22 Tahun 2021'
+                } else if (metrics.type === 'tsp') {
+                    regulation = 'TSP: PP Nomor 22 Tahun 2021'
+                }
+
+                regulationNote.textContent = regulation
                 await handleDetailChart(uid, metrics)
             })
         },
@@ -254,7 +265,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return
         }
 
-        console.log(metric)
         const formatTimestamp = (timestamp: number, format: 'time' | 'datetime' = 'time'): string => {
             const date = new Date(timestamp * 1000);
 
@@ -381,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // },
             }, {
                 type: 'line',
-                name: `Buffer (${metric.bml_max_buffer} ${metric.type})`,
+                name: `Buffer (${metric.bml_max_buffer})`,
                 color: 'rgb(228,186,47)'
             }, {
                 type: 'line',
