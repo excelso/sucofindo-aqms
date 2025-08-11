@@ -49,10 +49,10 @@
                 </div>
             </div>
             <div class="form-group">
-                <label>AQI Status</label>
+                <label>AQI Category</label>
                 <div class="form-group-control">
                     <select class="form-control select2-custom" name="statusAqi">
-                        <option value="">All Status</option>
+                        <option value="">All Category</option>
                         @foreach($dataAqiCat as $item)
                             @php($selected = request()->input('statusAqi') == $item->id ? 'selected' : '')
                             @php($emoji = mb_convert_encoding($item->emoji, 'UTF-8', 'HTML-ENTITIES'))
