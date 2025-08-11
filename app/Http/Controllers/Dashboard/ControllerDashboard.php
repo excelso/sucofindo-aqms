@@ -169,6 +169,7 @@
                         'category' => $aqiCatForDisplay->category_name_en ?? 'Unknown',
                         'category_id' => $aqiCatForDisplay->id,
                         'category_range' => "[{$aqiCatForDisplay->pm25_min}, {$aqiCatForDisplay->pm25_max}]",
+                        'aqi_from' => $logger->aqi_from ?? null,
                     ];
                 } catch (Exception $e) {
                     Log::error("AQI processing failed for logger {$logger->id}: " . $e->getMessage());
@@ -182,6 +183,7 @@
                         'link_video_recorded' => $logger->link_video_recorded ?? null,
                         'pm25' => $logger->pm_25,
                         'category' => 'Error',
+                        'aqi_from' => $logger->aqi_from ?? null,
                         'error' => $e->getMessage()
                     ];
                 }

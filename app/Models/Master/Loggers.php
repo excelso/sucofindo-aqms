@@ -19,14 +19,20 @@
         protected $table = 't_loggers';
         protected $fillable = [
             'uid',
-            'pm_10',
             'pm_25',
+            'pm_10',
             'tsp',
             'noise',
             'temp',
+            'aqi_index_pm25',
+            'aqi_index_pm10',
+            'aqi_index',
+            'aqi_from',
             'link_video_id',
             'link_video_status',
             'link_video_recorded',
+            'link_video_message',
+            'tipe_logger',
             'datetime_unix',
         ];
 
@@ -57,6 +63,7 @@
                 $builder->selectRaw('ROUND(AVG(noise), 2) AS noise');
                 $builder->selectRaw('ROUND((10 * LOG10((1/count(*) * SUM(POWER(10, noise / 10))))), 2) AS noise_leq');
                 $builder->selectRaw('ROUND(AVG(aqi_index), 2) AS aqi_index');
+                $builder->selectRaw('IF( COALESCE( AVG(aqi_index_pm25), -1 ) >= COALESCE( AVG(aqi_index_pm10), -1 ), "PM 2.5", "PM 10" ) AS aqi_from');
                 $builder->from('t_loggers');
                 $builder->where('uid', $uid);
                 $builder->groupByRaw('uid, FLOOR(datetime_unix / 600)');

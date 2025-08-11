@@ -17,7 +17,7 @@ export interface LoggerEventData {
     noise: number;
     temp?: number;
     datetime_unix: number;
-    forecastData?: Array<{ timestamp: number; value: number; link_video_recorded?: string }>;
+    forecastData?: Array<{ timestamp: number; value: number; link_video_recorded?: string; aqi_from: string }>;
     aqi_value?: number;
 }
 

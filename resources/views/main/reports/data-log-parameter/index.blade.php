@@ -28,6 +28,11 @@
                         <i class="fas fa-search mr-2"></i> Search
                     </a>
                 </div>
+                <div class="mr-3">
+                    <a href="{{ route('logs-parameter.export-excel', request()->input()) }}" class="btn btn-primary btnExport ml-2">
+                        <i class="fas fa-cloud-download mr-2"></i> Export Excel
+                    </a>
+                </div>
             </div>
         </div>
 

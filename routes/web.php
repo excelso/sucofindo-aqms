@@ -64,6 +64,13 @@
                 Route::get('platform-heartbeat/{uid}', [ControllerDashboard::class, 'handleDetailPlatformHeartbeat']);
             });
 
+            Route::group(['prefix' => 'reports'], function () {
+                Route::group(['prefix' => 'logs-parameter'], function () {
+                    Route::get('/', [ControllerReportLogParameter::class, 'index']);
+                    Route::get('export-excel', [ControllerReportLogParameter::class, 'exportExcel'])->name('logs-parameter.export-excel');
+                });
+            });
+
             Route::group(['prefix' => 'master'], function () {
                 Route::group(['prefix' => 'sites'], function () {
                     Route::get('/', [ControllerSites::class, 'index']);
@@ -86,12 +93,6 @@
                     Route::get('detail/{userId}', [ControllerUsers::class, 'handleDetailUser']);
                     Route::put('update/{userId}', [ControllerUsers::class, 'update']);
                     Route::delete('delete/{userId}', [ControllerUsers::class, 'delete']);
-                });
-            });
-
-            Route::group(['prefix' => 'reports'], function () {
-                Route::group(['prefix' => 'logs-parameter'], function () {
-                    Route::get('/', [ControllerReportLogParameter::class, 'index']);
                 });
             });
 

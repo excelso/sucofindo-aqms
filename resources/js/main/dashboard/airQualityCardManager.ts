@@ -52,6 +52,7 @@ interface AirQualityData {
         link_video_id?: string;
         link_video_status?: string;
         link_video_recorded?: string;
+        aqi_from: string;
     }>; // Unix timestamp
     cctvLink?: string;
     timezone?: string; // Timezone untuk platform ini (e.g., 'Asia/Jakarta', 'Asia/Makassar')
@@ -113,9 +114,10 @@ interface LoggerEventData {
     datetime_unix: number;
     link_video_id?: string;
     // Optional forecast data untuk update chart forecast
-    forecastData?: Array<{ timestamp: number; value: number }>;
+    forecastData?: Array<{ timestamp: number; value: number; aqi_from: string }>;
     // Atau bisa menggunakan AQI value untuk generate forecast point baru
     aqi_value?: number;
+    aqi_from?: string;
 }
 
 class AirQualityCardManager {
@@ -501,7 +503,8 @@ class AirQualityCardManager {
     // region Create Forecast Chart dengan Adaptive Range
     private createForecastChart(element: HTMLElement, data: Array<{
         timestamp: number;
-        value: number
+        value: number;
+        aqi_from: string;
     }>, cardId: string): void {
         if (!this.options.enableCharts || typeof Highcharts === 'undefined') {
             return;
@@ -517,7 +520,8 @@ class AirQualityCardManager {
         const now = Math.floor(new Date().setHours(0, 1, 0, 0) / 1000);
         const defaultData = data || Array.from({length: 144}, (_, i) => ({
             timestamp: now + (i * 300),
-            value: Math.floor(Math.random() * 50) + 20
+            value: Math.floor(Math.random() * 50) + 20,
+            aqi_from: null
         }));
 
         // Prepare chart data
@@ -531,7 +535,8 @@ class AirQualityCardManager {
                 fillColor: this.getAQIColor(item.value),
                 radius: 0,
                 symbol: 'circle'
-            }
+            },
+            aqi_from: item?.aqi_from
         }));
 
         const yValues = chartData.map(point => point.y);
@@ -613,12 +618,14 @@ class AirQualityCardManager {
                 shadow: true,
                 style: {fontSize: '12px'},
                 formatter: function () {
+                    const {aqi_from} = this as any
+
                     const timestampMs = this.x;
                     const timestampSeconds = timestampMs / 1000;
                     const formattedTime = managerInstance.safeFormatTimestamp(timestampSeconds, 'datetime', platformTimezone, platformLocale, true);
                     const timezoneShort = platformTimezone.split('/')[1] || platformTimezone;
 
-                    return `<b>Time (${timezoneShort}):</b> ${formattedTime}<br><b>AQI:</b> ${this.y}`;
+                    return `<b>Time (${timezoneShort}):</b> ${formattedTime}<br><b>AQI:</b> ${this.y} (${aqi_from})`;
                 }
             },
             plotOptions: {
@@ -1240,6 +1247,7 @@ class AirQualityCardManager {
             link_video_id?: string;
             link_video_status?: string;
             link_video_recorded?: string;
+            aqi_from: string;
         }>,
         newTimestamp: number,
         newValue: number,
@@ -1250,6 +1258,7 @@ class AirQualityCardManager {
         link_video_id?: string;
         link_video_status?: string;
         link_video_recorded?: string;
+        aqi_from: string;
     }> {
 
         // Create a copy of existing forecast data
@@ -1261,7 +1270,8 @@ class AirQualityCardManager {
             value: newValue,
             link_video_id: linkVideoId,
             link_video_status: linkVideoId ? 'pending' : undefined, // Set initial status jika ada video
-            link_video_recorded: undefined // Will be updated when recording completes
+            link_video_recorded: undefined, // Will be updated when recording completes
+            aqi_from: "PM 2.5"
         };
 
         updatedForecast.push(newDataPoint);
