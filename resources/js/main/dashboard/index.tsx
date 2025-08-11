@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 text: `${metric.title}`
             },
             subtitle: {
-                text: `Range: Buffer (${metric.bml_max_buffer}) - BML (${metric.bml_max})`
+                text: null
             },
             credits: {enabled: false},
             xAxis: {
