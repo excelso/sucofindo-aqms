@@ -14,7 +14,7 @@
         </div>
         <div class="modal-body overflow-y-auto !max-h-[400px]">
             <div class="form-group">
-                <label>Data Platform</label>
+                <label>Platform</label>
                 <div class="form-group-control">
                     <select class="form-control select2-custom platformUid" name="platformUid">
                         @foreach($dataAllPlatform as $item)
@@ -49,7 +49,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <label>Status Platform</label>
+                <label>AQI Status</label>
                 <div class="form-group-control">
                     <select class="form-control select2-custom" name="statusAqi">
                         <option value="">All Status</option>
