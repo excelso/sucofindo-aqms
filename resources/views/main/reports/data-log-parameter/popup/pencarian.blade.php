@@ -14,7 +14,7 @@
         </div>
         <div class="modal-body overflow-y-auto !max-h-[400px]">
             <div class="form-group">
-                <label>Platform</label>
+                <label>Logger Platform</label>
                 <div class="form-group-control">
                     <select class="form-control select2-custom platformUid" name="platformUid">
                         @foreach($dataAllPlatform as $item)
