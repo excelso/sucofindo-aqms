@@ -26,4 +26,9 @@
             $builder->where('pm25_min', '<=', $pm25);
             $builder->where('pm25_max', '>=', $pm25);
         }
+
+        public function scopeDataAqiIndex(Builder $builder, $aqiIndex): void {
+            $builder->where('aqi_min', '<=', $aqiIndex);
+            $builder->where('aqi_max', '>=', $aqiIndex);
+        }
     }

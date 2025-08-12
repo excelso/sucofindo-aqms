@@ -60,10 +60,10 @@
                     $emoji = mb_convert_encoding('&#x2753;', 'UTF-8', 'HTML-ENTITIES');
                     $colorCode = 'bg-gray-200';
 
-                    if ($dataLastLogger && $dataLastLogger->pm_25 !== null) {
-                        $aqiCat = AqiCategories::dataAqiPm25($dataLastLogger->pm_25)->first();
+                    if ($dataLastLogger && $dataLastLogger->aqi_index !== null) {
+                        $aqiCat = AqiCategories::dataAqiIndex($dataLastLogger->aqi_index)->first();
                         if (!$aqiCat) {
-                            $aqiCat = AqiCategories::orderBy('pm25_max', 'desc')->first();
+                            $aqiCat = AqiCategories::orderBy('aqi_max', 'desc')->first();
                         }
 
                         if ($aqiCat) {

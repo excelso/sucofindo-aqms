@@ -105,6 +105,7 @@
                 $builder->selectRaw('ROUND(AVG(noise), 2) AS noise');
                 $builder->selectRaw('ROUND((10 * LOG10((1/count(*) * SUM(POWER(10, noise / 10))))), 2) AS noise_leq');
                 $builder->selectRaw('ROUND(AVG(aqi_index), 2) AS aqi_index');
+                $builder->selectRaw('IF( COALESCE( AVG(aqi_index_pm25), -1 ) >= COALESCE( AVG(aqi_index_pm10), -1 ), "PM 2.5", "PM 10" ) AS aqi_from');
                 $builder->from('t_loggers');
 
                 if (isset($search['platformUid']) && $search['platformUid'] != '') {
@@ -119,8 +120,8 @@
 
             // Join dengan t_aqi_categories untuk mendapatkan kategori
             $builder->leftJoin('t_aqi_categories', function ($join) {
-                $join->whereRaw('summary.pm_25 >= t_aqi_categories.pm25_min')
-                    ->whereRaw('summary.pm_25 <= t_aqi_categories.pm25_max');
+                $join->whereRaw('summary.aqi_index >= t_aqi_categories.aqi_min')
+                    ->whereRaw('summary.aqi_index <= t_aqi_categories.aqi_max');
             });
 
             // Jika tidak ada kategori yang cocok (PM2.5 > 500), ambil kategori tertinggi

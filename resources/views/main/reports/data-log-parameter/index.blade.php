@@ -57,6 +57,7 @@
                                     <th class="text-right w-[120px]">TSP</th>
                                     <th class="text-right w-[120px]">Noise</th>
                                     <th class="text-right w-[150px]">AQI Index</th>
+                                    <th class="text-left w-[150px]">AQI From</th>
                                     <th class="text-left w-[180px]">AQI Category</th>
                                     <th class="text-left w-[150px]">CCTV</th>
                                 </tr>
@@ -74,6 +75,7 @@
                                             <td class="text-right">{{ $item->tsp ?? '' }}</td>
                                             <td class="text-right">{{ $item->noise_leq ?? '' }}</td>
                                             <td class="text-right">{{ $item->aqi_index ?? '' }}</td>
+                                            <td class="text-left">{{ $item->aqi_from ?? '' }}</td>
                                             <td class="text-left">
                                                 <span class="status-badge inline-flex items-center rounded-full gap-1 px-[7px] py-[3px] {{ $item->color_code }} text-[12px] font-bold">
                                                     {{ mb_convert_encoding($item->emoji, 'UTF-8', 'HTML-ENTITIES') }} {{ $item->category_name_en }}
