@@ -8,7 +8,7 @@
             </div>
 
             <div class="flex items-center">
-                <div class="p-[10px]">
+                <div class="p-[10px] !hidden">
                     <div id="dropdownLangButton" data-dropdown-toggle="dropdownLang" data-dropdown-offset-skidding="-60" class="dropdown-button cursor-pointer" type="button">
                         <div class="flex items-center capitalize">
                             @php($imgLocale = asset('images/locales/en.png'))

@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function () {
     //endregion
 
     //region Handle AQI Card
-    const manager = new AirQualityCardManager({
+    new AirQualityCardManager({
         containerSelector: '.airQualityParent',
         batchSize: 50,
         enableLazyLoading: true,
@@ -83,11 +83,11 @@ document.addEventListener('DOMContentLoaded', function () {
             showModalDialog(modalDetailParameter, `<i class="fas fa-file mr-2"></i> ${uid}`, async () => {
                 let regulation = 'Noise: KepmenLH Nomor 48 Tahun 1996'
                 if (metrics.type === 'pm25') {
-                    regulation = 'PM 2.5: PP Nomor 22 Tahun 2021'
+                    regulation = 'BML Parameter PM 2.5 mengacu pada PP Nomor 22 Tahun 2021'
                 } else if (metrics.type === 'pm10') {
-                    regulation = 'PM 10: PP Nomor 22 Tahun 2021'
+                    regulation = 'BML Parameter PM 10 mengacu pada PP Nomor 22 Tahun 2021'
                 } else if (metrics.type === 'tsp') {
-                    regulation = 'TSP: PP Nomor 22 Tahun 2021'
+                    regulation = 'BML Parameter PM 2.5 mengacu pada PP Nomor 22 Tahun 2021'
                 }
 
                 regulationNote.textContent = regulation
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
         onConnectionStatus: (status) => {
             console.log('Connection status:', status);
         },
-        onClickForcastPoint: async (events, pointData) => {
+        onClickAirIndexPoint: async (events, pointData) => {
             const { cardId, linkVideo } = pointData
             const { uid, linkVideoId, linkVideoRecorded } = linkVideo
 
@@ -332,6 +332,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 gridLineWidth: 0,
                 gridLineDashStyle: 'LongDash',
                 min: 0,
+                max: (metric.bml_max_buffer + 50),
                 plotLines: [
                     {
                         value: metric.bml_max,

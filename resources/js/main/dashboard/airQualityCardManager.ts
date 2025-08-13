@@ -5,6 +5,9 @@ import "highcharts/modules/no-data-to-display";
 import {io, Socket} from 'socket.io-client';
 import {SocketClient, SocketEventCallbacks, SocketOptions} from "@/js/plugins/SocketClient";
 import {createSmoothGradient} from "@/js/main/dashboard/chartHelper";
+import { Dropdown } from 'flowbite';
+import type { DropdownOptions, DropdownInterface } from 'flowbite';
+import type { InstanceOptions } from 'flowbite';
 
 interface AirQualityData {
     uid: string;
@@ -46,7 +49,7 @@ interface AirQualityData {
     };
     location?: string;
     lastUpdated?: Date;
-    forecastData?: Array<{
+    airIndexData?: Array<{
         timestamp: number;
         value: number;
         link_video_id?: string;
@@ -89,7 +92,7 @@ interface CardManagerOptions {
     onMetricsClick?: (id: string, metrics: MetricsData) => void;
     onDataUpdate?: (updatedData: AirQualityData[]) => void;
     onConnectionStatus?: (status: 'connected' | 'disconnected' | 'error') => void;
-    onClickForcastPoint?: (events: any, pointData: {
+    onClickAirIndexPoint?: (events: any, pointData: {
         cardId: string;
         timestamp: number;
         value: number;
@@ -113,9 +116,9 @@ interface LoggerEventData {
     temp?: number;
     datetime_unix: number;
     link_video_id?: string;
-    // Optional forecast data untuk update chart forecast
-    forecastData?: Array<{ timestamp: number; value: number; aqi_from: string }>;
-    // Atau bisa menggunakan AQI value untuk generate forecast point baru
+    // Optional airIndex data untuk update chart airIndex
+    airIndexData?: Array<{ timestamp: number; value: number; aqi_from: string }>;
+    // Atau bisa menggunakan AQI value untuk generate airIndex point baru
     aqi_value?: number;
     aqi_from?: string;
 }
@@ -570,7 +573,7 @@ class AirQualityCardManager {
             },
             title: {text: null},
             lang: {
-                noData: "No forecast data available"
+                noData: "No AQI data available"
             },
             credits: {enabled: false},
             xAxis: {
@@ -678,8 +681,8 @@ class AirQualityCardManager {
                             events: {
                                 click: (event: any) => {
                                     if (lastPoint.y > 50) {
-                                        if (this.options.onClickForcastPoint) {
-                                            this.options.onClickForcastPoint(event, {
+                                        if (this.options.onClickAirIndexPoint) {
+                                            this.options.onClickAirIndexPoint(event, {
                                                 cardId: cardId || 'unknown',
                                                 timestamp: lastPoint.x ? lastPoint.x / 1000 : Date.now() / 1000,
                                                 value: lastPoint.y,
@@ -724,8 +727,8 @@ class AirQualityCardManager {
                                 },
                                 events: {
                                     click: (event: any) => {
-                                        if (this.options.onClickForcastPoint) {
-                                            this.options.onClickForcastPoint(event, {
+                                        if (this.options.onClickAirIndexPoint) {
+                                            this.options.onClickAirIndexPoint(event, {
                                                 cardId: cardId || 'unknown',
                                                 timestamp: item.x ? item.x / 1000 : Date.now() / 1000,
                                                 value: item.y,
@@ -747,7 +750,7 @@ class AirQualityCardManager {
             }
         }.bind(this))
 
-        this.chartInstances.set(`${cardId}-forecast`, chart);
+        this.chartInstances.set(`${cardId}-airIndex`, chart);
     }
 
     // endregion
@@ -901,9 +904,9 @@ class AirQualityCardManager {
             });
         }
 
-        // Update forecast chart if data changed
-        if (newData.forecastData && JSON.stringify(oldData.forecastData) !== JSON.stringify(newData.forecastData)) {
-            this.updateForecastChart(`card-${cardId}-${this.getCardIndex(cardId)}`, newData.forecastData);
+        // Update airIndex chart if data changed
+        if (newData.airIndexData && JSON.stringify(oldData.airIndexData) !== JSON.stringify(newData.airIndexData)) {
+            this.updateForecastChart(`card-${cardId}-${this.getCardIndex(cardId)}`, newData.airIndexData);
         }
 
         // Update last updated timestamp
@@ -976,20 +979,20 @@ class AirQualityCardManager {
     // endregion
 
     // region Update Forecast Chart
-    private updateForecastChart(cardId: string, forecastData: Array<{ timestamp: number; value: number }>): void {
-        const chartKey = `${cardId}-forecast`;
+    private updateForecastChart(cardId: string, airIndexData: Array<{ timestamp: number; value: number }>): void {
+        const chartKey = `${cardId}-airIndex`;
         const chart = this.chartInstances.get(chartKey);
 
         if (chart && chart.series && chart.series[0]) {
-            const yValues = forecastData.map(item => item.value);
+            const yValues = airIndexData.map(item => item.value);
             const minY = Math.min(0, Math.min(...yValues));
             const maxY = Math.max(100, Math.max(...yValues));
             const newGradient = createSmoothGradient(minY, maxY);
 
-            // Convert forecast data to Highcharts format
-            const chartData = forecastData.map((item, index) => {
+            // Convert airIndex data to Highcharts format
+            const chartData = airIndexData.map((item, index) => {
                 const markerColor = this.getAQIColor(item.value);
-                const isLastPoint = index === forecastData.length - 1;
+                const isLastPoint = index === airIndexData.length - 1;
                 const isHighValue = item.value > 50;
                 const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.timestamp * 1000);
 
@@ -1011,8 +1014,8 @@ class AirQualityCardManager {
                         events: {
                             click: (event: any) => {
                                 if (isHighValue) {
-                                    if (this.options.onClickForcastPoint) {
-                                        this.options.onClickForcastPoint(event, {
+                                    if (this.options.onClickAirIndexPoint) {
+                                        this.options.onClickAirIndexPoint(event, {
                                             cardId,
                                             timestamp: item.timestamp,
                                             value: item.value,
@@ -1067,7 +1070,7 @@ class AirQualityCardManager {
         linkVideoRecorded: string
     } {
         const cardData = this.data.find(item => item.uid === cardId.replace(/card-|-\d+$/g, ''));
-        const cardDataPoint = cardData?.forecastData?.find(point => point.timestamp === (timestamp / 1000))
+        const cardDataPoint = cardData?.airIndexData?.find(point => point.timestamp === (timestamp / 1000))
         return {
             uid: cardData?.uid,
             linkVideoId: cardDataPoint?.link_video_id,
@@ -1155,9 +1158,9 @@ class AirQualityCardManager {
             // Calculate AQI from PM2.5 if not provided
             const aqiValue = loggerData.aqi_value || this.calculateAQIFromPM25(loggerData.pm_25);
 
-            // Update forecast data with new point
+            // Update airIndex data with new point
             const updatedForecastData = this.updateForecastData(
-                oldData.forecastData || [],
+                oldData.airIndexData || [],
                 loggerData.datetime_unix,
                 aqiValue,
                 loggerData.link_video_id
@@ -1185,7 +1188,7 @@ class AirQualityCardManager {
                         value: loggerData.noise
                     }
                 },
-                forecastData: loggerData.forecastData || updatedForecastData,
+                airIndexData: loggerData.airIndexData || updatedForecastData,
                 lastUpdated: new Date(loggerData.datetime_unix * 1000),
                 isOnline: true // Update online status when receiving data
             };
@@ -1196,7 +1199,7 @@ class AirQualityCardManager {
             // Update cache
             this.dataCache.set(loggerData.uid, updatedData);
 
-            // Update UI for this specific card (including forecast chart)
+            // Update UI for this specific card (including airIndex chart)
             this.updateCardUI(loggerData.uid, oldData, updatedData);
 
             // Trigger callback if provided
@@ -1204,7 +1207,7 @@ class AirQualityCardManager {
                 this.options.onDataUpdate([updatedData]);
             }
 
-            console.log(`📊 Updated station ${loggerData.uid} with real-time logger data and forecast`);
+            console.log(`📊 Updated station ${loggerData.uid} with real-time logger data and airIndex`);
         } else {
             console.warn(`⚠️ Station ${loggerData.uid} not found in current data`);
         }
@@ -1261,7 +1264,7 @@ class AirQualityCardManager {
         aqi_from: string;
     }> {
 
-        // Create a copy of existing forecast data
+        // Create a copy of existing airIndex data
         let updatedForecast = [...existingForecast];
 
         // Add new data point with video information
@@ -1619,20 +1622,90 @@ class AirQualityCardManager {
         metricsContainer.appendChild(metricsGrid);
 
         // Forecast section
-        const forecastSection = this.createElement('div', 'mt-4');
-        const forecastTitle = this.createElement('div', 'font-bold text-[14px]', 'Air Quality Forecast');
-        const forecastSubTitle = this.createElement('div', 'text-[11px] mb-4', 'Based on PM 2.5');
-        const forecastChart = this.createElement('div', 'chart-one');
-        forecastChart.id = `${cardId}-forecast`;
+        const airIndexSection = this.createElement('div', 'mt-4');
+        const airIndexTitle = this.createElement('div', 'font-bold text-[14px]', 'Air Quality Index');
+        const airIndexSubTitle = this.createElement('div', 'text-[11px] mb-4 flex items-center justify-between gap-2');
+        const subText = this.createElement('span', '', 'Based on PM 2.5 / PM 10');
+        const ddWrap = this.createElement('div', 'relative');
+        const ddButton = this.createElement('button', 'inline-flex items-center gap-1 text-xs px-2 py-1 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-800') as HTMLButtonElement;
+        ddButton.id = `${cardId}-dropdownButton`;
+        ddButton.type = 'button';
+        ddButton.innerHTML = `
+              Source <svg class="w-3 h-3" aria-hidden="true" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
+              </svg>
+        `;
+        const ddMenu = this.createElement('div', 'z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700') as HTMLDivElement;
+        ddMenu.id = `${cardId}-dropdownMenu`;
+        ddMenu.setAttribute('aria-labelledby', ddButton.id);
+        const menuList = document.createElement('ul');
+        menuList.className = 'py-2 text-sm text-gray-700 dark:text-gray-200';
+        menuList.setAttribute('role', 'menu');
 
-        forecastSection.appendChild(forecastTitle);
-        forecastSection.appendChild(forecastSubTitle);
-        forecastSection.appendChild(forecastChart);
+        const makeItem = (label: string, value: 'both' | 'tsp') => {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = '#';
+            a.className = 'block px-4 py-2 text-[12px] hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white';
+            a.textContent = label;
+            a.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (value === 'both') subText.textContent = 'Based on PM 2.5 / PM 10';
+                if (value === 'tsp') subText.textContent = 'Based on TSP';
 
-        // Create forecast chart after DOM insertion
+                // TODO (opsional): panggil callback atau filter data chart sesuai value
+                // contoh: this.filterAirIndexSource(cardId, value);
+
+                dropdown.hide();
+            });
+            li.appendChild(a);
+            return li;
+        };
+
+        menuList.appendChild(makeItem('PM 2.5 / PM 10', 'both'));
+        menuList.appendChild(makeItem('TSP', 'tsp'));
+        ddMenu.appendChild(menuList);
+
+        ddWrap.appendChild(ddButton);
+        ddWrap.appendChild(ddMenu);
+
+        airIndexSubTitle.appendChild(subText);
+        airIndexSubTitle.appendChild(ddWrap);
+
+        const airIndexChart = this.createElement('div', 'chart-one');
+        airIndexChart.id = `${cardId}-airIndex`;
+
+        airIndexSection.appendChild(airIndexTitle);
+        airIndexSection.appendChild(airIndexSubTitle);
+        airIndexSection.appendChild(airIndexChart);
+
+        // Create airIndex chart after DOM insertion
         setTimeout(() => {
-            this.createForecastChart(forecastChart, data.forecastData, cardId);
+            this.createForecastChart(airIndexChart, data.airIndexData, cardId);
         }, 200);
+
+        const ddOptions: DropdownOptions = {
+            placement: 'bottom-end',
+            triggerType: 'click',
+            offsetSkidding: 0,
+            offsetDistance: 8,
+            delay: 150,
+            onShow: () => console.log(`[${cardId}] dropdown shown`),
+            onHide: () => console.log(`[${cardId}] dropdown hidden`),
+            onToggle: () => console.log(`[${cardId}] dropdown toggled`),
+        };
+
+        const instanceOptions: InstanceOptions = {
+            id: ddMenu.id,
+            override: true
+        };
+
+        const dropdown: DropdownInterface = new Dropdown(
+            ddMenu,
+            ddButton,
+            ddOptions,
+            instanceOptions
+        );
 
         if (data.lastUpdated) {
             const platformTimezone = data.timezone || 'Asia/Jakarta';
@@ -1643,13 +1716,13 @@ class AirQualityCardManager {
 
             const lastUpdatedDiv = this.createElement('div', 'text-[10px] text-gray-400 mt-4 last-updated',
                 `Last updated: ${formattedLastUpdated} (${timezoneShort})`);
-            forecastSection.appendChild(lastUpdatedDiv);
+            airIndexSection.appendChild(lastUpdatedDiv);
         }
 
         // Assemble card
         cardBody.appendChild(headerFlex);
         cardBody.appendChild(metricsContainer);
-        cardBody.appendChild(forecastSection);
+        cardBody.appendChild(airIndexSection);
         card.appendChild(cardBody);
 
         return card;
