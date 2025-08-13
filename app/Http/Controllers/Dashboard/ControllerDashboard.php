@@ -75,7 +75,7 @@
 
                     $dataPlatformsTemp[] = [
                         'uid' => $platform->uid,
-                        'siteName' => $platform->sites->site_name,
+                        'siteName' => $platform->sites->site_name ?? 'Unknown',
                         'status' => $status,
                         'emoji' => $emoji,
                         'colorCode' => $colorCode,

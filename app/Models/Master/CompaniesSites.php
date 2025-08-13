@@ -31,7 +31,17 @@
         }
 
         public function scopeDataSites(Builder $builder, $options = []): void {
+            $search = [];
+            if (count($options) != 0) {
+                $search = $options['search'];
+            }
+
             $builder->select('*');
+
+            if (!empty($search['site_name'])) {
+                $builder->where('site_name', 'like', '%' . $search['site_name'] . '%');
+            }
+
             $builder->orderBy('created_at');
         }
 

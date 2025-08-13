@@ -5,6 +5,7 @@ import DataSitesModel from "@/js/main/master/data-sites/model/DataSitesModel";
 import Swal from "sweetalert2";
 import {TabItem, Tabs} from "flowbite";
 import MapsHelper from "@/js/plugins/mapsHelper";
+import VideoStreamHandler from "@/js/plugins/videoStreamHandler";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
@@ -70,9 +71,20 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnSave: HTMLElement = modalForm.querySelector('.btnSave')
     const btnDelete: HTMLElement = modalForm.querySelector('.btnDelete')
 
+    const modalCctv: HTMLElement = document.querySelector('.modalCctv')
+    const modalBody: HTMLElement = modalCctv.querySelector('.modal-body')
+
     const modelSite = new DataSitesModel(companyId, companySiteId, {
         csrfToken
-    })
+    });
+
+    const videoHandler = new VideoStreamHandler({
+        autoplay: true,
+        controls: true,
+        muted: true,
+        maxHeight: '80vh',
+        retryAttempts: 5
+    });
 
     //region Handle Close Modal
     closeModalForm.forEach((elm: Element) => {
@@ -88,6 +100,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     platformTimezone.dispatchEvent(new Event('exbox.change'));
 
                     showTab('#platform')
+                })
+            }
+
+            if (modalCctv) {
+                closeModalDialog(modalCctv, () => {
+                    videoHandler.destroy();
                 })
             }
         })
@@ -253,7 +271,34 @@ document.addEventListener('DOMContentLoaded', function () {
     if (dataTables) {
         dataTables.forEach((elm) => {
             const platformId = elm.getAttribute('data-id')
+            const platformUid = elm.getAttribute('data-uid')
             const btnEdit = elm.querySelector('.btnEdit')
+            const btnCCTVRtc = elm.querySelector('.btnCCTVRtc')
+            const btnCCTVHls = elm.querySelector('.btnCCTVHls')
+
+            if (btnCCTVRtc) {
+                btnCCTVRtc.addEventListener('click', () => {
+                    showModalDialog(modalCctv, `
+                        <div class="flex items-center">
+                            <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${platformUid}
+                        </div>
+                    `, () => {
+                        videoHandler.createVideoElement(modalBody, btnCCTVRtc.getAttribute('data-href'));
+                    })
+                })
+            }
+
+            if (btnCCTVHls) {
+                btnCCTVHls.addEventListener('click', () => {
+                    showModalDialog(modalCctv, `
+                        <div class="flex items-center">
+                            <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${platformUid}
+                        </div>
+                    `, () => {
+                        videoHandler.createVideoElement(modalBody, btnCCTVHls.getAttribute('data-href'));
+                    })
+                })
+            }
 
             if (btnEdit) {
                 btnEdit.addEventListener('click', async function () {

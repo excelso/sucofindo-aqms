@@ -89,6 +89,7 @@
 
         {{-- Bagian Include (Modal) --}}
         @include('main.master.data-sites.popup.form')
+        @include('main.master.data-sites.popup.pencarian')
     </div>
 </x-app-layout>
 

@@ -64,12 +64,12 @@
                                 @php($i = isset($items) ? $items->firstItem() : 0)
                                 @if(isset($items) && count($items) !== 0)
                                     @foreach($items as $item)
-                                        <tr class="data-tables" data-id="{{ $item->id }}">
+                                        <tr class="data-tables" data-id="{{ $item->id }}" data-uid="{{ $item->uid ?? '' }}">
                                             <td class="text-center">{{$i++}}</td>
                                             <td class="text-center">{{ $item->uid ?? '' }}</td>
                                             <td class="text-left">
                                                 @if($item->cctv_link)
-                                                    <a href="{{ $item->cctv_link }}" target="_blank">
+                                                    <a class="cursor-pointer btnCCTVRtc" data-href="{{ $item->cctv_link }}">
                                                         {{ $item->cctv_link }}
                                                     </a>
                                                 @else
@@ -78,7 +78,7 @@
                                             </td>
                                             <td class="text-left">
                                                 @if($item->cctv_link_hls)
-                                                    <a href="{{ $item->cctv_link_hls }}" target="_blank">
+                                                    <a class="cursor-pointer btnCCTVHls" data-href="{{ $item->cctv_link_hls }}">
                                                         {{ $item->cctv_link_hls }}
                                                     </a>
                                                 @else
@@ -86,8 +86,8 @@
                                                 @endif
                                             </td>
                                             <td class="text-left">{{ $item->timezone ?? '-' }}</td>
-                                            <td class="text-left">{{ $item->sites->site_name ?? '' }}</td>
-                                            <td class="text-left">{{ $item->sites->companies->company_name ?? '' }}</td>
+                                            <td class="text-left">{{ $item->sites->site_name ?? '-' }}</td>
+                                            <td class="text-left">{{ $item->sites->companies->company_name ?? '-' }}</td>
                                             <td class="text-center">{{ Carbon::parse($item->updated_at)->translatedFormat('d M Y H:i') }}</td>
                                             <td class="text-center">
                                                 <a href="javascript:void(0)" class="btnEdit">
@@ -113,6 +113,7 @@
 
         {{-- Bagian Include (Modal) --}}
         @include('main.master.data-platform-loggers.popup.form')
+        @include('main.master.data-platform-loggers.popup.cctv')
     </div>
 </x-app-layout>
 

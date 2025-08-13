@@ -75,6 +75,9 @@
                 Route::group(['prefix' => 'sites'], function () {
                     Route::get('/', [ControllerSites::class, 'index']);
                     Route::post('store', [ControllerSites::class, 'store']);
+                    Route::get('detail/{siteId}', [ControllerSites::class, 'handleDetailSite']);
+                    Route::put('update/{siteId}', [ControllerSites::class, 'update']);
+                    Route::delete('delete/{siteId}', [ControllerSites::class, 'delete']);
                     Route::get('data-site', [ControllerSites::class, 'handleDataSite']);
                 });
 
