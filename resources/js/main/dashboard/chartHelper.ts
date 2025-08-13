@@ -9,29 +9,27 @@ export function createSmoothGradient(minY: number, maxY: number) {
 
     // Filter color points berdasarkan nilai maksimal data
     let relevantColorPoints = [];
-    console.log(maxY)
-
     if (maxY <= 50) {
         // Jika maxY <= 50, hanya gunakan hijau sampai kuning
         relevantColorPoints = [
             {value: 0, color: '#22C55E'},     // Hijau
-            {value: 25, color: '#84CC16'},    // Hijau muda
-            {value: 50, color: '#EAB308'}     // Kuning
+            {value: 50, color: '#84CC16'},    // Hijau muda
+            // {value: 50, color: '#EAB308'}     // Kuning
         ];
     } else if (maxY <= 100) {
         // Jika maxY <= 100, gunakan hijau sampai orange
         relevantColorPoints = [
             {value: 0, color: '#22C55E'},     // Hijau
-            {value: 25, color: '#84CC16'},    // Hijau muda
-            {value: 50, color: '#EAB308'},    // Kuning
-            {value: 100, color: '#F97316'}    // Orange
+            {value: 50, color: '#84CC16'},    // Hijau muda
+            {value: 100, color: '#EAB308'},    // Kuning
+            // {value: 100, color: '#F97316'}    // Orange
         ];
     } else if (maxY <= 150) {
         // Jika maxY <= 150, gunakan hijau sampai merah
         relevantColorPoints = [
             {value: 0, color: '#22C55E'},     // Hijau
-            {value: 50, color: '#EAB308'},    // Kuning
-            {value: 100, color: '#F97316'},   // Orange
+            {value: 50, color: '#84CC16'},    // Kuning
+            {value: 100, color: '#EAB308'},    // Kuning
             {value: 150, color: '#EF4444'}    // Merah
         ];
     } else {

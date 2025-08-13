@@ -62,7 +62,7 @@
                 $builder->selectRaw('ROUND(AVG(tsp), 0) AS tsp');
                 $builder->selectRaw('ROUND(AVG(noise), 2) AS noise');
                 $builder->selectRaw('ROUND((10 * LOG10((1/count(*) * SUM(POWER(10, noise / 10))))), 2) AS noise_leq');
-                $builder->selectRaw('ROUND(AVG(aqi_index), 2) AS aqi_index');
+                $builder->selectRaw('ROUND(AVG(aqi_index)) AS aqi_index');
                 $builder->selectRaw('IF( COALESCE( AVG(aqi_index_pm25), -1 ) >= COALESCE( AVG(aqi_index_pm10), -1 ), "PM 2.5", "PM 10" ) AS aqi_from');
                 $builder->from('t_loggers');
                 $builder->where('uid', $uid);
@@ -104,7 +104,7 @@
                 $builder->selectRaw('ROUND(AVG(tsp), 0) AS tsp');
                 $builder->selectRaw('ROUND(AVG(noise), 2) AS noise');
                 $builder->selectRaw('ROUND((10 * LOG10((1/count(*) * SUM(POWER(10, noise / 10))))), 2) AS noise_leq');
-                $builder->selectRaw('ROUND(AVG(aqi_index), 2) AS aqi_index');
+                $builder->selectRaw('ROUND(AVG(aqi_index)) AS aqi_index');
                 $builder->selectRaw('IF( COALESCE( AVG(aqi_index_pm25), -1 ) >= COALESCE( AVG(aqi_index_pm10), -1 ), "PM 2.5", "PM 10" ) AS aqi_from');
                 $builder->from('t_loggers');
 
@@ -120,12 +120,12 @@
 
             // Join dengan t_aqi_categories untuk mendapatkan kategori
             $builder->leftJoin('t_aqi_categories', function ($join) {
-                $join->whereRaw('summary.aqi_index >= t_aqi_categories.aqi_min')
-                    ->whereRaw('summary.aqi_index <= t_aqi_categories.aqi_max');
+                $join->whereRaw('ROUND(summary.aqi_index) >= t_aqi_categories.aqi_min')
+                    ->whereRaw('ROUND(summary.aqi_index) <= t_aqi_categories.aqi_max');
             });
 
             // Jika tidak ada kategori yang cocok (PM2.5 > 500), ambil kategori tertinggi
-            $builder->leftJoin(DB::raw('(SELECT * FROM t_aqi_categories ORDER BY pm25_max DESC LIMIT 1) as highest_category'), function ($join) {
+            $builder->leftJoin(DB::raw('(SELECT * FROM t_aqi_categories ORDER BY aqi_max DESC LIMIT 1) as highest_category'), function ($join) {
                 $join->whereRaw('t_aqi_categories.id IS NULL');
             });
 
@@ -136,7 +136,7 @@
                 DB::raw('COALESCE(t_aqi_categories.color_code, highest_category.color_code) as color_code'),
                 DB::raw('COALESCE(t_aqi_categories.emoji, highest_category.emoji) as emoji'),
                 DB::raw('COALESCE(t_aqi_categories.id, highest_category.id) as category_id'),
-                DB::raw('CONCAT("[", COALESCE(t_aqi_categories.pm25_min, highest_category.pm25_min), ", ", COALESCE(t_aqi_categories.pm25_max, highest_category.pm25_max), "]") as category_range')
+                DB::raw('CONCAT("[", COALESCE(t_aqi_categories.aqi_min, highest_category.aqi_min), ", ", COALESCE(t_aqi_categories.aqi_max, highest_category.aqi_max), "]") as category_range')
             ]);
 
             if (isset($search['platformUid']) && $search['platformUid'] != '') {
