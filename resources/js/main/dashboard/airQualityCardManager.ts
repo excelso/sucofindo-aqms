@@ -52,6 +52,7 @@ interface AirQualityData {
     airIndexData?: Array<{
         timestamp: number;
         value: number;
+        value_tsp: number;
         link_video_id?: string;
         link_video_status?: string;
         link_video_recorded?: string;
@@ -117,7 +118,7 @@ interface LoggerEventData {
     datetime_unix: number;
     link_video_id?: string;
     // Optional airIndex data untuk update chart airIndex
-    airIndexData?: Array<{ timestamp: number; value: number; aqi_from: string }>;
+    airIndexData?: Array<{ timestamp: number; value: number; value_tsp: number; aqi_from: string }>;
     // Atau bisa menggunakan AQI value untuk generate airIndex point baru
     aqi_value?: number;
     aqi_from?: string;
@@ -137,6 +138,7 @@ class AirQualityCardManager {
     private lastUpdateTime: Date = new Date();
     private dataCache: Map<string, AirQualityData> = new Map();
     private socketClient: SocketClient;
+    private currentAQISource: Map<string, 'pm25_pm10' | 'tsp'> = new Map();
 
     // region Constructor
     constructor(options: CardManagerOptions = {}) {
@@ -503,10 +505,11 @@ class AirQualityCardManager {
 
     // endregion
 
-    // region Create Forecast Chart dengan Adaptive Range
-    private createForecastChart(element: HTMLElement, data: Array<{
+    // region Create AirIndex Chart dengan Adaptive Range
+    private createAirIndexChart(element: HTMLElement, data: Array<{
         timestamp: number;
         value: number;
+        value_tsp: number;
         aqi_from: string;
     }>, cardId: string): void {
         if (!this.options.enableCharts || typeof Highcharts === 'undefined') {
@@ -519,6 +522,8 @@ class AirQualityCardManager {
         const platformTimezone = platformData?.timezone || 'Asia/Jakarta';
         const platformLocale = platformData?.locale || 'id-ID';
 
+        const currentSource = this.currentAQISource.get(cardId) || 'pm25_pm10';
+
         // Default data with Unix timestamps
         const now = Math.floor(new Date().setHours(0, 1, 0, 0) / 1000);
         const defaultData = data || Array.from({length: 144}, (_, i) => ({
@@ -528,19 +533,23 @@ class AirQualityCardManager {
         }));
 
         // Prepare chart data
-        const chartData = defaultData.map(item => ({
-            x: item.timestamp * 1000,
-            y: item.value,
-            timestamp: item.timestamp,
-            marker: {
-                lineWidth: 2,
-                lineColor: 'white',
-                fillColor: this.getAQIColor(item.value),
-                radius: 0,
-                symbol: 'circle'
-            },
-            aqi_from: item?.aqi_from
-        }));
+        const chartData = data.map(item => {
+            const aqiValue = currentSource === 'pm25_pm10' ? item.value : item.value_tsp;
+
+            return {
+                x: item.timestamp * 1000,
+                y: aqiValue,
+                timestamp: item.timestamp,
+                marker: {
+                    lineWidth: 2,
+                    lineColor: 'white',
+                    fillColor: this.getAQIColor(aqiValue),
+                    radius: 0,
+                    symbol: 'circle'
+                },
+                aqi_from: currentSource === 'pm25_pm10' ? 'PM 2.5 / PM 10' : 'TSP',
+            };
+        });
 
         const yValues = chartData.map(point => point.y);
         const dataMinY = Math.min(...yValues);
@@ -654,9 +663,9 @@ class AirQualityCardManager {
             },
             series: [{
                 type: 'areaspline',
-                name: 'AQI Forecast',
+                name: currentSource === 'pm25_pm10' ? 'AQI (PM2.5/PM10)' : 'AQI (TSP)',
                 data: chartData,
-                fillColor: gradient, // Gradient adaptif
+                fillColor: gradient,
             }]
         }, function (chart: any) {
             // Handle markers untuk point dengan nilai tinggi
@@ -906,7 +915,7 @@ class AirQualityCardManager {
 
         // Update airIndex chart if data changed
         if (newData.airIndexData && JSON.stringify(oldData.airIndexData) !== JSON.stringify(newData.airIndexData)) {
-            this.updateForecastChart(`card-${cardId}-${this.getCardIndex(cardId)}`, newData.airIndexData);
+            this.updateAirIndexChart(`card-${cardId}-${this.getCardIndex(cardId)}`, newData.airIndexData);
         }
 
         // Update last updated timestamp
@@ -978,8 +987,8 @@ class AirQualityCardManager {
 
     // endregion
 
-    // region Update Forecast Chart
-    private updateForecastChart(cardId: string, airIndexData: Array<{ timestamp: number; value: number }>): void {
+    // region Update AirIndex Chart
+    private updateAirIndexChart(cardId: string, airIndexData: Array<{ timestamp: number; value: number; aqi_from: string }>): void {
         const chartKey = `${cardId}-airIndex`;
         const chart = this.chartInstances.get(chartKey);
 
@@ -1001,6 +1010,7 @@ class AirQualityCardManager {
                         x: item.timestamp * 1000,
                         y: item.value,
                         timestamp: item.timestamp,
+                        aqi_from: item.aqi_from,
                         marker: (isLastPoint || isHighValue) ? {
                             enabled: true,
                             radius: 6,
@@ -1036,15 +1046,19 @@ class AirQualityCardManager {
                         x: item.timestamp * 1000,
                         y: item.value,
                         timestamp: item.timestamp,
+                        aqi_from: item.aqi_from,
                     }
                 }
             });
 
             // Update series dengan data dan gradient baru
             const series = chart.series[0];
+            const currentSource = this.currentAQISource.get(cardId) || 'pm25_pm10';
+
             series.update({
+                name: currentSource === 'pm25_pm10' ? 'AQI (PM2.5/PM10)' : 'AQI (TSP)',
                 data: chartData,
-                fillColor: newGradient // PENTING: Update gradient
+                fillColor: newGradient
             }, true);
 
             // Update Y-axis range
@@ -1157,12 +1171,14 @@ class AirQualityCardManager {
 
             // Calculate AQI from PM2.5 if not provided
             const aqiValue = loggerData.aqi_value || this.calculateAQIFromPM25(loggerData.pm_25);
+            const aqiValueTsp = loggerData.airIndexData[0].value_tsp || this.calculateAQIFromTSP(loggerData.tsp);
 
             // Update airIndex data with new point
-            const updatedForecastData = this.updateForecastData(
+            const updatedAirIndexData = this.updateAirIndexData(
                 oldData.airIndexData || [],
                 loggerData.datetime_unix,
                 aqiValue,
+                aqiValueTsp,
                 loggerData.link_video_id
             );
 
@@ -1188,7 +1204,7 @@ class AirQualityCardManager {
                         value: loggerData.noise
                     }
                 },
-                airIndexData: loggerData.airIndexData || updatedForecastData,
+                airIndexData: loggerData.airIndexData || updatedAirIndexData,
                 lastUpdated: new Date(loggerData.datetime_unix * 1000),
                 isOnline: true // Update online status when receiving data
             };
@@ -1242,11 +1258,23 @@ class AirQualityCardManager {
 
     // endregion
 
-    // region Update Forecast Data
-    private updateForecastData(
-        existingForecast: Array<{
+    private calculateAQIFromTSP(tsp: number): number {
+        // Implementasi perhitungan AQI dari TSP
+        // Sesuaikan dengan standar yang digunakan di sistem Anda
+        if (tsp <= 230) return Math.round((50 / 230) * tsp);
+        if (tsp <= 400) return Math.round(50 + ((100 - 50) / (400 - 230)) * (tsp - 230));
+        if (tsp <= 520) return Math.round(100 + ((150 - 100) / (520 - 400)) * (tsp - 400));
+        if (tsp <= 650) return Math.round(150 + ((200 - 150) / (650 - 520)) * (tsp - 520));
+        if (tsp <= 800) return Math.round(200 + ((300 - 200) / (800 - 650)) * (tsp - 650));
+        return Math.min(500, Math.round(300 + ((500 - 300) / (1200 - 800)) * (tsp - 800)));
+    }
+
+    // region Update AirIndex Data
+    private updateAirIndexData(
+        existingAirIndex: Array<{
             timestamp: number;
             value: number;
+            value_tsp: number;
             link_video_id?: string;
             link_video_status?: string;
             link_video_recorded?: string;
@@ -1254,10 +1282,12 @@ class AirQualityCardManager {
         }>,
         newTimestamp: number,
         newValue: number,
+        newValueTsp: number,
         linkVideoId?: string
     ): Array<{
         timestamp: number;
         value: number;
+        value_tsp: number;
         link_video_id?: string;
         link_video_status?: string;
         link_video_recorded?: string;
@@ -1265,31 +1295,32 @@ class AirQualityCardManager {
     }> {
 
         // Create a copy of existing airIndex data
-        let updatedForecast = [...existingForecast];
+        let updatedAirIndex = [...existingAirIndex];
 
         // Add new data point with video information
         const newDataPoint = {
             timestamp: newTimestamp,
             value: newValue,
+            value_tsp: newValueTsp,
             link_video_id: linkVideoId,
             link_video_status: linkVideoId ? 'pending' : undefined, // Set initial status jika ada video
             link_video_recorded: undefined, // Will be updated when recording completes
             aqi_from: "PM 2.5"
         };
 
-        updatedForecast.push(newDataPoint);
+        updatedAirIndex.push(newDataPoint);
 
         // Sort by timestamp
-        updatedForecast.sort((a, b) => a.timestamp - b.timestamp);
+        updatedAirIndex.sort((a, b) => a.timestamp - b.timestamp);
 
         // Keep only last 144 points (12 hours with 5-minute intervals)
         const maxPoints = 144;
-        if (updatedForecast.length > maxPoints) {
-            updatedForecast = updatedForecast.slice(-maxPoints);
+        if (updatedAirIndex.length > maxPoints) {
+            updatedAirIndex = updatedAirIndex.slice(-maxPoints);
         }
 
         // Remove duplicates based on timestamp
-        return updatedForecast.filter((item, index, array) =>
+        return updatedAirIndex.filter((item, index, array) =>
             index === 0 || item.timestamp !== array[index - 1].timestamp
         );
     }
@@ -1470,6 +1501,50 @@ class AirQualityCardManager {
 
     // endregion
 
+    // region Filter AirIndex Source (Updated untuk menggunakan data dari database)
+    private filterAirIndexSource(cardId: string, sourceType: 'pm25_pm10' | 'tsp'): void {
+        // Update current source tracking
+        this.currentAQISource.set(cardId, sourceType);
+
+        // Get card data
+        const cardData = this.data.find(item => item.uid === cardId.replace(/card-|-\d+$/g, ''));
+        if (!cardData || !cardData.airIndexData) return;
+
+        // Convert data untuk chart berdasarkan source yang dipilih
+        const chartData = this.convertAirIndexDataForChart(cardData.airIndexData, sourceType);
+
+        // Update chart dengan data baru
+        this.updateAirIndexChart(cardId, chartData);
+
+        console.log(`🔄 Updated AQI chart for ${cardId} to use ${sourceType} source`);
+    }
+    // endregion
+
+    // region Convert AirIndex Data For Chart
+    private convertAirIndexDataForChart(
+        airIndexData: Array<{
+            timestamp: number;
+            value: number;
+            value_tsp: number;
+            link_video_id?: string;
+            link_video_status?: string;
+            link_video_recorded?: string;
+            aqi_from: string;
+        }>,
+        sourceType: 'pm25_pm10' | 'tsp'
+    ): Array<{ timestamp: number; value: number; aqi_from: string; link_video_id?: string; link_video_status?: string; link_video_recorded?: string }> {
+
+        return airIndexData.map(item => ({
+            timestamp: item.timestamp,
+            value: sourceType === 'pm25_pm10' ? item.value : item.value_tsp,
+            aqi_from: sourceType === 'pm25_pm10' ? 'PM 2.5 / PM 10' : 'TSP',
+            link_video_id: item.link_video_id,
+            link_video_status: item.link_video_status,
+            link_video_recorded: item.link_video_recorded
+        }));
+    }
+    // endregion
+
     // region Create Single Card
     private createSingleCard(data: AirQualityData, index: number): HTMLElement {
         const cardId = `card-${data.uid}-${index}`;
@@ -1621,7 +1696,7 @@ class AirQualityCardManager {
 
         metricsContainer.appendChild(metricsGrid);
 
-        // Forecast section
+        // AirIndex section
         const airIndexSection = this.createElement('div', 'mt-4');
         const airIndexTitle = this.createElement('div', 'font-bold text-[14px]', 'Air Quality Index');
         const airIndexSubTitle = this.createElement('div', 'text-[11px] mb-4 flex items-center justify-between gap-2');
@@ -1642,7 +1717,7 @@ class AirQualityCardManager {
         menuList.className = 'py-2 text-sm text-gray-700 dark:text-gray-200';
         menuList.setAttribute('role', 'menu');
 
-        const makeItem = (label: string, value: 'both' | 'tsp') => {
+        const makeItem = (label: string, value: 'pm25_pm10' | 'tsp') => {
             const li = document.createElement('li');
             const a = document.createElement('a');
             a.href = '#';
@@ -1650,11 +1725,10 @@ class AirQualityCardManager {
             a.textContent = label;
             a.addEventListener('click', (e) => {
                 e.preventDefault();
-                if (value === 'both') subText.textContent = 'Based on PM 2.5 / PM 10';
+                if (value === 'pm25_pm10') subText.textContent = 'Based on PM 2.5 / PM 10';
                 if (value === 'tsp') subText.textContent = 'Based on TSP';
 
-                // TODO (opsional): panggil callback atau filter data chart sesuai value
-                // contoh: this.filterAirIndexSource(cardId, value);
+                this.filterAirIndexSource(cardId, value);
 
                 dropdown.hide();
             });
@@ -1662,7 +1736,7 @@ class AirQualityCardManager {
             return li;
         };
 
-        menuList.appendChild(makeItem('PM 2.5 / PM 10', 'both'));
+        menuList.appendChild(makeItem('PM 2.5 / PM 10', 'pm25_pm10'));
         menuList.appendChild(makeItem('TSP', 'tsp'));
         ddMenu.appendChild(menuList);
 
@@ -1681,7 +1755,7 @@ class AirQualityCardManager {
 
         // Create airIndex chart after DOM insertion
         setTimeout(() => {
-            this.createForecastChart(airIndexChart, data.airIndexData, cardId);
+            this.createAirIndexChart(airIndexChart, data.airIndexData, cardId);
         }, 200);
 
         const ddOptions: DropdownOptions = {

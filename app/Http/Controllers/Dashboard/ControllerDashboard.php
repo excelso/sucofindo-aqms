@@ -42,11 +42,16 @@
                 $platforms = Platforms::orderBy('created_at', 'ASC')->get();
                 $dataPlatformsTemp = [];
                 foreach ($platforms as $platform) {
-                    $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
-                    $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
-                    if ($request->input('startDate')) {
-                        $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
-                        $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
+                    if (config('app.env') === 'production') {
+                        $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
+                        $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
+                        if ($request->input('startDate')) {
+                            $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
+                            $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
+                        }
+                    } else {
+                        $minDate = '2025-08-12 00:00';
+                        $maxDate = '2025-08-12 23:59';
                     }
 
                     $dataLastLogger = Loggers::loggerData5Minutes($platform->uid, $minDate, $maxDate, $platform->timezone)
@@ -141,6 +146,7 @@
                 try {
                     // 1. Ambil AQI value langsung dari database (sudah dihitung)
                     $aqiValue = $logger->aqi_index ?? 0;
+                    $aqiValueTsp = $logger->aqi_index_tsp ?? 0;
 
                     // 2. Cari kategori AQI berdasarkan PM2.5 value untuk display
                     $aqiCatForDisplay = AqiCategories::where('pm25_min', '<=', $logger->pm_25)
@@ -161,7 +167,8 @@
                     $dataLoggersTemp[] = [
                         'logger_id' => $logger->id,
                         'timestamp' => $logger->datetime_unix,
-                        'value' => (float) number_format($aqiValue, 1), // AQI langsung dari DB
+                        'value' => (float) number_format($aqiValue, 1),
+                        'value_tsp' => (float) number_format($aqiValueTsp, 1),
                         'link_video_id' => $logger->link_video_id ?? null,
                         'link_video_status' => $logger->link_video_status ?? null,
                         'link_video_recorded' => $logger->link_video_recorded ?? null,
@@ -228,11 +235,16 @@
             try {
 
                 $platform = Platforms::where('uid', $uid)->first();
-                $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
-                $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
-                if ($request->input('startDate')) {
-                    $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
-                    $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
+                if (config('app.env') === 'production') {
+                    $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
+                    $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
+                    if ($request->input('startDate')) {
+                        $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
+                        $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
+                    }
+                } else {
+                    $minDate = '2025-08-12 00:00';
+                    $maxDate = '2025-08-12 23:59';
                 }
 
                 $dataLogger = Loggers::loggerData5Minutes($uid, $minDate, $maxDate, $platform->timezone)->get();
