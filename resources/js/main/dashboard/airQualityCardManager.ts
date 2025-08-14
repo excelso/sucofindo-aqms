@@ -724,7 +724,7 @@ class AirQualityCardManager {
 
                 // Update markers untuk semua point dengan nilai tinggi
                 series.data.forEach((item: any, index: number) => {
-                    const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.x)
+                    const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.x);
                     if (item.aqi_from === 'TSP') {
                         const markerColor = this.getAQIColor(item.y);
                         if (linkVideoPoint.linkVideoRecorded) {
@@ -1008,14 +1008,15 @@ class AirQualityCardManager {
                 const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.timestamp * 1000);
 
                 if (linkVideoPoint.linkVideoRecorded) {
+                    console.log(item)
                     if (item.aqi_from === 'TSP') {
                         return {
                             x: item.timestamp * 1000,
                             y: item.value,
                             timestamp: item.timestamp,
                             aqi_from: item.aqi_from,
-                            marker: (isLastPoint || isHighValue) ? {
-                                enabled: false,
+                            marker: (isHighValue && linkVideoPoint.linkVideoRecorded) ? {
+                                enabled: true,
                                 radius: 6,
                                 fillColor: markerColor,
                                 lineWidth: 2,
