@@ -1710,16 +1710,17 @@ class AirQualityCardManager {
         // AirIndex section
         const airIndexSection = this.createElement('div', 'mt-4');
         const airIndexTitle = this.createElement('div', 'font-bold text-[14px]', 'Air Quality Index');
-        const airIndexSubTitle = this.createElement('div', 'text-[11px] mb-4 flex items-center justify-between gap-2');
-        const subText = this.createElement('span', '', 'Based on PM 2.5 / PM 10');
+        const airIndexSubTitle = this.createElement('div', 'text-[11px] mb-4 flex items-center gap-2');
+        // const subText = this.createElement('span', '', 'Based on PM 2.5 / PM 10');
         const ddWrap = this.createElement('div', 'relative');
-        const ddButton = this.createElement('button', 'inline-flex items-center gap-1 text-xs px-2 py-1 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-800') as HTMLButtonElement;
+        const ddButton = this.createElement('button', 'inline-flex items-center gap-1 text-xs hover:bg-gray-50 dark:hover:bg-gray-800') as HTMLButtonElement;
         ddButton.id = `${cardId}-dropdownButton`;
         ddButton.type = 'button';
         ddButton.innerHTML = `
-              Source <svg class="w-3 h-3" aria-hidden="true" viewBox="0 0 20 20" fill="currentColor">
+            <span class="subText">Based on PM 2.5 / PM 10</span>
+            <svg class="w-3 h-3" aria-hidden="true" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
-              </svg>
+            </svg>
         `;
         const ddMenu = this.createElement('div', 'z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700') as HTMLDivElement;
         ddMenu.id = `${cardId}-dropdownMenu`;
@@ -1736,6 +1737,7 @@ class AirQualityCardManager {
             a.textContent = label;
             a.addEventListener('click', (e) => {
                 e.preventDefault();
+                const subText = ddButton.querySelector('.subText');
                 if (value === 'pm25_pm10') subText.textContent = 'Based on PM 2.5 / PM 10';
                 if (value === 'tsp') subText.textContent = 'Based on TSP';
 
@@ -1754,7 +1756,7 @@ class AirQualityCardManager {
         ddWrap.appendChild(ddButton);
         ddWrap.appendChild(ddMenu);
 
-        airIndexSubTitle.appendChild(subText);
+        // airIndexSubTitle.appendChild(subText);
         airIndexSubTitle.appendChild(ddWrap);
 
         const airIndexChart = this.createElement('div', 'chart-one');
@@ -1772,7 +1774,7 @@ class AirQualityCardManager {
         const ddOptions: DropdownOptions = {
             placement: 'bottom-end',
             triggerType: 'click',
-            offsetSkidding: 0,
+            offsetSkidding: 100,
             offsetDistance: 8,
             delay: 150,
             onShow: () => console.log(`[${cardId}] dropdown shown`),
