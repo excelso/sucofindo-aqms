@@ -547,7 +547,7 @@ class AirQualityCardManager {
                     radius: 0,
                     symbol: 'circle'
                 },
-                aqi_from: currentSource === 'pm25_pm10' ? 'PM 2.5 / PM 10' : 'TSP',
+                aqi_from: currentSource === 'tsp' ? 'TSP' : item.aqi_from,
             };
         });
 
@@ -674,48 +674,50 @@ class AirQualityCardManager {
                 const lastPoint = series.data[series.data.length - 1];
 
                 if (lastPoint) {
-                    const linkVideoPoint = this.getVideoLinkForPoint(cardId, lastPoint.x)
-                    const aqiValue = lastPoint.y;
-                    const markerColor = this.getAQIColor(aqiValue);
+                    if (lastPoint.aqi_from === 'TSP') {
+                        const linkVideoPoint = this.getVideoLinkForPoint(cardId, lastPoint.x)
+                        const aqiValue = lastPoint.y;
+                        const markerColor = this.getAQIColor(aqiValue);
 
-                    if (linkVideoPoint.linkVideoRecorded) {
-                        lastPoint.update({
-                            marker: {
-                                enabled: true,
-                                radius: 6,
-                                fillColor: markerColor,
-                                lineWidth: 2,
-                                lineColor: 'white'
-                            },
-                            events: {
-                                click: (event: any) => {
-                                    if (lastPoint.y > 50) {
-                                        if (this.options.onClickAirIndexPoint) {
-                                            this.options.onClickAirIndexPoint(event, {
-                                                cardId: cardId || 'unknown',
-                                                timestamp: lastPoint.x ? lastPoint.x / 1000 : Date.now() / 1000,
-                                                value: lastPoint.y,
-                                                pointIndex: series.data.length - 1,
-                                                isLastPoint: true,
-                                                formattedDate: new Date(lastPoint.x || Date.now()).toLocaleDateString(),
-                                                formattedTime: new Date(lastPoint.x || Date.now()).toLocaleTimeString(),
-                                                linkVideo: linkVideoPoint
-                                            });
+                        if (linkVideoPoint.linkVideoRecorded) {
+                            lastPoint.update({
+                                marker: {
+                                    enabled: true,
+                                    radius: 6,
+                                    fillColor: markerColor,
+                                    lineWidth: 2,
+                                    lineColor: 'white'
+                                },
+                                events: {
+                                    click: (event: any) => {
+                                        if (lastPoint.y > 50) {
+                                            if (this.options.onClickAirIndexPoint) {
+                                                this.options.onClickAirIndexPoint(event, {
+                                                    cardId: cardId || 'unknown',
+                                                    timestamp: lastPoint.x ? lastPoint.x / 1000 : Date.now() / 1000,
+                                                    value: lastPoint.y,
+                                                    pointIndex: series.data.length - 1,
+                                                    isLastPoint: true,
+                                                    formattedDate: new Date(lastPoint.x || Date.now()).toLocaleDateString(),
+                                                    formattedTime: new Date(lastPoint.x || Date.now()).toLocaleTimeString(),
+                                                    linkVideo: linkVideoPoint
+                                                });
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        }, false);
-                    } else {
-                        lastPoint.update({
-                            marker: {
-                                enabled: true,
-                                radius: 6,
-                                fillColor: markerColor,
-                                lineWidth: 2,
-                                lineColor: 'white'
-                            },
-                        }, false);
+                            }, false);
+                        } else {
+                            lastPoint.update({
+                                marker: {
+                                    enabled: true,
+                                    radius: 6,
+                                    fillColor: markerColor,
+                                    lineWidth: 2,
+                                    lineColor: 'white'
+                                },
+                            }, false);
+                        }
                     }
                     chart.redraw();
                 }
@@ -723,7 +725,7 @@ class AirQualityCardManager {
                 // Update markers untuk semua point dengan nilai tinggi
                 series.data.forEach((item: any, index: number) => {
                     const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.x)
-                    if (item.y > 50) {
+                    if (item.aqi_from === 'TSP') {
                         const markerColor = this.getAQIColor(item.y);
                         if (linkVideoPoint.linkVideoRecorded) {
                             item.update({
@@ -1006,41 +1008,50 @@ class AirQualityCardManager {
                 const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.timestamp * 1000);
 
                 if (linkVideoPoint.linkVideoRecorded) {
-                    return {
-                        x: item.timestamp * 1000,
-                        y: item.value,
-                        timestamp: item.timestamp,
-                        aqi_from: item.aqi_from,
-                        marker: (isLastPoint || isHighValue) ? {
-                            enabled: true,
-                            radius: 6,
-                            fillColor: markerColor,
-                            lineWidth: 2,
-                            lineColor: 'white'
-                        } : {
-                            enabled: false,
-                            radius: 0
-                        },
-                        events: {
-                            click: (event: any) => {
-                                if (isHighValue) {
-                                    if (this.options.onClickAirIndexPoint) {
-                                        this.options.onClickAirIndexPoint(event, {
-                                            cardId,
-                                            timestamp: item.timestamp,
-                                            value: item.value,
-                                            pointIndex: index,
-                                            isLastPoint,
-                                            isHighValue,
-                                            formattedDate: new Date(item.timestamp * 1000).toLocaleDateString(),
-                                            formattedTime: new Date(item.timestamp * 1000).toLocaleTimeString(),
-                                            linkVideo: linkVideoPoint
-                                        });
+                    if (item.aqi_from === 'TSP') {
+                        return {
+                            x: item.timestamp * 1000,
+                            y: item.value,
+                            timestamp: item.timestamp,
+                            aqi_from: item.aqi_from,
+                            marker: (isLastPoint || isHighValue) ? {
+                                enabled: false,
+                                radius: 6,
+                                fillColor: markerColor,
+                                lineWidth: 2,
+                                lineColor: 'white'
+                            } : {
+                                enabled: false,
+                                radius: 0
+                            },
+                            events: {
+                                click: (event: any) => {
+                                    if (isHighValue) {
+                                        if (this.options.onClickAirIndexPoint) {
+                                            this.options.onClickAirIndexPoint(event, {
+                                                cardId,
+                                                timestamp: item.timestamp,
+                                                value: item.value,
+                                                pointIndex: index,
+                                                isLastPoint,
+                                                isHighValue,
+                                                formattedDate: new Date(item.timestamp * 1000).toLocaleDateString(),
+                                                formattedTime: new Date(item.timestamp * 1000).toLocaleTimeString(),
+                                                linkVideo: linkVideoPoint
+                                            });
+                                        }
                                     }
                                 }
                             }
+                        };
+                    } else {
+                        return {
+                            x: item.timestamp * 1000,
+                            y: item.value,
+                            timestamp: item.timestamp,
+                            aqi_from: item.aqi_from,
                         }
-                    };
+                    }
                 } else {
                     return {
                         x: item.timestamp * 1000,
