@@ -1008,7 +1008,6 @@ class AirQualityCardManager {
                 const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.timestamp * 1000);
 
                 if (linkVideoPoint.linkVideoRecorded) {
-                    console.log(item)
                     if (item.aqi_from === 'TSP') {
                         return {
                             x: item.timestamp * 1000,
@@ -1549,7 +1548,7 @@ class AirQualityCardManager {
         return airIndexData.map(item => ({
             timestamp: item.timestamp,
             value: sourceType === 'pm25_pm10' ? item.value : item.value_tsp,
-            aqi_from: sourceType === 'pm25_pm10' ? 'PM 2.5 / PM 10' : 'TSP',
+            aqi_from: sourceType === 'tsp' ? 'TSP' : item.aqi_from,
             link_video_id: item.link_video_id,
             link_video_status: item.link_video_status,
             link_video_recorded: item.link_video_recorded
