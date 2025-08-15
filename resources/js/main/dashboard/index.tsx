@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else if (metrics.type === 'pm10') {
                     regulation = 'BML Parameter PM 10 mengacu pada PP Nomor 22 Tahun 2021'
                 } else if (metrics.type === 'tsp') {
-                    regulation = 'BML Parameter PM 2.5 mengacu pada PP Nomor 22 Tahun 2021'
+                    regulation = 'BML Parameter TSP mengacu pada PP Nomor 22 Tahun 2021'
                 }
 
                 regulationNote.textContent = regulation
