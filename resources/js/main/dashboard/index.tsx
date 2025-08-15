@@ -42,29 +42,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const closeModalForm = document.querySelectorAll('.closeModalForm')
     // const socket = SocketClient.getInstance('dashboard', appEnv.value === 'local' ? 'ws://127.0.0.1:3300' : 'https://aqms-api.cloudtrack.id')
 
-    const videoHandler = new VideoStreamHandler({
-        autoplay: true,
-        controls: true,
-        muted: true,
-        maxHeight: '80vh',
-        retryAttempts: 5
-    });
-
     const cctvLiveHandler = new VideoStreamHandler({
         autoplay: true,
         controls: true,
         muted: true,
         maxHeight: '100vh',
         retryAttempts: 5,
-        showPTZControls: true,
-        ptzControlPosition: 'side'
     });
 
     //region Handle Close Menu
     closeModalForm.forEach((elm) => {
         elm.addEventListener('click', function () {
             closeModalDialog(modalCctv, () => {
-                videoHandler.destroy();
                 cctvLiveHandler.destroy();
             })
 
@@ -90,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
         //     withCredentials: appEnv.value === 'production' || appEnv.value === 'staging',
         // },
         onCctvClick: (id, cctvLink) => {
-            showVideoModal(bodyCCTV, id, cctvLink)
+            showVideoModal(bodyCCTV, id, cctvLink, 'live')
         },
         onMetricsClick: (uid, metrics) => {
             showModalDialog(modalDetailParameter, `<i class="fas fa-file mr-2"></i> ${uid}`, async () => {
@@ -129,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // }
 
             if (linkVideoRecorded) {
-                showVideoModal(bodyCCTV, uid, linkVideoRecorded)
+                showVideoModal(bodyCCTV, uid, linkVideoRecorded, 'recorded')
             }
         },
         onHeartbeatStatusClick: (id) => {
@@ -164,14 +153,23 @@ document.addEventListener('DOMContentLoaded', function () {
     //endregion
 
     //region Handle Open Video on Forecast Chart
-    const showVideoModal = (modalBodyElm: HTMLElement, uid: any, videoUrl: string) => {
+    const showVideoModal = (modalBodyElm: HTMLElement, uid: any, videoUrl: string, tipe: 'live' | 'recorded') => {
         showModalDialog(modalCctv, `
             <div class="flex items-center">
                 <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${uid}
             </div>
         `, () => {
+
+            cctvLiveHandler.createVideoElement(modalBodyElm, videoUrl);
+
+            if (tipe === 'live') {
+                cctvLiveHandler.showPTZControls(true)
+                cctvLiveHandler.setPTZPosition('side')
+            } else {
+                cctvLiveHandler.showPTZControls(false)
+            }
+
             const hikvisionPTZController = new HikvisionPTZController(csrfToken, 'camera_001');
-            cctvLiveHandler.createVideoElement(modalBodyElm, videoUrl)
             cctvLiveHandler.setPTZCallbacks({
                 onMoveUp: async () => {
                     try {

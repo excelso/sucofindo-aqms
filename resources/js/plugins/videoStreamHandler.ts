@@ -114,7 +114,7 @@ class VideoStreamHandler {
         // PTZ container (will be populated later if needed)
         if (this.config.ptzControlPosition === 'side') {
             this.ptzContainer = document.createElement('div');
-            this.ptzContainer.className = 'flex-shrink-0 w-64 bg-transparent';
+            this.ptzContainer.className = 'ptz-control-container flex-shrink-0 w-64 bg-transparent';
         }
 
         // Assemble layout
@@ -859,6 +859,40 @@ class VideoStreamHandler {
         const ptzControls = this.modalBody.querySelector('.ptz-controls') as HTMLElement;
         if (ptzControls) {
             ptzControls.style.display = show ? 'block' : 'none';
+        }
+    }
+
+    /**
+     * Show/Hide PTZ controls - alternative method
+     */
+    public showPTZControls(isShow: boolean): void {
+        if (isShow) {
+            // Update config to show PTZ controls
+            this.config.showPTZControls = true;
+
+            // Add PTZ controls if they don't exist
+            const existingPTZControls = this.modalBody.querySelector('.ptz-controls');
+            if (!existingPTZControls) {
+                this.addPTZControls();
+            } else {
+                // Show existing controls
+                (existingPTZControls as HTMLElement).style.display = 'block';
+            }
+        } else {
+            // Update config to hide PTZ controls
+            this.config.showPTZControls = false;
+
+            // Remove PTZ controls from DOM
+            const ptzControls = this.modalBody.querySelector('.ptz-control-container');
+            if (ptzControls) {
+                ptzControls.remove();
+            }
+
+            // Remove keyboard event listener if PTZ is hidden
+            if ((this.modalBody as any)._ptzKeyListener) {
+                document.removeEventListener('keydown', (this.modalBody as any)._ptzKeyListener);
+                delete (this.modalBody as any)._ptzKeyListener;
+            }
         }
     }
 
