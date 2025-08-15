@@ -360,6 +360,9 @@ document.addEventListener('DOMContentLoaded', function () {
             timestamp: item.timestamp
         }));
 
+        const yValues = chartData.map(point => point.y);
+        const dataMaxY = Math.max(...yValues);
+
         Highcharts.chart({
             chart: {
                 renderTo: bodyChart,
@@ -401,7 +404,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 gridLineWidth: 0,
                 gridLineDashStyle: 'LongDash',
                 min: 0,
-                max: (metric.bml_max_buffer + 50),
+                max: dataMaxY > metric.bml_max_buffer ? dataMaxY : (metric.bml_max_buffer + 50),
                 plotLines: [
                     {
                         value: metric.bml_max,
