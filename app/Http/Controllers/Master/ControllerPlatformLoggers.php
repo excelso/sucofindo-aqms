@@ -180,7 +180,7 @@
                         'lng' => $request->input('lng'),
                     ]);
 
-                    LoggersLimit::where('uid', $request->input('uid'))->update([
+                    LoggersLimit::updateOrCreate(['uid' => $request->input('uid')], [
                         'pm10_min' => $request->input('pm10_min'),
                         'pm10_min_buffer' => $request->input('pm10_min_buffer'),
                         'pm10_max_buffer' => $request->input('pm10_max_buffer'),
