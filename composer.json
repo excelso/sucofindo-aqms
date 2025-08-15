@@ -16,7 +16,9 @@
         "laravel/tinker": "^2.9",
         "mcamara/laravel-localization": "^2.0",
         "phpseclib/phpseclib": "^3.0",
-        "vinkla/hashids": "^12.0"
+        "vinkla/hashids": "^12.0",
+        "ext-simplexml": "*",
+        "ext-curl": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

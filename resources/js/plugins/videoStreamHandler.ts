@@ -7,6 +7,8 @@ interface VideoStreamConfig {
     retryAttempts?: number;
     errorTimeout?: number;
     safetyTimeout?: number;
+    showPTZControls?: boolean;
+    ptzControlPosition?: 'side' | 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right';
 }
 
 interface StreamProtocolInfo {
@@ -19,12 +21,26 @@ interface StreamProtocolInfo {
     shouldUseHLSPlayer: boolean;
 }
 
+interface PTZControlsCallbacks {
+    onMoveUp?: () => void;
+    onMoveDown?: () => void;
+    onMoveLeft?: () => void;
+    onMoveRight?: () => void;
+    onZoomIn?: () => void;
+    onZoomOut?: () => void;
+    onStop?: () => void;
+}
+
 class VideoStreamHandler {
     private modalBody: HTMLElement;
     private config: VideoStreamConfig;
     private currentVideo: HTMLVideoElement | null = null;
     private currentIframe: HTMLIFrameElement | null = null;
     private hlsInstance: any = null;
+    private ptzCallbacks: PTZControlsCallbacks = {};
+    private mainContainer: HTMLElement | null = null;
+    private videoContainer: HTMLElement | null = null;
+    private ptzContainer: HTMLElement | null = null;
 
     constructor(config: VideoStreamConfig = {}) {
         this.config = {
@@ -36,8 +52,17 @@ class VideoStreamHandler {
             retryAttempts: 3,
             errorTimeout: 2000,
             safetyTimeout: 10000,
+            showPTZControls: true,
+            ptzControlPosition: 'side',
             ...config
         };
+    }
+
+    /**
+     * Set PTZ control callbacks
+     */
+    public setPTZCallbacks(callbacks: PTZControlsCallbacks): void {
+        this.ptzCallbacks = {...this.ptzCallbacks, ...callbacks};
     }
 
     /**
@@ -46,6 +71,9 @@ class VideoStreamHandler {
     public createVideoElement(modalBody: HTMLElement, streamUrl: string): void {
         this.modalBody = modalBody;
         this.clearExistingContent();
+
+        // Create main layout containers
+        this.createMainLayout();
 
         const protocolInfo = this.detectProtocol(streamUrl);
         this.logProtocolDetection(streamUrl, protocolInfo);
@@ -60,6 +88,42 @@ class VideoStreamHandler {
             // Default fallback to HLS player
             this.loadHLSPlayer(streamUrl);
         }
+
+        // Add PTZ controls if enabled
+        if (this.config.showPTZControls) {
+            this.addPTZControls();
+        }
+    }
+
+    /**
+     * Create main layout with video and PTZ controls containers
+     */
+    private createMainLayout(): void {
+        // Main container with flex layout
+        this.mainContainer = document.createElement('div');
+        this.mainContainer.className = this.config.ptzControlPosition === 'side'
+            ? 'flex gap-2 w-full max-w-none mx-auto'
+            : 'w-full max-w-[900px] mx-auto relative';
+
+        // Video container
+        this.videoContainer = document.createElement('div');
+        this.videoContainer.className = this.config.ptzControlPosition === 'side'
+            ? 'flex-1 relative bg-black rounded-sm overflow-hidden min-h-[500px]'
+            : 'relative w-full bg-black rounded-sm overflow-hidden min-h-[500px]';
+
+        // PTZ container (will be populated later if needed)
+        if (this.config.ptzControlPosition === 'side') {
+            this.ptzContainer = document.createElement('div');
+            this.ptzContainer.className = 'flex-shrink-0 w-64 bg-transparent';
+        }
+
+        // Assemble layout
+        this.mainContainer.appendChild(this.videoContainer);
+        if (this.ptzContainer) {
+            this.mainContainer.appendChild(this.ptzContainer);
+        }
+
+        this.modalBody.appendChild(this.mainContainer);
     }
 
     /**
@@ -85,6 +149,11 @@ class VideoStreamHandler {
         // Clear modal content
         this.modalBody.innerHTML = '';
         this.modalBody.className = this.modalBody.className.replace(/\brelative\b/g, '').trim();
+
+        // Reset containers
+        this.mainContainer = null;
+        this.videoContainer = null;
+        this.ptzContainer = null;
     }
 
     /**
@@ -129,7 +198,7 @@ class VideoStreamHandler {
         updateStatus: (text: string, color?: string) => void;
     } {
         const container = document.createElement('div');
-        container.className = 'flex items-center absolute top-[20px] right-[20px] gap-3';
+        container.className = 'flex items-center absolute top-[20px] right-[20px] gap-3 z-10';
 
         const statusDiv = document.createElement('div');
         statusDiv.className = 'bg-[rgba(0,0,0,0.8)] text-white px-[10px] py-[7px] rounded-sm text-[11px] font-bold z-[1000] backdrop-opacity-[4px]';
@@ -145,22 +214,298 @@ class VideoStreamHandler {
             statusDiv.style.color = color;
         };
 
-        return { container, statusDiv, protocolDiv, updateStatus };
+        return {container, statusDiv, protocolDiv, updateStatus};
+    }
+
+    /**
+     * Create PTZ controls - side layout or overlay
+     */
+    private createPTZControls(): HTMLDivElement {
+        const ptzControlsContainer = document.createElement('div');
+
+        if (this.config.ptzControlPosition === 'side') {
+            // Side layout - not absolute positioned
+            ptzControlsContainer.className = 'ptz-controls w-full h-full flex flex-col justify-start';
+
+            ptzControlsContainer.innerHTML = `
+                <div class="bg-gray-900 bg-opacity-95 p-6 h-fit">
+                    <div class="text-white text-sm font-bold mb-4 text-center">Camera Control</div>
+
+                    <!-- Movement Controls -->
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        <div></div>
+                        <button class="ptz-btn ptz-up bg-gray-700 hover:bg-blue-600 text-white rounded-lg p-3 transition-colors duration-200 flex items-center justify-center" title="Move Up">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+                            </svg>
+                        </button>
+                        <div></div>
+
+                        <button class="ptz-btn ptz-left bg-gray-700 hover:bg-blue-600 text-white rounded-lg p-3 transition-colors duration-200 flex items-center justify-center" title="Move Left">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                            </svg>
+                        </button>
+                        <button class="ptz-btn ptz-stop bg-red-600 hover:bg-red-700 text-white rounded-lg p-3 transition-colors duration-200 flex items-center justify-center text-sm font-bold" title="Stop">
+                            ⏹
+                        </button>
+                        <button class="ptz-btn ptz-right bg-gray-700 hover:bg-blue-600 text-white rounded-lg p-3 transition-colors duration-200 flex items-center justify-center" title="Move Right">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                            </svg>
+                        </button>
+
+                        <div></div>
+                        <button class="ptz-btn ptz-down bg-gray-700 hover:bg-blue-600 text-white rounded-lg p-3 transition-colors duration-200 flex items-center justify-center" title="Move Down">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/>
+                            </svg>
+                        </button>
+                        <div></div>
+                    </div>
+
+                    <!-- Zoom Controls -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <button class="ptz-btn ptz-zoom-in bg-green-600 hover:bg-green-700 text-white rounded-lg p-3 transition-colors duration-200 flex items-center justify-center" title="Zoom In">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                                <path d="M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z"/>
+                            </svg>
+                        </button>
+                        <button class="ptz-btn ptz-zoom-out bg-orange-600 hover:bg-orange-700 text-white rounded-lg p-3 transition-colors duration-200 flex items-center justify-center" title="Zoom Out">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                                <path d="M7 9h5v1H7z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Keyboard Shortcuts Info -->
+                    <div class="mt-4 pt-4 border-t border-gray-600">
+                        <div class="text-white text-xs font-bold mb-2">Keyboard Shortcuts:</div>
+                        <div class="text-gray-300 text-xs space-y-1">
+                            <div>Arrow Keys: Move Camera</div>
+                            <div>+/=: Zoom In</div>
+                            <div>-: Zoom Out</div>
+                            <div>Space/Esc: Stop</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Original overlay layout
+            ptzControlsContainer.className = 'ptz-controls absolute z-[1001]';
+
+            // Position based on config
+            const position = this.config.ptzControlPosition;
+            const positionClasses = {
+                'bottom-left': 'bottom-4 left-4',
+                'bottom-right': 'bottom-6 right-4',
+                'top-left': 'top-4 left-4',
+                'top-right': 'top-4 right-4'
+            };
+
+            // @ts-ignore
+            if (position && position !== 'side') {
+                ptzControlsContainer.className += ` ${positionClasses[position]}`;
+            }
+
+            ptzControlsContainer.innerHTML = `
+                <div class="bg-black bg-opacity-80 rounded-lg p-4 backdrop-blur-sm">
+                    <div class="text-white text-xs font-bold mb-3 text-center">Camera Control</div>
+
+                    <!-- Movement Controls -->
+                    <div class="grid grid-cols-3 gap-1 mb-3">
+                        <div></div>
+                        <button class="ptz-btn ptz-up bg-gray-700 hover:bg-blue-600 text-white rounded p-2 transition-colors duration-200 flex items-center justify-center" title="Move Up">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+                            </svg>
+                        </button>
+                        <div></div>
+
+                        <button class="ptz-btn ptz-left bg-gray-700 hover:bg-blue-600 text-white rounded p-2 transition-colors duration-200 flex items-center justify-center" title="Move Left">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                            </svg>
+                        </button>
+                        <button class="ptz-btn ptz-stop bg-red-600 hover:bg-red-700 text-white rounded p-2 transition-colors duration-200 flex items-center justify-center text-xs font-bold" title="Stop">
+                            ⏹
+                        </button>
+                        <button class="ptz-btn ptz-right bg-gray-700 hover:bg-blue-600 text-white rounded p-2 transition-colors duration-200 flex items-center justify-center" title="Move Right">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                            </svg>
+                        </button>
+
+                        <div></div>
+                        <button class="ptz-btn ptz-down bg-gray-700 hover:bg-blue-600 text-white rounded p-2 transition-colors duration-200 flex items-center justify-center" title="Move Down">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/>
+                            </svg>
+                        </button>
+                        <div></div>
+                    </div>
+
+                    <!-- Zoom Controls -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="ptz-btn ptz-zoom-in bg-green-600 hover:bg-green-700 text-white rounded p-2 transition-colors duration-200 flex items-center justify-center" title="Zoom In">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                                <path d="M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z"/>
+                            </svg>
+                        </button>
+                        <button class="ptz-btn ptz-zoom-out bg-orange-600 hover:bg-orange-700 text-white rounded p-2 transition-colors duration-200 flex items-center justify-center" title="Zoom Out">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                                <path d="M7 9h5v1H7z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        return ptzControlsContainer;
+    }
+
+    /**
+     * Add PTZ controls to the appropriate container
+     */
+    private addPTZControls(): void {
+        const ptzControls = this.createPTZControls();
+
+        if (this.config.ptzControlPosition === 'side' && this.ptzContainer) {
+            // Add to side container
+            this.ptzContainer.appendChild(ptzControls);
+        } else if (this.videoContainer) {
+            // Add as overlay to video container
+            this.videoContainer.style.position = 'relative';
+            this.videoContainer.appendChild(ptzControls);
+        }
+
+        // Add event listeners
+        this.setupPTZEventListeners(ptzControls);
+    }
+
+    /**
+     * Setup PTZ control event listeners
+     */
+    private setupPTZEventListeners(ptzContainer: HTMLDivElement): void {
+        const buttons = {
+            up: ptzContainer.querySelector('.ptz-up'),
+            down: ptzContainer.querySelector('.ptz-down'),
+            left: ptzContainer.querySelector('.ptz-left'),
+            right: ptzContainer.querySelector('.ptz-right'),
+            zoomIn: ptzContainer.querySelector('.ptz-zoom-in'),
+            zoomOut: ptzContainer.querySelector('.ptz-zoom-out'),
+            stop: ptzContainer.querySelector('.ptz-stop')
+        };
+
+        // Movement controls
+        buttons.up?.addEventListener('click', () => {
+            console.log('PTZ: Move Up');
+            this.ptzCallbacks.onMoveUp?.();
+        });
+
+        buttons.down?.addEventListener('click', () => {
+            console.log('PTZ: Move Down');
+            this.ptzCallbacks.onMoveDown?.();
+        });
+
+        buttons.left?.addEventListener('click', () => {
+            console.log('PTZ: Move Left');
+            this.ptzCallbacks.onMoveLeft?.();
+        });
+
+        buttons.right?.addEventListener('click', () => {
+            console.log('PTZ: Move Right');
+            this.ptzCallbacks.onMoveRight?.();
+        });
+
+        // Zoom controls
+        buttons.zoomIn?.addEventListener('click', () => {
+            console.log('PTZ: Zoom In');
+            this.ptzCallbacks.onZoomIn?.();
+        });
+
+        buttons.zoomOut?.addEventListener('click', () => {
+            console.log('PTZ: Zoom Out');
+            this.ptzCallbacks.onZoomOut?.();
+        });
+
+        // Stop control
+        buttons.stop?.addEventListener('click', () => {
+            console.log('PTZ: Stop');
+            this.ptzCallbacks.onStop?.();
+        });
+
+        // Add keyboard controls
+        this.setupKeyboardControls();
+    }
+
+    /**
+     * Setup keyboard controls for PTZ
+     */
+    private setupKeyboardControls(): void {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            // Only handle if the modal is visible and contains the video
+            if (!this.modalBody.closest('.modal:not(.hidden)')) return;
+
+            switch (event.key) {
+                case 'ArrowUp':
+                    event.preventDefault();
+                    console.log('PTZ: Move Up (Keyboard)');
+                    this.ptzCallbacks.onMoveUp?.();
+                    break;
+                case 'ArrowDown':
+                    event.preventDefault();
+                    console.log('PTZ: Move Down (Keyboard)');
+                    this.ptzCallbacks.onMoveDown?.();
+                    break;
+                case 'ArrowLeft':
+                    event.preventDefault();
+                    console.log('PTZ: Move Left (Keyboard)');
+                    this.ptzCallbacks.onMoveLeft?.();
+                    break;
+                case 'ArrowRight':
+                    event.preventDefault();
+                    console.log('PTZ: Move Right (Keyboard)');
+                    this.ptzCallbacks.onMoveRight?.();
+                    break;
+                case '+':
+                case '=':
+                    event.preventDefault();
+                    console.log('PTZ: Zoom In (Keyboard)');
+                    this.ptzCallbacks.onZoomIn?.();
+                    break;
+                case '-':
+                    event.preventDefault();
+                    console.log('PTZ: Zoom Out (Keyboard)');
+                    this.ptzCallbacks.onZoomOut?.();
+                    break;
+                case ' ':
+                case 'Escape':
+                    event.preventDefault();
+                    console.log('PTZ: Stop (Keyboard)');
+                    this.ptzCallbacks.onStop?.();
+                    break;
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+
+        // Store the event listener for cleanup
+        (this.modalBody as any)._ptzKeyListener = handleKeyDown;
     }
 
     /**
      * Load iframe player for WebRTC/HLS streams
      */
     private loadIframePlayer(streamUrl: string, protocolInfo: StreamProtocolInfo): void {
-        // Create container for iframe
-        const container = document.createElement('div');
-        container.className = 'w-full max-w-[900px] mx-auto relative';
+        if (!this.videoContainer) return;
 
-        const contentArea = document.createElement('div');
-        contentArea.className = 'relative w-full bg-black rounded-sm overflow-hidden min-h-[300px]';
-
-        const { container: statusContainer, protocolDiv, updateStatus } = this.createStatusContainer();
-        statusContainer.className = 'flex items-center absolute top-[15px] right-[15px] gap-3';
+        const {container: statusContainer, protocolDiv, updateStatus} = this.createStatusContainer();
 
         // Determine protocol type for display
         let protocolType = 'WebRTC';
@@ -185,7 +530,7 @@ class VideoStreamHandler {
         iframe.style.cssText = `
             width: 100%;
             height: auto;
-            min-height: 400px;
+            min-height: 500px;
             max-height: ${this.config.maxHeight};
             border: none;
             border-radius: ${this.config.borderRadius};
@@ -217,10 +562,8 @@ class VideoStreamHandler {
         };
 
         // Assemble elements
-        contentArea.appendChild(statusContainer);
-        contentArea.appendChild(iframe);
-        container.appendChild(contentArea);
-        this.modalBody.appendChild(container);
+        this.videoContainer.appendChild(statusContainer);
+        this.videoContainer.appendChild(iframe);
 
         this.currentIframe = iframe;
     }
@@ -229,10 +572,10 @@ class VideoStreamHandler {
      * Load HLS player
      */
     private loadHLSPlayer(streamUrl: string): void {
-        this.modalBody.classList.add('relative');
+        if (!this.videoContainer) return;
 
-        const { container: statusContainer, protocolDiv, updateStatus } = this.createStatusContainer();
-        this.modalBody.appendChild(statusContainer);
+        const {container: statusContainer, protocolDiv, updateStatus} = this.createStatusContainer();
+        this.videoContainer.appendChild(statusContainer);
 
         updateStatus('Load HLS Player...', '#f8bf31');
         protocolDiv.textContent = 'HLS';
@@ -276,7 +619,7 @@ class VideoStreamHandler {
             }
         }
 
-        this.modalBody.appendChild(video);
+        this.videoContainer.appendChild(video);
         this.currentVideo = video;
     }
 
@@ -284,10 +627,10 @@ class VideoStreamHandler {
      * Load MP4 player with comprehensive error handling
      */
     private loadMP4Player(streamUrl: string): void {
-        this.modalBody.classList.add('relative');
+        if (!this.videoContainer) return;
 
-        const { container: statusContainer, protocolDiv, updateStatus } = this.createStatusContainer();
-        this.modalBody.appendChild(statusContainer);
+        const {container: statusContainer, protocolDiv, updateStatus} = this.createStatusContainer();
+        this.videoContainer.appendChild(statusContainer);
 
         updateStatus('Loading MP4 Player...', '#f8bf31');
         protocolDiv.textContent = 'MP4';
@@ -309,7 +652,7 @@ class VideoStreamHandler {
         `;
 
         this.setupMP4EventHandlers(video, streamUrl, updateStatus);
-        this.modalBody.appendChild(video);
+        this.videoContainer.appendChild(video);
         this.currentVideo = video;
     }
 
@@ -346,7 +689,7 @@ class VideoStreamHandler {
             }
 
             const error = video.error;
-            console.log(`📍 Error attempt ${errorCount}:`, {
+            console.log(`🔍 Error attempt ${errorCount}:`, {
                 errorCode: error?.code,
                 readyState: video.readyState,
                 networkState: video.networkState,
@@ -493,6 +836,12 @@ class VideoStreamHandler {
      * Destroy the handler and clean up resources
      */
     public destroy(): void {
+        // Remove keyboard event listener
+        if ((this.modalBody as any)._ptzKeyListener) {
+            document.removeEventListener('keydown', (this.modalBody as any)._ptzKeyListener);
+            delete (this.modalBody as any)._ptzKeyListener;
+        }
+
         this.clearExistingContent();
     }
 
@@ -501,6 +850,145 @@ class VideoStreamHandler {
      */
     public updateConfig(newConfig: Partial<VideoStreamConfig>): void {
         this.config = { ...this.config, ...newConfig };
+    }
+
+    /**
+     * Show/Hide PTZ controls
+     */
+    public togglePTZControls(show: boolean): void {
+        const ptzControls = this.modalBody.querySelector('.ptz-controls') as HTMLElement;
+        if (ptzControls) {
+            ptzControls.style.display = show ? 'block' : 'none';
+        }
+    }
+
+    /**
+     * Send PTZ command (example implementation)
+     */
+    public sendPTZCommand(command: string, params?: any): void {
+        console.log(`Sending PTZ command: ${command}`, params);
+        // Implementasi untuk mengirim perintah PTZ ke server/API
+        // Contoh:
+        // fetch('/api/ptz-control', {
+        //     method: 'POST',
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //     },
+        //     body: JSON.stringify({
+        //         command: command,
+        //         params: params
+        //     })
+        // });
+    }
+
+    /**
+     * Set PTZ control position
+     */
+    public setPTZPosition(position: 'side' | 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right'): void {
+        this.config.ptzControlPosition = position;
+
+        // If changing to/from side position, need to recreate layout
+        if (position === 'side' || this.config.ptzControlPosition === 'side') {
+            console.log('PTZ position change requires layout recreation');
+            // This would require recreating the entire layout
+            // For now, just update the config for future use
+            return;
+        }
+
+        // Update existing controls if they exist
+        const ptzControls = this.modalBody.querySelector('.ptz-controls') as HTMLElement;
+        // @ts-ignore
+        if (ptzControls && position !== 'side') {
+            // Remove old position classes
+            ptzControls.className = ptzControls.className.replace(/\b(bottom|top)-(left|right)\b/g, '');
+
+            // Add new position classes
+            const positionClasses = {
+                'bottom-left': 'bottom-4 left-4',
+                'bottom-right': 'bottom-4 right-4',
+                'top-left': 'top-4 left-4',
+                'top-right': 'top-4 right-4'
+            };
+
+            ptzControls.className += ` ${positionClasses[position]}`;
+        }
+    }
+
+    /**
+     * Get PTZ controls element
+     */
+    public getPTZControls(): HTMLElement | null {
+        return this.modalBody.querySelector('.ptz-controls');
+    }
+
+    /**
+     * Enable/Disable specific PTZ functions
+     */
+    public setPTZEnabled(controls: {
+        pan?: boolean;
+        tilt?: boolean;
+        zoom?: boolean;
+    }): void {
+        const ptzContainer = this.modalBody.querySelector('.ptz-controls');
+        if (!ptzContainer) return;
+
+        if (controls.pan === false) {
+            const panButtons = ptzContainer.querySelectorAll('.ptz-left, .ptz-right');
+            panButtons.forEach(btn => {
+                (btn as HTMLElement).style.opacity = '0.3';
+                (btn as HTMLElement).style.pointerEvents = 'none';
+            });
+        }
+
+        if (controls.tilt === false) {
+            const tiltButtons = ptzContainer.querySelectorAll('.ptz-up, .ptz-down');
+            tiltButtons.forEach(btn => {
+                (btn as HTMLElement).style.opacity = '0.3';
+                (btn as HTMLElement).style.pointerEvents = 'none';
+            });
+        }
+
+        if (controls.zoom === false) {
+            const zoomButtons = ptzContainer.querySelectorAll('.ptz-zoom-in, .ptz-zoom-out');
+            zoomButtons.forEach(btn => {
+                (btn as HTMLElement).style.opacity = '0.3';
+                (btn as HTMLElement).style.pointerEvents = 'none';
+            });
+        }
+    }
+
+    /**
+     * Switch between side and overlay PTZ layout
+     */
+    public switchPTZLayout(layout: 'side' | 'overlay'): void {
+        const newPosition = layout === 'side' ? 'side' : 'bottom-right';
+
+        if (this.config.ptzControlPosition === newPosition) {
+            return; // Already in the desired layout
+        }
+
+        // Store current stream URL if any
+        let currentStreamUrl = '';
+        if (this.currentVideo?.src) {
+            currentStreamUrl = this.currentVideo.src;
+        } else if (this.currentIframe?.src) {
+            currentStreamUrl = this.currentIframe.src;
+        }
+
+        // Update config
+        this.config.ptzControlPosition = newPosition;
+
+        // If we have a stream, recreate the layout
+        if (currentStreamUrl) {
+            this.createVideoElement(this.modalBody, currentStreamUrl);
+        }
+    }
+
+    /**
+     * Get current PTZ layout type
+     */
+    public getPTZLayout(): 'side' | 'overlay' {
+        return this.config.ptzControlPosition === 'side' ? 'side' : 'overlay';
     }
 }
 

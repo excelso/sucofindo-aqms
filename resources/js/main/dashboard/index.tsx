@@ -16,6 +16,7 @@ import Swal from "sweetalert2";
 import moment from "moment";
 import MapsHelper from "@/js/plugins/mapsHelper";
 import VideoStreamHandler from "@/js/plugins/videoStreamHandler";
+import HikvisionPTZController from "@/js/plugins/hikvisionPTZController";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const appEnv: HTMLInputElement = document.querySelector('.app_env')
     const modalCctv: HTMLElement = document.querySelector('.modalCctv')
     const modalBody: HTMLElement = modalCctv.querySelector('.modal-body')
+    const bodyCCTV: HTMLElement = modalBody.querySelector('.body-cctv')
 
     const modalDetailParameter = document.querySelector('.modalDetailParameter')
     const bodyChart: HTMLElement = modalDetailParameter.querySelector('.bodyChart')
@@ -48,11 +50,22 @@ document.addEventListener('DOMContentLoaded', function () {
         retryAttempts: 5
     });
 
+    const cctvLiveHandler = new VideoStreamHandler({
+        autoplay: true,
+        controls: true,
+        muted: true,
+        maxHeight: '100vh',
+        retryAttempts: 5,
+        showPTZControls: true,
+        ptzControlPosition: 'side'
+    });
+
     //region Handle Close Menu
     closeModalForm.forEach((elm) => {
         elm.addEventListener('click', function () {
             closeModalDialog(modalCctv, () => {
                 videoHandler.destroy();
+                cctvLiveHandler.destroy();
             })
 
             closeModalDialog(modalDetailParameter)
@@ -77,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
         //     withCredentials: appEnv.value === 'production' || appEnv.value === 'staging',
         // },
         onCctvClick: (id, cctvLink) => {
-            showVideoModal(modalBody, id, cctvLink)
+            showVideoModal(bodyCCTV, id, cctvLink)
         },
         onMetricsClick: (uid, metrics) => {
             showModalDialog(modalDetailParameter, `<i class="fas fa-file mr-2"></i> ${uid}`, async () => {
@@ -116,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // }
 
             if (linkVideoRecorded) {
-                showVideoModal(modalBody, uid, linkVideoRecorded)
+                showVideoModal(bodyCCTV, uid, linkVideoRecorded)
             }
         },
         onHeartbeatStatusClick: (id) => {
@@ -157,7 +170,65 @@ document.addEventListener('DOMContentLoaded', function () {
                 <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${uid}
             </div>
         `, () => {
-            videoHandler.createVideoElement(modalBodyElm, videoUrl)
+            const hikvisionPTZController = new HikvisionPTZController(csrfToken, 'camera_001');
+            cctvLiveHandler.createVideoElement(modalBodyElm, videoUrl)
+            cctvLiveHandler.setPTZCallbacks({
+                onMoveUp: async () => {
+                    try {
+                        await hikvisionPTZController.moveDown(100); // Move up by 100 units (10 degrees)
+                    } catch (error) {
+                        console.error('Move up failed:', error);
+                    }
+                },
+
+                onMoveDown: async () => {
+                    try {
+                        await hikvisionPTZController.moveUp(100); // Move down by 100 units (10 degrees)
+                    } catch (error) {
+                        console.error('Move down failed:', error);
+                    }
+                },
+
+                onMoveLeft: async () => {
+                    try {
+                        await hikvisionPTZController.moveLeft(100); // Move left by 100 units (10 degrees)
+                    } catch (error) {
+                        console.error('Move left failed:', error);
+                    }
+                },
+
+                onMoveRight: async () => {
+                    try {
+                        await hikvisionPTZController.moveRight(100); // Move right by 100 units (10 degrees)
+                    } catch (error) {
+                        console.error('Move right failed:', error);
+                    }
+                },
+
+                onZoomIn: async () => {
+                    try {
+                        await hikvisionPTZController.zoomIn(5); // Zoom in by 5 levels
+                    } catch (error) {
+                        console.error('Zoom in failed:', error);
+                    }
+                },
+
+                onZoomOut: async () => {
+                    try {
+                        await hikvisionPTZController.zoomOut(5); // Zoom out by 5 levels
+                    } catch (error) {
+                        console.error('Zoom out failed:', error);
+                    }
+                },
+
+                onStop: async () => {
+                    try {
+                        await hikvisionPTZController.stop();
+                    } catch (error) {
+                        console.error('Stop failed:', error);
+                    }
+                }
+            })
         })
     }
     //endregion
