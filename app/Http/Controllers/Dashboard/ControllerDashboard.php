@@ -42,7 +42,7 @@
                 $platforms = Platforms::orderBy('created_at', 'ASC')->get();
                 $dataPlatformsTemp = [];
                 foreach ($platforms as $platform) {
-                    if (config('app.env') === 'production') {
+                    if (in_array(config('app.env'), ['production', 'staging'])) {
                         $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
                         $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
                         if ($request->input('startDate')) {
@@ -235,7 +235,7 @@
             try {
 
                 $platform = Platforms::where('uid', $uid)->first();
-                if (config('app.env') === 'production') {
+                if (in_array(config('app.env'), ['production', 'staging'])) {
                     $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
                     $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
                     if ($request->input('startDate')) {
