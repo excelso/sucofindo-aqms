@@ -990,28 +990,42 @@ class AirQualityCardManager {
     // endregion
 
     // region Update AirIndex Chart
-    private updateAirIndexChart(cardId: string, airIndexData: Array<{ timestamp: number; value: number; aqi_from: string }>): void {
+    private updateAirIndexChart(cardId: string, airIndexData: Array<{
+        timestamp: number;
+        value: number;
+        value_tsp: number;
+        aqi_from: string;
+        link_video_id?: string;
+        link_video_status?: string;
+        link_video_recorded?: string;
+    }>): void {
         const chartKey = `${cardId}-airIndex`;
         const chart = this.chartInstances.get(chartKey);
 
         if (chart && chart.series && chart.series[0]) {
-            const yValues = airIndexData.map(item => item.value);
+            // Get current source selection, default to 'pm25_pm10' if not set
+            const currentSource = this.currentAQISource.get(cardId) || 'pm25_pm10';
+
+            // Convert data berdasarkan current source yang dipilih
+            const convertedData = this.convertAirIndexDataForChart(airIndexData, currentSource);
+
+            const yValues = convertedData.map(item => item.value);
             const minY = Math.min(0, Math.min(...yValues));
             const maxY = Math.max(100, Math.max(...yValues));
             const newGradient = createSmoothGradient(minY, maxY);
 
-            // Convert airIndex data to Highcharts format
-            const chartData = airIndexData.map((item, index) => {
+            // Convert airIndex data to Highcharts format dengan current source
+            const chartData = convertedData.map((item, index) => {
                 const markerColor = this.getAQIColor(item.value);
-                const isLastPoint = index === airIndexData.length - 1;
+                const isLastPoint = index === convertedData.length - 1;
                 const isHighValue = item.value > 50;
                 const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.timestamp * 1000);
 
                 if (linkVideoPoint.linkVideoRecorded) {
-                    if (item.aqi_from === 'TSP') {
+                    if (currentSource === 'tsp') {
                         return {
                             x: item.timestamp * 1000,
-                            y: item.value,
+                            y: item.value_tsp,
                             timestamp: item.timestamp,
                             aqi_from: item.aqi_from,
                             marker: (isHighValue && linkVideoPoint.linkVideoRecorded) ? {
@@ -1031,7 +1045,7 @@ class AirQualityCardManager {
                                             this.options.onClickAirIndexPoint(event, {
                                                 cardId,
                                                 timestamp: item.timestamp,
-                                                value: item.value,
+                                                value: item.value_tsp,
                                                 pointIndex: index,
                                                 isLastPoint,
                                                 isHighValue,
@@ -1047,24 +1061,31 @@ class AirQualityCardManager {
                     } else {
                         return {
                             x: item.timestamp * 1000,
-                            y: item.value,
+                            y: currentSource === 'pm25_pm10' ? item.value : item.value_tsp,
                             timestamp: item.timestamp,
                             aqi_from: item.aqi_from,
+                            marker: {
+                                enabled: false,
+                                radius: 0
+                            }
                         }
                     }
                 } else {
                     return {
                         x: item.timestamp * 1000,
-                        y: item.value,
+                        y: currentSource === 'pm25_pm10' ? item.value : item.value_tsp,
                         timestamp: item.timestamp,
                         aqi_from: item.aqi_from,
+                        marker: {
+                            enabled: false,
+                            radius: 0
+                        }
                     }
                 }
             });
 
-            // Update series dengan data dan gradient baru
+            // Update series dengan data dan gradient baru, pertahankan current source
             const series = chart.series[0];
-            const currentSource = this.currentAQISource.get(cardId) || 'pm25_pm10';
 
             series.update({
                 name: currentSource === 'pm25_pm10' ? 'AQI (PM2.5/PM10)' : 'AQI (TSP)',
@@ -1083,10 +1104,29 @@ class AirQualityCardManager {
                     true
                 );
             }
+
+            // Update dropdown text to reflect current source
+            this.updateDropdownText(cardId, currentSource);
         }
     }
 
     // endregion
+
+    // region Update Dropdown Text
+    private updateDropdownText(cardId: string, currentSource: 'pm25_pm10' | 'tsp'): void {
+        const dropdownButton = document.getElementById(`${cardId}-dropdownButton`);
+        if (dropdownButton) {
+            const subText = dropdownButton.querySelector('.subText');
+            if (subText) {
+                if (currentSource === 'pm25_pm10') {
+                    subText.textContent = 'Based on PM 2.5 / PM 10';
+                } else {
+                    subText.textContent = 'Based on TSP';
+                }
+            }
+        }
+    }
+// endregion
 
     private getVideoLinkForPoint(cardId: string, timestamp: number): {
         uid: string,
@@ -1543,11 +1583,12 @@ class AirQualityCardManager {
             aqi_from: string;
         }>,
         sourceType: 'pm25_pm10' | 'tsp'
-    ): Array<{ timestamp: number; value: number; aqi_from: string; link_video_id?: string; link_video_status?: string; link_video_recorded?: string }> {
+    ): Array<{ timestamp: number; value: number; value_tsp: number; aqi_from: string; link_video_id?: string; link_video_status?: string; link_video_recorded?: string }> {
 
         return airIndexData.map(item => ({
             timestamp: item.timestamp,
-            value: sourceType === 'pm25_pm10' ? item.value : item.value_tsp,
+            value: item.value,
+            value_tsp: item.value_tsp,
             aqi_from: sourceType === 'tsp' ? 'TSP' : item.aqi_from,
             link_video_id: item.link_video_id,
             link_video_status: item.link_video_status,
@@ -1817,7 +1858,7 @@ class AirQualityCardManager {
 
     // endregion
 
-    // region Update Chart Value
+    // region Update Gauge Chart Value
     updateChartValue(cardId: string, chartType: 'pm10' | 'pm25' | 'pm1' | 'noise', newValue: number): void {
         const chartKey = `${cardId}-${chartType}`;
         const chart = this.chartInstances.get(chartKey);
