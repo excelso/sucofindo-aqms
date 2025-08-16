@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
             cctvLiveHandler.setPTZCallbacks({
                 onMoveUp: async () => {
                     try {
-                        await hikvisionPTZController.moveDown(100); // Move up by 100 units (10 degrees)
+                        await hikvisionPTZController.moveDown(500); // Move up by 100 units (10 degrees)
                     } catch (error) {
                         console.error('Move up failed:', error);
                     }
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 onMoveDown: async () => {
                     try {
-                        await hikvisionPTZController.moveUp(100); // Move down by 100 units (10 degrees)
+                        await hikvisionPTZController.moveUp(500); // Move down by 100 units (10 degrees)
                     } catch (error) {
                         console.error('Move down failed:', error);
                     }
@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 onMoveLeft: async () => {
                     try {
-                        await hikvisionPTZController.moveLeft(100); // Move left by 100 units (10 degrees)
+                        await hikvisionPTZController.moveLeft(500); // Move left by 100 units (10 degrees)
                     } catch (error) {
                         console.error('Move left failed:', error);
                     }
@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 onMoveRight: async () => {
                     try {
-                        await hikvisionPTZController.moveRight(100); // Move right by 100 units (10 degrees)
+                        await hikvisionPTZController.moveRight(500); // Move right by 100 units (10 degrees)
                     } catch (error) {
                         console.error('Move right failed:', error);
                     }
