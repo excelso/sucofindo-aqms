@@ -113,7 +113,13 @@
                             'width' => 'auto',
                         ]
                     ],
-                    'AQI Index' => [
+                    'AQI Index (PM 2.5 / PM 10)' => [
+                        'props' => [
+                            'align' => 'right',
+                            'width' => 'auto',
+                        ]
+                    ],
+                    'AQI Index (TSP)' => [
                         'props' => [
                             'align' => 'right',
                             'width' => 'auto',
@@ -207,6 +213,7 @@
                             $item->tsp,
                             $item->noise_leq,
                             $item->aqi_index,
+                            $item->aqi_index_tsp,
                             $aqiCat,
                         ];
                     }
