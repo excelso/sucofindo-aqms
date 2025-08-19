@@ -568,6 +568,8 @@ class AirQualityCardManager {
             maxY = Math.max(300, dataMaxY + 20);
         }
 
+        console.log('Max Y', maxY, dataMaxY);
+
         // Gunakan helper function dengan range adaptif
         const gradient = createSmoothGradient(minY, maxY);
         const chart = Highcharts.chart({
