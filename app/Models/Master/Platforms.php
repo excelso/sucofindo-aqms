@@ -28,6 +28,9 @@
             'ssh_username',
             'ssh_password',
             'ssh_port',
+            'cctv_portal_ip',
+            'cctv_portal_username',
+            'cctv_portal_password',
             'is_active',
         ];
 

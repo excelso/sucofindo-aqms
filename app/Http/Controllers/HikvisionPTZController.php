@@ -3,6 +3,7 @@
     namespace App\Http\Controllers;
 
     use App\Http\Controllers\Controller;
+    use App\Models\Master\Platforms;
     use Exception;
     use Illuminate\Http\Request;
     use Illuminate\Http\JsonResponse;
@@ -1126,16 +1127,18 @@
         /**
          * Get camera by ID (updated for Hikvision)
          */
-        private function getCameraById(string $cameraId): ?array {
+        private function getCameraById(string $uid): ?array {
             // This should fetch from your database
             // Example implementation for Hikvision camera
 
+            $platforms = Platforms::where('uid', '=', $uid)->first();
+
             return [
-                'id' => $cameraId,
-                'name' => 'Hikvision Camera ' . $cameraId,
-                'ip_address' => '192.168.88.252', // Use your camera IP
-                'username' => 'admin',
-                'password' => 'spiderBilt25',
+                'id' => $platforms->uid,
+                'name' => 'Hikvision Camera ' . $platforms->uid,
+                'ip_address' => $platforms->cctv_portal_ip, // Use your camera IP
+                'username' => $platforms->cctv_portal_username,
+                'password' => $platforms->cctv_portal_password,
                 'channel' => 1,
                 'supports_ptz' => true,
                 'protocol' => 'hikvision_isapi',

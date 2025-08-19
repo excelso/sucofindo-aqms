@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 cctvLiveHandler.showPTZControls(false)
             }
 
-            const hikvisionPTZController = new HikvisionPTZController(csrfToken, 'camera_001');
+            const hikvisionPTZController = new HikvisionPTZController(csrfToken, uid);
             cctvLiveHandler.setPTZCallbacks({
                 onMoveUp: async () => {
                     try {

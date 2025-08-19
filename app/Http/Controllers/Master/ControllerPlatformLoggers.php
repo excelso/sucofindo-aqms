@@ -46,10 +46,16 @@
                     }
                 ],
                 'cctv_link' => 'nullable|url',
+                'cctv_link_hls' => 'nullable|url',
+                'timezone' => 'required',
+                'cctv_portal_ip' => 'nullable|ip',
             ], [], [
                 'company_site_id' => 'Site Name',
                 'uid' => 'UID',
-                'cctv_link' => 'CCTV Link',
+                'cctv_link' => 'CCTV Link (RTC)',
+                'cctv_link_hls' => 'CCTV Link (HLS)',
+                'timezone' => 'Timezone',
+                'cctv_portal_ip' => 'CCTV Portal IP',
             ]);
 
             if ($validator->fails()) {
@@ -69,6 +75,9 @@
                         'timezone' => $request->input('timezone'),
                         'lat' => $request->input('lat'),
                         'lng' => $request->input('lng'),
+                        'cctv_portal_ip' => $request->input('cctv_portal_ip'),
+                        'cctv_portal_username' => $request->input('cctv_portal_username'),
+                        'cctv_portal_password' => $request->input('cctv_portal_password'),
                     ]);
 
                     LoggersLimit::create([
@@ -152,12 +161,14 @@
                 'cctv_link' => 'nullable|url',
                 'cctv_link_hls' => 'nullable|url',
                 'timezone' => 'required',
+                'cctv_portal_ip' => 'nullable|ip',
             ], [], [
                 'company_site_id' => 'Site Name',
                 'uid' => 'UID',
                 'cctv_link' => 'CCTV Link (RTC)',
                 'cctv_link_hls' => 'CCTV Link (HLS)',
                 'timezone' => 'Timezone',
+                'cctv_portal_ip' => 'CCTV Portal IP',
             ]);
 
             if ($validator->fails()) {
@@ -178,6 +189,9 @@
                         'timezone' => $request->input('timezone'),
                         'lat' => $request->input('lat'),
                         'lng' => $request->input('lng'),
+                        'cctv_portal_ip' => $request->input('cctv_portal_ip'),
+                        'cctv_portal_username' => $request->input('cctv_portal_username'),
+                        'cctv_portal_password' => $request->input('cctv_portal_password'),
                     ]);
 
                     LoggersLimit::updateOrCreate(['uid' => $request->input('uid')], [

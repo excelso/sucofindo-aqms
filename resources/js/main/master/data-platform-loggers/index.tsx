@@ -24,6 +24,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const cctvLinkError: HTMLElement = modalForm.querySelector('.cctvLinkError')
     const cctvLinkHls: HTMLInputElement = modalForm.querySelector('.cctvLinkHls')
     const cctvLinkHlsError: HTMLElement = modalForm.querySelector('.cctvLinkHlsError')
+    const cctvPortalIP: HTMLInputElement = modalForm.querySelector('.cctvPortalIP')
+    const cctvPortalIPError: HTMLElement = modalForm.querySelector('.cctvPortalIPError')
+    const cctvPortalUsername: HTMLInputElement = modalForm.querySelector('.cctvPortalUsername')
+    const cctvPortalUsernameError: HTMLElement = modalForm.querySelector('.cctvPortalUsernameError')
+    const cctvPortalPassword: HTMLInputElement = modalForm.querySelector('.cctvPortalPassword')
+    const cctvPortalPasswordError: HTMLElement = modalForm.querySelector('.cctvPortalPasswordError')
+    const btnShowPortalPassword: HTMLElement = modalForm.querySelector('.btnShowPortalPassword')
     const platformTimezone: HTMLInputElement = modalForm.querySelector('.platformTimezone')
     const platformTimezoneError: HTMLElement = modalForm.querySelector('.platformTimezoneError')
 
@@ -187,6 +194,13 @@ document.addEventListener('DOMContentLoaded', function () {
                                 markerImage.style.top = `${pixelConvert[1] + 197}px`
                             });
                         });
+                    } else if (id === '#camera') {
+                        btnShowPortalPassword.addEventListener('click', function () {
+                            let currentType = cctvPortalPassword.getAttribute('type') === 'password' ? 'text' : 'password'
+                            let currentTypeIcon = cctvPortalPassword.getAttribute('type') === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash'
+                            cctvPortalPassword.setAttribute('type', currentType)
+                            btnShowPortalPassword.innerHTML = `<i class="${currentTypeIcon}"></i>`
+                        })
                     }
                 }
             }
@@ -238,6 +252,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                         timezone: platformTimezone.value,
                                         lat: alamatLat.value,
                                         lng: alamatLng.value,
+                                        cctv_portal_ip: cctvPortalIP.value,
+                                        cctv_portal_username: cctvPortalUsername.value,
+                                        cctv_portal_password: cctvPortalPassword.value,
                                         pm10_min: pm10Min.value,
                                         pm10_min_buffer: pm10MinBuffer.value,
                                         pm10_max_buffer: pm10MaxBuffer.value,
@@ -316,7 +333,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         Swal.close()
 
                         if (status === 200) {
-                            const {company_site_id, uid: data_uid, cctv_link, cctv_link_hls, timezone, lat, lng, logger_limit} = data
+                            const {company_site_id, uid: data_uid, cctv_link, cctv_link_hls, cctv_portal_ip, cctv_portal_username, cctv_portal_password, timezone, lat, lng, logger_limit} = data
                             const {
                                 pm10_min,
                                 pm10_min_buffer,
@@ -346,6 +363,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                 platformTimezone.dispatchEvent(new Event('exbox.change'))
                                 alamatLat.value = lat
                                 alamatLng.value = lng
+                                cctvPortalIP.value = cctv_portal_ip
+                                cctvPortalUsername.value = cctv_portal_username
+                                cctvPortalPassword.value = cctv_portal_password
 
                                 pm10Min.value = pm10_min ?? 0
                                 pm10MinBuffer.value = pm10_min_buffer ?? 0
@@ -392,6 +412,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                                         timezone: platformTimezone.value,
                                                         lat: alamatLat.value,
                                                         lng: alamatLng.value,
+                                                        cctv_portal_ip: cctvPortalIP.value,
+                                                        cctv_portal_username: cctvPortalUsername.value,
+                                                        cctv_portal_password: cctvPortalPassword.value,
                                                         pm10_min: pm10Min.value,
                                                         pm10_min_buffer: pm10MinBuffer.value,
                                                         pm10_max_buffer: pm10MaxBuffer.value,
@@ -480,6 +503,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     cctv_link,
                     cctv_link_hls,
                     timezone,
+                    cctv_portal_ip,
+                    cctv_portal_username,
+                    cctv_portal_password,
                 } = errorValidation
 
                 responseMessages(companySiteIdError, company_site_id)
@@ -487,6 +513,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 responseMessages(cctvLinkError, cctv_link)
                 responseMessages(cctvLinkHlsError, cctv_link_hls)
                 responseMessages(platformTimezoneError, timezone)
+                responseMessages(cctvPortalIPError, cctv_portal_ip)
+                responseMessages(cctvPortalUsernameError, cctv_portal_username)
+                responseMessages(cctvPortalPasswordError, cctv_portal_password)
 
             } else {
                 failureAlert({

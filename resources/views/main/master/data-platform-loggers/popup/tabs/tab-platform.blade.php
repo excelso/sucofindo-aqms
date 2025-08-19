@@ -44,36 +44,6 @@
             </div>
             <ul class="uidError"></ul>
         </div>
-        <div class="grid grid-cols-2 gap-4">
-            <div class="form-group">
-                <label>CCTV Link (RTC)</label>
-                <div class="form-group-control">
-                    <input type="text" class="form-control cctvLink" placeholder="...">
-                    <div class="form-control-append">
-                        <div class="form-control-append-icon">
-                            <a class="cursor-pointer btnCheckLink">
-                                <i class="fas fa-external-link"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <ul class="cctvLinkError"></ul>
-            </div>
-            <div class="form-group">
-                <label>CCTV Link (HLS)</label>
-                <div class="form-group-control">
-                    <input type="text" class="form-control cctvLinkHls" placeholder="...">
-                    <div class="form-control-append">
-                        <div class="form-control-append-icon">
-                            <a class="cursor-pointer btnCheckLinkHls">
-                                <i class="fas fa-external-link"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <ul class="cctvLinkHlsError"></ul>
-            </div>
-        </div>
         <div class="form-group">
             <label>
                 Timezone
