@@ -31,7 +31,7 @@
                 </div>
             </div>
             <div class="mt-5">
-                <div class="airQualityParent grid grid-cols-3 gap-4"></div>
+                <div class="airQualityParent grid md:grid-cols-2 sm:grid-cols-1 grid-cols-3 gap-4"></div>
             </div>
         </div>
 
