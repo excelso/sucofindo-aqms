@@ -620,7 +620,7 @@ class AirQualityCardManager {
                 gridLineColor: '#eee',
                 gridLineDashStyle: 'Dash',
                 min: minY,
-                max: maxY, // Gunakan maxY yang adaptif
+                max: dataMaxY,
             },
             legend: {enabled: false},
             tooltip: {
