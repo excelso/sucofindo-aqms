@@ -568,8 +568,6 @@ class AirQualityCardManager {
             maxY = Math.max(300, dataMaxY + 20);
         }
 
-        console.log('Max Y', maxY, dataMaxY);
-
         // Gunakan helper function dengan range adaptif
         const gradient = createSmoothGradient(minY, maxY);
         const chart = Highcharts.chart({
@@ -1011,7 +1009,7 @@ class AirQualityCardManager {
             // Convert data berdasarkan current source yang dipilih
             const convertedData = this.convertAirIndexDataForChart(airIndexData, currentSource);
 
-            const yValues = convertedData.map(item => item.value);
+            const yValues = currentSource === 'pm25_pm10' ? convertedData.map(item => item.value) : convertedData.map(item => item.value_tsp);
             const minY = Math.min(0, Math.min(...yValues));
             const maxY = Math.max(100, Math.max(...yValues));
             const newGradient = createSmoothGradient(minY, maxY);
@@ -1565,7 +1563,6 @@ class AirQualityCardManager {
 
         // Convert data untuk chart berdasarkan source yang dipilih
         const chartData = this.convertAirIndexDataForChart(cardData.airIndexData, sourceType);
-
         // Update chart dengan data baru
         this.updateAirIndexChart(cardId, chartData);
 
