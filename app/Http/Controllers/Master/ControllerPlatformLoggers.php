@@ -48,7 +48,10 @@
                 'cctv_link' => 'nullable|url',
                 'cctv_link_hls' => 'nullable|url',
                 'timezone' => 'required',
-                'cctv_portal_ip' => 'nullable|ip',
+                'cctv_portal_ip' => [
+                    'nullable',
+                    'regex:/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}$/'
+                ],
             ], [], [
                 'company_site_id' => 'Site Name',
                 'uid' => 'UID',
@@ -161,7 +164,10 @@
                 'cctv_link' => 'nullable|url',
                 'cctv_link_hls' => 'nullable|url',
                 'timezone' => 'required',
-                'cctv_portal_ip' => 'nullable|ip',
+                'cctv_portal_ip' => [
+                    'nullable',
+                    'regex:/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}$/'
+                ],
             ], [], [
                 'company_site_id' => 'Site Name',
                 'uid' => 'UID',
