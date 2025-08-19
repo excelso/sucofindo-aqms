@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                     `, () => {
                         videoHandler.createVideoElement(modalBody, btnCCTV.getAttribute('data-href'));
+                        videoHandler.showPTZControls(false);
                     })
                 })
             }

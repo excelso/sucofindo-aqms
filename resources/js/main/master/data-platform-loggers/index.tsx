@@ -313,6 +313,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                     `, () => {
                         videoHandler.createVideoElement(modalBody, btnCCTVHls.getAttribute('data-href'));
+                        videoHandler.showPTZControls(false);
                     })
                 })
             }
