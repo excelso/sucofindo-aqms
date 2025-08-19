@@ -6,6 +6,7 @@ import Swal from "sweetalert2";
 import {TabItem, Tabs} from "flowbite";
 import MapsHelper from "@/js/plugins/mapsHelper";
 import VideoStreamHandler from "@/js/plugins/videoStreamHandler";
+import HikvisionPTZController from "@/js/plugins/hikvisionPTZController";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
@@ -301,6 +302,64 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                     `, () => {
                         videoHandler.createVideoElement(modalBody, btnCCTVRtc.getAttribute('data-href'));
+                        const hikvisionPTZController = new HikvisionPTZController(csrfToken, platformUid);
+                        videoHandler.setPTZCallbacks({
+                            onMoveUp: async () => {
+                                try {
+                                    await hikvisionPTZController.moveDown(500); // Move up by 100 units (10 degrees)
+                                } catch (error) {
+                                    console.error('Move up failed:', error);
+                                }
+                            },
+
+                            onMoveDown: async () => {
+                                try {
+                                    await hikvisionPTZController.moveUp(500); // Move down by 100 units (10 degrees)
+                                } catch (error) {
+                                    console.error('Move down failed:', error);
+                                }
+                            },
+
+                            onMoveLeft: async () => {
+                                try {
+                                    await hikvisionPTZController.moveLeft(500); // Move left by 100 units (10 degrees)
+                                } catch (error) {
+                                    console.error('Move left failed:', error);
+                                }
+                            },
+
+                            onMoveRight: async () => {
+                                try {
+                                    await hikvisionPTZController.moveRight(500); // Move right by 100 units (10 degrees)
+                                } catch (error) {
+                                    console.error('Move right failed:', error);
+                                }
+                            },
+
+                            onZoomIn: async () => {
+                                try {
+                                    await hikvisionPTZController.zoomIn(5); // Zoom in by 5 levels
+                                } catch (error) {
+                                    console.error('Zoom in failed:', error);
+                                }
+                            },
+
+                            onZoomOut: async () => {
+                                try {
+                                    await hikvisionPTZController.zoomOut(5); // Zoom out by 5 levels
+                                } catch (error) {
+                                    console.error('Zoom out failed:', error);
+                                }
+                            },
+
+                            onStop: async () => {
+                                try {
+                                    await hikvisionPTZController.stop();
+                                } catch (error) {
+                                    console.error('Stop failed:', error);
+                                }
+                            }
+                        })
                     })
                 })
             }
