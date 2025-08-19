@@ -5,9 +5,9 @@ import "highcharts/modules/no-data-to-display";
 import {io, Socket} from 'socket.io-client';
 import {SocketClient, SocketEventCallbacks, SocketOptions} from "@/js/plugins/SocketClient";
 import {createSmoothGradient} from "@/js/main/dashboard/chartHelper";
-import { Dropdown } from 'flowbite';
-import type { DropdownOptions, DropdownInterface } from 'flowbite';
-import type { InstanceOptions } from 'flowbite';
+import {Dropdown} from 'flowbite';
+import type {DropdownOptions, DropdownInterface} from 'flowbite';
+import type {InstanceOptions} from 'flowbite';
 
 interface AirQualityData {
     uid: string;
@@ -53,6 +53,9 @@ interface AirQualityData {
         timestamp: number;
         value: number;
         value_tsp: number;
+        pm25: number;
+        pm10: number;
+        tsp: number;
         link_video_id?: string;
         link_video_status?: string;
         link_video_recorded?: string;
@@ -118,7 +121,15 @@ interface LoggerEventData {
     datetime_unix: number;
     link_video_id?: string;
     // Optional airIndex data untuk update chart airIndex
-    airIndexData?: Array<{ timestamp: number; value: number; value_tsp: number; aqi_from: string }>;
+    airIndexData?: Array<{
+        timestamp: number;
+        value: number;
+        value_tsp: number;
+        pm25: number;
+        pm10: number;
+        tsp: number;
+        aqi_from: string
+    }>;
     // Atau bisa menggunakan AQI value untuk generate airIndex point baru
     aqi_value?: number;
     aqi_from?: string;
@@ -510,6 +521,9 @@ class AirQualityCardManager {
         timestamp: number;
         value: number;
         value_tsp: number;
+        pm25: number;
+        pm10: number;
+        tsp: number;
         aqi_from: string;
     }>, cardId: string): void {
         if (!this.options.enableCharts || typeof Highcharts === 'undefined') {
@@ -547,7 +561,7 @@ class AirQualityCardManager {
                     radius: 0,
                     symbol: 'circle'
                 },
-                aqi_from: currentSource === 'tsp' ? 'TSP' : item.aqi_from,
+                aqi_from: currentSource === 'tsp' ? `TSP: ${item.tsp} µg/m³` : item.aqi_from,
             };
         });
 
@@ -994,6 +1008,9 @@ class AirQualityCardManager {
         timestamp: number;
         value: number;
         value_tsp: number;
+        pm25: number;
+        pm10: number;
+        tsp: number;
         aqi_from: string;
         link_video_id?: string;
         link_video_status?: string;
@@ -1126,6 +1143,7 @@ class AirQualityCardManager {
             }
         }
     }
+
 // endregion
 
     private getVideoLinkForPoint(cardId: string, timestamp: number): {
@@ -1230,6 +1248,9 @@ class AirQualityCardManager {
                 loggerData.datetime_unix,
                 aqiValue,
                 aqiValueTsp,
+                loggerData.pm_25,
+                loggerData.pm_10,
+                loggerData.tsp,
                 loggerData.link_video_id
             );
 
@@ -1326,6 +1347,9 @@ class AirQualityCardManager {
             timestamp: number;
             value: number;
             value_tsp: number;
+            pm25: number;
+            pm10: number;
+            tsp: number;
             link_video_id?: string;
             link_video_status?: string;
             link_video_recorded?: string;
@@ -1334,11 +1358,17 @@ class AirQualityCardManager {
         newTimestamp: number,
         newValue: number,
         newValueTsp: number,
+        pm25: number,
+        pm10: number,
+        tsp: number,
         linkVideoId?: string
     ): Array<{
         timestamp: number;
         value: number;
         value_tsp: number;
+        pm25: number;
+        pm10: number;
+        tsp: number;
         link_video_id?: string;
         link_video_status?: string;
         link_video_recorded?: string;
@@ -1353,6 +1383,9 @@ class AirQualityCardManager {
             timestamp: newTimestamp,
             value: newValue,
             value_tsp: newValueTsp,
+            pm25: pm25,
+            pm10: pm10,
+            tsp: tsp,
             link_video_id: linkVideoId,
             link_video_status: linkVideoId ? 'pending' : undefined, // Set initial status jika ada video
             link_video_recorded: undefined, // Will be updated when recording completes
@@ -1568,6 +1601,7 @@ class AirQualityCardManager {
 
         console.log(`🔄 Updated AQI chart for ${cardId} to use ${sourceType} source`);
     }
+
     // endregion
 
     // region Convert AirIndex Data For Chart
@@ -1576,24 +1610,42 @@ class AirQualityCardManager {
             timestamp: number;
             value: number;
             value_tsp: number;
+            pm25: number;
+            pm10: number;
+            tsp: number;
             link_video_id?: string;
             link_video_status?: string;
             link_video_recorded?: string;
             aqi_from: string;
         }>,
         sourceType: 'pm25_pm10' | 'tsp'
-    ): Array<{ timestamp: number; value: number; value_tsp: number; aqi_from: string; link_video_id?: string; link_video_status?: string; link_video_recorded?: string }> {
+    ): Array<{
+        timestamp: number;
+        value: number;
+        value_tsp: number;
+        pm25: number;
+        pm10: number;
+        tsp: number;
+        aqi_from: string;
+        link_video_id?: string;
+        link_video_status?: string;
+        link_video_recorded?: string
+    }> {
 
         return airIndexData.map(item => ({
             timestamp: item.timestamp,
             value: item.value,
             value_tsp: item.value_tsp,
-            aqi_from: sourceType === 'tsp' ? 'TSP' : item.aqi_from,
+            pm25: item.pm25,
+            pm10: item.pm10,
+            tsp: item.tsp,
+            aqi_from: sourceType === 'tsp' ? `TSP: ${item.tsp} µg/m³` : item.aqi_from,
             link_video_id: item.link_video_id,
             link_video_status: item.link_video_status,
             link_video_recorded: item.link_video_recorded
         }));
     }
+
     // endregion
 
     // region Create Single Card

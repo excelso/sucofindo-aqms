@@ -175,6 +175,8 @@
                         'link_video_status' => $logger->link_video_status ?? null,
                         'link_video_recorded' => $logger->link_video_recorded ?? null,
                         'pm25' => $logger->pm_25,
+                        'pm10' => $logger->pm_10,
+                        'tsp' => $logger->tsp,
                         'category' => $aqiCatForDisplay->category_name_en ?? 'Unknown',
                         'category_id' => $aqiCatForDisplay->id,
                         'category_range' => "[{$aqiCatForDisplay->pm25_min}, {$aqiCatForDisplay->pm25_max}]",
@@ -191,6 +193,8 @@
                         'link_video_status' => $logger->link_video_status ?? null,
                         'link_video_recorded' => $logger->link_video_recorded ?? null,
                         'pm25' => $logger->pm_25,
+                        'pm10' => $logger->pm_10,
+                        'tsp' => $logger->tsp,
                         'category' => 'Error',
                         'aqi_from' => $logger->aqi_from ?? null,
                         'error' => $e->getMessage()
@@ -237,16 +241,18 @@
             try {
 
                 $platform = Platforms::where('uid', $uid)->first();
-                if (in_array(config('app.env'), ['production', 'staging'])) {
-                    $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
-                    $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
-                    if ($request->input('startDate')) {
-                        $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
-                        $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
-                    }
-                } else {
-                    $minDate = '2025-08-12 00:00';
-                    $maxDate = '2025-08-12 23:59';
+                // if (in_array(config('app.env'), ['production', 'staging'])) {
+                //
+                // } else {
+                //     $minDate = '2025-08-12 00:00';
+                //     $maxDate = '2025-08-12 23:59';
+                // }
+
+                $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
+                $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
+                if ($request->input('startDate')) {
+                    $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
+                    $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
                 }
 
                 $dataLogger = Loggers::loggerData5Minutes($uid, $minDate, $maxDate, $platform->timezone)->get();
