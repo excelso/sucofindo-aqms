@@ -50,7 +50,18 @@
                 'timezone' => 'required',
                 'cctv_portal_ip' => [
                     'nullable',
-                    'regex:/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}$/'
+                    'regex:/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}(:[0-9]{1,5})?$/',
+                    function ($attribute, $value, $fail) {
+                        if (empty($value)) return;
+
+                        $parts = explode(':', $value);
+                        $ip = $parts[0];
+
+                        // Validasi IP menggunakan filter_var untuk memastikan IP valid
+                        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                            $fail('IP address tidak valid.');
+                        }
+                    }
                 ],
             ], [], [
                 'company_site_id' => 'Site Name',
@@ -166,7 +177,18 @@
                 'timezone' => 'required',
                 'cctv_portal_ip' => [
                     'nullable',
-                    'regex:/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}$/'
+                    'regex:/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}(:[0-9]{1,5})?$/',
+                    function ($attribute, $value, $fail) {
+                        if (empty($value)) return;
+
+                        $parts = explode(':', $value);
+                        $ip = $parts[0];
+
+                        // Validasi IP menggunakan filter_var untuk memastikan IP valid
+                        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                            $fail('IP address tidak valid.');
+                        }
+                    }
                 ],
             ], [], [
                 'company_site_id' => 'Site Name',
