@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     //region Handle Open Video on AQI Chart
     const showModalVideoRecord = (modalBodyElm: HTMLElement, uid: any, videoUrl: string) => {
-        showModalDialog(modalCctv, `
+        showModalDialog(modalCctvRecord, `
             <div class="flex items-center">
                 <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${uid}
             </div>
