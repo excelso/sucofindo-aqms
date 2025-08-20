@@ -1,6 +1,6 @@
 import Hls from "hls.js";
 import {closeModalDialog, showModalDialog} from "@/js/plugins/modal";
-import {AirQualityCardManager, MetricsData} from "@/js/main/dashboard/airQualityCardManager";
+import {AirQualityCardManager, CameraData, MetricsData} from "@/js/main/dashboard/airQualityCardManager";
 import Highcharts from "highcharts";
 import {
     formatter,
@@ -17,6 +17,9 @@ import moment from "moment";
 import MapsHelper from "@/js/plugins/mapsHelper";
 import VideoStreamHandler from "@/js/plugins/videoStreamHandler";
 import HikvisionPTZController from "@/js/plugins/hikvisionPTZController";
+import videojs from "video.js";
+import {MediaMtxWhepPlayer} from "@/js/plugins/MediaMtxWhepPlayer";
+import {CamerasConfig, EnhancedVideoStreamHandler} from "@/js/plugins/EnhancedVideoStreamHandler";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
@@ -24,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const appEnv: HTMLInputElement = document.querySelector('.app_env')
     const modalCctv: HTMLElement = document.querySelector('.modalCctv')
     const modalBody: HTMLElement = modalCctv.querySelector('.modal-body')
-    const bodyCCTV: HTMLElement = modalBody.querySelector('.body-cctv')
+    const bodyCamera: HTMLElement = modalBody.querySelector('.body-camera')
 
     const modalDetailParameter = document.querySelector('.modalDetailParameter')
     const bodyChart: HTMLElement = modalDetailParameter.querySelector('.bodyChart')
@@ -40,9 +43,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const mapsBody: HTMLDivElement = document.querySelector('#mapsBody')
 
     const closeModalForm = document.querySelectorAll('.closeModalForm')
-    // const socket = SocketClient.getInstance('dashboard', appEnv.value === 'local' ? 'ws://127.0.0.1:3300' : 'https://aqms-api.cloudtrack.id')
 
-    const cctvLiveHandler = new VideoStreamHandler({
+    const cameraRecord = new EnhancedVideoStreamHandler({
         autoplay: true,
         controls: true,
         muted: true,
@@ -50,11 +52,21 @@ document.addEventListener('DOMContentLoaded', function () {
         retryAttempts: 5,
     });
 
+    const cameraLive = new EnhancedVideoStreamHandler({
+        autoplay: true,
+        controls: true,
+        muted: true,
+        maxHeight: '100vh',
+        videoHeight: '400px',
+        retryAttempts: 5,
+    });
+
     //region Handle Close Menu
     closeModalForm.forEach((elm) => {
         elm.addEventListener('click', function () {
             closeModalDialog(modalCctv, () => {
-                cctvLiveHandler.destroy();
+                cameraRecord.destroy();
+                cameraLive.destroy();
             })
 
             closeModalDialog(modalDetailParameter)
@@ -73,13 +85,8 @@ document.addEventListener('DOMContentLoaded', function () {
         realTimeUpdateInterval: 60000,
         apiEndpoint: '/dashboard/platforms',
         autoLoadInitialData: false,
-        // enableSocketIO: true,
-        // socketIOUrl: appEnv.value === 'local' ? 'ws://127.0.0.1:3300' : 'https://aqms-api.cloudtrack.id',
-        // socketIOOptions: {
-        //     withCredentials: appEnv.value === 'production' || appEnv.value === 'staging',
-        // },
-        onCctvClick: (id, cctvLink) => {
-            showVideoModal(bodyCCTV, id, cctvLink, 'live')
+        onCctvClick: (id, cameraData) => {
+            showModalLiveVideo(bodyCamera, id, cameraData)
         },
         onMetricsClick: (uid, metrics) => {
             showModalDialog(modalDetailParameter, `<i class="fas fa-file mr-2"></i> ${uid}`, async () => {
@@ -100,25 +107,11 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('Connection status:', status);
         },
         onClickAirIndexPoint: async (events, pointData) => {
-            const { cardId, linkVideo } = pointData
-            const { uid, linkVideoId, linkVideoRecorded } = linkVideo
-
-            // if (socket.isConnected()) {
-            //     await waitLoader('Please wait...', 'Loading Recorded Video', () => {
-            //         if (linkVideoId) {
-            //             requestVideo(linkVideoId, cardId, linkVideoRecorded)
-            //         } else {
-            //             failureAlert({
-            //                 html: 'Video Recorded Not Found',
-            //             })
-            //         }
-            //     })
-            // } else {
-            //     // Offline mode - gunakan video yang sudah ada
-            // }
+            const { linkVideo } = pointData
+            const { uid, linkVideoRecorded } = linkVideo
 
             if (linkVideoRecorded) {
-                showVideoModal(bodyCCTV, uid, linkVideoRecorded, 'recorded')
+                showModalVideoRecord(bodyCamera, uid, linkVideoRecorded)
             }
         },
         onHeartbeatStatusClick: (id) => {
@@ -148,170 +141,85 @@ document.addEventListener('DOMContentLoaded', function () {
             })
         }
     });
-
-    // manager.startRealTimeMode();
     //endregion
 
-    //region Handle Open Video on Forecast Chart
-    const showVideoModal = (modalBodyElm: HTMLElement, uid: any, videoUrl: string, tipe: 'live' | 'recorded') => {
+    //region Handle Open Video on AQI Chart
+    const showModalVideoRecord = (modalBodyElm: HTMLElement, uid: any, videoUrl: string) => {
         showModalDialog(modalCctv, `
             <div class="flex items-center">
                 <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${uid}
             </div>
         `, () => {
 
-            cctvLiveHandler.createVideoElement(modalBodyElm, videoUrl);
-
-            if (tipe === 'live') {
-                cctvLiveHandler.showPTZControls(true)
-                cctvLiveHandler.setPTZPosition('side')
-            } else {
-                cctvLiveHandler.showPTZControls(false)
-            }
-
-            const hikvisionPTZController = new HikvisionPTZController(csrfToken, uid);
-            cctvLiveHandler.setPTZCallbacks({
-                onMoveUp: async () => {
-                    try {
-                        await hikvisionPTZController.moveDown(200); // Move up by 100 units (10 degrees)
-                    } catch (error) {
-                        console.error('Move up failed:', error);
-                    }
-                },
-
-                onMoveDown: async () => {
-                    try {
-                        await hikvisionPTZController.moveUp(200); // Move down by 100 units (10 degrees)
-                    } catch (error) {
-                        console.error('Move down failed:', error);
-                    }
-                },
-
-                onMoveLeft: async () => {
-                    try {
-                        await hikvisionPTZController.moveLeft(200); // Move left by 100 units (10 degrees)
-                    } catch (error) {
-                        console.error('Move left failed:', error);
-                    }
-                },
-
-                onMoveRight: async () => {
-                    try {
-                        await hikvisionPTZController.moveRight(200); // Move right by 100 units (10 degrees)
-                    } catch (error) {
-                        console.error('Move right failed:', error);
-                    }
-                },
-
-                onZoomIn: async () => {
-                    try {
-                        await hikvisionPTZController.zoomIn(5); // Zoom in by 5 levels
-                    } catch (error) {
-                        console.error('Zoom in failed:', error);
-                    }
-                },
-
-                onZoomOut: async () => {
-                    try {
-                        await hikvisionPTZController.zoomOut(5); // Zoom out by 5 levels
-                    } catch (error) {
-                        console.error('Zoom out failed:', error);
-                    }
-                },
-
-                onStop: async () => {
-                    try {
-                        await hikvisionPTZController.stop();
-                    } catch (error) {
-                        console.error('Stop failed:', error);
-                    }
+            cameraRecord.initializeWithCameras(modalBodyElm, [
+                {
+                    cameraName: "Camera 1",
+                    "videoLink": videoUrl,
+                    "protocol": 'whep',
+                    "supportPTZ": false,
+                    "videoControl": true,
                 }
-            })
+            ]);
         })
     }
     //endregion
 
-    //region Handle Recording Progress
-    // const handleRecordingProgress = (recordingId: string, cardId: string) => {
-    //     // Listen untuk recording progress
-    //     socket.on('recording:progress', (data) => {
-    //         if (data.id === recordingId) {
-    //             const { progress, status } = data
-    //
-    //             if (status === 'recording') {
-    //                 Swal.update({
-    //                     title: 'Recording in Progress',
-    //                     html: `
-    //                         <div class="text-md mb-3">Progress: ${progress}%</div>
-    //                         <div class="text-sm text-gray-600">Please wait while we record the video...</div>
-    //                     `,
-    //                     showConfirmButton: false,
-    //                     allowOutsideClick: false,
-    //                     allowEscapeKey: false
-    //                 });
-    //                 Swal.showLoading();
-    //             }
-    //
-    //             if (progress === 99) {
-    //                 socket.off('recording:progress')
-    //             }
-    //         }
-    //     })
-    //
-    //     socket.on('recording:retrying', (data) => {
-    //         if (data.id === recordingId) {
-    //             const { status } = data
-    //
-    //             if (status === 'retrying') {
-    //                 Swal.update({
-    //                     title: 'Retrying Record',
-    //                     html: `
-    //                         <div class="text-md text-gray-600">Please Wait, Retry Recording Video</div>
-    //                     `,
-    //                     showConfirmButton: false,
-    //                     allowOutsideClick: false,
-    //                     allowEscapeKey: false
-    //                 });
-    //                 Swal.showLoading();
-    //             }
-    //
-    //             socket.off('recording:retrying')
-    //         }
-    //     })
-    //
-    //     socket.on('recording:completed', (data) => {
-    //         if (data.id === recordingId) {
-    //             socket.off('recording:completed')
-    //             requestVideo(recordingId, cardId)
-    //         }
-    //     })
-    // }
-    //
-    // const requestVideo = (recordingId: string, cardId: string, fallbackVideoUrl = null) => {
-    //     socket.emit('req-video', { recordingId }, async (response) => {
-    //         if (response.status) {
-    //             const { status, videoUrl } = response.status
-    //
-    //             if (status === 'completed') {
-    //                 Swal.close()
-    //                 showVideoModal(cardId, videoUrl)
-    //             } else if (status === 'recording') {
-    //                 await waitLoader('Recording in progress...', 'Please wait while video is being recorded', () => {
-    //                     handleRecordingProgress(recordingId, cardId)
-    //                 })
-    //             } else if (status === 'failed') {
-    //                 Swal.close();
-    //                 failureAlert({
-    //                     html: 'Recording Video is Failed',
-    //                 })
-    //             }
-    //         } else if (fallbackVideoUrl) {
-    //             // Fallback ke video yang sudah ada
-    //             Swal.close()
-    //             showVideoModal(cardId, fallbackVideoUrl)
-    //         }
-    //     })
-    // }
+    //region Handle Open Video on AQI Chart
+    const showModalLiveVideo = (bodyElm1: HTMLElement, uid: any, cameraData: CameraData[]) => {
+        showModalDialog(modalCctv, `
+            <div class="flex items-center">
+                <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${uid}
+            </div>
+        `, async () => {
+
+            const dataCamera: CamerasConfig = [];
+            cameraData.forEach((item) => {
+                dataCamera.push({
+                    "cameraName": item.cameraName,
+                    "videoLink": convertWebRTCToWhepUrl(item.videoLink),
+                    "protocol": 'whep',
+                    "supportPTZ": item.supportPTZ,
+                    "videoControl": false,
+                })
+            })
+
+            cameraLive.initializeWithCameras(bodyElm1, dataCamera)
+        })
+    }
+
+    function convertWebRTCToWhepUrl(webrtcUrl: string): string {
+        try {
+            // Parse the URL
+            const url = new URL(webrtcUrl);
+
+            // Extract the path and remove leading/trailing slashes
+            const path = url.pathname.replace(/^\/+|\/+$/g, '');
+
+            // Split path into segments
+            const pathSegments = path.split('/');
+
+            // Find 'rtc' segment and get the camera ID after it
+            const rtcIndex = pathSegments.findIndex(segment => segment === 'rtc');
+
+            if (rtcIndex === -1) {
+                console.error('URL does not contain /rtc/ path');
+            }
+
+            // Get camera ID (should be the segment after 'rtc')
+            const cameraId = pathSegments[rtcIndex + 1];
+
+            if (!cameraId) {
+                console.error('Camera ID not found after /rtc/ in URL');
+            }
+
+            // Construct new WHEP URL
+            return `${url.protocol}//${url.host}/${cameraId}/whep`;
+
+        } catch (error) {
+            console.error('Error converting WebRTC URL to WHEP:', error);
+            throw new Error(`Failed to convert URL: ${error.message}`);
+        }
+    }
     //endregion
 
     //region Handle Chart Detail

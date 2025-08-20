@@ -117,7 +117,10 @@
                             ]
                         ],
                         'isOnline' => $platformHeartbeat ? $platformHeartbeat->heartbeat_status == 'Online' ? 1 : 0 : 0,
-                        'cctvLink' => $platform->cctv_link,
+                        'cctvLink1' => $platform->cctv_link_1,
+                        'cctv1IsSupportPTZ' => $platform->cctv_1_support_ptz,
+                        'cctvLink2' => $platform->cctv_link_2,
+                        'cctv2IsSupportPTZ' => $platform->cctv_2_support_ptz,
                         'timezone' => $platform->timezone,
                         'locale' => 'en-US',
                         'lat' => $platform->lat,

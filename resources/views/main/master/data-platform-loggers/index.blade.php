@@ -68,9 +68,9 @@
                                             <td class="text-center">{{$i++}}</td>
                                             <td class="text-center">{{ $item->uid ?? '' }}</td>
                                             <td class="text-left">
-                                                @if($item->cctv_link)
-                                                    <a class="cursor-pointer btnCCTVRtc" data-href="{{ $item->cctv_link }}">
-                                                        {{ $item->cctv_link }}
+                                                @if($item->cctv_link_1)
+                                                    <a class="cursor-pointer btnCCTVRtc" data-href="{{ $item->cctv_link_1 }}">
+                                                        {{ $item->cctv_link_1 }}
                                                     </a>
                                                 @else
                                                     -

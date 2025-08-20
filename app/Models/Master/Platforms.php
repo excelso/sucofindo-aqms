@@ -19,7 +19,10 @@
         protected $fillable = [
             'company_site_id',
             'uid',
-            'cctv_link',
+            'cctv_link_1',
+            'cctv_1_support_ptz',
+            'cctv_link_2',
+            'cctv_2_support_ptz',
             'cctv_link_hls',
             'timezone',
             'lat',

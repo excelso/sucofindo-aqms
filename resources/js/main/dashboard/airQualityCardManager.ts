@@ -9,6 +9,12 @@ import {Dropdown} from 'flowbite';
 import type {DropdownOptions, DropdownInterface} from 'flowbite';
 import type {InstanceOptions} from 'flowbite';
 
+interface CameraData {
+    cameraName: string;
+    videoLink: string;
+    supportPTZ: boolean;
+}
+
 interface AirQualityData {
     uid: string;
     siteName: string;
@@ -61,7 +67,10 @@ interface AirQualityData {
         link_video_recorded?: string;
         aqi_from: string;
     }>; // Unix timestamp
-    cctvLink?: string;
+    cctvLink1?: string;
+    cctv1IsSupportPTZ?: number;
+    cctvLink2?: string;
+    cctv2IsSupportPTZ?: number;
     timezone?: string; // Timezone untuk platform ini (e.g., 'Asia/Jakarta', 'Asia/Makassar')
     locale?: string;   // Locale untuk platform ini (optional, default 'id-ID')
     lat?: number;
@@ -92,7 +101,7 @@ interface CardManagerOptions {
     socketIOUrl?: string;
     socketInstanceName?: string; // Unique name for socket instance
     socketIOOptions?: SocketOptions;
-    onCctvClick?: (id: string, cctvLink: string) => void;
+    onCctvClick?: (id: string, cctvData: Array<CameraData>) => void;
     onMetricsClick?: (id: string, metrics: MetricsData) => void;
     onDataUpdate?: (updatedData: AirQualityData[]) => void;
     onConnectionStatus?: (status: 'connected' | 'disconnected' | 'error') => void;
@@ -1704,7 +1713,7 @@ class AirQualityCardManager {
         const rightSection = this.createElement('div', 'right-section');
         const cctvLink = this.createElement('a', 'cursor-pointer') as HTMLAnchorElement;
         const cctvImg = document.createElement('img');
-        if (!data.cctvLink) {
+        if (!data.cctvLink1) {
             cctvImg.src = data.cctvIconPath || '/images/vector/icons8-cctv-disabled-100.png';
             cctvLink.className = 'cursor-not-allowed'
         } else {
@@ -1717,9 +1726,22 @@ class AirQualityCardManager {
         cctvLink.appendChild(cctvImg);
         rightSection.appendChild(cctvLink);
 
-        if (data.cctvLink) {
+        if (data.cctvLink1) {
             if (this.options.onCctvClick) {
-                cctvLink.addEventListener('click', () => this.options.onCctvClick!(data.uid, data.cctvLink));
+                cctvLink.addEventListener('click', () => {
+                    this.options.onCctvClick!(data.uid, [
+                        {
+                            cameraName: "Camera 1",
+                            videoLink: data.cctvLink1,
+                            supportPTZ: data.cctv1IsSupportPTZ === 1
+                        },
+                        {
+                            cameraName: "Camera 2",
+                            videoLink: data.cctvLink2,
+                            supportPTZ: data.cctv2IsSupportPTZ === 1
+                        }
+                    ])
+                });
             }
         }
 
@@ -1909,6 +1931,42 @@ class AirQualityCardManager {
 
     // endregion
 
+    //region Handle Convert /rtc to /whep
+    private convertWebRTCToWhepUrl(webrtcUrl: string): string {
+        try {
+            // Parse the URL
+            const url = new URL(webrtcUrl);
+
+            // Extract the path and remove leading/trailing slashes
+            const path = url.pathname.replace(/^\/+|\/+$/g, '');
+
+            // Split path into segments
+            const pathSegments = path.split('/');
+
+            // Find 'rtc' segment and get the camera ID after it
+            const rtcIndex = pathSegments.findIndex(segment => segment === 'rtc');
+
+            if (rtcIndex === -1) {
+                console.error('URL does not contain /rtc/ path');
+            }
+
+            // Get camera ID (should be the segment after 'rtc')
+            const cameraId = pathSegments[rtcIndex + 1];
+
+            if (!cameraId) {
+                console.error('Camera ID not found after /rtc/ in URL');
+            }
+
+            // Construct new WHEP URL
+            return `${url.protocol}//${url.host}/${cameraId}/whep`;
+
+        } catch (error) {
+            console.error('Error converting WebRTC URL to WHEP:', error);
+            throw new Error(`Failed to convert URL: ${error.message}`);
+        }
+    }
+    //endregion
+
     // region Update Gauge Chart Value
     updateChartValue(cardId: string, chartType: 'pm10' | 'pm25' | 'pm1' | 'noise', newValue: number): void {
         const chartKey = `${cardId}-${chartType}`;
@@ -2075,4 +2133,4 @@ class AirQualityCardManager {
     // endregion
 }
 
-export {AirQualityCardManager, type AirQualityData, type CardManagerOptions, type MetricsData, type LoggerEventData};
+export {AirQualityCardManager, type CameraData, type AirQualityData, type CardManagerOptions, type MetricsData, type LoggerEventData};

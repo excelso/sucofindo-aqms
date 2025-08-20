@@ -52,7 +52,7 @@ class VideoStreamHandler {
             retryAttempts: 3,
             errorTimeout: 2000,
             safetyTimeout: 10000,
-            showPTZControls: true,
+            showPTZControls: false,
             ptzControlPosition: 'side',
             ...config
         };
@@ -546,13 +546,11 @@ class VideoStreamHandler {
         iframe.onload = () => {
             const protocolType = protocolDiv.textContent || 'Stream';
             updateStatus(`${protocolType} Connected ✓`, '#00ff00');
-            console.log(`✅ ${protocolType} iframe loaded successfully`);
         };
 
         iframe.onerror = () => {
             const protocolType = protocolDiv.textContent || 'Stream';
             updateStatus(`${protocolType} Load Failed`, '#ff0000');
-            console.error(`❌ ${protocolType} iframe failed to load`);
 
             // Fallback to HLS player
             setTimeout(() => {
@@ -638,7 +636,7 @@ class VideoStreamHandler {
 
         const video = document.createElement('video') as HTMLVideoElement;
         video.autoplay = this.config.autoplay!;
-        video.controls = this.config.controls!;
+        video.controls = false;
         video.muted = this.config.muted!;
         video.preload = 'metadata';
 
@@ -920,12 +918,11 @@ class VideoStreamHandler {
      */
     public setPTZPosition(position: 'side' | 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right'): void {
         this.config.ptzControlPosition = position;
+        console.log(position)
 
         // If changing to/from side position, need to recreate layout
         if (position === 'side' || this.config.ptzControlPosition === 'side') {
             console.log('PTZ position change requires layout recreation');
-            // This would require recreating the entire layout
-            // For now, just update the config for future use
             return;
         }
 

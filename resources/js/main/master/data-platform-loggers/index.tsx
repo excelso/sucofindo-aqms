@@ -21,8 +21,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const uidOld: HTMLInputElement = modalForm.querySelector('.uidOld')
     const uid: HTMLInputElement = modalForm.querySelector('.uid')
     const uidError: HTMLElement = modalForm.querySelector('.uidError')
-    const cctvLink: HTMLInputElement = modalForm.querySelector('.cctvLink')
-    const cctvLinkError: HTMLElement = modalForm.querySelector('.cctvLinkError')
+    const cctvLink1: HTMLInputElement = modalForm.querySelector('.cctvLink1')
+    const cctvLink1Error: HTMLElement = modalForm.querySelector('.cctvLink1Error')
+    const cctvLink2: HTMLInputElement = modalForm.querySelector('.cctvLink2')
+    const cctv1IsSupportPTZ: HTMLInputElement = modalForm.querySelector('.cctv1IsSupportPTZ')
+    const cctvLink2Error: HTMLElement = modalForm.querySelector('.cctvLink2Error')
+    const cctv2IsSupportPTZ: HTMLInputElement = modalForm.querySelector('.cctv2IsSupportPTZ')
     const cctvLinkHls: HTMLInputElement = modalForm.querySelector('.cctvLinkHls')
     const cctvLinkHlsError: HTMLElement = modalForm.querySelector('.cctvLinkHlsError')
     const cctvPortalIP: HTMLInputElement = modalForm.querySelector('.cctvPortalIP')
@@ -102,7 +106,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     modelSite.setSelectedValue('')
                     uidOld.value = ''
                     uid.value = ''
-                    cctvLink.value = ''
+                    cctvLink1.value = ''
+                    cctvLink2.value = ''
                     cctvLinkHls.value = ''
                     platformTimezone.value = ''
                     platformTimezone.dispatchEvent(new Event('exbox.change'));
@@ -248,7 +253,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                     body: JSON.stringify({
                                         company_site_id: companySiteId.value,
                                         uid: uid.value,
-                                        cctv_link: cctvLink.value,
+                                        cctv_link_1: cctvLink1.value,
+                                        cctv_1_support_ptz: cctv1IsSupportPTZ.checked ? 1 : 0,
+                                        cctv_link_2: cctvLink2.value,
+                                        cctv_2_support_ptz: cctv2IsSupportPTZ.checked ? 1 : 0,
                                         cctv_link_hls: cctvLinkHls.value,
                                         timezone: platformTimezone.value,
                                         lat: alamatLat.value,
@@ -393,7 +401,23 @@ document.addEventListener('DOMContentLoaded', function () {
                         Swal.close()
 
                         if (status === 200) {
-                            const {company_site_id, uid: data_uid, cctv_link, cctv_link_hls, cctv_portal_ip, cctv_portal_username, cctv_portal_password, timezone, lat, lng, logger_limit} = data
+                            const {
+                                company_site_id,
+                                uid: data_uid,
+                                cctv_link_1,
+                                cctv_1_support_ptz,
+                                cctv_link_2,
+                                cctv_2_support_ptz,
+                                cctv_link_hls,
+                                cctv_portal_ip,
+                                cctv_portal_username,
+                                cctv_portal_password,
+                                timezone,
+                                lat,
+                                lng,
+                                logger_limit
+                            } = data
+
                             const {
                                 pm10_min,
                                 pm10_min_buffer,
@@ -417,7 +441,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                 modelSite.setSelectedValue(company_site_id)
                                 uidOld.value = data_uid
                                 uid.value = data_uid
-                                cctvLink.value = cctv_link
+                                cctvLink1.value = cctv_link_1
+                                cctv1IsSupportPTZ.checked = cctv_1_support_ptz === 1
+                                cctvLink2.value = cctv_link_2
+                                cctv2IsSupportPTZ.checked = cctv_2_support_ptz === 1
                                 cctvLinkHls.value = cctv_link_hls
                                 platformTimezone.value = timezone
                                 platformTimezone.dispatchEvent(new Event('exbox.change'))
@@ -467,7 +494,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                                         company_site_id: companySiteId.value,
                                                         uid_old: uidOld.value,
                                                         uid: uid.value,
-                                                        cctv_link: cctvLink.value,
+                                                        cctv_link_1: cctvLink1.value,
+                                                        cctv_1_support_ptz: cctv1IsSupportPTZ.checked ? 1 : 0,
+                                                        cctv_link_2: cctvLink2.value,
+                                                        cctv_2_support_ptz: cctv2IsSupportPTZ.checked ? 1 : 0,
                                                         cctv_link_hls: cctvLinkHls.value,
                                                         timezone: platformTimezone.value,
                                                         lat: alamatLat.value,
@@ -560,7 +590,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 const {
                     company_site_id,
                     uid,
-                    cctv_link,
+                    cctv_link_1,
+                    cctv_link_2,
                     cctv_link_hls,
                     timezone,
                     cctv_portal_ip,
@@ -570,7 +601,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 responseMessages(companySiteIdError, company_site_id)
                 responseMessages(uidError, uid)
-                responseMessages(cctvLinkError, cctv_link)
+                responseMessages(cctvLink1Error, cctv_link_1)
+                responseMessages(cctvLink2Error, cctv_link_2)
                 responseMessages(cctvLinkHlsError, cctv_link_hls)
                 responseMessages(platformTimezoneError, timezone)
                 responseMessages(cctvPortalIPError, cctv_portal_ip)

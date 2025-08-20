@@ -1,18 +1,61 @@
 <div id="tabCamera">
     <div class="hidden p-5 rounded-lg" id="camera">
-        <div class="form-group">
-            <label>CCTV Link (RTC)</label>
-            <div class="form-group-control">
-                <input type="text" class="form-control cctvLink" placeholder="...">
-                <div class="form-control-append">
-                    <div class="form-control-append-icon">
-                        <a class="cursor-pointer btnCheckLink">
-                            <i class="fas fa-external-link"></i>
-                        </a>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="col-span-1">
+                <div class="form-group">
+                    <label>Camera URL 1 (RTC)</label>
+                    <div class="form-group-control">
+                        <input type="text" class="form-control cctvLink1" placeholder="...">
+                        <div class="form-control-append">
+                            <div class="form-control-append-icon">
+                                <a class="cursor-pointer btnCheckLink1">
+                                    <i class="fas fa-external-link"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
+                    <ul class="cctvLink1Error"></ul>
+                </div>
+
+                <div class="form-group">
+                    <label class="inline-flex cursor-pointer">
+                        <input type="checkbox" class="sr-only peer cctv1IsSupportPTZ">
+                        <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-1 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                        <div class="ms-3 mt-[2px] text-sm text-gray-900">
+                            <span class="!font-bold">{{ trans('PTZ Support?') }}</span>
+                            <p class="text-gray-400 !font-normal">Is Camera 1 Support PTZ?</p>
+                        </div>
+                    </label>
                 </div>
             </div>
-            <ul class="cctvLinkError"></ul>
+
+            <div class="col-span-1">
+                <div class="form-group">
+                    <label>Camera URL 2 (RTC)</label>
+                    <div class="form-group-control">
+                        <input type="text" class="form-control cctvLink2" placeholder="...">
+                        <div class="form-control-append">
+                            <div class="form-control-append-icon">
+                                <a class="cursor-pointer btnCheckLink2">
+                                    <i class="fas fa-external-link"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <ul class="cctvLink2Error"></ul>
+                </div>
+
+                <div class="form-group">
+                    <label class="inline-flex cursor-pointer">
+                        <input type="checkbox" class="sr-only peer cctv2IsSupportPTZ">
+                        <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-1 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                        <div class="ms-3 mt-[2px] text-sm text-gray-900">
+                            <span class="!font-bold">{{ trans('PTZ Support?') }}</span>
+                            <p class="text-gray-400 !font-normal">Is Camera 2 Support PTZ?</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
         </div>
 
         <div class="form-group">

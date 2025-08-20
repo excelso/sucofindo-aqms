@@ -18,6 +18,7 @@ import 'croppie/croppie.css'
 import '@yaireo/tagify/dist/tagify.css'
 import Inputmask from "inputmask"
 import moment from "moment";
+import 'video.js/dist/video-js.css'
 
 declare global {
     interface Window {

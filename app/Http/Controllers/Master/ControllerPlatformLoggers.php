@@ -45,7 +45,8 @@
                         }
                     }
                 ],
-                'cctv_link' => 'nullable|url',
+                'cctv_link_1' => 'nullable|url',
+                'cctv_link_2' => 'nullable|url',
                 'cctv_link_hls' => 'nullable|url',
                 'timezone' => 'required',
                 'cctv_portal_ip' => [
@@ -84,7 +85,10 @@
                     Platforms::create([
                         'company_site_id' => $request->input('company_site_id'),
                         'uid' => $request->input('uid'),
-                        'cctv_link' => $request->input('cctv_link'),
+                        'cctv_link_1' => $request->input('cctv_link_1'),
+                        'cctv_1_support_ptz' => $request->input('cctv_1_support_ptz'),
+                        'cctv_link_2' => $request->input('cctv_link_2'),
+                        'cctv_2_support_ptz' => $request->input('cctv_2_support_ptz'),
                         'cctv_link_hls' => $request->input('cctv_link_hls'),
                         'timezone' => $request->input('timezone'),
                         'lat' => $request->input('lat'),
@@ -172,7 +176,8 @@
                         }
                     }
                 ],
-                'cctv_link' => 'nullable|url',
+                'cctv_link_1' => 'nullable|url',
+                'cctv_link_2' => 'nullable|url',
                 'cctv_link_hls' => 'nullable|url',
                 'timezone' => 'required',
                 'cctv_portal_ip' => [
@@ -212,7 +217,10 @@
                     Platforms::where('id', $platformId)->update([
                         'company_site_id' => $request->input('company_site_id'),
                         'uid' => $request->input('uid'),
-                        'cctv_link' => $request->input('cctv_link'),
+                        'cctv_link_1' => $request->input('cctv_link_1'),
+                        'cctv_1_support_ptz' => $request->input('cctv_1_support_ptz'),
+                        'cctv_link_2' => $request->input('cctv_link_2'),
+                        'cctv_2_support_ptz' => $request->input('cctv_2_support_ptz'),
                         'cctv_link_hls' => $request->input('cctv_link_hls'),
                         'timezone' => $request->input('timezone'),
                         'lat' => $request->input('lat'),
