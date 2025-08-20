@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalCctv: HTMLElement = document.querySelector('.modalCctv')
     const modalBody: HTMLElement = modalCctv.querySelector('.modal-body')
     const bodyCamera: HTMLElement = modalBody.querySelector('.body-camera')
+    const modalCctvRecord: HTMLElement = document.querySelector('.modalCctvRecord')
+    const modalBodyRecord: HTMLElement = modalCctvRecord.querySelector('.modal-body')
+    const bodyCameraRecord: HTMLElement = modalBodyRecord.querySelector('.body-camera')
 
     const modalDetailParameter = document.querySelector('.modalDetailParameter')
     const bodyChart: HTMLElement = modalDetailParameter.querySelector('.bodyChart')
@@ -113,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const { uid, linkVideoRecorded } = linkVideo
 
             if (linkVideoRecorded) {
-                showModalVideoRecord(bodyCamera, uid, linkVideoRecorded)
+                showModalVideoRecord(bodyCameraRecord, uid, linkVideoRecorded)
             }
         },
         onHeartbeatStatusClick: (id) => {

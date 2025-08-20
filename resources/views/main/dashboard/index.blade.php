@@ -36,6 +36,7 @@
         </div>
 
         @include('main.dashboard.popup.cctv')
+        @include('main.dashboard.popup.cctv-record')
         @include('main.dashboard.popup.detail-parameter')
         @include('main.dashboard.popup.heartbeat-status')
         @include('main.dashboard.popup.maps')
