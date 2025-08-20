@@ -1931,42 +1931,6 @@ class AirQualityCardManager {
 
     // endregion
 
-    //region Handle Convert /rtc to /whep
-    private convertWebRTCToWhepUrl(webrtcUrl: string): string {
-        try {
-            // Parse the URL
-            const url = new URL(webrtcUrl);
-
-            // Extract the path and remove leading/trailing slashes
-            const path = url.pathname.replace(/^\/+|\/+$/g, '');
-
-            // Split path into segments
-            const pathSegments = path.split('/');
-
-            // Find 'rtc' segment and get the camera ID after it
-            const rtcIndex = pathSegments.findIndex(segment => segment === 'rtc');
-
-            if (rtcIndex === -1) {
-                console.error('URL does not contain /rtc/ path');
-            }
-
-            // Get camera ID (should be the segment after 'rtc')
-            const cameraId = pathSegments[rtcIndex + 1];
-
-            if (!cameraId) {
-                console.error('Camera ID not found after /rtc/ in URL');
-            }
-
-            // Construct new WHEP URL
-            return `${url.protocol}//${url.host}/${cameraId}/whep`;
-
-        } catch (error) {
-            console.error('Error converting WebRTC URL to WHEP:', error);
-            throw new Error(`Failed to convert URL: ${error.message}`);
-        }
-    }
-    //endregion
-
     // region Update Gauge Chart Value
     updateChartValue(cardId: string, chartType: 'pm10' | 'pm25' | 'pm1' | 'noise', newValue: number): void {
         const chartKey = `${cardId}-${chartType}`;

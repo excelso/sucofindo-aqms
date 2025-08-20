@@ -12,7 +12,7 @@
                 </div>
             </div>
         </div>
-        <div class="modal-body overflow-y-auto !max-h-[calc(100vh-15rem)] !p-2">
+        <div class="modal-body overflow-y-auto !max-h-[calc(100vh-15rem)] !p-0">
 
         </div>
     </div>

@@ -220,11 +220,15 @@ class EnhancedVideoStreamHandler {
      */
     private createCameraHeader(camera: CameraData): HTMLElement {
         const header = document.createElement('div');
-        // header.className = 'absolute top-0 left-0 right-0 bottom-0 bg-gradient-to-b from-black/20 to-transparent p-3 z-10';
-        header.className = 'absolute top-0 left-0 right-0 bottom-0 p-3 z-10';
+        console.log(this.camerasData.length)
+        if (this.camerasData.length > 1) {
+            header.className = 'absolute top-0 left-0 right-0 p-3 z-10';
+        } else {
+            header.className = 'absolute top-0 left-0 right-0 bg-gradient-to-b from-black/20 to-transparent p-3 z-10';
+        }
 
         const title = document.createElement('div');
-        title.className = 'text-white font-bold text-sm flex items-center justify-between';
+        title.className = 'absolute top-3 right-[185px] text-white font-bold text-sm flex items-center gap-4';
 
         const nameSpan = document.createElement('span');
         nameSpan.textContent = camera.cameraName;
@@ -286,7 +290,7 @@ class EnhancedVideoStreamHandler {
         updateStatus: (text: string, color?: string) => void;
     } {
         const container = document.createElement('div');
-        container.className = 'flex items-center absolute bottom-2 left-2 gap-2 z-10';
+        container.className = 'flex items-center absolute top-3 right-4 gap-2 z-10';
 
         const statusDiv = document.createElement('div');
         statusDiv.className = 'bg-black/80 text-white px-2 py-1 rounded text-xs font-bold';
