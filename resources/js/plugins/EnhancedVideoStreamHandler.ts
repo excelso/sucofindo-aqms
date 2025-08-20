@@ -457,7 +457,7 @@ class EnhancedVideoStreamHandler {
             if (!this.modalBody.closest('.modal:not(.hidden)') || !this.activeCameraId) return;
 
             // Only handle if active camera supports PTZ
-            const activeCamera = this.camerasData[this.activeCameraId];
+            const activeCamera = this.camerasData.find((item) => item.cameraName === this.activeCameraId);
             if (!activeCamera || !activeCamera.supportPTZ) return;
 
             switch (event.key) {

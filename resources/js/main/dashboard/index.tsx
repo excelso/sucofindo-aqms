@@ -3,6 +3,7 @@ import {closeModalDialog, showModalDialog} from "@/js/plugins/modal";
 import {AirQualityCardManager, CameraData, MetricsData} from "@/js/main/dashboard/airQualityCardManager";
 import Highcharts from "highcharts";
 import {
+    convertWebRTCToWhepUrl,
     formatter,
     getMetaContent, handleFixedTd,
     handleFixedTheadTh,
@@ -188,56 +189,34 @@ document.addEventListener('DOMContentLoaded', function () {
             const onvif = new OnvifPTZController(csrfToken, uid);
             cameraLive.setPTZCallbacks({
                 onMoveUp: () => {
-                    onvif.moveContinuous('up')
+                    onvif.moveContinuous('up', 0.3)
                 },
                 onMoveDown: () => {
-                    onvif.moveContinuous('down')
+                    onvif.moveContinuous('down', 0.3)
                 },
                 onMoveLeft: () => {
-                    onvif.moveContinuous('left')
+                    onvif.moveContinuous('left', 0.3)
                 },
                 onMoveRight: () => {
-                    onvif.moveContinuous('right')
+                    onvif.moveContinuous('right', 0.3)
+                },
+                onZoomIn: () => {
+                    onvif.zoomIn(0.3)
+                    setTimeout(() => {
+                        onvif.stop()
+                    }, 2000)
+                },
+                onZoomOut: () => {
+                    onvif.zoomOut(0.3)
+                    setTimeout(() => {
+                        onvif.stop()
+                    }, 2000)
                 },
                 onStop: () => {
                     onvif.stop()
                 }
             })
         })
-    }
-
-    function convertWebRTCToWhepUrl(webrtcUrl: string): string {
-        try {
-            // Parse the URL
-            const url = new URL(webrtcUrl);
-
-            // Extract the path and remove leading/trailing slashes
-            const path = url.pathname.replace(/^\/+|\/+$/g, '');
-
-            // Split path into segments
-            const pathSegments = path.split('/');
-
-            // Find 'rtc' segment and get the camera ID after it
-            const rtcIndex = pathSegments.findIndex(segment => segment === 'rtc');
-
-            if (rtcIndex === -1) {
-                console.error('URL does not contain /rtc/ path');
-            }
-
-            // Get camera ID (should be the segment after 'rtc')
-            const cameraId = pathSegments[rtcIndex + 1];
-
-            if (!cameraId) {
-                console.error('Camera ID not found after /rtc/ in URL');
-            }
-
-            // Construct new WHEP URL
-            return `${url.protocol}//${url.host}/${cameraId}/whep`;
-
-        } catch (error) {
-            console.error('Error converting WebRTC URL to WHEP:', error);
-            throw new Error(`Failed to convert URL: ${error.message}`);
-        }
     }
     //endregion
 

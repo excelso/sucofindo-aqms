@@ -51,7 +51,8 @@
                                 <tr class="sticky-header">
                                     <th class="text-center w-[50px]">No.</th>
                                     <th class="text-center w-[150px]">UID</th>
-                                    <th class="text-left w-[150px]">CCTV Link (RTC)</th>
+                                    <th class="text-left w-[150px]">Camera 1 (RTC)</th>
+                                    <th class="text-left w-[150px]">Camera 2 (RTC)</th>
                                     <th class="text-left w-[150px]">CCTV Link (HLS)</th>
                                     <th class="text-left w-[150px]">Timezone</th>
                                     <th class="text-left w-[150px]">Site Name</th>
@@ -69,8 +70,17 @@
                                             <td class="text-center">{{ $item->uid ?? '' }}</td>
                                             <td class="text-left">
                                                 @if($item->cctv_link_1)
-                                                    <a class="cursor-pointer btnCCTVRtc" data-href="{{ $item->cctv_link_1 }}">
+                                                    <a class="cursor-pointer btnCamera1" data-href="{{ $item->cctv_link_1 }}" data-ptz="{{ $item->cctv_1_support_ptz ?? '0' }}">
                                                         {{ $item->cctv_link_1 }}
+                                                    </a>
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                            <td class="text-left">
+                                                @if($item->cctv_link_2)
+                                                    <a class="cursor-pointer btnCamera2" data-href="{{ $item->cctv_link_2 }}" data-ptz="{{ $item->cctv_2_support_ptz ?? '0' }}">
+                                                        {{ $item->cctv_link_2 }}
                                                     </a>
                                                 @else
                                                     -

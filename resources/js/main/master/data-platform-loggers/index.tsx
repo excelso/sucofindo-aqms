@@ -1,5 +1,5 @@
 import {closeModalDialog, showModalDialog} from "@/js/plugins/modal";
-import {getMetaContent, responseMessages, showHiddenElm} from "@/js/plugins/functions";
+import {convertWebRTCToWhepUrl, getMetaContent, responseMessages, showHiddenElm} from "@/js/plugins/functions";
 import {confirmAlert, failureAlert, successAlert, waitLoader} from "@/js/plugins/sweet-alert";
 import DataSitesModel from "@/js/main/master/data-sites/model/DataSitesModel";
 import Swal from "sweetalert2";
@@ -7,6 +7,8 @@ import {TabItem, Tabs} from "flowbite";
 import MapsHelper from "@/js/plugins/mapsHelper";
 import VideoStreamHandler from "@/js/plugins/videoStreamHandler";
 import HikvisionPTZController from "@/js/plugins/hikvisionPTZController";
+import {EnhancedVideoStreamHandler} from "@/js/plugins/EnhancedVideoStreamHandler";
+import OnvifPTZController from "@/js/plugins/OnvifPTZController";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
@@ -90,12 +92,13 @@ document.addEventListener('DOMContentLoaded', function () {
         csrfToken
     });
 
-    const videoHandler = new VideoStreamHandler({
+    const cameraLive = new EnhancedVideoStreamHandler({
         autoplay: true,
         controls: true,
         muted: true,
-        maxHeight: '80vh',
-        retryAttempts: 5
+        maxHeight: '100vh',
+        videoHeight: '400px',
+        retryAttempts: 5,
     });
 
     //region Handle Close Modal
@@ -118,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (modalCctv) {
                 closeModalDialog(modalCctv, () => {
-                    videoHandler.destroy();
+                    cameraLive.destroy();
                 })
             }
         })
@@ -299,76 +302,88 @@ document.addEventListener('DOMContentLoaded', function () {
             const platformId = elm.getAttribute('data-id')
             const platformUid = elm.getAttribute('data-uid')
             const btnEdit = elm.querySelector('.btnEdit')
-            const btnCCTVRtc = elm.querySelector('.btnCCTVRtc')
+            const btnCamera1 = elm.querySelector('.btnCamera1')
+            const btnCamera2 = elm.querySelector('.btnCamera2')
             const btnCCTVHls = elm.querySelector('.btnCCTVHls')
 
-            if (btnCCTVRtc) {
-                btnCCTVRtc.addEventListener('click', () => {
+            //region Handle Camera 1
+            if (btnCamera1) {
+                btnCamera1.addEventListener('click', () => {
                     showModalDialog(modalCctv, `
                         <div class="flex items-center">
                             <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${platformUid}
                         </div>
-                    `, () => {
-                        videoHandler.createVideoElement(modalBody, btnCCTVRtc.getAttribute('data-href'));
-                        const hikvisionPTZController = new HikvisionPTZController(csrfToken, platformUid);
-                        videoHandler.setPTZCallbacks({
-                            onMoveUp: async () => {
-                                try {
-                                    await hikvisionPTZController.moveDown(200); // Move up by 100 units (10 degrees)
-                                } catch (error) {
-                                    console.error('Move up failed:', error);
-                                }
-                            },
+                    `, async () => {
+                        cameraLive.initializeWithCameras(modalBody, [{
+                            cameraName: "Camera 1 RTC",
+                            videoLink: convertWebRTCToWhepUrl(btnCamera1.getAttribute('data-href')),
+                            videoControl: false,
+                            protocol: 'whep',
+                            supportPTZ: btnCamera1.getAttribute('data-ptz') === '1'
+                        }]);
 
-                            onMoveDown: async () => {
-                                try {
-                                    await hikvisionPTZController.moveUp(200); // Move down by 100 units (10 degrees)
-                                } catch (error) {
-                                    console.error('Move down failed:', error);
-                                }
-                            },
-
-                            onMoveLeft: async () => {
-                                try {
-                                    await hikvisionPTZController.moveLeft(200); // Move left by 100 units (10 degrees)
-                                } catch (error) {
-                                    console.error('Move left failed:', error);
-                                }
-                            },
-
-                            onMoveRight: async () => {
-                                try {
-                                    await hikvisionPTZController.moveRight(200); // Move right by 100 units (10 degrees)
-                                } catch (error) {
-                                    console.error('Move right failed:', error);
-                                }
-                            },
-
-                            onZoomIn: async () => {
-                                try {
-                                    await hikvisionPTZController.zoomIn(5); // Zoom in by 5 levels
-                                } catch (error) {
-                                    console.error('Zoom in failed:', error);
-                                }
-                            },
-
-                            onZoomOut: async () => {
-                                try {
-                                    await hikvisionPTZController.zoomOut(5); // Zoom out by 5 levels
-                                } catch (error) {
-                                    console.error('Zoom out failed:', error);
-                                }
-                            },
-
-                            onStop: async () => {
-                                try {
-                                    await hikvisionPTZController.stop();
-                                } catch (error) {
-                                    console.error('Stop failed:', error);
-                                }
-                            }
-                        })
+                        if (btnCamera1.getAttribute('data-ptz') === '1') {
+                            await handlePTZControl()
+                        }
                     })
+                })
+            }
+            //endregion
+
+            //region Handle Camera 2
+            if (btnCamera2) {
+                btnCamera2.addEventListener('click', () => {
+                    showModalDialog(modalCctv, `
+                        <div class="flex items-center">
+                            <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${platformUid}
+                        </div>
+                    `, async () => {
+                        cameraLive.initializeWithCameras(modalBody, [{
+                            cameraName: "Camera 1 RTC",
+                            videoLink: convertWebRTCToWhepUrl(btnCamera2.getAttribute('data-href')),
+                            videoControl: false,
+                            protocol: 'whep',
+                            supportPTZ: btnCamera2.getAttribute('data-ptz') === '1'
+                        }]);
+
+                        if (btnCamera2.getAttribute('data-ptz') === '1') {
+                            await handlePTZControl()
+                        }
+                    })
+                })
+            }
+            //endregion
+
+            const handlePTZControl = async () => {
+                const onvif = new OnvifPTZController(csrfToken, platformUid);
+                cameraLive.setPTZCallbacks({
+                    onMoveUp: () => {
+                        onvif.moveContinuous('up', 0.3)
+                    },
+                    onMoveDown: () => {
+                        onvif.moveContinuous('down', 0.3)
+                    },
+                    onMoveLeft: () => {
+                        onvif.moveContinuous('left', 0.3)
+                    },
+                    onMoveRight: () => {
+                        onvif.moveContinuous('right', 0.3)
+                    },
+                    onZoomIn: () => {
+                        onvif.zoomIn(0.3)
+                        setTimeout(() => {
+                            onvif.stop()
+                        }, 2000)
+                    },
+                    onZoomOut: () => {
+                        onvif.zoomOut(0.3)
+                        setTimeout(() => {
+                            onvif.stop()
+                        }, 2000)
+                    },
+                    onStop: () => {
+                        onvif.stop()
+                    }
                 })
             }
 
@@ -379,8 +394,13 @@ document.addEventListener('DOMContentLoaded', function () {
                             <img src="/images/vector/icons8-cctv-100.png" width="24" class="mr-2" alt=""/> ${platformUid}
                         </div>
                     `, () => {
-                        videoHandler.createVideoElement(modalBody, btnCCTVHls.getAttribute('data-href'));
-                        videoHandler.showPTZControls(false);
+                        cameraLive.initializeWithCameras(modalBody, [{
+                            cameraName: "Camera HLS",
+                            videoLink: btnCCTVHls.getAttribute('data-href'),
+                            videoControl: true,
+                            protocol: 'hls',
+                            supportPTZ: false
+                        }]);
                     })
                 })
             }
