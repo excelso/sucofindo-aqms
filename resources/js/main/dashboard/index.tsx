@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
         controls: true,
         muted: true,
         maxHeight: '100vh',
+        videoHeight: '400px',
         retryAttempts: 5,
     });
 
@@ -70,8 +71,11 @@ document.addEventListener('DOMContentLoaded', function () {
     closeModalForm.forEach((elm) => {
         elm.addEventListener('click', function () {
             closeModalDialog(modalCctv, () => {
-                cameraRecord.destroy();
                 cameraLive.destroy();
+            })
+
+            closeModalDialog(modalCctvRecord, () => {
+                cameraRecord.destroy();
             })
 
             closeModalDialog(modalDetailParameter)
