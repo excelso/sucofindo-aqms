@@ -18,7 +18,8 @@
         "phpseclib/phpseclib": "^3.0",
         "vinkla/hashids": "^12.0",
         "ext-simplexml": "*",
-        "ext-curl": "*"
+        "ext-curl": "*",
+        "ext-libxml": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

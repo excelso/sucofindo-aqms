@@ -6,6 +6,7 @@
     use App\Http\Controllers\Master\ControllerPlatformLoggers;
     use App\Http\Controllers\Master\ControllerSites;
     use App\Http\Controllers\Master\ControllerUsers;
+    use App\Http\Controllers\OnvifPTZController;
     use App\Http\Controllers\PTZController;
     use App\Http\Controllers\Reports\ControllerReportLogParameter;
     use App\Http\Controllers\Settings\ControllerChangePassword;
@@ -239,6 +240,47 @@
                         ->name('api.hikvision.ptz.sync_preset');
                 });
             });
+
+            Route::prefix('onvif')->group(function () {
+                // Main PTZ control endpoint
+                Route::post('/onvif-ptz/control', [OnvifPTZController::class, 'control'])
+                    ->name('onvif.ptz.control');
+
+                // Camera status endpoints
+                Route::get('/onvif-ptz/camera/{cameraId}/status', [OnvifPTZController::class, 'getStatus'])
+                    ->name('onvif.ptz.status');
+
+                Route::get('/onvif-ptz/camera/{cameraId}/test-connection', [OnvifPTZController::class, 'testConnection'])
+                    ->name('onvif.ptz.test');
+
+                // Absolute movement endpoints
+                Route::post('/onvif-ptz/camera/{cameraId}/move/absolute', [OnvifPTZController::class, 'absoluteMove'])
+                    ->name('onvif.ptz.absolute');
+
+                Route::post('/onvif-ptz/camera/{cameraId}/move/degrees', [OnvifPTZController::class, 'moveToDegrees'])
+                    ->name('onvif.ptz.degrees');
+
+                // Preset endpoints
+                Route::post('/onvif-ptz/camera/{cameraId}/preset/{presetToken}/goto', [OnvifPTZController::class, 'gotoPreset'])
+                    ->name('onvif.ptz.preset.goto');
+
+                Route::put('/onvif-ptz/camera/{cameraId}/preset/{presetToken}', [OnvifPTZController::class, 'setPreset'])
+                    ->name('onvif.ptz.preset.set');
+
+                Route::delete('/onvif-ptz/camera/{cameraId}/preset/{presetToken}', [OnvifPTZController::class, 'removePreset'])
+                    ->name('onvif.ptz.preset.remove');
+
+                Route::get('/onvif-ptz/camera/{cameraId}/presets', [OnvifPTZController::class, 'getPresets'])
+                    ->name('onvif.ptz.presets');
+
+                // Utility endpoints
+                Route::get('/onvif-ptz/camera/{cameraId}/capabilities', [OnvifPTZController::class, 'getCapabilities'])
+                    ->name('onvif.ptz.capabilities');
+
+                Route::post('/onvif-ptz/camera/{cameraId}/debug', [OnvifPTZController::class, 'debugCommand'])
+                    ->name('onvif.ptz.debug');
+            });
+
         });
 
     });

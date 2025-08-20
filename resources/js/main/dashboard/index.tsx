@@ -20,6 +20,7 @@ import HikvisionPTZController from "@/js/plugins/hikvisionPTZController";
 import videojs from "video.js";
 import {MediaMtxWhepPlayer} from "@/js/plugins/MediaMtxWhepPlayer";
 import {CamerasConfig, EnhancedVideoStreamHandler} from "@/js/plugins/EnhancedVideoStreamHandler";
+import OnvifPTZController from "@/js/plugins/OnvifPTZController";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
@@ -184,6 +185,24 @@ document.addEventListener('DOMContentLoaded', function () {
             })
 
             cameraLive.initializeWithCameras(bodyElm1, dataCamera)
+            const onvif = new OnvifPTZController(csrfToken, uid);
+            cameraLive.setPTZCallbacks({
+                onMoveUp: () => {
+                    onvif.moveContinuous('up')
+                },
+                onMoveDown: () => {
+                    onvif.moveContinuous('down')
+                },
+                onMoveLeft: () => {
+                    onvif.moveContinuous('left')
+                },
+                onMoveRight: () => {
+                    onvif.moveContinuous('right')
+                },
+                onStop: () => {
+                    onvif.stop()
+                }
+            })
         })
     }
 
