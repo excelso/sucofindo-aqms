@@ -341,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         cameraLive.initializeWithCameras(modalBody, [{
                             cameraName: "Camera 1 RTC",
                             videoLink: convertWebRTCToWhepUrl(btnCamera2.getAttribute('data-href')),
-                            videoControl: false,
+                            videoControl: true,
                             protocol: 'whep',
                             supportPTZ: btnCamera2.getAttribute('data-ptz') === '1'
                         }]);

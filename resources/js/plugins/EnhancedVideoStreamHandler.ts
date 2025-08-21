@@ -163,8 +163,8 @@ class EnhancedVideoStreamHandler {
         });
 
         // Create header with camera name and PTZ indicator
-        const header = this.createCameraHeader(camera);
-        videoContainer.appendChild(header);
+        // const header = this.createCameraHeader(camera);
+        // videoContainer.appendChild(header);
 
         // Create video content area
         const videoContent = document.createElement('div');
@@ -172,7 +172,7 @@ class EnhancedVideoStreamHandler {
         videoContainer.appendChild(videoContent);
 
         // Create status container
-        const statusContainer = this.createStatusContainer();
+        const statusContainer = this.createStatusContainer(camera);
         videoContent.appendChild(statusContainer.container);
 
         // Load appropriate video player
@@ -183,7 +183,7 @@ class EnhancedVideoStreamHandler {
         let hlsInstance: any = null;
 
         // Always use video element instead of iframe
-        if (protocolInfo.isWebRTCPath || protocolInfo.isWebRTCPort || protocolInfo.isHLSPort) {
+        if (protocolInfo.isWebRTCPath || protocolInfo.isWebRTCPort) {
             videoElement = this.loadVideoPlayer(camera.videoLink, camera.videoControl, protocolInfo, videoContent, statusContainer);
         } else if (protocolInfo.shouldUseHLSPlayer || protocolInfo.isHLSFile) {
             const result = this.loadHLSPlayer(camera.videoLink, videoContent, statusContainer);
@@ -213,40 +213,6 @@ class EnhancedVideoStreamHandler {
 
         this.videoInstances.set(camera.cameraName, videoInstance);
         this.gridContainer.appendChild(videoContainer);
-    }
-
-    /**
-     * Create camera header with name and info
-     */
-    private createCameraHeader(camera: CameraData): HTMLElement {
-        const header = document.createElement('div');
-        console.log(this.camerasData.length)
-        if (this.camerasData.length > 1) {
-            header.className = 'absolute top-0 left-0 right-0 p-3 z-10';
-        } else {
-            header.className = 'absolute top-0 left-0 right-0 bg-gradient-to-b from-black/20 to-transparent p-3 z-10';
-        }
-
-        const title = document.createElement('div');
-        title.className = 'absolute top-3 right-[185px] text-white font-bold text-sm flex items-center gap-4';
-
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = camera.cameraName;
-
-        const ptzBadge = document.createElement('span');
-        if (camera.supportPTZ) {
-            ptzBadge.className = 'bg-green-500 text-white px-2 py-1 rounded text-xs';
-            ptzBadge.textContent = 'PTZ';
-        } else {
-            ptzBadge.className = 'bg-gray-500 text-white px-2 py-1 rounded text-xs';
-            ptzBadge.textContent = 'FIXED';
-        }
-
-        title.appendChild(nameSpan);
-        title.appendChild(ptzBadge);
-        header.appendChild(title);
-
-        return header;
     }
 
     /**
@@ -283,14 +249,27 @@ class EnhancedVideoStreamHandler {
     /**
      * Create status container
      */
-    private createStatusContainer(): {
+    private createStatusContainer(camera: CameraData): {
         container: HTMLDivElement;
         statusDiv: HTMLDivElement;
         protocolDiv: HTMLDivElement;
         updateStatus: (text: string, color?: string) => void;
     } {
         const container = document.createElement('div');
-        container.className = 'flex items-center absolute top-3 right-4 gap-2 z-10';
+        container.className = 'flex items-center justify-end absolute top-0 left-0 right-0 bg-gradient-to-b from-black/20 to-transparent gap-2 p-3 z-10';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'text-white font-bold text-sm';
+        nameSpan.textContent = camera.cameraName;
+
+        const ptzBadge = document.createElement('span');
+        if (camera.supportPTZ) {
+            ptzBadge.className = 'bg-black/80 bg-green-500 text-white px-2 py-1 rounded text-xs';
+            ptzBadge.textContent = 'PTZ';
+        } else {
+            ptzBadge.className = 'bg-black/80 bg-gray-500 text-white px-2 py-1 rounded text-xs';
+            ptzBadge.textContent = 'FIXED';
+        }
 
         const statusDiv = document.createElement('div');
         statusDiv.className = 'bg-black/80 text-white px-2 py-1 rounded text-xs font-bold';
@@ -298,6 +277,8 @@ class EnhancedVideoStreamHandler {
         const protocolDiv = document.createElement('div');
         protocolDiv.className = 'bg-black/80 text-white px-2 py-1 rounded text-xs font-bold';
 
+        container.appendChild(nameSpan);
+        container.appendChild(ptzBadge);
         container.appendChild(statusDiv);
         container.appendChild(protocolDiv);
 
@@ -506,9 +487,9 @@ class EnhancedVideoStreamHandler {
      * Protocol detection and player loading methods
      */
     private detectProtocol(streamUrl: string): StreamProtocolInfo {
-        const isWebRTCPath = streamUrl.includes('/rtc/') || streamUrl.includes('/hls/');
+        const isWebRTCPath = streamUrl.includes('/rtc/');
         const isWhepPath = streamUrl.includes('/whep') || streamUrl.includes('/whep/');
-        const isWebRTCPort = streamUrl.includes(':8889') && !streamUrl.includes('.m3u8');
+        const isWebRTCPort = streamUrl.includes(':8889');
         const isHLSPort = streamUrl.includes(':8888') && !streamUrl.includes('.m3u8');
         const isHLSFile = streamUrl.includes('.m3u8');
         const isMp4File = streamUrl.includes('.mp4');
@@ -831,17 +812,20 @@ class EnhancedVideoStreamHandler {
         video.style.cssText = `
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            border-radius: ${this.config.borderRadius};
+            object-fit: contain;
             background: #000;
         `;
 
         let hlsInstance: any = null;
-
         if ((window as any).Hls?.isSupported()) {
             hlsInstance = new (window as any).Hls();
             hlsInstance.loadSource(streamUrl);
             hlsInstance.attachMedia(video);
+
+            const source = document.createElement('source')
+            source.src = streamUrl
+            source.type = 'application/x-mpegURL'
+            video.appendChild(source);
 
             hlsInstance.on((window as any).Hls.Events.MANIFEST_PARSED, () => {
                 updateStatus('Connected', '#00ff00');
@@ -849,6 +833,7 @@ class EnhancedVideoStreamHandler {
                     video.play().catch(() => updateStatus('Ready', '#00ff00'));
                 }
             });
+
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = streamUrl;
             if (this.config.autoplay) {

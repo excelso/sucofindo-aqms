@@ -29,6 +29,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
     <script src="{{ asset('js/plugins/metismenu/metisMenu.js') }}"></script>
     <script src="{{ asset('js/plugins/inputmask/jquery.inputmask.js') }}"></script>
     <script src="{{ asset('js/plugins/select2/select2.js') }}"></script>
