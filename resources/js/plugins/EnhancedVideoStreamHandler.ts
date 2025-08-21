@@ -35,8 +35,12 @@ interface StreamProtocolInfo {
 }
 
 interface PTZControlsCallbacks {
+    onMoveUpLeft?: (cameraId: string) => void;
     onMoveUp?: (cameraId: string) => void;
+    onMoveUpRight?: (cameraId: string) => void;
+    onMoveDownLeft?: (cameraId: string) => void;
     onMoveDown?: (cameraId: string) => void;
+    onMoveDownRight?: (cameraId: string) => void;
     onMoveLeft?: (cameraId: string) => void;
     onMoveRight?: (cameraId: string) => void;
     onZoomIn?: (cameraId: string) => void;
@@ -313,40 +317,43 @@ class EnhancedVideoStreamHandler {
         }
 
         ptzContainer.innerHTML = `
-            <div class="bg-black/90 rounded-lg p-2 backdrop-blur-sm">
-                <div class="text-white text-xs font-bold mb-2 text-center">${cameraId}</div>
+            <div class="bg-black/90 rounded-lg p-3 backdrop-blur-sm">
+                <div class="text-white text-xs font-bold mb-3 text-center">${cameraId}</div>
 
-                <!-- Movement Controls -->
-                <div class="grid grid-cols-3 gap-1 mb-2">
-                    <div></div>
-                    <button class="ptz-btn ptz-up bg-gray-700 hover:bg-blue-600 text-white rounded p-1 transition-colors duration-200 flex items-center justify-center" title="Move Up">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
-                        </svg>
+                <!-- Movement Controls with Diagonal -->
+                <div class="grid grid-cols-3 gap-1 mb-3">
+                    <!-- Top Row: Up-Left, Up, Up-Right -->
+                    <button class="ptz-btn ptz-up-left bg-gray-700 hover:bg-purple-600 text-white rounded p-1 transition-colors duration-200 flex items-center justify-center" title="Move Up-Left">
+                        <i class="fas fa-chevron-up text-[11px] -rotate-45"></i>
                     </button>
-                    <div></div>
+                    <button class="ptz-btn ptz-up bg-gray-700 hover:bg-blue-600 text-white rounded p-1 transition-colors duration-200 flex items-center justify-center" title="Move Up">
+                        <i class="fas fa-chevron-up text-[11px]"></i>
+                    </button>
+                    <button class="ptz-btn ptz-up-right bg-gray-700 hover:bg-purple-600 text-white rounded p-1 transition-colors duration-200 flex items-center justify-center" title="Move Up-Right">
+                        <i class="fas fa-chevron-up text-[11px] rotate-45"></i>
+                    </button>
 
+                    <!-- Middle Row: Left, Stop, Right -->
                     <button class="ptz-btn ptz-left bg-gray-700 hover:bg-blue-600 text-white rounded p-1 transition-colors duration-200 flex items-center justify-center" title="Move Left">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-                        </svg>
+                        <i class="fas fa-chevron-left text-[11px]"></i>
                     </button>
                     <button class="ptz-btn ptz-stop bg-red-600 hover:bg-red-700 text-white rounded p-1 transition-colors duration-200 flex items-center justify-center text-xs font-bold" title="Stop">
-                        ■
+                        <i class="fas fa-stop text-[11px]"></i>
                     </button>
                     <button class="ptz-btn ptz-right bg-gray-700 hover:bg-blue-600 text-white rounded p-1 transition-colors duration-200 flex items-center justify-center" title="Move Right">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-                        </svg>
+                        <i class="fas fa-chevron-right text-[11px]"></i>
                     </button>
 
-                    <div></div>
-                    <button class="ptz-btn ptz-down bg-gray-700 hover:bg-blue-600 text-white rounded p-1 transition-colors duration-200 flex items-center justify-center" title="Move Down">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/>
-                        </svg>
+                    <!-- Bottom Row: Down-Left, Down, Down-Right -->
+                    <button class="ptz-btn ptz-down-left bg-gray-700 hover:bg-purple-600 text-white rounded p-1 transition-colors duration-200 flex items-center justify-center" title="Move Down-Left">
+                        <i class="fas fa-chevron-down text-[11px] rotate-45"></i>
                     </button>
-                    <div></div>
+                    <button class="ptz-btn ptz-down bg-gray-700 hover:bg-blue-600 text-white rounded p-1 transition-colors duration-200 flex items-center justify-center" title="Move Down">
+                        <i class="fas fa-chevron-down text-[11px]"></i>
+                    </button>
+                    <button class="ptz-btn ptz-down-right bg-gray-700 hover:bg-purple-600 text-white rounded p-1 transition-colors duration-200 flex items-center justify-center" title="Move Down-Right">
+                        <i class="fas fa-chevron-down text-[11px] -rotate-45"></i>
+                    </button>
                 </div>
 
                 <!-- Zoom Controls -->
@@ -382,53 +389,72 @@ class EnhancedVideoStreamHandler {
             down: ptzContainer.querySelector('.ptz-down'),
             left: ptzContainer.querySelector('.ptz-left'),
             right: ptzContainer.querySelector('.ptz-right'),
+            // Diagonal movement buttons
+            upLeft: ptzContainer.querySelector('.ptz-up-left'),
+            upRight: ptzContainer.querySelector('.ptz-up-right'),
+            downLeft: ptzContainer.querySelector('.ptz-down-left'),
+            downRight: ptzContainer.querySelector('.ptz-down-right'),
+            // Zoom and stop buttons
             zoomIn: ptzContainer.querySelector('.ptz-zoom-in'),
             zoomOut: ptzContainer.querySelector('.ptz-zoom-out'),
             stop: ptzContainer.querySelector('.ptz-stop')
         };
 
         // Movement controls
+        buttons.upLeft?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.ptzCallbacks.onMoveUpLeft?.(cameraId);
+        });
+
         buttons.up?.addEventListener('click', (e) => {
             e.stopPropagation();
-            console.log(`PTZ: Move Up - Camera: ${cameraId}`);
             this.ptzCallbacks.onMoveUp?.(cameraId);
+        });
+
+        buttons.upRight?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.ptzCallbacks.onMoveUpRight?.(cameraId);
+        });
+
+        buttons.downLeft?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.ptzCallbacks.onMoveDownLeft?.(cameraId);
         });
 
         buttons.down?.addEventListener('click', (e) => {
             e.stopPropagation();
-            console.log(`PTZ: Move Down - Camera: ${cameraId}`);
             this.ptzCallbacks.onMoveDown?.(cameraId);
+        });
+
+        buttons.downRight?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.ptzCallbacks.onMoveDownRight?.(cameraId);
         });
 
         buttons.left?.addEventListener('click', (e) => {
             e.stopPropagation();
-            console.log(`PTZ: Move Left - Camera: ${cameraId}`);
             this.ptzCallbacks.onMoveLeft?.(cameraId);
         });
 
         buttons.right?.addEventListener('click', (e) => {
             e.stopPropagation();
-            console.log(`PTZ: Move Right - Camera: ${cameraId}`);
             this.ptzCallbacks.onMoveRight?.(cameraId);
         });
 
         // Zoom controls
         buttons.zoomIn?.addEventListener('click', (e) => {
             e.stopPropagation();
-            console.log(`PTZ: Zoom In - Camera: ${cameraId}`);
             this.ptzCallbacks.onZoomIn?.(cameraId);
         });
 
         buttons.zoomOut?.addEventListener('click', (e) => {
             e.stopPropagation();
-            console.log(`PTZ: Zoom Out - Camera: ${cameraId}`);
             this.ptzCallbacks.onZoomOut?.(cameraId);
         });
 
         // Stop control
         buttons.stop?.addEventListener('click', (e) => {
             e.stopPropagation();
-            console.log(`PTZ: Stop - Camera: ${cameraId}`);
             this.ptzCallbacks.onStop?.(cameraId);
         });
     }
@@ -444,6 +470,30 @@ class EnhancedVideoStreamHandler {
             // Only handle if active camera supports PTZ
             const activeCamera = this.camerasData.find((item) => item.cameraName === this.activeCameraId);
             if (!activeCamera || !activeCamera.supportPTZ) return;
+
+            if (event.shiftKey) {
+                switch (event.key) {
+                    case 'ArrowUp':
+                        if (event.ctrlKey) {
+                            event.preventDefault();
+                            this.ptzCallbacks.onMoveUpLeft?.(this.activeCameraId);
+                        } else if (event.altKey) {
+                            event.preventDefault();
+                            this.ptzCallbacks.onMoveUpRight?.(this.activeCameraId);
+                        }
+                        break;
+                    case 'ArrowDown':
+                        if (event.ctrlKey) {
+                            event.preventDefault();
+                            this.ptzCallbacks.onMoveDownLeft?.(this.activeCameraId);
+                        } else if (event.altKey) {
+                            event.preventDefault();
+                            this.ptzCallbacks.onMoveDownRight?.(this.activeCameraId);
+                        }
+                        break;
+                }
+                return;
+            }
 
             switch (event.key) {
                 case 'ArrowUp':

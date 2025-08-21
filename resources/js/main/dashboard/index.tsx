@@ -195,11 +195,23 @@ document.addEventListener('DOMContentLoaded', function () {
             cameraLive.initializeWithCameras(bodyElm1, dataCamera)
             const onvif = new OnvifPTZController(csrfToken, uid);
             cameraLive.setPTZCallbacks({
+                onMoveUpLeft: () => {
+                    onvif.moveContinuous('up-left', 0.3)
+                },
                 onMoveUp: () => {
                     onvif.moveContinuous('up', 0.3)
                 },
+                onMoveUpRight: () => {
+                    onvif.moveContinuous('up-right', 0.3)
+                },
+                onMoveDownLeft: () => {
+                    onvif.moveContinuous('down-left', 0.3)
+                },
                 onMoveDown: () => {
                     onvif.moveContinuous('down', 0.3)
+                },
+                onMoveDownRight: () => {
+                    onvif.moveContinuous('down-right', 0.3)
                 },
                 onMoveLeft: () => {
                     onvif.moveContinuous('left', 0.3)
