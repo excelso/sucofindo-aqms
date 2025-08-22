@@ -116,8 +116,8 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('Connection status:', status);
         },
         onClickAirIndexPoint: async (events, pointData) => {
-            const { linkVideo } = pointData
-            const { uid, linkVideoRecorded } = linkVideo
+            const {linkVideo} = pointData
+            const {uid, linkVideoRecorded} = linkVideo
 
             if (linkVideoRecorded) {
                 showModalVideoRecord(bodyCameraRecord, uid, linkVideoRecorded)
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
 
         const {status} = response
-        const {message, data} = await response.json()
+        const {message, data, timezone} = await response.json()
         if (status !== 200) {
             failureAlert({
                 html: message
@@ -259,25 +259,92 @@ document.addEventListener('DOMContentLoaded', function () {
             return
         }
 
-        const formatTimestamp = (timestamp: number, format: 'time' | 'datetime' = 'time'): string => {
-            const date = new Date(timestamp * 1000);
+        // region Helper Functions for Date Validation
+        function isValidTimestamp(timestamp: number | undefined | null): boolean {
+            return timestamp !== undefined &&
+                    timestamp !== null &&
+                    !isNaN(timestamp) &&
+                    isFinite(timestamp) &&
+                    timestamp > 0;
+        }
 
-            if (format === 'time') {
-                return date.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
-                });
-            } else {
-                return date.toLocaleString('en-US', {
+        function isValidDate(date: Date | undefined | null): boolean {
+            return date instanceof Date &&
+                    !isNaN(date.getTime()) &&
+                    isFinite(date.getTime());
+        }
+
+        function safeFormatTimestamp(timestamp: number | undefined | null, format: 'time' | 'datetime' = 'time', timezone: string = 'Asia/Jakarta', locale: string = 'id-ID', useSecond: boolean = false): string {
+            if (!isValidTimestamp(timestamp)) {
+                return format === 'time' ? '--:--' : 'Invalid Date';
+            }
+
+            try {
+                const date = new Date(timestamp! * 1000);
+
+                if (!isValidDate(date)) {
+                    return format === 'time' ? '--:--' : 'Invalid Date';
+                }
+
+                if (format === 'time') {
+                    const dateOptions: Intl.DateTimeFormatOptions = {
+                        timeZone: timezone,
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    };
+
+                    if (useSecond) {
+                        dateOptions.second = '2-digit';
+                    }
+
+                    return new Intl.DateTimeFormat(locale, dateOptions).format(date);
+                } else {
+                    // Untuk format datetime
+                    const dateOptions: Intl.DateTimeFormatOptions = {
+                        timeZone: timezone,
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    };
+
+                    if (useSecond) {
+                        dateOptions.second = '2-digit';
+                    }
+
+                    return new Intl.DateTimeFormat(locale, dateOptions).format(date);
+                }
+            } catch (error) {
+                console.warn('Error formatting timestamp:', error);
+                return format === 'time' ? '--:--' : 'Invalid Date';
+            }
+        }
+
+        function safeFormatDate(date: Date | undefined | null, timezone: string = 'Asia/Jakarta', locale: string = 'id-ID'): string {
+            if (!isValidDate(date)) {
+                return 'Invalid Date';
+            }
+
+            try {
+                return new Intl.DateTimeFormat(locale, {
+                    timeZone: timezone,
+                    year: 'numeric',
                     month: 'short',
                     day: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit',
+                    second: '2-digit',
                     hour12: false
-                });
+                }).format(date!);
+            } catch (error) {
+                console.warn('Error formatting date:', error);
+                return 'Invalid Date';
             }
-        };
+        }
+
+        // endregion
 
         const chartData = data.map((item) => ({
             x: item.timestamp * 1000,
@@ -287,6 +354,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const yValues = chartData.map(point => point.y);
         const dataMaxY = Math.max(...yValues);
+
+        const managerInstance = this;
+        const platformTimezone = timezone || 'Asia/Jakarta';
+        const platformLocale = 'id-ID';
 
         Highcharts.chart({
             chart: {
@@ -308,8 +379,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 type: 'datetime',
                 labels: {
                     formatter: function () {
-                        const value = (this as any).value as number;
-                        return formatTimestamp(value / 1000, 'time');
+                        const timestampMs = this.value as number;
+                        const timestampSeconds = timestampMs / 1000;
+                        return managerInstance.safeFormatTimestamp(timestampSeconds, 'time', platformTimezone, platformLocale);
                     },
                     style: {
                         fontSize: '10px',
@@ -352,8 +424,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 shadow: true,
                 style: {fontSize: '12px'},
                 formatter: function () {
-                    const timestamp = this.x / 1000;
-                    return `<b>Time:</b> ${formatTimestamp(timestamp, 'datetime')}<br><b>${metric.title}:</b> ${this.y}`;
+                    const {aqi_from} = this as any
+
+                    const timestampMs = this.x;
+                    const timestampSeconds = timestampMs / 1000;
+                    const formattedTime = managerInstance.safeFormatTimestamp(timestampSeconds, 'datetime', platformTimezone, platformLocale, true);
+                    const timezoneShort = platformTimezone.split('/')[1] || platformTimezone;
+
+                    return `<b>Time (${timezoneShort}):</b> ${formattedTime}<br><b>AQI:</b> ${this.y} (${aqi_from})`;
                 }
             },
             plotOptions: {
@@ -481,6 +559,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     }
+
     //endregion
 
 })

@@ -292,6 +292,7 @@
 
                 return response()->json([
                     'data' => $dataLoggerTemp,
+                    'timezone' => $platform->timezone,
                     'responseTime' => Carbon::now()
                 ]);
 
