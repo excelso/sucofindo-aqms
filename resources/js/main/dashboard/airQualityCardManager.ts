@@ -84,7 +84,8 @@ interface MetricsData {
     bml_min: number;
     bml_min_buffer: number,
     bml_max_buffer: number,
-    bml_max: number
+    bml_max: number,
+    unit: string
 }
 
 interface CardManagerOptions {
@@ -1768,7 +1769,8 @@ class AirQualityCardManager {
                 bml_min: data.metrics?.pm25?.bml_min,
                 bml_min_buffer: data.metrics?.pm25?.bml_min_buffer,
                 bml_max_buffer: data.metrics?.pm25?.bml_max_buffer,
-                bml_max: data.metrics?.pm25?.bml_max
+                bml_max: data.metrics?.pm25?.bml_max,
+                unit: 'µg/m³'
             },
             {
                 title: 'PM10',
@@ -1777,7 +1779,8 @@ class AirQualityCardManager {
                 bml_min: data.metrics?.pm10?.bml_min,
                 bml_min_buffer: data.metrics?.pm10?.bml_min_buffer,
                 bml_max_buffer: data.metrics?.pm10?.bml_max_buffer,
-                bml_max: data.metrics?.pm10?.bml_max
+                bml_max: data.metrics?.pm10?.bml_max,
+                unit: 'µg/m³'
             },
             {
                 title: 'TSP',
@@ -1786,7 +1789,8 @@ class AirQualityCardManager {
                 bml_min: data.metrics?.tsp?.bml_min,
                 bml_min_buffer: data.metrics?.tsp?.bml_min_buffer,
                 bml_max_buffer: data.metrics?.tsp?.bml_max_buffer,
-                bml_max: data.metrics?.tsp?.bml_max
+                bml_max: data.metrics?.tsp?.bml_max,
+                unit: 'µg/m³'
             },
             {
                 title: 'Noise',
@@ -1795,7 +1799,8 @@ class AirQualityCardManager {
                 bml_min: data.metrics?.noise?.bml_min,
                 bml_min_buffer: data.metrics?.noise?.bml_min_buffer,
                 bml_max_buffer: data.metrics?.noise?.bml_max_buffer,
-                bml_max: data.metrics?.noise?.bml_max
+                bml_max: data.metrics?.noise?.bml_max,
+                unit: 'dbA'
             }
         ];
 

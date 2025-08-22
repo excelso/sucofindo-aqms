@@ -244,18 +244,16 @@
             try {
 
                 $platform = Platforms::where('uid', $uid)->first();
-                // if (in_array(config('app.env'), ['production', 'staging'])) {
-                //
-                // } else {
-                //     $minDate = '2025-08-12 00:00';
-                //     $maxDate = '2025-08-12 23:59';
-                // }
-
-                $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
-                $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
-                if ($request->input('startDate')) {
-                    $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
-                    $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
+                if (in_array(config('app.env'), ['production', 'staging'])) {
+                    $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
+                    $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
+                    if ($request->input('startDate')) {
+                        $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
+                        $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
+                    }
+                } else {
+                    $minDate = '2025-08-12 00:00';
+                    $maxDate = '2025-08-12 23:59';
                 }
 
                 $dataLogger = Loggers::loggerData5Minutes($uid, $minDate, $maxDate, $platform->timezone)->get();

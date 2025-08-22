@@ -355,9 +355,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const yValues = chartData.map(point => point.y);
         const dataMaxY = Math.max(...yValues);
 
-        const managerInstance = this;
         const platformTimezone = timezone || 'Asia/Jakarta';
-        const platformLocale = 'id-ID';
+        const platformLocale = 'en-EN';
 
         Highcharts.chart({
             chart: {
@@ -381,7 +380,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     formatter: function () {
                         const timestampMs = this.value as number;
                         const timestampSeconds = timestampMs / 1000;
-                        return managerInstance.safeFormatTimestamp(timestampSeconds, 'time', platformTimezone, platformLocale);
+                        return safeFormatTimestamp(timestampSeconds, 'time', platformTimezone, platformLocale);
                     },
                     style: {
                         fontSize: '10px',
@@ -424,14 +423,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 shadow: true,
                 style: {fontSize: '12px'},
                 formatter: function () {
-                    const {aqi_from} = this as any
-
                     const timestampMs = this.x;
                     const timestampSeconds = timestampMs / 1000;
-                    const formattedTime = managerInstance.safeFormatTimestamp(timestampSeconds, 'datetime', platformTimezone, platformLocale, true);
+                    const formattedTime = safeFormatTimestamp(timestampSeconds, 'datetime', platformTimezone, platformLocale, true);
                     const timezoneShort = platformTimezone.split('/')[1] || platformTimezone;
 
-                    return `<b>Time (${timezoneShort}):</b> ${formattedTime}<br><b>AQI:</b> ${this.y} (${aqi_from})`;
+                    return `<b>Time (${timezoneShort}):</b> ${formattedTime}<br><b>${metric.title}:</b> ${this.y} ${metric.unit}`;
                 }
             },
             plotOptions: {
