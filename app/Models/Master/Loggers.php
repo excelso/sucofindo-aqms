@@ -60,6 +60,7 @@
                 $builder->selectRaw('ROUND(AVG(pm_10), 0) AS pm_10');
                 $builder->selectRaw('ROUND(AVG(pm_25), 0) AS pm_25');
                 $builder->selectRaw('ROUND(AVG(tsp), 0) AS tsp');
+                $builder->selectRaw('MAX( tsp ) AS max_tsp');
                 $builder->selectRaw('ROUND(AVG(noise), 2) AS noise');
                 $builder->selectRaw('ROUND((10 * LOG10((1/count(*) * SUM(POWER(10, noise / 10))))), 2) AS noise_leq');
                 $builder->selectRaw('ROUND(AVG(aqi_index)) AS aqi_index');
