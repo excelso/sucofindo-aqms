@@ -51,7 +51,7 @@
                 $builder->select([
                     'id',
                     'uid',
-                    'link_video_recorded'
+                    DB::raw('MAX(CASE WHEN link_video_recorded IS NOT NULL THEN link_video_recorded END) AS link_video_recorded')
                 ]);
                 // Gunakan timezone yang sama dengan parameter
                 $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / 600) * 600), 'UTC', ?) AS interval_time", [$timezone]);
@@ -94,7 +94,7 @@
                 $builder->select([
                     'id',
                     'uid',
-                    'link_video_recorded'
+                    DB::raw('MAX(CASE WHEN link_video_recorded IS NOT NULL THEN link_video_recorded END) AS link_video_recorded')
                 ]);
                 // Gunakan timezone yang sama dengan parameter
                 $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / 600) * 600), 'UTC', ?) AS interval_time", [$timezone]);

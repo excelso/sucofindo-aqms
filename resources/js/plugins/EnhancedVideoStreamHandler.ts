@@ -915,7 +915,7 @@ class EnhancedVideoStreamHandler {
         video.style.cssText = `
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
             border-radius: ${this.config.borderRadius};
             background: #000;
         `;
