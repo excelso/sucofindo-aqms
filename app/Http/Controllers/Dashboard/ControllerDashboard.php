@@ -179,7 +179,7 @@
                         'link_video_recorded' => $logger->link_video_recorded ?? null,
                         'pm25' => $logger->pm_25,
                         'pm10' => $logger->pm_10,
-                        'tsp' => $logger->max_tsp ?? 0,
+                        'tsp' => $logger->link_video_recorded ? $logger->max_tsp : $logger->tsp,
                         'category' => $aqiCatForDisplay->category_name_en ?? 'Unknown',
                         'category_id' => $aqiCatForDisplay->id,
                         'category_range' => "[{$aqiCatForDisplay->pm25_min}, {$aqiCatForDisplay->pm25_max}]",
