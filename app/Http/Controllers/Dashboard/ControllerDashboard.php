@@ -264,28 +264,28 @@
                     if ($request->input('metric') == 'pm10') {
                         $dataLoggerTemp[] = [
                             'timestamp' => $item->datetime_unix,
-                            'value' => (float)number_format($item->pm_10, 1),
+                            'value' => (float) $item->pm_10,
                         ];
                     }
 
                     if ($request->input('metric') == 'pm25') {
                         $dataLoggerTemp[] = [
                             'timestamp' => $item->datetime_unix,
-                            'value' => (float)number_format($item->pm_25, 1),
+                            'value' => (float) $item->pm_25,
                         ];
                     }
 
                     if ($request->input('metric') == 'tsp') {
                         $dataLoggerTemp[] = [
                             'timestamp' => $item->datetime_unix,
-                            'value' => (float)number_format($item->tsp, 1),
+                            'value' => (float) $item->tsp,
                         ];
                     }
 
                     if ($request->input('metric') == 'noise') {
                         $dataLoggerTemp[] = [
                             'timestamp' => $item->datetime_unix,
-                            'value' => (float)number_format($item->noise_leq ?? 0, 2),
+                            'value' => (float) $item->noise_leq ?? 0,
                         ];
                     }
                 }
