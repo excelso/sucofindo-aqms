@@ -177,9 +177,9 @@
                         'link_video_id' => $logger->link_video_id ?? null,
                         'link_video_status' => $logger->link_video_status ?? null,
                         'link_video_recorded' => $logger->link_video_recorded ?? null,
-                        'pm25' => $logger->pm_25,
-                        'pm10' => $logger->pm_10,
-                        'tsp' => $logger->link_video_recorded ? $logger->max_tsp : $logger->tsp,
+                        'pm25' => $logger->max_pm_25,
+                        'pm10' => $logger->max_pm_10,
+                        'tsp' => $logger->max_tsp,
                         'category' => $aqiCatForDisplay->category_name_en ?? 'Unknown',
                         'category_id' => $aqiCatForDisplay->id,
                         'category_range' => "[{$aqiCatForDisplay->pm25_min}, {$aqiCatForDisplay->pm25_max}]",
@@ -264,21 +264,21 @@
                     if ($request->input('metric') == 'pm10') {
                         $dataLoggerTemp[] = [
                             'timestamp' => $item->datetime_unix,
-                            'value' => (float) $item->pm_10,
+                            'value' => (float) $item->max_pm_10,
                         ];
                     }
 
                     if ($request->input('metric') == 'pm25') {
                         $dataLoggerTemp[] = [
                             'timestamp' => $item->datetime_unix,
-                            'value' => (float) $item->pm_25,
+                            'value' => (float) $item->max_pm_25,
                         ];
                     }
 
                     if ($request->input('metric') == 'tsp') {
                         $dataLoggerTemp[] = [
                             'timestamp' => $item->datetime_unix,
-                            'value' => (float) $item->tsp,
+                            'value' => (float) $item->max_tsp,
                         ];
                     }
 

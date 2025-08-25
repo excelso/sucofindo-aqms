@@ -58,7 +58,9 @@
                 $builder->selectRaw('FLOOR(datetime_unix / 600) * 600 AS datetime_unix');
                 $builder->selectRaw('COUNT(*) AS record_count');
                 $builder->selectRaw('ROUND(AVG(pm_10), 0) AS pm_10');
+                $builder->selectRaw('MAX( pm_10 ) AS max_pm_10');
                 $builder->selectRaw('ROUND(AVG(pm_25), 0) AS pm_25');
+                $builder->selectRaw('MAX( pm_25 ) AS max_pm_25');
                 $builder->selectRaw('ROUND(AVG(tsp), 0) AS tsp');
                 $builder->selectRaw('MAX( tsp ) AS max_tsp');
                 $builder->selectRaw('ROUND(AVG(noise), 2) AS noise');
