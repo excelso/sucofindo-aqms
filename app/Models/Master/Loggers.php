@@ -64,10 +64,13 @@
                 $builder->selectRaw('ROUND(AVG(tsp), 0) AS tsp');
                 $builder->selectRaw('MAX( tsp ) AS max_tsp');
                 $builder->selectRaw('ROUND(AVG(noise), 2) AS noise');
+                $builder->selectRaw('MAX( noise ) AS max_noise');
                 $builder->selectRaw('ROUND((10 * LOG10((1/count(*) * SUM(POWER(10, noise / 10))))), 2) AS noise_leq');
                 $builder->selectRaw('ROUND(AVG(aqi_index)) AS aqi_index');
+                $builder->selectRaw('MAX( aqi_index ) AS max_aqi_index');
                 $builder->selectRaw('ROUND(AVG(aqi_index_tsp)) AS aqi_index_tsp');
-                $builder->selectRaw('IF( COALESCE( AVG(aqi_index_pm25), -1 ) >= COALESCE( AVG(aqi_index_pm10), -1 ), "PM 2.5", "PM 10" ) AS aqi_from');
+                $builder->selectRaw('MAX( aqi_index_tsp ) AS max_aqi_index_tsp');
+                $builder->selectRaw('IF( COALESCE( MAX(aqi_index_pm25), -1 ) >= COALESCE( MAX(aqi_index_pm10), -1 ), "PM 2.5", "PM 10" ) AS aqi_from');
                 $builder->from('t_loggers');
                 $builder->where('uid', $uid);
                 $builder->groupByRaw('uid, FLOOR(datetime_unix / 600)');

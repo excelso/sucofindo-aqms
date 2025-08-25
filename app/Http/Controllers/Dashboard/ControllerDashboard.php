@@ -67,8 +67,8 @@
                     $emoji = mb_convert_encoding('&#x2753;', 'UTF-8', 'HTML-ENTITIES');
                     $colorCode = 'bg-gray-200';
 
-                    if ($dataLastLogger && $dataLastLogger->aqi_index !== null) {
-                        $aqiCat = AqiCategories::dataAqiIndex($dataLastLogger->aqi_index)->first();
+                    if ($dataLastLogger && $dataLastLogger->max_aqi_index !== null) {
+                        $aqiCat = AqiCategories::dataAqiIndex($dataLastLogger->max_aqi_index)->first();
                         if (!$aqiCat) {
                             $aqiCat = AqiCategories::orderBy('aqi_max', 'desc')->first();
                         }
@@ -88,28 +88,28 @@
                         'colorCode' => $colorCode,
                         'metrics' => [
                             'pm10' => [
-                                'value' => $dataLastLogger->pm_10 ?? 0,
+                                'value' => $dataLastLogger->max_pm_10 ?? 0,
                                 'bml_min' => $dataLastLogger->limit->pm10_min ?? 0,
                                 'bml_min_buffer' => $dataLastLogger->limit->pm10_min_buffer ?? 0,
                                 'bml_max_buffer' => $dataLastLogger->limit->pm10_max_buffer ?? 0,
                                 'bml_max' => $dataLastLogger->limit->pm10_max ?? 0,
                             ],
                             'pm25' => [
-                                'value' => $dataLastLogger->pm_25 ?? 0,
+                                'value' => $dataLastLogger->max_pm_25 ?? 0,
                                 'bml_min' => $dataLastLogger->limit->pm25_min ?? 0,
                                 'bml_min_buffer' => $dataLastLogger->limit->pm25_min_buffer ?? 0,
                                 'bml_max_buffer' => $dataLastLogger->limit->pm25_max_buffer ?? 0,
                                 'bml_max' => $dataLastLogger->limit->pm25_max ?? 0,
                             ],
                             'tsp' => [
-                                'value' => $dataLastLogger->tsp ?? 0,
+                                'value' => $dataLastLogger->max_tsp ?? 0,
                                 'bml_min' => $dataLastLogger->limit->tsp_min ?? 0,
                                 'bml_min_buffer' => $dataLastLogger->limit->tsp_min_buffer ?? 0,
                                 'bml_max_buffer' => $dataLastLogger->limit->tsp_max_buffer ?? 0,
                                 'bml_max' => $dataLastLogger->limit->tsp_max ?? 0,
                             ],
                             'noise' => [
-                                'value' => (float)number_format($dataLastLogger->noise_leq ?? 0, 2),
+                                'value' => $dataLastLogger->noise_leq ?? 0,
                                 'bml_min' => $dataLastLogger->limit->noise_min ?? 0,
                                 'bml_min_buffer' => $dataLastLogger->limit->noise_min_buffer ?? 0,
                                 'bml_max_buffer' => $dataLastLogger->limit->noise_max_buffer ?? 0,
@@ -150,8 +150,8 @@
             foreach ($loggers as $logger) {
                 try {
                     // 1. Ambil AQI value langsung dari database (sudah dihitung)
-                    $aqiValue = $logger->aqi_index ?? 0;
-                    $aqiValueTsp = $logger->aqi_index_tsp ?? 0;
+                    $aqiValue = $logger->max_aqi_index ?? 0;
+                    $aqiValueTsp = $logger->max_aqi_index_tsp ?? 0;
 
                     // 2. Cari kategori AQI berdasarkan PM2.5 value untuk display
                     $aqiCatForDisplay = AqiCategories::where('pm25_min', '<=', $logger->pm_25)
