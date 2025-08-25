@@ -76,12 +76,12 @@
                                             <td class="text-center">{{$i++}}</td>
                                             <td class="text-center">{{ $item->uid ?? '' }}</td>
                                             <td class="text-center">{{ Carbon::parse($item->datetime_unix)->setTimezone($platform->timezone)->format('d M Y H:i:s') ?? '' }}</td>
-                                            <td class="text-right">{{ $item->pm_25 ?? '' }}</td>
-                                            <td class="text-right">{{ $item->pm_10 ?? '' }}</td>
-                                            <td class="text-right">{{ $item->tsp ?? '' }}</td>
+                                            <td class="text-right">{{ $item->max_pm_25 ?? '' }}</td>
+                                            <td class="text-right">{{ $item->max_pm_10 ?? '' }}</td>
+                                            <td class="text-right">{{ $item->max_tsp ?? '' }}</td>
                                             <td class="text-right">{{ $item->noise_leq ?? '' }}</td>
-                                            <td class="text-right">{{ $item->aqi_index ?? '' }}</td>
-                                            <td class="text-right">{{ $item->aqi_index_tsp ?? '' }}</td>
+                                            <td class="text-right">{{ $item->max_aqi_index ?? '' }}</td>
+                                            <td class="text-right">{{ $item->max_aqi_index_tsp ?? '' }}</td>
                                             <td class="text-left">
                                                 <span class="status-badge inline-flex items-center rounded-full gap-1 px-[7px] py-[3px] {{ $item->color_code }} text-[12px] font-bold">
                                                     {{ mb_convert_encoding($item->emoji, 'UTF-8', 'HTML-ENTITIES') }} {{ $item->category_name_en }}
