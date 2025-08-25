@@ -208,12 +208,12 @@
                             $globalRowNumber,
                             $item->uid,
                             Carbon::parse($item->datetime_unix)->setTimezone($dataPlatform->timezone)->format('Y-m-d H:i:s') ?? '',
-                            $item->pm_25,
-                            $item->pm_10,
-                            $item->tsp,
+                            $item->max_pm_25 ?? 0,
+                            $item->max_pm_10 ?? 0,
+                            $item->max_tsp ?? 0,
                             $item->noise_leq,
-                            $item->aqi_index,
-                            $item->aqi_index_tsp,
+                            $item->max_aqi_index ?? 0,
+                            $item->max_aqi_index_tsp ?? 0,
                             $aqiCat,
                         ];
                     }
