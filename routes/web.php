@@ -65,6 +65,7 @@
                 Route::get('detail-metric/{uid}', [ControllerDashboard::class, 'detailMetric']);
                 Route::get('webrtc-proxy', [WebRTCProxyController::class, 'proxyGet']);
                 Route::get('platform-heartbeat/{uid}', [ControllerDashboard::class, 'handleDetailPlatformHeartbeat']);
+                Route::get('export-excel-heartbeat/{uid}', [ControllerDashboard::class, 'handleExportHeartbeat']);
             });
 
             Route::group(['prefix' => 'reports'], function () {

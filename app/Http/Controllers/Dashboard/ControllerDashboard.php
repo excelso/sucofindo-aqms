@@ -8,9 +8,12 @@
     use App\Models\Master\Loggers;
     use App\Models\Master\Platforms;
     use App\Models\Master\PlatformsHeartbeat;
+    use avadim\FastExcelWriter\Excel;
+    use avadim\FastExcelWriter\Style;
     use Cache;
     use Carbon\Carbon;
     use Exception;
+    use File;
     use Illuminate\Http\RedirectResponse;
     use Illuminate\Http\Request;
     use Illuminate\Pagination\LengthAwarePaginator;
@@ -24,6 +27,7 @@
     class ControllerDashboard extends Controller {
 
         protected string $viewPath;
+
         public function __construct() {
             $this->viewPath = 'main.dashboard';
         }
@@ -172,8 +176,8 @@
                     $dataLoggersTemp[] = [
                         'logger_id' => $logger->id,
                         'timestamp' => $logger->datetime_unix,
-                        'value' => (float) $aqiValue,
-                        'value_tsp' => (float) $aqiValueTsp,
+                        'value' => (float)$aqiValue,
+                        'value_tsp' => (float)$aqiValueTsp,
                         'link_video_id' => $logger->link_video_id ?? null,
                         'link_video_status' => $logger->link_video_status ?? null,
                         'link_video_recorded' => $logger->link_video_recorded ?? null,
@@ -191,7 +195,7 @@
                     $dataLoggersTemp[] = [
                         'logger_id' => $logger->id,
                         'timestamp' => $logger->datetime_unix,
-                        'value' => $logger->aqi_index ? (float) number_format($logger->aqi_index, 1) : null,
+                        'value' => $logger->aqi_index ? (float)number_format($logger->aqi_index, 1) : null,
                         'link_video_id' => $logger->link_video_id ?? null,
                         'link_video_status' => $logger->link_video_status ?? null,
                         'link_video_recorded' => $logger->link_video_recorded ?? null,
@@ -264,28 +268,28 @@
                     if ($request->input('metric') == 'pm10') {
                         $dataLoggerTemp[] = [
                             'timestamp' => $item->datetime_unix,
-                            'value' => (float) $item->max_pm_10,
+                            'value' => (float)$item->max_pm_10,
                         ];
                     }
 
                     if ($request->input('metric') == 'pm25') {
                         $dataLoggerTemp[] = [
                             'timestamp' => $item->datetime_unix,
-                            'value' => (float) $item->max_pm_25,
+                            'value' => (float)$item->max_pm_25,
                         ];
                     }
 
                     if ($request->input('metric') == 'tsp') {
                         $dataLoggerTemp[] = [
                             'timestamp' => $item->datetime_unix,
-                            'value' => (float) $item->max_tsp,
+                            'value' => (float)$item->max_tsp,
                         ];
                     }
 
                     if ($request->input('metric') == 'noise') {
                         $dataLoggerTemp[] = [
                             'timestamp' => $item->datetime_unix,
-                            'value' => (float) $item->noise_leq ?? 0,
+                            'value' => (float)$item->noise_leq ?? 0,
                         ];
                     }
                 }
@@ -345,6 +349,143 @@
                 ], 500);
             }
         }
+
         //endregion
+
+        public static function numToExcelAlpha($n): int|string {
+            $r = 'A';
+            while ($n-- > 1) {
+                $r++;
+            }
+            return $r;
+        }
+
+        public function handleExportHeartbeat(Request $request, $uid) {
+            try {
+
+                $head = [
+                    'UID' => [
+                        'props' => [
+                            'align' => 'center',
+                            'width' => 8,
+                        ]
+                    ],
+                    trans('Logger Status') => [
+                        'props' => [
+                            'align' => 'left',
+                            'width' => 'auto',
+                            'format' => '@text',
+                        ]
+                    ],
+                    trans('Update Date') => [
+                        'props' => [
+                            'align' => 'left',
+                            'width' => 'auto',
+                            'format' => '@datetime',
+                        ]
+                    ],
+                ];
+
+                $excel = Excel::create(['Platform Status']);
+                $sheet = $excel->getSheet(1);
+
+                $headIndex = 0;
+                $colsStyle = [];
+                foreach ($head as $key => $value) {
+                    $headIndex++;
+                    $highColumn = $this->numToExcelAlpha($headIndex);
+
+                    $header_prop_align = 'left';
+                    $header_prop_width = 'auto';
+                    $header_prop_format = '';
+                    $header_prop_warp = '';
+                    if (isset($value['props'])) {
+                        $header_prop = $value['props'];
+                        $header_prop_align = $header_prop['align'] ?? 'left';
+                        $header_prop_width = $header_prop['width'] ?? 'auto';
+                        $header_prop_format = $header_prop['format'] ?? '';
+                        $header_prop_warp = $header_prop['warp'] ?? '';
+                    }
+
+                    $styles = [
+                        $highColumn => [
+                            'text-align' => $header_prop_align,
+                            'width' => $header_prop_width,
+                            'format' => $header_prop_format,
+                            'text-wrap' => $header_prop_warp,
+                            'vertical-align' => 'center',
+                            'border' => [
+                                Style::BORDER_BOTTOM => Style::BORDER_THIN
+                            ]
+                        ]
+                    ];
+
+                    $colsStyle[] = $styles;
+                    $sheet->writeTo($highColumn . '1', $key, [
+                        'text-align' => $header_prop_align,
+                        'width' => $header_prop_width,
+                        'vertical-align' => 'center',
+                        'font' => [
+                            'style' => 'bold'
+                        ],
+                        'border' => [
+                            Style::BORDER_TOP => Style::BORDER_THIN,
+                            Style::BORDER_BOTTOM => Style::BORDER_DOUBLE
+                        ],
+                        'height' => 24,
+                    ]);
+                }
+
+                $sheet->nextRow();
+                $sheet->setColOptions(array_merge([], ...$colsStyle));
+
+                $platform = Platforms::where('uid', $uid)->first();
+                $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
+                $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
+                if ($request->input('startDate')) {
+                    $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
+                    $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
+                }
+
+                PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone)
+                    ->chunk(50, function ($platformHeartbeatsChunk) use ($sheet) {
+                        $rowNumber = 0;
+                        $rows = [];
+                        foreach ($platformHeartbeatsChunk as $data) {
+                            $rowNumber++;
+
+                            $rows[] = [
+                                $data->uid,
+                                $data->heartbeat_status ?? '',
+                                $data->date_formated,
+                            ];
+                        }
+
+                        foreach ($rows as $index => $r) {
+                            $sheet->writeRow($r);
+                        }
+                    });
+
+                $filename = 'platform-status_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+                $directory = storage_path('app/public/platform-status');
+
+                if (!File::exists($directory)) {
+                    File::makeDirectory($directory, 0755, true);
+                }
+
+                $filePath = $directory . '/' . $filename;
+                $excel->save($filePath);
+
+                return response()->download($filePath, $filename)
+                    ->deleteFileAfterSend();
+
+            } catch (Exception $exception) {
+                return response()->json([
+                    'message' => $exception->getMessage() . ' on line ' . $exception->getLine(),
+                    'file' => $exception->getFile(),
+                    'responseTime' => Carbon::now()
+                ], 500);
+            }
+        }
 
     }

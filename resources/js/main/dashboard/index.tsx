@@ -25,6 +25,7 @@ import OnvifPTZController from "@/js/plugins/OnvifPTZController";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
+    const url = new URL(window.location.href)
 
     const appEnv: HTMLInputElement = document.querySelector('.app_env')
     const modalCctv: HTMLElement = document.querySelector('.modalCctv')
@@ -41,6 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalHeartbeat = document.querySelector('.modalHeartbeat')
     const onlinePercentage = modalHeartbeat.querySelector('.onlinePercentage')
     const offlinePercentage = modalHeartbeat.querySelector('.offlinePercentage')
+    const btnDownload = modalHeartbeat.querySelector('.btnDownload')
     const tHeartbeatData = modalHeartbeat.querySelector('.tHeartbeatData')
     const footerHeartbeat = modalHeartbeat.querySelector('.footerHeartbeat')
 
@@ -486,7 +488,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         function renderData(options?: any) {
             lookupData(options).then(response => {
-                renderBody(response)
+                renderBody(uid, response)
 
                 const {dataResponse} = response as any
                 renderPagination(dataResponse, renderData, footerHeartbeat, options)
@@ -519,14 +521,18 @@ document.addEventListener('DOMContentLoaded', function () {
             })
         }
 
-        function renderBody(response: any) {
+        function renderBody(uid: string, response: any) {
             const {dataResponse, onlinePercent, offlinePercent} = response
             const {data} = dataResponse
 
-            console.log(response)
-
             onlinePercentage.textContent = `${onlinePercent}%`
             offlinePercentage.textContent = `${offlinePercent}%`
+
+            if (btnDownload) {
+                btnDownload.addEventListener('click', async function () {
+                    await handleExportHeartbeat(uid)
+                })
+            }
 
             const itemBodies = []
             if (data.length !== 0) {
@@ -554,6 +560,41 @@ document.addEventListener('DOMContentLoaded', function () {
                 handleFixedTheadTh()
                 handleFixedTd()
             }
+        }
+
+        async function handleExportHeartbeat(uid: string) {
+            await waitLoader('Downloading...', 'This may take longer.', async () => {
+                const response = await fetch(`/dashboard/export-excel-heartbeat/${uid}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    }
+                });
+
+                if (!response.ok) {
+                    const {message} = await response.json();
+                    Swal.close();
+
+                    failureAlert({
+                        html: message
+                    })
+                }
+
+                const blob = await response.blob();
+                Swal.close();
+
+                const urlBlob = window.URL.createObjectURL(blob);
+                const aLink = document.createElement('a');
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                aLink.href = urlBlob;
+                aLink.download = `report-platform-status_${timestamp}.xlsx`;
+                document.body.appendChild(aLink);
+                aLink.click();
+                setTimeout(() => URL.revokeObjectURL(urlBlob), 10000);
+                document.body.removeChild(aLink);
+            });
         }
     }
 
