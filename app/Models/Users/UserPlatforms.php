@@ -18,4 +18,12 @@
             'is_active',
         ];
 
+        public function scopeUserPlatforms(Builder $builder, $user_id): void {
+            $builder->select([
+                't_users_platforms.platform_id'
+            ]);
+            $builder->where('user_id', $user_id);
+            $builder->groupBy(['platform_id']);
+        }
+
     }

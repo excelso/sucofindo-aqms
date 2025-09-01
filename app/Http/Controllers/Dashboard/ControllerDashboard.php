@@ -8,6 +8,7 @@
     use App\Models\Master\Loggers;
     use App\Models\Master\Platforms;
     use App\Models\Master\PlatformsHeartbeat;
+    use App\Models\Users\UserPlatforms;
     use avadim\FastExcelWriter\Excel;
     use avadim\FastExcelWriter\Style;
     use Cache;
@@ -43,7 +44,15 @@
         public function getDataPlatforms(Request $request) {
             try {
 
-                $platforms = Platforms::orderBy('created_at', 'ASC')->get();
+                $userPlatformId = null;
+                if (request()->user()->user_level != 'super_admin') {
+                    $userPlatformIds = UserPlatforms::userPlatforms(request()->user()->id)->get();
+                    foreach ($userPlatformIds as $platformId) {
+                        $userPlatformId[] = $platformId->platform_id;
+                    }
+                }
+
+                $platforms = Platforms::dataPlatformByUserPlatform($userPlatformId ?? null)->get();
                 $dataPlatformsTemp = [];
                 foreach ($platforms as $platform) {
                     // if (in_array(config('app.env'), ['production', 'staging'])) {
@@ -352,6 +361,7 @@
 
         //endregion
 
+        //region Handle Export Heartbeat Sensor
         public static function numToExcelAlpha($n): int|string {
             $r = 'A';
             while ($n-- > 1) {
@@ -487,5 +497,6 @@
                 ], 500);
             }
         }
+        //endregion
 
     }

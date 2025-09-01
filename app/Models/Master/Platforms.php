@@ -45,8 +45,20 @@
             return $this->hasOne(LoggersLimit::class, 'uid', 'uid');
         }
 
+        public function scopeDataPlatformByUserPlatform(Builder $builder, array|string|null $platformId = null): void {
+            if ($platformId) {
+                if (is_array($platformId)) {
+                    $builder->whereIn('id', $platformId);
+                } else {
+                    $builder->where('id', $platformId);
+                }
+            }
+
+            $builder->orderBy('uid', 'ASC');
+        }
+
         public function scopeDataPlatforms(Builder $builder, $options = []): void {
-            $builder->orderBy('created_at');
+            $builder->orderBy('uid', 'ASC');
         }
 
         public function scopeDataPlatformsById(Builder $builder, $id): void {

@@ -8,6 +8,7 @@
     use App\Models\Master\CompaniesSites;
     use App\Models\Master\Loggers;
     use App\Models\Master\Platforms;
+    use App\Models\Users\UserPlatforms;
     use avadim\FastExcelWriter\Excel;
     use avadim\FastExcelWriter\Style;
     use Carbon\Carbon;
@@ -29,12 +30,20 @@
         public function index(Request $request): View {
             $dataCompanies = Companies::all();
 
-            $dataAllPlatform = Platforms::orderBy('uid', 'ASC')
+            $userPlatformId = null;
+            if (request()->user()->user_level != 'super_admin') {
+                $userPlatformIds = UserPlatforms::userPlatforms(request()->user()->id)->get();
+                foreach ($userPlatformIds as $platformId) {
+                    $userPlatformId[] = $platformId->platform_id;
+                }
+            }
+
+            $dataAllPlatform = Platforms::dataPlatformByUserPlatform($userPlatformId ?? null)
                 ->with('sites')->get();
 
             $dataAqiCat = AqiCategories::all();
 
-            $dataPlatform = Platforms::orderBy('uid', 'ASC')->first();
+            $dataPlatform = Platforms::dataPlatformByUserPlatform($userPlatformId ?? null)->first();
             $minDate = Carbon::now()->timezone($dataPlatform->timezone)->format('Y-m-d') . ' 00:00';
             $maxDate = Carbon::now()->timezone($dataPlatform->timezone)->format('Y-m-d') . ' 23:59';
             if ($request->input('startDate')) {
