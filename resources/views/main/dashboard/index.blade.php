@@ -20,7 +20,7 @@
                     <div>
                         <i class="fas fa-eye"></i>
                     </div>
-                    <div>Watchlist (12)</div>
+                    <div>Watchlist</div>
                 </div>
 
                 <div class="flex items-center gap-2 text-[15px] font-bold">
