@@ -205,7 +205,7 @@
                                                 </label>
                                             </td>
                                         </tr>
-                                        <tr class="child">
+                                        <tr class="child !hidden">
                                             <td class="text-center !border-l-[1px]"></td>
                                             <td class="text-left">
                                                 <div class="ml-[5rem]">Internal</div>
@@ -216,7 +216,7 @@
                                                 </label>
                                             </td>
                                         </tr>
-                                        <tr class="child">
+                                        <tr class="child !hidden">
                                             <td class="text-center !border-l-[1px]"></td>
                                             <td class="text-left">
                                                 <div class="ml-[5rem]">Re - Engineer</div>

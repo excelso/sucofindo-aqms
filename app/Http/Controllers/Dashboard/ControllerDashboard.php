@@ -45,14 +45,16 @@
             try {
 
                 $userPlatformId = null;
+                $isTrial = 0;
                 if (request()->user()->user_level != 'super_admin') {
+                    $isTrial = 1;
                     $userPlatformIds = UserPlatforms::userPlatforms(request()->user()->id)->get();
                     foreach ($userPlatformIds as $platformId) {
                         $userPlatformId[] = $platformId->platform_id;
                     }
                 }
 
-                $platforms = Platforms::dataPlatformByUserPlatform($userPlatformId ?? null)->get();
+                $platforms = Platforms::dataPlatformByUserPlatform($userPlatformId, $isTrial)->get();
                 $dataPlatformsTemp = [];
                 foreach ($platforms as $platform) {
                     // if (in_array(config('app.env'), ['production', 'staging'])) {

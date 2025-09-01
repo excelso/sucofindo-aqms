@@ -34,6 +34,7 @@
             'cctv_portal_ip',
             'cctv_portal_username',
             'cctv_portal_password',
+            'is_trial',
             'is_active',
         ];
 
@@ -45,7 +46,7 @@
             return $this->hasOne(LoggersLimit::class, 'uid', 'uid');
         }
 
-        public function scopeDataPlatformByUserPlatform(Builder $builder, array|string|null $platformId = null): void {
+        public function scopeDataPlatformByUserPlatform(Builder $builder, $platformId = null, $isTrial = null): void {
             if ($platformId) {
                 if (is_array($platformId)) {
                     $builder->whereIn('id', $platformId);
@@ -54,6 +55,7 @@
                 }
             }
 
+            $builder->where('is_trial', '=', $isTrial);
             $builder->orderBy('uid', 'ASC');
         }
 
