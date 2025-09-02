@@ -72,6 +72,21 @@
                                 @php($i = isset($items) ? $items->firstItem() : 0)
                                 @if(isset($items) && count($items) !== 0)
                                     @foreach($items as $item)
+
+                                        @if($item->max_tsp > $item->limit->tsp_max_buffer && $item->max_tsp < $item->limit->tsp_max)
+                                            @php($status = 'Moderate')
+                                            @php($statusColor = 'bg-orange-200')
+                                            @php($statusEmo = mb_convert_encoding('&#x1F61E;', 'UTF-8', 'HTML-ENTITIES'))
+                                        @elseif($item->max_tsp > $item->limit->tsp_max)
+                                            @php($status = 'Nod Good')
+                                            @php($statusColor = 'bg-red-300')
+                                            @php($statusEmo = mb_convert_encoding('&#x1F922;', 'UTF-8', 'HTML-ENTITIES'))
+                                        @else
+                                            @php($status = 'Good')
+                                            @php($statusColor = 'bg-green-200')
+                                            @php($statusEmo = mb_convert_encoding('&#x1F601;', 'UTF-8', 'HTML-ENTITIES'))
+                                        @endif
+
                                         <tr class="data-tables" data-id="{{ $item->id }}" data-uid="{{ $item->uid ?? '' }}">
                                             <td class="text-center">{{$i++}}</td>
                                             <td class="text-center">{{ $item->uid ?? '' }}</td>
@@ -83,8 +98,8 @@
                                             <td class="text-right">{{ $item->max_aqi_index ?? '' }}</td>
                                             <td class="text-right">{{ $item->max_aqi_index_tsp ?? '' }}</td>
                                             <td class="text-left">
-                                                <span class="status-badge inline-flex items-center rounded-full gap-1 px-[7px] py-[3px] {{ $item->color_code }} text-[12px] font-bold">
-                                                    {{ mb_convert_encoding($item->emoji, 'UTF-8', 'HTML-ENTITIES') }} {{ $item->category_name_en }}
+                                                <span class="status-badge inline-flex items-center rounded-full gap-1 px-[7px] py-[3px] {{ $statusColor }} text-[12px] font-bold">
+                                                    {{ $statusEmo }} {{ $status }}
                                                 </span>
                                             </td>
                                             <td class="text-left">

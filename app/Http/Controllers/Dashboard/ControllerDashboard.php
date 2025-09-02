@@ -35,8 +35,6 @@
         public function getDataPlatforms(Request $request) {
             try {
                 $page = $request->input('page', 1);
-                $perPage = $request->input('per_page', 20);
-                $searchQuery = $request->input('search', '');
 
                 // User platform filtering
                 $userPlatformId = null;
@@ -51,18 +49,8 @@
                 $platformsQuery = Platforms::with(['sites', 'loggerLimit'])
                     ->dataPlatformByUserPlatform($userPlatformId, $isTrial);
 
-                // Apply search filter
-                if ($searchQuery) {
-                    $platformsQuery->where(function ($query) use ($searchQuery) {
-                        $query->where('uid', 'like', "%{$searchQuery}%")
-                            ->orWhereHas('sites', function ($q) use ($searchQuery) {
-                                $q->where('site_name', 'like', "%{$searchQuery}%");
-                            });
-                    });
-                }
-
-                // Get paginated results
-                $platforms = $platformsQuery->paginate(20, ['*'], 'page', $page);
+                $platforms = $platformsQuery
+                    ->paginate(20, ['*'], 'page', $page);
 
                 // Process platform data
                 $dataPlatformsTemp = [];
@@ -119,16 +107,35 @@
                 $platformHeartbeat = $this->getPlatformHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone);
 
                 // Process AQI status
-                [$status, $emoji, $colorCode] = $this->processAQIStatus($dataLastLogger);
+                // [$status, $emoji, $colorCode] = $this->processAQIStatus($dataLastLogger);
+
+                $status = 'Unknown';
+                $statusColor = 'bg-gray-200';
+                $statusEmo = mb_convert_encoding('&#x2753;', 'UTF-8', 'HTML-ENTITIES');
+                if ($dataLastLogger) {
+                    if ($dataLastLogger->max_tsp > $dataLastLogger->limit->tsp_max_buffer && $dataLastLogger->max_tsp < $dataLastLogger->limit->tsp_max) {
+                        $status = 'Moderate';
+                        $statusColor = 'bg-orange-200';
+                        $statusEmo = mb_convert_encoding('&#x1F61E;', 'UTF-8', 'HTML-ENTITIES');
+                    } else if ($dataLastLogger->max_tsp > $dataLastLogger->limit->tsp_max) {
+                        $status = 'Not Good';
+                        $statusColor = 'bg-red-300';
+                        $statusEmo = mb_convert_encoding('&#x1F922;', 'UTF-8', 'HTML-ENTITIES');
+                    } else {
+                        $status = 'Good';
+                        $statusColor = 'bg-green-200';
+                        $statusEmo = mb_convert_encoding('&#x1F601;', 'UTF-8', 'HTML-ENTITIES');
+                    }
+                }
 
                 return [
                     'uid' => $platform->uid,
                     'siteName' => $platform->sites->site_name ?? 'Unknown',
                     'status' => $status,
-                    'emoji' => $emoji,
-                    'colorCode' => $colorCode,
+                    'emoji' => $statusEmo,
+                    'colorCode' => $statusColor,
                     'metrics' => $this->formatMetrics($dataLastLogger),
-                    'isOnline' => $platformHeartbeat ? ($platformHeartbeat->heartbeat_status === 'Online') : false,
+                    'isOnline' => $platformHeartbeat && $platformHeartbeat->heartbeat_status === 'Online',
                     'cctvLink1' => $platform->cctv_link_1,
                     'cctv1IsSupportPTZ' => $platform->cctv_1_support_ptz,
                     'cctvLink2' => $platform->cctv_link_2,

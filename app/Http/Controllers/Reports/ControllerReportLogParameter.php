@@ -55,7 +55,7 @@
 
             $dataLogger = Loggers::reportLoggerData($dataPlatform->uid, $minDate, $maxDate, $dataPlatform->timezone, [
                 'search' => $request->input()
-            ]);
+            ])->with('limit');
 
             return view($this->viewPath . '/index', [
                 'items' => $dataLogger->paginate(20)->onEachSide(1),
