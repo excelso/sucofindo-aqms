@@ -88,6 +88,16 @@ interface MetricsData {
     unit: string
 }
 
+interface PaginationData {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    has_more_pages: boolean;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+}
+
 interface CardManagerOptions {
     containerSelector?: string;
     batchSize?: number;
@@ -102,6 +112,9 @@ interface CardManagerOptions {
     socketIOUrl?: string;
     socketInstanceName?: string; // Unique name for socket instance
     socketIOOptions?: SocketOptions;
+    enablePagination?: boolean; // New option for pagination
+    itemsPerPage?: number; // Items per page
+    enableInfiniteScroll?: boolean; // Enable infinite scroll instead of traditional pagination
     onCctvClick?: (id: string, cctvData: Array<CameraData>) => void;
     onMetricsClick?: (id: string, metrics: MetricsData) => void;
     onDataUpdate?: (updatedData: AirQualityData[]) => void;
@@ -119,6 +132,8 @@ interface CardManagerOptions {
     }) => void;
     onHeartbeatStatusClick?: (id: string) => void;
     onSiteLocationClick?: (id: string, lat: number, lng: number) => void;
+    onLoadingStateChange?: (isLoading: boolean) => void; // Loading state callback
+    onPageChange?: (page: number, totalPages: number) => void; // Page change callback
 }
 
 interface LoggerEventData {
@@ -146,6 +161,7 @@ interface LoggerEventData {
 }
 
 class AirQualityCardManager {
+    // region Properties
     private data: AirQualityData[] = [];
     private container: HTMLElement | null = null;
     private options: CardManagerOptions;
@@ -161,6 +177,16 @@ class AirQualityCardManager {
     private socketClient: SocketClient;
     private currentAQISource: Map<string, 'pm25_pm10' | 'tsp'> = new Map();
 
+    // Pagination properties
+    private paginationData: PaginationData | null = null;
+    private currentPage: number = 1;
+    private isLoading: boolean = false;
+    private searchQuery: string = '';
+    private loadingElement: HTMLElement | null = null;
+    private paginationElement: HTMLElement | null = null;
+    private noDataElement: HTMLElement | null = null;
+    // endregion
+
     // region Constructor
     constructor(options: CardManagerOptions = {}) {
         this.options = {
@@ -173,6 +199,9 @@ class AirQualityCardManager {
             autoLoadInitialData: true,
             enableSocketIO: false,
             socketInstanceName: 'air-quality-default',
+            enablePagination: true,
+            itemsPerPage: 20,
+            enableInfiniteScroll: false,
             socketIOOptions: {
                 autoConnect: true,
                 reconnection: true,
@@ -187,10 +216,14 @@ class AirQualityCardManager {
             this.container = document.querySelector(options.containerSelector);
         }
 
+        // Initialize UI elements
+        this.initializeUIElements();
+
         // Auto-load initial data if API endpoint is provided
-        if (this.options.apiEndpoint) {
+        if (this.options.apiEndpoint && this.options.autoLoadInitialData) {
             this.loadInitialData().catch((error) => {
-                console.error(error);
+                console.error('Failed to load initial data:', error);
+                this.showError('Failed to load data');
             });
         }
 
@@ -202,11 +235,451 @@ class AirQualityCardManager {
         // Initialize periodic updates only if Socket.IO is disabled
         if (this.options.apiEndpoint && this.options.realTimeUpdateInterval && !this.options.enableSocketIO) {
             this.startRealTimeUpdates().catch((error) => {
-                console.error(error);
+                console.error('Failed to start real-time updates:', error);
             });
         }
     }
+    // endregion
 
+    // region Initialize UI Elements
+    private initializeUIElements(): void {
+        if (!this.container) return;
+
+        // Create loading element
+        this.loadingElement = this.createElement('div', 'flex justify-center items-center p-8');
+        this.loadingElement.innerHTML = `
+            <div class="flex flex-col items-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                <p class="text-gray-600">Loading platforms...</p>
+            </div>
+        `;
+
+        // Create no data element
+        this.noDataElement = this.createElement('div', 'flex justify-center items-center p-16');
+        this.noDataElement.innerHTML = `
+            <div class="text-center">
+                <div class="text-6xl text-gray-300 mb-4">📊</div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No Data Available</h3>
+                <p class="text-gray-500">No platforms found matching your criteria.</p>
+            </div>
+        `;
+
+        // Create pagination element if enabled
+        if (this.options.enablePagination && !this.options.enableInfiniteScroll) {
+            this.paginationElement = this.createElement('div', 'flex justify-between items-center mt-6 px-4');
+        }
+    }
+    // endregion
+
+    // region Show Loading State
+    private showLoading(show: boolean = true): void {
+        if (!this.container || !this.loadingElement) return;
+
+        this.isLoading = show;
+
+        if (this.options.onLoadingStateChange) {
+            this.options.onLoadingStateChange(show);
+        }
+
+        if (show) {
+            // Clear container and show loading
+            this.container.innerHTML = '';
+            this.container.appendChild(this.loadingElement);
+        } else {
+            // Remove loading element
+            if (this.container.contains(this.loadingElement)) {
+                this.container.removeChild(this.loadingElement);
+            }
+        }
+    }
+    // endregion
+
+    // region Show Error
+    private showError(message: string): void {
+        if (!this.container) return;
+
+        const errorElement = this.createElement('div', 'flex justify-center items-center p-16');
+        errorElement.innerHTML = `
+            <div class="text-center">
+                <div class="text-6xl text-red-300 mb-4">⚠️</div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Error Loading Data</h3>
+                <p class="text-red-500 mb-4">${message}</p>
+                <button class="btn btn-primary retry-btn">Retry</button>
+            </div>
+        `;
+
+        // Add retry functionality
+        const retryBtn = errorElement.querySelector('.retry-btn');
+        if (retryBtn) {
+            retryBtn.addEventListener('click', () => {
+                this.loadInitialData().catch(console.error);
+            });
+        }
+
+        this.container.innerHTML = '';
+        this.container.appendChild(errorElement);
+    }
+    // endregion
+
+    // region Show No Data
+    private showNoData(): void {
+        if (!this.container || !this.noDataElement) return;
+
+        this.container.innerHTML = '';
+        this.container.appendChild(this.noDataElement);
+    }
+    // endregion
+
+    // region Load Initial Data dengan Pagination
+    private async loadInitialData(page: number = 1): Promise<void> {
+        if (!this.options.apiEndpoint) return;
+
+        try {
+            this.showLoading(true);
+            console.log(`🔄 Loading page ${page} from API...`);
+
+            const url = new URL(this.options.apiEndpoint, window.location.origin);
+            url.searchParams.set('page', page.toString());
+            url.searchParams.set('per_page', this.options.itemsPerPage?.toString() || '20');
+
+            if (this.searchQuery) {
+                url.searchParams.set('search', this.searchQuery);
+            }
+
+            const response = await fetch(url.toString());
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+
+            // Handle paginated response
+            if (result.pagination) {
+                this.paginationData = result.pagination;
+                this.currentPage = result.pagination.current_page;
+
+                if (this.options.onPageChange) {
+                    this.options.onPageChange(this.currentPage, result.pagination.last_page);
+                }
+            }
+
+            // Handle data
+            const newData: AirQualityData[] = Array.isArray(result.data) ? result.data : [];
+
+            if (page === 1 || !this.options.enableInfiniteScroll) {
+                // Replace data for first page or non-infinite scroll
+                this.data = newData.map(item => ({
+                    ...item,
+                    lastUpdated: item.lastUpdated ? new Date(item.lastUpdated) : new Date()
+                }));
+            } else {
+                // Append data for infinite scroll
+                const mappedNewData = newData.map(item => ({
+                    ...item,
+                    lastUpdated: item.lastUpdated ? new Date(item.lastUpdated) : new Date()
+                }));
+                this.data = [...this.data, ...mappedNewData];
+            }
+
+            // Update cache
+            this.data.forEach(item => {
+                this.dataCache.set(item.uid, item);
+            });
+
+            this.lastUpdateTime = new Date();
+            this.updateConnectionStatus('connected');
+
+            console.log(`✅ Loaded ${newData.length} platforms (page ${page}), total: ${this.data.length}`);
+
+            // Render data
+            if (this.data.length === 0) {
+                this.showNoData();
+            } else {
+                this.showLoading(false);
+                if (page === 1 || !this.options.enableInfiniteScroll) {
+                    this.renderAll();
+                } else {
+                    this.appendNewItems(newData, this.data.length - newData.length);
+                }
+                this.renderPagination();
+            }
+
+            // Trigger callback if provided
+            if (this.options.onDataUpdate) {
+                this.options.onDataUpdate(this.data);
+            }
+
+        } catch (error) {
+            console.error('❌ Error loading data:', error);
+            this.updateConnectionStatus('error');
+            this.showError(error.message || 'Failed to load data');
+        }
+    }
+    // endregion
+
+    // region Append New Items untuk Infinite Scroll
+    private appendNewItems(newItems: AirQualityData[], startIndex: number): void {
+        if (!this.container) return;
+
+        const fragment = document.createDocumentFragment();
+        newItems.forEach((data, i) => {
+            const card = this.createSingleCard(data, startIndex + i);
+            fragment.appendChild(card);
+        });
+
+        // Find pagination element and insert before it
+        const paginationEl = this.container.querySelector('.pagination-container');
+        if (paginationEl) {
+            this.container.insertBefore(fragment, paginationEl);
+        } else {
+            this.container.appendChild(fragment);
+        }
+    }
+    // endregion
+
+    // region Load More Data (untuk Infinite Scroll)
+    public async loadMoreData(): Promise<void> {
+        if (this.isLoading || !this.paginationData?.has_more_pages) return;
+
+        try {
+            await this.loadInitialData(this.currentPage + 1);
+        } catch (error) {
+            console.error('Error loading more data:', error);
+        }
+    }
+    // endregion
+
+    // region Load Specific Page
+    public async loadPage(page: number): Promise<void> {
+        if (this.isLoading || page < 1) return;
+
+        if (this.paginationData && page > this.paginationData.last_page) return;
+
+        try {
+            await this.loadInitialData(page);
+        } catch (error) {
+            console.error(`Error loading page ${page}:`, error);
+        }
+    }
+    // endregion
+
+    // region Render Pagination
+    private renderPagination(): void {
+        if (!this.options.enablePagination || this.options.enableInfiniteScroll || !this.paginationElement || !this.paginationData) {
+            return;
+        }
+
+        const { current_page, last_page, total } = this.paginationData;
+
+        // Create pagination info
+        const startItem = ((current_page - 1) * this.options.itemsPerPage!) + 1;
+        const endItem = Math.min(current_page * this.options.itemsPerPage!, total);
+
+        // Create pagination HTML
+        this.paginationElement.innerHTML = `
+            <div class="flex items-center text-sm text-gray-600">
+                Showing ${startItem}-${endItem} of ${total} platforms
+            </div>
+            <div class="flex items-center space-x-2">
+                <button class="pagination-btn prev-btn px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded disabled:opacity-50"
+                        ${current_page <= 1 ? 'disabled' : ''}>
+                    Previous
+                </button>
+                <div class="flex space-x-1">
+                    ${this.generatePageNumbers(current_page, last_page)}
+                </div>
+                <button class="pagination-btn next-btn px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded disabled:opacity-50"
+                        ${current_page >= last_page ? 'disabled' : ''}>
+                    Next
+                </button>
+            </div>
+        `;
+
+        // Add event listeners
+        this.attachPaginationEvents();
+
+        // Append to container if not already present
+        if (this.container && !this.container.contains(this.paginationElement)) {
+            this.paginationElement.classList.add('pagination-container');
+            this.container.appendChild(this.paginationElement);
+        }
+    }
+    // endregion
+
+    // region Generate Page Numbers
+    private generatePageNumbers(currentPage: number, totalPages: number): string {
+        const pages: string[] = [];
+        const showPages = 5; // Number of page buttons to show
+
+        let startPage = Math.max(1, currentPage - Math.floor(showPages / 2));
+        let endPage = Math.min(totalPages, startPage + showPages - 1);
+
+        // Adjust if we're near the end
+        if (endPage - startPage < showPages - 1) {
+            startPage = Math.max(1, endPage - showPages + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            const isActive = i === currentPage;
+            pages.push(`
+                <button class="page-btn px-3 py-2 text-sm rounded ${isActive ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}"
+                        data-page="${i}" ${isActive ? 'disabled' : ''}>
+                    ${i}
+                </button>
+            `);
+        }
+
+        return pages.join('');
+    }
+    // endregion
+
+    // region Attach Pagination Events
+    private attachPaginationEvents(): void {
+        if (!this.paginationElement) return;
+
+        // Previous button
+        const prevBtn = this.paginationElement.querySelector('.prev-btn');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if (this.currentPage > 1) {
+                    this.loadPage(this.currentPage - 1);
+                }
+            });
+        }
+
+        // Next button
+        const nextBtn = this.paginationElement.querySelector('.next-btn');
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                if (this.paginationData && this.currentPage < this.paginationData.last_page) {
+                    this.loadPage(this.currentPage + 1);
+                }
+            });
+        }
+
+        // Page number buttons
+        const pageButtons = this.paginationElement.querySelectorAll('.page-btn');
+        pageButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const target = e.target as HTMLElement;
+                const page = parseInt(target.dataset.page || '1');
+                this.loadPage(page);
+            });
+        });
+    }
+    // endregion
+
+    // region Setup Infinite Scroll
+    private setupInfiniteScroll(): void {
+        if (!this.options.enableInfiniteScroll || !this.container) return;
+
+        const sentinel = this.createElement('div', 'h-4 w-full flex justify-center items-center p-4');
+        sentinel.innerHTML = `
+            <div class="text-sm text-gray-500">
+                <span class="loading-more hidden">Loading more platforms...</span>
+                <span class="load-more-btn cursor-pointer text-blue-500 hover:text-blue-700">Load more platforms</span>
+            </div>
+        `;
+
+        this.container.appendChild(sentinel);
+
+        // Add click handler for manual load more
+        const loadMoreBtn = sentinel.querySelector('.load-more-btn');
+        const loadingText = sentinel.querySelector('.loading-more');
+
+        if (loadMoreBtn && loadingText) {
+            loadMoreBtn.addEventListener('click', async () => {
+                if (!this.paginationData?.has_more_pages) return;
+
+                loadMoreBtn.classList.add('hidden');
+                loadingText.classList.remove('hidden');
+
+                try {
+                    await this.loadMoreData();
+                } finally {
+                    loadingText.classList.add('hidden');
+                    if (this.paginationData?.has_more_pages) {
+                        loadMoreBtn.classList.remove('hidden');
+                    } else {
+                        sentinel.innerHTML = '<div class="text-sm text-gray-400 text-center">No more platforms to load</div>';
+                    }
+                }
+            });
+        }
+
+        // Optional: Auto-load on scroll
+        if (this.options.enableLazyLoading) {
+            const sentinelObserver = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && this.paginationData?.has_more_pages && !this.isLoading) {
+                    this.loadMoreData();
+                }
+            }, {
+                rootMargin: '100px'
+            });
+
+            sentinelObserver.observe(sentinel);
+        }
+    }
+    // endregion
+
+    // region Search Functionality
+    public search(query: string): void {
+        this.searchQuery = query.trim();
+        this.currentPage = 1;
+        this.data = [];
+        this.dataCache.clear();
+
+        if (this.options.apiEndpoint) {
+            this.loadInitialData(1).catch(console.error);
+        } else {
+            // Local search fallback
+            const filteredData = this.data.filter(item =>
+                item.uid.toLowerCase().includes(query.toLowerCase()) ||
+                item.siteName?.toLowerCase().includes(query.toLowerCase()) ||
+                item.location?.toLowerCase().includes(query.toLowerCase()) ||
+                item.status.toLowerCase().includes(query.toLowerCase())
+            );
+
+            if (filteredData.length === 0) {
+                this.showNoData();
+            } else {
+                this.data = filteredData;
+                this.renderAll();
+            }
+        }
+    }
+    // endregion
+
+    // region Clear Search
+    public clearSearch(): void {
+        this.searchQuery = '';
+        this.currentPage = 1;
+        this.data = [];
+        this.dataCache.clear();
+
+        if (this.options.apiEndpoint) {
+            this.loadInitialData(1).catch(console.error);
+        }
+    }
+    // endregion
+
+    // region Get Pagination Info
+    public getPaginationInfo(): PaginationData | null {
+        return this.paginationData;
+    }
+    // endregion
+
+    // region Get Current Page
+    public getCurrentPage(): number {
+        return this.currentPage;
+    }
+    // endregion
+
+    // region Get Loading State
+    public getLoadingState(): boolean {
+        return this.isLoading;
+    }
     // endregion
 
     // region Chart Helper Functions
@@ -221,7 +694,6 @@ class AirQualityCardManager {
         }
         return stops[stops.length - 1][1];
     }
-
     // endregion
 
     // region Color Interpolation
@@ -233,7 +705,6 @@ class AirQualityCardManager {
         const b = Math.round(c1.b + (c2.b - c1.b) * factor);
         return `rgb(${r}, ${g}, ${b})`;
     }
-
     // endregion
 
     // region Hex to RGB Conversion
@@ -246,7 +717,6 @@ class AirQualityCardManager {
             b: bigint & 255
         };
     }
-
     // endregion
 
     // region Create Gauge Chart
@@ -278,7 +748,6 @@ class AirQualityCardManager {
             noise: ' dBA'
         };
 
-        // Store reference to manager methods for use in chart events
         const managerRef = this;
 
         const chart = Highcharts.chart({
@@ -335,9 +804,7 @@ class AirQualityCardManager {
             accessibility: {enabled: false},
             title: {text: null},
             credits: {enabled: false},
-            tooltip: {
-                enabled: false
-            },
+            tooltip: {enabled: false},
             pane: {
                 center: ['50%', '70%'],
                 size: '150%',
@@ -415,10 +882,8 @@ class AirQualityCardManager {
             }]
         });
 
-        // Store chart instance
         this.chartInstances.set(`${cardId}-${type}`, chart);
     }
-
     // endregion
 
     // region Get AQI Color
@@ -435,11 +900,9 @@ class AirQualityCardManager {
         const category = categories.find(cat => aqiValue >= cat.min && aqiValue <= cat.max);
         return category ? category.color : '#7F1D1D'; // Default untuk >500
     }
-
     // endregion
 
     // region Helper Functions for Date Validation
-
     private isValidTimestamp(timestamp: number | undefined | null): boolean {
         return timestamp !== undefined &&
             timestamp !== null &&
@@ -480,7 +943,6 @@ class AirQualityCardManager {
 
                 return new Intl.DateTimeFormat(locale, dateOptions).format(date);
             } else {
-                // Untuk format datetime
                 const dateOptions: Intl.DateTimeFormatOptions = {
                     timeZone: timezone,
                     month: 'short',
@@ -523,7 +985,6 @@ class AirQualityCardManager {
             return 'Invalid Date';
         }
     }
-
     // endregion
 
     // region Create AirIndex Chart dengan Adaptive Range
@@ -580,10 +1041,10 @@ class AirQualityCardManager {
         const dataMaxY = Math.max(...yValues);
 
         // Set range berdasarkan nilai maksimal data
-        const minY = Math.min(0, dataMinY); // Selalu mulai dari 0 atau lebih rendah
+        const minY = Math.min(0, dataMinY);
         let maxY: number;
         if (dataMaxY <= 50) {
-            maxY = Math.max(50, dataMaxY + 5); // Tambah sedikit padding
+            maxY = Math.max(50, dataMaxY + 5);
         } else if (dataMaxY <= 100) {
             maxY = Math.max(100, dataMaxY + 10);
         } else if (dataMaxY <= 150) {
@@ -592,7 +1053,6 @@ class AirQualityCardManager {
             maxY = Math.max(300, dataMaxY + 20);
         }
 
-        // Gunakan helper function dengan range adaptif
         const gradient = createSmoothGradient(minY, maxY);
         const chart = Highcharts.chart({
             chart: {
@@ -787,80 +1247,64 @@ class AirQualityCardManager {
 
         this.chartInstances.set(`${cardId}-airIndex`, chart);
     }
-
     // endregion
 
-    // region Load Initial Data
-    private async loadInitialData(): Promise<void> {
-        try {
-            console.log('🔄 Loading initial data from API...');
-            const response = await fetch(this.options.apiEndpoint!);
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const result = await response.json();
-
-            // Handle both a direct array and object with data property
-            const initialData: AirQualityData[] = Array.isArray(result) ? result : result.data || [];
-
-            // Set initial data and cache
-            this.data = initialData.map(item => ({
-                ...item,
-                lastUpdated: item.lastUpdated || new Date()
-            }));
-
-            // Update cache
-            this.data.forEach(item => {
-                this.dataCache.set(item.uid, item);
-            });
-
-            this.lastUpdateTime = new Date();
-            this.updateConnectionStatus('connected');
-
-            console.log(`✅ Loaded ${this.data.length} stations successfully`);
-
-            // Auto-render if container is available
-            if (this.container) {
-                this.renderAll();
-            }
-
-            // Trigger callback if provided
-            if (this.options.onDataUpdate) {
-                this.options.onDataUpdate(this.data);
-            }
-
-        } catch (error) {
-            console.error('❌ Error loading initial data:', error);
-            this.updateConnectionStatus('error');
-            this.data = [];
-        }
+    // region Create Element
+    private createElement(tag: string, className?: string, textContent?: string): HTMLElement {
+        const element = document.createElement(tag);
+        if (className) element.className = className;
+        if (textContent) element.textContent = textContent;
+        return element;
     }
-
     // endregion
 
-    // region Handle Start RealTime Updates
+    // region Get Video Link for Point
+    private getVideoLinkForPoint(cardId: string, timestamp: number): {
+        uid: string,
+        linkVideoId: string,
+        linkVideoStatus: string,
+        linkVideoRecorded: string
+    } {
+        const cardData = this.data.find(item => item.uid === cardId.replace(/card-|-\d+$/g, ''));
+        const cardDataPoint = cardData?.airIndexData?.find(point => point.timestamp === (timestamp / 1000))
+        return {
+            uid: cardData?.uid,
+            linkVideoId: cardDataPoint?.link_video_id,
+            linkVideoStatus: cardDataPoint?.link_video_status,
+            linkVideoRecorded: cardDataPoint?.link_video_recorded
+        };
+    }
+    // endregion
+
+    // region Start Real Time Updates
     private async startRealTimeUpdates(): Promise<void> {
         if (!this.options.apiEndpoint) return;
 
         const updateData = async () => {
             try {
                 console.log('🔄 Fetching real-time data...');
-                const response = await fetch(this.options.apiEndpoint!);
+
+                const url = new URL(this.options.apiEndpoint!, window.location.origin);
+                url.searchParams.set('page', this.currentPage.toString());
+                url.searchParams.set('per_page', this.options.itemsPerPage?.toString() || '20');
+
+                if (this.searchQuery) {
+                    url.searchParams.set('search', this.searchQuery);
+                }
+
+                const response = await fetch(url.toString());
 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
-                const {data} = await response.json();
-                const newData: AirQualityData[] = data;
+                const result = await response.json();
+                const newData: AirQualityData[] = Array.isArray(result.data) ? result.data : [];
+
                 await this.updateExistingData(newData);
 
                 this.lastUpdateTime = new Date();
                 this.updateConnectionStatus('connected');
-
-                // console.log(`✅ Data updated successfully at ${this.lastUpdateTime.toLocaleTimeString()}`);
 
             } catch (error) {
                 console.error('❌ Error fetching real-time data:', error);
@@ -874,7 +1318,6 @@ class AirQualityCardManager {
         // Setup periodic updates
         this.realTimeInterval = window.setInterval(updateData, this.options.realTimeUpdateInterval!);
     }
-
     // endregion
 
     // region Update Existing Data
@@ -882,36 +1325,26 @@ class AirQualityCardManager {
         const updatedCards: string[] = [];
 
         newData.forEach(newItem => {
-            // Find existing data index
             const existingIndex = this.data.findIndex(item => item.uid === newItem.uid);
 
             if (existingIndex !== -1) {
                 const oldItem = this.data[existingIndex];
 
-                // Update data array
                 this.data[existingIndex] = {...newItem, lastUpdated: newItem.lastUpdated};
-
-                // Update cache
                 this.dataCache.set(newItem.uid, this.data[existingIndex]);
 
-                // Update UI elements for this card
                 this.updateCardUI(newItem.uid, oldItem, this.data[existingIndex]);
                 updatedCards.push(newItem.uid);
             } else {
-                // Add new card if not exists
                 this.data.push({...newItem, lastUpdated: new Date()});
                 this.dataCache.set(newItem.uid, newItem);
             }
         });
 
-        // Trigger callback if provided
         if (this.options.onDataUpdate) {
             this.options.onDataUpdate(this.data);
         }
-
-        // console.log(`📊 Updated ${updatedCards.length} cards: ${updatedCards.join(', ')}`);
     }
-
     // endregion
 
     // region Update Card UI
@@ -919,18 +1352,14 @@ class AirQualityCardManager {
         const cardElement = document.getElementById(`card-${cardId}-${this.getCardIndex(cardId)}`);
         if (!cardElement) return;
 
-        // Update status badge if changed
         if (oldData.status !== newData.status) {
-            console.log(newData)
             this.updateStatusBadge(cardElement, newData);
         }
 
-        // Update online status if changed
         if (oldData.isOnline !== newData.isOnline) {
             this.updateOnlineStatus(cardElement, newData.isOnline);
         }
 
-        // Update charts with new metric values
         if (newData.metrics) {
             Object.entries(newData.metrics).forEach(([metric, data]) => {
                 if (data !== undefined && oldData.metrics?.[metric as keyof typeof oldData.metrics] !== data) {
@@ -939,12 +1368,10 @@ class AirQualityCardManager {
             });
         }
 
-        // Update airIndex chart if data changed
         if (newData.airIndexData && JSON.stringify(oldData.airIndexData) !== JSON.stringify(newData.airIndexData)) {
             this.updateAirIndexChart(`card-${cardId}-${this.getCardIndex(cardId)}`, newData.airIndexData);
         }
 
-        // Update last updated timestamp
         const lastUpdatedElement = cardElement.querySelector('.last-updated');
         if (lastUpdatedElement && newData.lastUpdated) {
             const platformTimezone = newData.timezone || 'Asia/Jakarta';
@@ -956,20 +1383,17 @@ class AirQualityCardManager {
             lastUpdatedElement.textContent = `Last updated: ${formattedLastUpdated} (${timezoneShort})`;
         }
     }
-
     // endregion
 
     // region Get Card Index
     private getCardIndex(cardId: string): number {
         return this.data.findIndex(item => item.uid === cardId);
     }
-
     // endregion
 
     // region Update Status Badge
     private updateStatusBadge(cardElement: HTMLElement, data: AirQualityData): void {
         const badge = cardElement.querySelector('.status-badge');
-        console.log(badge)
         if (!badge) return;
 
         const emoji = badge.querySelector('div:first-child');
@@ -991,10 +1415,8 @@ class AirQualityCardManager {
             colorCode = 'bg-red-400';
         }
 
-        // Update background color
         badge.className = badge.className.replace(/bg-\w+-200/g, colorCode);
     }
-
     // endregion
 
     // region Update Online Status
@@ -1010,7 +1432,6 @@ class AirQualityCardManager {
             text.textContent = isOnline ? 'Online' : 'Offline';
         }
     }
-
     // endregion
 
     // region Update AirIndex Chart
@@ -1030,10 +1451,7 @@ class AirQualityCardManager {
         const chart = this.chartInstances.get(chartKey);
 
         if (chart && chart.series && chart.series[0]) {
-            // Get current source selection, default to 'pm25_pm10' if not set
             const currentSource = this.currentAQISource.get(cardId) || 'pm25_pm10';
-
-            // Convert data berdasarkan current source yang dipilih
             const convertedData = this.convertAirIndexDataForChart(airIndexData, currentSource);
 
             const yValues = currentSource === 'pm25_pm10' ? convertedData.map(item => item.value) : convertedData.map(item => item.value_tsp);
@@ -1041,7 +1459,6 @@ class AirQualityCardManager {
             const maxY = Math.max(100, Math.max(...yValues));
             const newGradient = createSmoothGradient(minY, maxY);
 
-            // Convert airIndex data to Highcharts format dengan current source
             const chartData = convertedData.map((item, index) => {
                 const markerColor = this.getAQIColor(item.value);
                 const isLastPoint = index === convertedData.length - 1;
@@ -1111,7 +1528,6 @@ class AirQualityCardManager {
                 }
             });
 
-            // Update series dengan data dan gradient baru, pertahankan current source
             const series = chart.series[0];
 
             series.update({
@@ -1120,10 +1536,8 @@ class AirQualityCardManager {
                 fillColor: newGradient
             }, true);
 
-            // Update Y-axis range
             chart.yAxis[0].setExtremes(minY, maxY, true);
 
-            // Update x-axis range
             if (chartData.length > 0) {
                 chart.xAxis[0].setExtremes(
                     chartData[0].x,
@@ -1132,11 +1546,9 @@ class AirQualityCardManager {
                 );
             }
 
-            // Update dropdown text to reflect current source
             this.updateDropdownText(cardId, currentSource);
         }
     }
-
     // endregion
 
     // region Update Dropdown Text
@@ -1153,465 +1565,20 @@ class AirQualityCardManager {
             }
         }
     }
-
-// endregion
-
-    private getVideoLinkForPoint(cardId: string, timestamp: number): {
-        uid: string,
-        linkVideoId: string,
-        linkVideoStatus: string,
-        linkVideoRecorded: string
-    } {
-        const cardData = this.data.find(item => item.uid === cardId.replace(/card-|-\d+$/g, ''));
-        const cardDataPoint = cardData?.airIndexData?.find(point => point.timestamp === (timestamp / 1000))
-        return {
-            uid: cardData?.uid,
-            linkVideoId: cardDataPoint?.link_video_id,
-            linkVideoStatus: cardDataPoint?.link_video_status,
-            linkVideoRecorded: cardDataPoint?.link_video_recorded
-        };
-    }
-
-    // region Socket.IO Implementation
-    private initSocketIO(): void {
-        if (!this.options.socketIOUrl || !this.options.socketInstanceName) return;
-
-        try {
-            // Setup callbacks for socket events
-            const socketCallbacks: SocketEventCallbacks = {
-                onConnect: (socketId) => {
-                    this.updateConnectionStatus('connected');
-                },
-                onDisconnect: (reason) => {
-                    this.updateConnectionStatus('disconnected');
-                },
-                onConnectError: (error) => {
-                    this.updateConnectionStatus('error');
-                },
-                onReconnect: (attemptNumber) => {
-                    this.updateConnectionStatus('connected');
-                },
-                onReconnectError: (error) => {
-                    this.updateConnectionStatus('error');
-                },
-                onReconnectFailed: () => {
-                    this.updateConnectionStatus('error');
-                },
-                onLoggerData: (loggerData) => {
-                    this.handleLoggerDataUpdate(loggerData);
-                },
-                onBulkDataUpdate: (bulkData) => {
-                    this.updateExistingData(bulkData);
-                },
-                onStationStatusChange: (data) => {
-                    this.updateStationStatus(data.uid, data.status, data.isOnline);
-                },
-                onHeartbeat: () => {
-                    this.lastUpdateTime = new Date();
-                    console.log('💓 Heartbeat received');
-                },
-                onNotification: (data) => {
-                    console.log('📢 Notification:', data);
-                },
-                onConnectionStatusChange: (status) => {
-                    this.connectionStatus = status;
-                    if (this.options.onConnectionStatus) {
-                        this.options.onConnectionStatus(status);
-                    }
-                    this.updateConnectionIndicator(status);
-                }
-            };
-
-            // Get or create socket instance
-            this.socketClient = SocketClient.getInstance(
-                this.options.socketInstanceName,
-                this.options.socketIOUrl,
-                this.options.socketIOOptions,
-                socketCallbacks
-            );
-
-            console.log(`🔌 Socket.IO initialized for Air Quality Manager with instance: ${this.options.socketInstanceName}`);
-
-        } catch (error) {
-            console.error('❌ Failed to initialize Socket.IO for Air Quality Manager:', error);
-            this.updateConnectionStatus('error');
-        }
-    }
-
     // endregion
 
-    // region Handle Logger Data Update
-    private handleLoggerDataUpdate(loggerData: LoggerEventData): void {
-        // Find the corresponding air quality data
-        const existingIndex = this.data.findIndex(item => item.uid === loggerData.uid);
-
-        if (existingIndex !== -1) {
-            const oldData = {...this.data[existingIndex]};
-
-            // Calculate AQI from PM2.5 if not provided
-            const aqiValue = loggerData.aqi_value || this.calculateAQIFromPM25(loggerData.pm_25);
-            const aqiValueTsp = loggerData.airIndexData[0].value_tsp || this.calculateAQIFromTSP(loggerData.tsp);
-
-            // Update airIndex data with new point
-            const updatedAirIndexData = this.updateAirIndexData(
-                oldData.airIndexData || [],
-                loggerData.datetime_unix,
-                aqiValue,
-                aqiValueTsp,
-                loggerData.pm_25,
-                loggerData.pm_10,
-                loggerData.tsp,
-                loggerData.link_video_id
-            );
-
-            // Update metrics with new logger data
-            const updatedData: AirQualityData = {
-                ...this.data[existingIndex],
-                metrics: {
-                    ...this.data[existingIndex].metrics,
-                    pm10: {
-                        ...this.data[existingIndex].metrics?.pm10,
-                        value: loggerData.pm_10
-                    },
-                    pm25: {
-                        ...this.data[existingIndex].metrics?.pm25,
-                        value: loggerData.pm_25
-                    },
-                    tsp: {
-                        ...this.data[existingIndex].metrics?.tsp,
-                        value: loggerData.tsp
-                    },
-                    noise: {
-                        ...this.data[existingIndex].metrics?.noise,
-                        value: loggerData.noise
-                    }
-                },
-                airIndexData: loggerData.airIndexData || updatedAirIndexData,
-                lastUpdated: new Date(loggerData.datetime_unix * 1000),
-                isOnline: true // Update online status when receiving data
-            };
-
-            // Update data array
-            this.data[existingIndex] = updatedData;
-
-            // Update cache
-            this.dataCache.set(loggerData.uid, updatedData);
-
-            // Update UI for this specific card (including airIndex chart)
-            this.updateCardUI(loggerData.uid, oldData, updatedData);
-
-            // Trigger callback if provided
-            if (this.options.onDataUpdate) {
-                this.options.onDataUpdate([updatedData]);
-            }
-
-            console.log(`📊 Updated station ${loggerData.uid} with real-time logger data and airIndex`);
-        } else {
-            console.warn(`⚠️ Station ${loggerData.uid} not found in current data`);
-        }
-    }
-
-    // endregion
-
-    // region Calculate AQI from PM2.5
-    private calculateAQIFromPM25(pm25: number): number {
-        // AQI calculation based on PM2.5 concentration
-        // Based on a US EPA standard
-        const breakpoints = [
-            {cLow: 0, cHigh: 12, aqiLow: 0, aqiHigh: 50},      // Good
-            {cLow: 12.1, cHigh: 35.4, aqiLow: 51, aqiHigh: 100}, // Moderate
-            {cLow: 35.5, cHigh: 55.4, aqiLow: 101, aqiHigh: 150}, // Unhealthy for Sensitive
-            {cLow: 55.5, cHigh: 150.4, aqiLow: 151, aqiHigh: 200}, // Unhealthy
-            {cLow: 150.5, cHigh: 250.4, aqiLow: 201, aqiHigh: 300}, // Very Unhealthy
-            {cLow: 250.5, cHigh: 350.4, aqiLow: 301, aqiHigh: 400}, // Hazardous
-            {cLow: 350.5, cHigh: 500.4, aqiLow: 401, aqiHigh: 500}  // Hazardous
-        ];
-
-        for (const bp of breakpoints) {
-            if (pm25 >= bp.cLow && pm25 <= bp.cHigh) {
-                const aqi = ((bp.aqiHigh - bp.aqiLow) / (bp.cHigh - bp.cLow)) * (pm25 - bp.cLow) + bp.aqiLow;
-                return Math.round(aqi);
-            }
-        }
-
-        // If concentration is above the highest breakpoint
-        return 500;
-    }
-
-    // endregion
-
-    private calculateAQIFromTSP(tsp: number): number {
-        // Implementasi perhitungan AQI dari TSP
-        // Sesuaikan dengan standar yang digunakan di sistem Anda
-        if (tsp <= 230) return Math.round((50 / 230) * tsp);
-        if (tsp <= 400) return Math.round(50 + ((100 - 50) / (400 - 230)) * (tsp - 230));
-        if (tsp <= 520) return Math.round(100 + ((150 - 100) / (520 - 400)) * (tsp - 400));
-        if (tsp <= 650) return Math.round(150 + ((200 - 150) / (650 - 520)) * (tsp - 520));
-        if (tsp <= 800) return Math.round(200 + ((300 - 200) / (800 - 650)) * (tsp - 650));
-        return Math.min(500, Math.round(300 + ((500 - 300) / (1200 - 800)) * (tsp - 800)));
-    }
-
-    // region Update AirIndex Data
-    private updateAirIndexData(
-        existingAirIndex: Array<{
-            timestamp: number;
-            value: number;
-            value_tsp: number;
-            pm25: number;
-            pm10: number;
-            tsp: number;
-            link_video_id?: string;
-            link_video_status?: string;
-            link_video_recorded?: string;
-            aqi_from: string;
-        }>,
-        newTimestamp: number,
-        newValue: number,
-        newValueTsp: number,
-        pm25: number,
-        pm10: number,
-        tsp: number,
-        linkVideoId?: string
-    ): Array<{
-        timestamp: number;
-        value: number;
-        value_tsp: number;
-        pm25: number;
-        pm10: number;
-        tsp: number;
-        link_video_id?: string;
-        link_video_status?: string;
-        link_video_recorded?: string;
-        aqi_from: string;
-    }> {
-
-        // Create a copy of existing airIndex data
-        let updatedAirIndex = [...existingAirIndex];
-
-        // Add new data point with video information
-        const newDataPoint = {
-            timestamp: newTimestamp,
-            value: newValue,
-            value_tsp: newValueTsp,
-            pm25: pm25,
-            pm10: pm10,
-            tsp: tsp,
-            link_video_id: linkVideoId,
-            link_video_status: linkVideoId ? 'pending' : undefined, // Set initial status jika ada video
-            link_video_recorded: undefined, // Will be updated when recording completes
-            aqi_from: "PM 2.5"
-        };
-
-        updatedAirIndex.push(newDataPoint);
-
-        // Sort by timestamp
-        updatedAirIndex.sort((a, b) => a.timestamp - b.timestamp);
-
-        // Keep only last 144 points (12 hours with 5-minute intervals)
-        const maxPoints = 144;
-        if (updatedAirIndex.length > maxPoints) {
-            updatedAirIndex = updatedAirIndex.slice(-maxPoints);
-        }
-
-        // Remove duplicates based on timestamp
-        return updatedAirIndex.filter((item, index, array) =>
-            index === 0 || item.timestamp !== array[index - 1].timestamp
-        );
-    }
-
-    // endregion
-
-    // region Handle Update Single Station
-    private updateSingleStation(stationData: AirQualityData): void {
-        const existingIndex = this.data.findIndex(item => item.uid === stationData.uid);
-
-        if (existingIndex !== -1) {
-            const oldData = this.data[existingIndex];
-            this.data[existingIndex] = {...stationData, lastUpdated: new Date()};
-            this.updateCardUI(stationData.uid, oldData, this.data[existingIndex]);
-        }
-    }
-
-    // endregion
-
-    // region Update Station Status
-    private updateStationStatus(stationId: string, status: string, isOnline: boolean): void {
-        const stationIndex = this.data.findIndex(item => item.uid === stationId);
-
-        if (stationIndex !== -1) {
-            const oldData = this.data[stationIndex];
-            this.data[stationIndex] = {
-                ...this.data[stationIndex],
-                status: status as any,
-                isOnline,
-                lastUpdated: new Date()
-            };
-
-            this.updateCardUI(stationId, oldData, this.data[stationIndex]);
-        }
-    }
-
-    // endregion
-
-    // region Update Connection Status
-    private updateConnectionStatus(status: 'connected' | 'disconnected' | 'error'): void {
-        this.connectionStatus = status;
-
-        if (this.options.onConnectionStatus) {
-            this.options.onConnectionStatus(status);
-        }
-
-        // Update UI indicator if exists
-        this.updateConnectionIndicator(status);
-    }
-
-    // endregion
-
-    // region Update Connection Indicator
-    private updateConnectionIndicator(status: 'connected' | 'disconnected' | 'error'): void {
-        const indicator = document.querySelector('.connection-status');
-        if (!indicator) return;
-
-        const statusConfig = {
-            connected: {color: 'bg-green-500', text: 'Connected'},
-            disconnected: {color: 'bg-yellow-500', text: 'Disconnected'},
-            error: {color: 'bg-red-500', text: 'Error'}
-        };
-
-        const config = statusConfig[status];
-        indicator.className = `connection-status flex items-center gap-2 ${config.color}`;
-        indicator.textContent = config.text;
-    }
-
-    // endregion
-
-    // region Public API Methods
-    public startRealTimeMode(): void {
-        // Start Socket.IO for real-time updates if configured
-        if (this.options.enableSocketIO && this.options.socketIOUrl) {
-            this.initSocketIO();
-        }
-
-        // Start periodic polling only if Socket.IO is not enabled
-        if (this.options.apiEndpoint && this.options.realTimeUpdateInterval) {
-            this.startRealTimeUpdates().catch((error) => {
-                console.error(error);
-            })
-        }
-    }
-
-    public stopRealTimeMode(): void {
-        if (this.realTimeInterval) {
-            clearInterval(this.realTimeInterval);
-            this.realTimeInterval = undefined;
-        }
-
-        if (this.socket) {
-            this.socket.disconnect();
-            this.socket = undefined;
-        }
-    }
-
-    public async refreshData(): Promise<void> {
-        if (this.options.apiEndpoint) {
-            await this.loadInitialData();
-        }
-    }
-
-    public getConnectionStatus(): 'connected' | 'disconnected' | 'error' {
-        return this.connectionStatus;
-    }
-
-    public getLastUpdateTime(): Date {
-        return this.lastUpdateTime;
-    }
-
-    public async forceUpdate(): Promise<void> {
-        if (this.options.apiEndpoint) {
-            return fetch(this.options.apiEndpoint)
-                .then(response => response.json())
-                .then(result => {
-                    const data = Array.isArray(result) ? result : result.data || [];
-                    return this.updateExistingData(data);
-                });
-        }
-        return Promise.resolve();
-    }
-
-    public emitToServer(event: string, data: any): void {
-        if (this.socket && this.socket.connected) {
-            this.socket.emit(event, data);
-            console.log(`📤 Emitted event '${event}' to server:`, data);
-        } else {
-            console.warn('⚠️ Socket.IO not connected. Cannot emit event:', event);
-        }
-    }
-
-    public getSocketId(): string | undefined {
-        return this.socket?.id;
-    }
-
-    public isSocketConnected(): boolean {
-        return this.socket?.connected || false;
-    }
-
-    public getStationCount(): number {
-        return this.data.length;
-    }
-
-    public getOnlineStationCount(): number {
-        return this.data.filter(station => station.isOnline).length;
-    }
-
-    // endregion
-
-    // region Load Data
-    async loadData(dataSource: AirQualityData[] | string | (() => Promise<AirQualityData[]>)): Promise<void> {
-        try {
-            if (Array.isArray(dataSource)) {
-                this.data = dataSource;
-            } else if (typeof dataSource === 'string') {
-                const response = await fetch(dataSource);
-                const {data} = await response.json()
-                this.data = data
-            } else if (typeof dataSource === 'function') {
-                this.data = await dataSource();
-            }
-        } catch (error) {
-            console.error('Error loading data:', error);
-            this.data = [];
-        }
-    }
-
-    // endregion
-
-    // region Create Element
-    private createElement(tag: string, className?: string, textContent?: string): HTMLElement {
-        const element = document.createElement(tag);
-        if (className) element.className = className;
-        if (textContent) element.textContent = textContent;
-        return element;
-    }
-
-    // endregion
-
-    // region Filter AirIndex Source (Updated untuk menggunakan data dari database)
+    // region Filter AirIndex Source
     private filterAirIndexSource(cardId: string, sourceType: 'pm25_pm10' | 'tsp'): void {
-        // Update current source tracking
         this.currentAQISource.set(cardId, sourceType);
 
-        // Get card data
         const cardData = this.data.find(item => item.uid === cardId.replace(/card-|-\d+$/g, ''));
         if (!cardData || !cardData.airIndexData) return;
 
-        // Convert data untuk chart berdasarkan source yang dipilih
         const chartData = this.convertAirIndexDataForChart(cardData.airIndexData, sourceType);
-        // Update chart dengan data baru
         this.updateAirIndexChart(cardId, chartData);
 
         console.log(`🔄 Updated AQI chart for ${cardId} to use ${sourceType} source`);
     }
-
     // endregion
 
     // region Convert AirIndex Data For Chart
@@ -1655,14 +1622,68 @@ class AirQualityCardManager {
             link_video_recorded: item.link_video_recorded
         }));
     }
+    // endregion
 
+    // region Update Chart Value
+    updateChartValue(cardId: string, chartType: 'pm10' | 'pm25' | 'pm1' | 'noise', newValue: number): void {
+        const chartKey = `${cardId}-${chartType}`;
+        const chart = this.chartInstances.get(chartKey);
+
+        if (chart && chart.series && chart.series[0]) {
+            const series = chart.series[0];
+            const currentValue = series.points[0].y;
+            let step = 0;
+            const steps = 30;
+
+            const interval = setInterval(() => {
+                step++;
+                const interpolated = currentValue + (newValue - currentValue) * (step / steps);
+                series.points[0].update(interpolated, true, false);
+
+                if (step >= steps) {
+                    clearInterval(interval);
+                    series.setData([newValue], true, {duration: 0});
+                }
+            }, 1000 / steps);
+        }
+    }
+    // endregion
+
+    // region Render All
+    renderAll(): void {
+        if (!this.container) {
+            console.error('Container not found. Please set container or use setContainer()');
+            return;
+        }
+
+        this.container.innerHTML = '';
+
+        if (this.data.length === 0) {
+            this.showNoData();
+            return;
+        }
+
+        const batchSize = this.options.batchSize || 20;
+        const fragment = document.createDocumentFragment();
+
+        this.data.forEach((data, index) => {
+            const card = this.createSingleCard(data, index);
+            fragment.appendChild(card);
+        });
+
+        this.container.appendChild(fragment);
+
+        // Setup infinite scroll if enabled
+        if (this.options.enableInfiniteScroll && this.paginationData?.has_more_pages) {
+            this.setupInfiniteScroll();
+        }
+    }
     // endregion
 
     // region Create Single Card
     private createSingleCard(data: AirQualityData, index: number): HTMLElement {
         const cardId = `card-${data.uid}-${index}`;
 
-        // Main card container
         const card = this.createElement('div', 'card !mb-0 cursor-pointer');
         card.dataset.index = index.toString();
         card.id = cardId;
@@ -1830,7 +1851,6 @@ class AirQualityCardManager {
         const airIndexSection = this.createElement('div', 'mt-4');
         const airIndexTitle = this.createElement('div', 'font-bold text-[14px]', 'Air Quality Index');
         const airIndexSubTitle = this.createElement('div', 'text-[11px] mb-4 flex items-center gap-2');
-        // const subText = this.createElement('span', '', 'Based on PM 2.5 / PM 10');
         const ddWrap = this.createElement('div', 'relative');
         const ddButton = this.createElement('button', 'inline-flex items-center gap-1 text-xs hover:bg-gray-50 dark:hover:bg-gray-800') as HTMLButtonElement;
         ddButton.id = `${cardId}-dropdownButton`;
@@ -1875,7 +1895,6 @@ class AirQualityCardManager {
         ddWrap.appendChild(ddButton);
         ddWrap.appendChild(ddMenu);
 
-        // airIndexSubTitle.appendChild(subText);
         airIndexSubTitle.appendChild(ddWrap);
 
         const airIndexChart = this.createElement('div', 'chart-one');
@@ -1933,100 +1952,381 @@ class AirQualityCardManager {
 
         return card;
     }
-
     // endregion
 
-    // region Update Gauge Chart Value
-    updateChartValue(cardId: string, chartType: 'pm10' | 'pm25' | 'pm1' | 'noise', newValue: number): void {
-        const chartKey = `${cardId}-${chartType}`;
-        const chart = this.chartInstances.get(chartKey);
+    // region Socket.IO Implementation
+    private initSocketIO(): void {
+        if (!this.options.socketIOUrl || !this.options.socketInstanceName) return;
 
-        if (chart && chart.series && chart.series[0]) {
-            const series = chart.series[0];
-            const currentValue = series.points[0].y;
-            let step = 0;
-            const steps = 30;
-
-            const interval = setInterval(() => {
-                step++;
-                const interpolated = currentValue + (newValue - currentValue) * (step / steps);
-                series.points[0].update(interpolated, true, false);
-
-                if (step >= steps) {
-                    clearInterval(interval);
-                    series.setData([newValue], true, {duration: 0});
+        try {
+            const socketCallbacks: SocketEventCallbacks = {
+                onConnect: (socketId) => {
+                    this.updateConnectionStatus('connected');
+                },
+                onDisconnect: (reason) => {
+                    this.updateConnectionStatus('disconnected');
+                },
+                onConnectError: (error) => {
+                    this.updateConnectionStatus('error');
+                },
+                onReconnect: (attemptNumber) => {
+                    this.updateConnectionStatus('connected');
+                },
+                onReconnectError: (error) => {
+                    this.updateConnectionStatus('error');
+                },
+                onReconnectFailed: () => {
+                    this.updateConnectionStatus('error');
+                },
+                onLoggerData: (loggerData) => {
+                    this.handleLoggerDataUpdate(loggerData);
+                },
+                onBulkDataUpdate: (bulkData) => {
+                    this.updateExistingData(bulkData);
+                },
+                onStationStatusChange: (data) => {
+                    this.updateStationStatus(data.uid, data.status, data.isOnline);
+                },
+                onHeartbeat: () => {
+                    this.lastUpdateTime = new Date();
+                    console.log('💓 Heartbeat received');
+                },
+                onNotification: (data) => {
+                    console.log('📢 Notification:', data);
+                },
+                onConnectionStatusChange: (status) => {
+                    this.connectionStatus = status;
+                    if (this.options.onConnectionStatus) {
+                        this.options.onConnectionStatus(status);
+                    }
+                    this.updateConnectionIndicator(status);
                 }
-            }, 1000 / steps);
+            };
+
+            this.socketClient = SocketClient.getInstance(
+                this.options.socketInstanceName,
+                this.options.socketIOUrl,
+                this.options.socketIOOptions,
+                socketCallbacks
+            );
+
+            console.log(`🔌 Socket.IO initialized for Air Quality Manager with instance: ${this.options.socketInstanceName}`);
+
+        } catch (error) {
+            console.error('❌ Failed to initialize Socket.IO for Air Quality Manager:', error);
+            this.updateConnectionStatus('error');
         }
     }
-
     // endregion
 
-    // region Render Batch
-    renderBatch(batch: AirQualityData[], startIndex: number): void {
-        if (!this.container) return;
+    // region Handle Logger Data Update
+    private handleLoggerDataUpdate(loggerData: LoggerEventData): void {
+        const existingIndex = this.data.findIndex(item => item.uid === loggerData.uid);
 
-        const fragment = document.createDocumentFragment();
-        batch.forEach((data, i) => {
-            const card = this.createSingleCard(data, startIndex + i);
-            fragment.appendChild(card);
-        });
+        if (existingIndex !== -1) {
+            const oldData = {...this.data[existingIndex]};
 
-        this.container.appendChild(fragment);
-    }
+            const aqiValue = loggerData.aqi_value || this.calculateAQIFromPM25(loggerData.pm_25);
+            const aqiValueTsp = loggerData.airIndexData[0].value_tsp || this.calculateAQIFromTSP(loggerData.tsp);
 
-    // endregion
+            const updatedAirIndexData = this.updateAirIndexData(
+                oldData.airIndexData || [],
+                loggerData.datetime_unix,
+                aqiValue,
+                aqiValueTsp,
+                loggerData.pm_25,
+                loggerData.pm_10,
+                loggerData.tsp,
+                loggerData.link_video_id
+            );
 
-    // region Render All
-    renderAll(): void {
-        if (!this.container) {
-            console.error('Container not found. Please set container or use setContainer()');
-            return;
-        }
+            const updatedData: AirQualityData = {
+                ...this.data[existingIndex],
+                metrics: {
+                    ...this.data[existingIndex].metrics,
+                    pm10: {
+                        ...this.data[existingIndex].metrics?.pm10,
+                        value: loggerData.pm_10
+                    },
+                    pm25: {
+                        ...this.data[existingIndex].metrics?.pm25,
+                        value: loggerData.pm_25
+                    },
+                    tsp: {
+                        ...this.data[existingIndex].metrics?.tsp,
+                        value: loggerData.tsp
+                    },
+                    noise: {
+                        ...this.data[existingIndex].metrics?.noise,
+                        value: loggerData.noise
+                    }
+                },
+                airIndexData: loggerData.airIndexData || updatedAirIndexData,
+                lastUpdated: new Date(loggerData.datetime_unix * 1000),
+                isOnline: true
+            };
 
-        this.container.innerHTML = '';
+            this.data[existingIndex] = updatedData;
+            this.dataCache.set(loggerData.uid, updatedData);
+            this.updateCardUI(loggerData.uid, oldData, updatedData);
 
-        const batchSize = this.options.batchSize || 20;
-        const initialBatch = this.data.slice(0, batchSize);
-        this.renderBatch(initialBatch, 0);
-
-        if (this.data.length > batchSize && this.options.enableLazyLoading) {
-            this.setupInfiniteScroll();
-        } else if (this.data.length > batchSize) {
-            const remainingBatch = this.data.slice(batchSize);
-            this.renderBatch(remainingBatch, batchSize);
-        }
-    }
-
-    // endregion
-
-    // region Setup Infinite Scroll
-    private setupInfiniteScroll(): void {
-        let currentBatch = 1;
-        const batchSize = this.options.batchSize || 20;
-
-        const sentinel = this.createElement('div', 'h-4 w-full');
-        this.container!.appendChild(sentinel);
-
-        const sentinelObserver = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting) {
-                const start = currentBatch * batchSize;
-                const end = start + batchSize;
-                const nextBatch = this.data.slice(start, end);
-
-                if (nextBatch.length > 0) {
-                    this.renderBatch(nextBatch, start);
-                    currentBatch++;
-                } else {
-                    sentinelObserver.disconnect();
-                    sentinel.remove();
-                }
+            if (this.options.onDataUpdate) {
+                this.options.onDataUpdate([updatedData]);
             }
-        });
 
-        sentinelObserver.observe(sentinel);
+            console.log(`📊 Updated station ${loggerData.uid} with real-time logger data and airIndex`);
+        } else {
+            console.warn(`⚠️ Station ${loggerData.uid} not found in current data`);
+        }
+    }
+    // endregion
+
+    // region Calculate AQI from PM2.5
+    private calculateAQIFromPM25(pm25: number): number {
+        const breakpoints = [
+            {cLow: 0, cHigh: 12, aqiLow: 0, aqiHigh: 50},
+            {cLow: 12.1, cHigh: 35.4, aqiLow: 51, aqiHigh: 100},
+            {cLow: 35.5, cHigh: 55.4, aqiLow: 101, aqiHigh: 150},
+            {cLow: 55.5, cHigh: 150.4, aqiLow: 151, aqiHigh: 200},
+            {cLow: 150.5, cHigh: 250.4, aqiLow: 201, aqiHigh: 300},
+            {cLow: 250.5, cHigh: 350.4, aqiLow: 301, aqiHigh: 400},
+            {cLow: 350.5, cHigh: 500.4, aqiLow: 401, aqiHigh: 500}
+        ];
+
+        for (const bp of breakpoints) {
+            if (pm25 >= bp.cLow && pm25 <= bp.cHigh) {
+                const aqi = ((bp.aqiHigh - bp.aqiLow) / (bp.cHigh - bp.cLow)) * (pm25 - bp.cLow) + bp.aqiLow;
+                return Math.round(aqi);
+            }
+        }
+
+        return 500;
+    }
+    // endregion
+
+    // region Calculate AQI from TSP
+    private calculateAQIFromTSP(tsp: number): number {
+        if (tsp <= 230) return Math.round((50 / 230) * tsp);
+        if (tsp <= 400) return Math.round(50 + ((100 - 50) / (400 - 230)) * (tsp - 230));
+        if (tsp <= 520) return Math.round(100 + ((150 - 100) / (520 - 400)) * (tsp - 400));
+        if (tsp <= 650) return Math.round(150 + ((200 - 150) / (650 - 520)) * (tsp - 520));
+        if (tsp <= 800) return Math.round(200 + ((300 - 200) / (800 - 650)) * (tsp - 650));
+        return Math.min(500, Math.round(300 + ((500 - 300) / (1200 - 800)) * (tsp - 800)));
+    }
+    // endregion
+
+    // region Update AirIndex Data
+    private updateAirIndexData(
+        existingAirIndex: Array<{
+            timestamp: number;
+            value: number;
+            value_tsp: number;
+            pm25: number;
+            pm10: number;
+            tsp: number;
+            link_video_id?: string;
+            link_video_status?: string;
+            link_video_recorded?: string;
+            aqi_from: string;
+        }>,
+        newTimestamp: number,
+        newValue: number,
+        newValueTsp: number,
+        pm25: number,
+        pm10: number,
+        tsp: number,
+        linkVideoId?: string
+    ): Array<{
+        timestamp: number;
+        value: number;
+        value_tsp: number;
+        pm25: number;
+        pm10: number;
+        tsp: number;
+        link_video_id?: string;
+        link_video_status?: string;
+        link_video_recorded?: string;
+        aqi_from: string;
+    }> {
+
+        let updatedAirIndex = [...existingAirIndex];
+
+        const newDataPoint = {
+            timestamp: newTimestamp,
+            value: newValue,
+            value_tsp: newValueTsp,
+            pm25: pm25,
+            pm10: pm10,
+            tsp: tsp,
+            link_video_id: linkVideoId,
+            link_video_status: linkVideoId ? 'pending' : undefined,
+            link_video_recorded: undefined,
+            aqi_from: "PM 2.5"
+        };
+
+        updatedAirIndex.push(newDataPoint);
+        updatedAirIndex.sort((a, b) => a.timestamp - b.timestamp);
+
+        const maxPoints = 144;
+        if (updatedAirIndex.length > maxPoints) {
+            updatedAirIndex = updatedAirIndex.slice(-maxPoints);
+        }
+
+        return updatedAirIndex.filter((item, index, array) =>
+            index === 0 || item.timestamp !== array[index - 1].timestamp
+        );
+    }
+    // endregion
+
+    // region Update Station Status
+    private updateStationStatus(stationId: string, status: string, isOnline: boolean): void {
+        const stationIndex = this.data.findIndex(item => item.uid === stationId);
+
+        if (stationIndex !== -1) {
+            const oldData = this.data[stationIndex];
+            this.data[stationIndex] = {
+                ...this.data[stationIndex],
+                status: status as any,
+                isOnline,
+                lastUpdated: new Date()
+            };
+
+            this.updateCardUI(stationId, oldData, this.data[stationIndex]);
+        }
+    }
+    // endregion
+
+    // region Update Connection Status
+    private updateConnectionStatus(status: 'connected' | 'disconnected' | 'error'): void {
+        this.connectionStatus = status;
+
+        if (this.options.onConnectionStatus) {
+            this.options.onConnectionStatus(status);
+        }
+
+        this.updateConnectionIndicator(status);
+    }
+    // endregion
+
+    // region Update Connection Indicator
+    private updateConnectionIndicator(status: 'connected' | 'disconnected' | 'error'): void {
+        const indicator = document.querySelector('.connection-status');
+        if (!indicator) return;
+
+        const statusConfig = {
+            connected: {color: 'bg-green-500', text: 'Connected'},
+            disconnected: {color: 'bg-yellow-500', text: 'Disconnected'},
+            error: {color: 'bg-red-500', text: 'Error'}
+        };
+
+        const config = statusConfig[status];
+        indicator.className = `connection-status flex items-center gap-2 ${config.color}`;
+        indicator.textContent = config.text;
+    }
+    // endregion
+
+    // region Public API Methods
+    public startRealTimeMode(): void {
+        if (this.options.enableSocketIO && this.options.socketIOUrl) {
+            this.initSocketIO();
+        }
+
+        if (this.options.apiEndpoint && this.options.realTimeUpdateInterval) {
+            this.startRealTimeUpdates().catch((error) => {
+                console.error(error);
+            })
+        }
     }
 
+    public stopRealTimeMode(): void {
+        if (this.realTimeInterval) {
+            clearInterval(this.realTimeInterval);
+            this.realTimeInterval = undefined;
+        }
+
+        if (this.socket) {
+            this.socket.disconnect();
+            this.socket = undefined;
+        }
+    }
+
+    public async refreshData(): Promise<void> {
+        if (this.options.apiEndpoint) {
+            await this.loadInitialData(1);
+        }
+    }
+
+    public getConnectionStatus(): 'connected' | 'disconnected' | 'error' {
+        return this.connectionStatus;
+    }
+
+    public getLastUpdateTime(): Date {
+        return this.lastUpdateTime;
+    }
+
+    public async forceUpdate(): Promise<void> {
+        if (this.options.apiEndpoint) {
+            return fetch(this.options.apiEndpoint)
+                .then(response => response.json())
+                .then(result => {
+                    const data = Array.isArray(result) ? result : result.data || [];
+                    return this.updateExistingData(data);
+                });
+        }
+        return Promise.resolve();
+    }
+
+    public emitToServer(event: string, data: any): void {
+        if (this.socket && this.socket.connected) {
+            this.socket.emit(event, data);
+            console.log(`📤 Emitted event '${event}' to server:`, data);
+        } else {
+            console.warn(`⚠️ Socket.IO not connected. Cannot emit event: ${event}`);
+        }
+    }
+
+    public getSocketId(): string | undefined {
+        return this.socket?.id;
+    }
+
+    public isSocketConnected(): boolean {
+        return this.socket?.connected || false;
+    }
+
+    public getStationCount(): number {
+        return this.data.length;
+    }
+
+    public getOnlineStationCount(): number {
+        return this.data.filter(station => station.isOnline).length;
+    }
+
+    public getTotalPages(): number {
+        return this.paginationData?.last_page || 1;
+    }
+
+    public hasMorePages(): boolean {
+        return this.paginationData?.has_more_pages || false;
+    }
+    // endregion
+
+    // region Load Data
+    async loadData(dataSource: AirQualityData[] | string | (() => Promise<AirQualityData[]>)): Promise<void> {
+        try {
+            if (Array.isArray(dataSource)) {
+                this.data = dataSource;
+            } else if (typeof dataSource === 'string') {
+                const response = await fetch(dataSource);
+                const {data} = await response.json()
+                this.data = data
+            } else if (typeof dataSource === 'function') {
+                this.data = await dataSource();
+            }
+        } catch (error) {
+            console.error('Error loading data:', error);
+            this.data = [];
+        }
+    }
     // endregion
 
     // region Set Container
@@ -2035,19 +2335,15 @@ class AirQualityCardManager {
             ? document.querySelector(container)
             : container;
     }
-
     // endregion
 
     // region Destroy
     destroy(): void {
-        // Stop real-time updates
         this.stopRealTimeMode();
 
-        // Clear all chart intervals
         this.chartIntervals.forEach(interval => clearInterval(interval));
         this.chartIntervals.clear();
 
-        // Destroy all chart instances
         this.chartInstances.forEach(chart => {
             if (chart && chart.destroy) {
                 chart.destroy();
@@ -2055,7 +2351,6 @@ class AirQualityCardManager {
         });
         this.chartInstances.clear();
 
-        // Clear container
         if (this.container) {
             this.container.innerHTML = '';
         }
@@ -2063,8 +2358,10 @@ class AirQualityCardManager {
         this.data = [];
         this.dataCache.clear();
         this.visibleCards.clear();
+        this.paginationData = null;
+        this.currentPage = 1;
+        this.searchQuery = '';
     }
-
     // endregion
 
     // region Filter
@@ -2075,31 +2372,13 @@ class AirQualityCardManager {
         this.renderAll();
         this.data = originalData;
     }
-
-    // endregion
-
-    // region Search
-    search(query: string): void {
-        const searchResults = this.data.filter(item =>
-            item.uid.toLowerCase().includes(query.toLowerCase()) ||
-            item.location?.toLowerCase().includes(query.toLowerCase()) ||
-            item.status.toLowerCase().includes(query.toLowerCase())
-        );
-
-        const originalData = [...this.data];
-        this.data = searchResults;
-        this.renderAll();
-        this.data = originalData;
-    }
-
     // endregion
 
     // region Get Data Count
     getDataCount(): number {
         return this.data.length;
     }
-
     // endregion
 }
 
-export {AirQualityCardManager, type CameraData, type AirQualityData, type CardManagerOptions, type MetricsData, type LoggerEventData};
+export {AirQualityCardManager, type CameraData, type AirQualityData, type CardManagerOptions, type MetricsData, type LoggerEventData, type PaginationData};

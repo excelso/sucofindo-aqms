@@ -3,307 +3,344 @@
     namespace App\Http\Controllers\Dashboard;
 
     use App\Http\Controllers\Controller;
-    use App\Http\Requests\ProfileUpdateRequest;
     use App\Models\Master\AqiCategories;
     use App\Models\Master\Loggers;
     use App\Models\Master\Platforms;
     use App\Models\Master\PlatformsHeartbeat;
     use App\Models\Users\UserPlatforms;
-    use avadim\FastExcelWriter\Excel;
-    use avadim\FastExcelWriter\Style;
-    use Cache;
     use Carbon\Carbon;
     use Exception;
-    use File;
-    use Illuminate\Http\RedirectResponse;
     use Illuminate\Http\Request;
-    use Illuminate\Pagination\LengthAwarePaginator;
-    use Illuminate\Support\Facades\Auth;
+    use Illuminate\Support\Facades\Cache;
+    use Illuminate\Support\Facades\DB;
     use Illuminate\Support\Facades\Log;
-    use Illuminate\Support\Facades\Redirect;
-    use Illuminate\View\View;
-    use InvalidArgumentException;
-    use OutOfRangeException;
 
     class ControllerDashboard extends Controller {
-
         protected string $viewPath;
 
         public function __construct() {
             $this->viewPath = 'main.dashboard';
         }
 
-        public function index(Request $request): View {
+        // region Index
+        public function index(Request $request) {
             $env = config('app.env');
             return view($this->viewPath . '.index', [
                 'env' => $env
             ]);
         }
+        // endregion
 
-        //region Handle Data Platforms
+        // region Handle Data Platforms dengan Pagination
         public function getDataPlatforms(Request $request) {
             try {
+                $page = $request->input('page', 1);
+                $perPage = $request->input('per_page', 20);
+                $searchQuery = $request->input('search', '');
 
+                // User platform filtering
                 $userPlatformId = null;
                 $isTrial = 0;
                 if (request()->user()->user_level != 'super_admin') {
                     $isTrial = 1;
-                    $userPlatformIds = UserPlatforms::userPlatforms(request()->user()->id)->get();
-                    foreach ($userPlatformIds as $platformId) {
-                        $userPlatformId[] = $platformId->platform_id;
-                    }
+                    $userPlatformIds = UserPlatforms::userPlatforms(request()->user()->id)->pluck('platform_id');
+                    $userPlatformId = $userPlatformIds->toArray();
                 }
 
-                $platforms = Platforms::dataPlatformByUserPlatform($userPlatformId, $isTrial)->get();
+                // Base query dengan eager loading
+                $platformsQuery = Platforms::with(['sites', 'loggerLimit'])
+                    ->dataPlatformByUserPlatform($userPlatformId, $isTrial);
+
+                // Apply search filter
+                if ($searchQuery) {
+                    $platformsQuery->where(function ($query) use ($searchQuery) {
+                        $query->where('uid', 'like', "%{$searchQuery}%")
+                            ->orWhereHas('sites', function ($q) use ($searchQuery) {
+                                $q->where('site_name', 'like', "%{$searchQuery}%");
+                            });
+                    });
+                }
+
+                // Get paginated results
+                $platforms = $platformsQuery->paginate(20, ['*'], 'page', $page);
+
+                // Process platform data
                 $dataPlatformsTemp = [];
-                foreach ($platforms as $platform) {
-                    // if (in_array(config('app.env'), ['production', 'staging'])) {
-                    //
-                    // } else {
-                    //     $minDate = '2025-08-12 00:00';
-                    //     $maxDate = '2025-08-12 23:59';
-                    // }
-
-                    $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
-                    $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
-                    if ($request->input('startDate')) {
-                        $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
-                        $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
-                    }
-
-                    $dataLastLogger = Loggers::loggerData5Minutes($platform->uid, $minDate, $maxDate, $platform->timezone)
-                        ->orderBy('datetime_unix', 'DESC')
-                        ->with('limit')->first();
-
-                    $platformHeartbeat = PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone)->first();
-
-                    $aqiCat = null;
-                    $status = 'Unknown';
-                    $emoji = mb_convert_encoding('&#x2753;', 'UTF-8', 'HTML-ENTITIES');
-                    $colorCode = 'bg-gray-200';
-
-                    if ($dataLastLogger && $dataLastLogger->max_aqi_index !== null) {
-                        $aqiCat = AqiCategories::dataAqiIndex($dataLastLogger->max_aqi_index)->first();
-                        if (!$aqiCat) {
-                            $aqiCat = AqiCategories::orderBy('aqi_max', 'desc')->first();
-                        }
-
-                        if ($aqiCat) {
-                            $status = $aqiCat->category_name_en;
-                            $emoji = mb_convert_encoding($aqiCat->emoji, 'UTF-8', 'HTML-ENTITIES');
-                            $colorCode = $aqiCat->color_code;
-                        }
-                    }
-
-                    $dataPlatformsTemp[] = [
-                        'uid' => $platform->uid,
-                        'siteName' => $platform->sites->site_name ?? 'Unknown',
-                        'status' => $status,
-                        'emoji' => $emoji,
-                        'colorCode' => $colorCode,
-                        'metrics' => [
-                            'pm10' => [
-                                'value' => $dataLastLogger->max_pm_10 ?? 0,
-                                'bml_min' => $dataLastLogger->limit->pm10_min ?? 0,
-                                'bml_min_buffer' => $dataLastLogger->limit->pm10_min_buffer ?? 0,
-                                'bml_max_buffer' => $dataLastLogger->limit->pm10_max_buffer ?? 0,
-                                'bml_max' => $dataLastLogger->limit->pm10_max ?? 0,
-                            ],
-                            'pm25' => [
-                                'value' => $dataLastLogger->max_pm_25 ?? 0,
-                                'bml_min' => $dataLastLogger->limit->pm25_min ?? 0,
-                                'bml_min_buffer' => $dataLastLogger->limit->pm25_min_buffer ?? 0,
-                                'bml_max_buffer' => $dataLastLogger->limit->pm25_max_buffer ?? 0,
-                                'bml_max' => $dataLastLogger->limit->pm25_max ?? 0,
-                            ],
-                            'tsp' => [
-                                'value' => $dataLastLogger->max_tsp ?? 0,
-                                'bml_min' => $dataLastLogger->limit->tsp_min ?? 0,
-                                'bml_min_buffer' => $dataLastLogger->limit->tsp_min_buffer ?? 0,
-                                'bml_max_buffer' => $dataLastLogger->limit->tsp_max_buffer ?? 0,
-                                'bml_max' => $dataLastLogger->limit->tsp_max ?? 0,
-                            ],
-                            'noise' => [
-                                'value' => $dataLastLogger->noise_leq ?? 0,
-                                'bml_min' => $dataLastLogger->limit->noise_min ?? 0,
-                                'bml_min_buffer' => $dataLastLogger->limit->noise_min_buffer ?? 0,
-                                'bml_max_buffer' => $dataLastLogger->limit->noise_max_buffer ?? 0,
-                                'bml_max' => $dataLastLogger->limit->noise_max ?? 0,
-                            ]
-                        ],
-                        'isOnline' => $platformHeartbeat ? $platformHeartbeat->heartbeat_status == 'Online' ? 1 : 0 : 0,
-                        'cctvLink1' => $platform->cctv_link_1,
-                        'cctv1IsSupportPTZ' => $platform->cctv_1_support_ptz,
-                        'cctvLink2' => $platform->cctv_link_2,
-                        'cctv2IsSupportPTZ' => $platform->cctv_2_support_ptz,
-                        'timezone' => $platform->timezone,
-                        'locale' => 'en-US',
-                        'lat' => $platform->lat,
-                        'lng' => $platform->lng,
-                        'airIndexData' => $this->processLoggerData($platform->uid, $minDate, $maxDate, $platform->timezone),
-                        'lastUpdated' => $dataLastLogger ? Carbon::createFromTimestampUTC($dataLastLogger->datetime_unix)->timezone('Asia/Jakarta')->format('d M Y H:i:s') : null,
-                    ];
+                foreach ($platforms->items() as $platform) {
+                    $dataPlatformsTemp[] = $this->processPlatformData($platform, $request);
                 }
 
                 return response()->json([
                     'data' => $dataPlatformsTemp,
+                    'pagination' => [
+                        'current_page' => $platforms->currentPage(),
+                        'last_page' => $platforms->lastPage(),
+                        'per_page' => $platforms->perPage(),
+                        'total' => $platforms->total(),
+                        'has_more_pages' => $platforms->hasMorePages(),
+                        'next_page_url' => $platforms->nextPageUrl(),
+                        'prev_page_url' => $platforms->previousPageUrl()
+                    ],
                     'responseTime' => Carbon::now()
                 ]);
+
             } catch (Exception $exception) {
                 return response()->json([
-                    'message' => $exception->getMessage() . ' on line ' . $exception->getLine(),
-                    'file' => $exception->getFile(),
+                    'message' => 'Failed to load platform data',
+                    'error' => config('app.debug') ? $exception->getMessage() : 'Internal server error',
                     'responseTime' => Carbon::now()
-                ], 500);
+                ], 500, [], JSON_PRETTY_PRINT);
             }
         }
+        // endregion
 
-        private function processLoggerData($uid, $minDate, $maxDate, $timezone) {
-            $loggers = Loggers::loggerData5Minutes($uid, $minDate, $maxDate, $timezone)->get();
-            $dataLoggersTemp = [];
+        // region Process Platform Data
+        private function processPlatformData($platform, $request = null) {
+            // Cache key for platform data
+            $cacheKey = "platform_data_{$platform->uid}_" . ($request?->input('startDate') ?
+                    Carbon::parse($request->input('startDate'))->format('Y-m-d') :
+                    Carbon::now()->timezone($platform->timezone)->format('Y-m-d'));
 
-            foreach ($loggers as $logger) {
-                try {
-                    // 1. Ambil AQI value langsung dari database (sudah dihitung)
-                    $aqiValue = $logger->max_aqi_index ?? 0;
-                    $aqiValueTsp = $logger->max_aqi_index_tsp ?? 0;
+            return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($platform, $request) {
 
-                    // 2. Cari kategori AQI berdasarkan PM2.5 value untuk display
-                    $aqiCatForDisplay = AqiCategories::where('pm25_min', '<=', $logger->pm_25)
-                        ->where('pm25_max', '>=', $logger->pm_25)
+                // Date range setup
+                $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
+                $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
+
+                if ($request?->input('startDate')) {
+                    $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
+                    $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
+                }
+
+                // Get latest logger data dengan efficient query
+                $dataLastLogger = $this->getLatestLoggerData($platform->uid, $minDate, $maxDate, $platform->timezone);
+
+                // Get heartbeat status
+                $platformHeartbeat = $this->getPlatformHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone);
+
+                // Process AQI status
+                [$status, $emoji, $colorCode] = $this->processAQIStatus($dataLastLogger);
+
+                return [
+                    'uid' => $platform->uid,
+                    'siteName' => $platform->sites->site_name ?? 'Unknown',
+                    'status' => $status,
+                    'emoji' => $emoji,
+                    'colorCode' => $colorCode,
+                    'metrics' => $this->formatMetrics($dataLastLogger),
+                    'isOnline' => $platformHeartbeat ? ($platformHeartbeat->heartbeat_status === 'Online') : false,
+                    'cctvLink1' => $platform->cctv_link_1,
+                    'cctv1IsSupportPTZ' => $platform->cctv_1_support_ptz,
+                    'cctvLink2' => $platform->cctv_link_2,
+                    'cctv2IsSupportPTZ' => $platform->cctv_2_support_ptz,
+                    'timezone' => $platform->timezone,
+                    'locale' => 'en-US',
+                    'lat' => $platform->lat,
+                    'lng' => $platform->lng,
+                    'airIndexData' => $this->getOptimizedLoggerData($platform->uid, $minDate, $maxDate, $platform->timezone),
+                    'lastUpdated' => $dataLastLogger ?
+                        Carbon::createFromTimestampUTC($dataLastLogger->datetime_unix)
+                            ->timezone('Asia/Jakarta')
+                            ->format('d M Y H:i:s') : null,
+                ];
+            });
+        }
+        // endregion
+
+        // region Get Latest Logger Data
+        private function getLatestLoggerData($uid, $minDate, $maxDate, $timezone) {
+            return Cache::remember("latest_logger_{$uid}_{$minDate}_{$maxDate}", now()->addMinutes(2), function () use ($uid, $minDate, $maxDate, $timezone) {
+                return Loggers::with('limit')
+                    ->loggerData5Minutes($uid, $minDate, $maxDate, $timezone)
+                    ->orderBy('datetime_unix', 'DESC')
+                    ->first();
+            });
+        }
+        // endregion
+
+        // region Get Platform Heartbeat
+        private function getPlatformHeartbeat($uid, $minDate, $maxDate, $timezone) {
+            return Cache::remember("heartbeat_{$uid}_{$minDate}_{$maxDate}", now()->addMinutes(2), function () use ($uid, $minDate, $maxDate, $timezone) {
+                return PlatformsHeartbeat::select(['heartbeat_status'])
+                    ->platformsHeartbeat($uid, $minDate, $maxDate, $timezone)
+                    ->first();
+            });
+        }
+        // endregion
+
+        // region Process AQI Status
+        private function processAQIStatus($dataLastLogger) {
+            $status = 'Unknown';
+            $emoji = mb_convert_encoding('&#x2753;', 'UTF-8', 'HTML-ENTITIES');
+            $colorCode = 'bg-gray-200';
+
+            if ($dataLastLogger && $dataLastLogger->max_aqi_index !== null) {
+                $aqiCat = Cache::remember("aqi_cat_{$dataLastLogger->max_aqi_index}", now()->addHours(1), function () use ($dataLastLogger) {
+                    return AqiCategories::select(['category_name_en', 'emoji', 'color_code'])
+                        ->dataAqiIndex($dataLastLogger->max_aqi_index)
+                        ->first() ?: AqiCategories::select(['category_name_en', 'emoji', 'color_code'])
+                        ->orderBy('aqi_max', 'desc')
                         ->first();
+                });
 
-                    // Jika tidak ditemukan kategori (PM2.5 > 500), ambil kategori tertinggi
-                    if (!$aqiCatForDisplay) {
-                        $aqiCatForDisplay = AqiCategories::orderBy('pm25_max', 'desc')->first();
-
-                        if (!$aqiCatForDisplay) {
-                            throw new Exception("No AQI categories found in database");
-                        }
-
-                        Log::warning("PM2.5 value {$logger->pm_25} exceeds maximum category range. Using highest category for display.");
-                    }
-
-                    $dataLoggersTemp[] = [
-                        'logger_id' => $logger->id,
-                        'timestamp' => $logger->datetime_unix,
-                        'value' => (float)$aqiValue,
-                        'value_tsp' => (float)$aqiValueTsp,
-                        'link_video_id' => $logger->link_video_id ?? null,
-                        'link_video_status' => $logger->link_video_status ?? null,
-                        'link_video_recorded' => $logger->link_video_recorded ?? null,
-                        'pm25' => $logger->max_pm_25,
-                        'pm10' => $logger->max_pm_10,
-                        'tsp' => $logger->max_tsp,
-                        'category' => $aqiCatForDisplay->category_name_en ?? 'Unknown',
-                        'category_id' => $aqiCatForDisplay->id,
-                        'category_range' => "[{$aqiCatForDisplay->pm25_min}, {$aqiCatForDisplay->pm25_max}]",
-                        'aqi_from' => $logger->aqi_from ?? null,
-                    ];
-                } catch (Exception $e) {
-                    Log::error("AQI processing failed for logger {$logger->id}: " . $e->getMessage());
-
-                    $dataLoggersTemp[] = [
-                        'logger_id' => $logger->id,
-                        'timestamp' => $logger->datetime_unix,
-                        'value' => $logger->aqi_index ? (float)number_format($logger->aqi_index, 1) : null,
-                        'link_video_id' => $logger->link_video_id ?? null,
-                        'link_video_status' => $logger->link_video_status ?? null,
-                        'link_video_recorded' => $logger->link_video_recorded ?? null,
-                        'pm25' => $logger->pm_25,
-                        'pm10' => $logger->pm_10,
-                        'tsp' => $logger->tsp,
-                        'category' => 'Error',
-                        'aqi_from' => $logger->aqi_from ?? null,
-                        'error' => $e->getMessage()
-                    ];
+                if ($aqiCat) {
+                    $status = $aqiCat->category_name_en;
+                    $emoji = mb_convert_encoding($aqiCat->emoji, 'UTF-8', 'HTML-ENTITIES');
+                    $colorCode = $aqiCat->color_code;
                 }
             }
 
-            return $dataLoggersTemp;
+            return [$status, $emoji, $colorCode];
         }
+        // endregion
 
-        private function calculateAQIFromPM25($pm25, AqiCategories $aqiCat) {
-            // Validate input
-            if (!is_numeric($pm25) || $pm25 < 0) {
-                throw new InvalidArgumentException("Invalid PM2.5 value: {$pm25}");
+        // region Format Metrics
+        private function formatMetrics($dataLastLogger) {
+            if (!$dataLastLogger) {
+                return [
+                    'pm10' => ['value' => 0, 'bml_min' => 0, 'bml_min_buffer' => 0, 'bml_max_buffer' => 0, 'bml_max' => 0],
+                    'pm25' => ['value' => 0, 'bml_min' => 0, 'bml_min_buffer' => 0, 'bml_max_buffer' => 0, 'bml_max' => 0],
+                    'tsp' => ['value' => 0, 'bml_min' => 0, 'bml_min_buffer' => 0, 'bml_max_buffer' => 0, 'bml_max' => 0],
+                    'noise' => ['value' => 0, 'bml_min' => 0, 'bml_min_buffer' => 0, 'bml_max_buffer' => 0, 'bml_max' => 0]
+                ];
             }
 
-            // Check if PM2.5 is below minimum category range
-            if ($pm25 < $aqiCat->pm25_min) {
-                throw new OutOfRangeException(
-                    "PM2.5 value {$pm25} is below category minimum [{$aqiCat->pm25_min}]"
-                );
-            }
-
-            // Calculate PM range
-            $pmRange = $aqiCat->pm25_max - $aqiCat->pm25_min;
-
-            // Handle edge case where min and max are the same
-            if ($pmRange == 0) {
-                return $aqiCat->aqi_min;
-            }
-
-            // Linear interpolation formula (EPA standard)
-            $aqiRange = $aqiCat->aqi_max - $aqiCat->aqi_min;
-            $pmOffset = $pm25 - $aqiCat->pm25_min;
-
-            $aqiValue = (($aqiRange / $pmRange) * $pmOffset) + $aqiCat->aqi_min;
-
-            return round($aqiValue, 1);
+            return [
+                'pm10' => [
+                    'value' => $dataLastLogger->max_pm_10 ?? 0,
+                    'bml_min' => $dataLastLogger->limit->pm10_min ?? 0,
+                    'bml_min_buffer' => $dataLastLogger->limit->pm10_min_buffer ?? 0,
+                    'bml_max_buffer' => $dataLastLogger->limit->pm10_max_buffer ?? 0,
+                    'bml_max' => $dataLastLogger->limit->pm10_max ?? 0,
+                ],
+                'pm25' => [
+                    'value' => $dataLastLogger->max_pm_25 ?? 0,
+                    'bml_min' => $dataLastLogger->limit->pm25_min ?? 0,
+                    'bml_min_buffer' => $dataLastLogger->limit->pm25_min_buffer ?? 0,
+                    'bml_max_buffer' => $dataLastLogger->limit->pm25_max_buffer ?? 0,
+                    'bml_max' => $dataLastLogger->limit->pm25_max ?? 0,
+                ],
+                'tsp' => [
+                    'value' => $dataLastLogger->max_tsp ?? 0,
+                    'bml_min' => $dataLastLogger->limit->tsp_min ?? 0,
+                    'bml_min_buffer' => $dataLastLogger->limit->tsp_min_buffer ?? 0,
+                    'bml_max_buffer' => $dataLastLogger->limit->tsp_max_buffer ?? 0,
+                    'bml_max' => $dataLastLogger->limit->tsp_max ?? 0,
+                ],
+                'noise' => [
+                    'value' => $dataLastLogger->noise_leq ?? 0,
+                    'bml_min' => $dataLastLogger->limit->noise_min ?? 0,
+                    'bml_min_buffer' => $dataLastLogger->limit->noise_min_buffer ?? 0,
+                    'bml_max_buffer' => $dataLastLogger->limit->noise_max_buffer ?? 0,
+                    'bml_max' => $dataLastLogger->limit->noise_max ?? 0,
+                ]
+            ];
         }
-        //endregion
+        // endregion
 
-        //region Handle Detail Metric
+        // region Get Optimized Logger Data
+        private function getOptimizedLoggerData($uid, $minDate, $maxDate, $timezone) {
+            return Cache::remember("logger_data_{$uid}_{$minDate}_{$maxDate}", now()->addMinutes(5), function () use ($uid, $minDate, $maxDate, $timezone) {
+                $loggers = Loggers::select([
+                    'id', 'datetime_unix', 'max_aqi_index', 'max_aqi_index_tsp',
+                    'max_pm_25', 'max_pm_10', 'max_tsp', 'aqi_from',
+                    'link_video_recorded'
+                ])
+                    ->loggerData5Minutes($uid, $minDate, $maxDate, $timezone)
+                    ->orderBy('datetime_unix', 'ASC')
+                    ->limit(288) // Limit to last 24 hours (5-minute intervals)
+                    ->get();
+
+                $dataLoggersTemp = [];
+                $aqiCategories = $this->getCachedAQICategories();
+
+                foreach ($loggers as $logger) {
+                    try {
+                        $aqiValue = $logger->max_aqi_index ?? 0;
+                        $aqiValueTsp = $logger->max_aqi_index_tsp ?? 0;
+
+                        $aqiCatForDisplay = $this->findAQICategory($logger->max_pm_25, $aqiCategories);
+
+                        $dataLoggersTemp[] = [
+                            'logger_id' => $logger->id,
+                            'timestamp' => $logger->datetime_unix,
+                            'value' => (float)$aqiValue,
+                            'value_tsp' => (float)$aqiValueTsp,
+                            'link_video_id' => $logger->link_video_id,
+                            'link_video_status' => $logger->link_video_status,
+                            'link_video_recorded' => $logger->link_video_recorded,
+                            'pm25' => $logger->max_pm_25,
+                            'pm10' => $logger->max_pm_10,
+                            'tsp' => $logger->max_tsp,
+                            'category' => $aqiCatForDisplay['category_name_en'] ?? 'Unknown',
+                            'category_id' => $aqiCatForDisplay['id'] ?? null,
+                            'aqi_from' => $logger->aqi_from,
+                        ];
+                    } catch (Exception $e) {
+                        Log::error("AQI processing failed for logger {$logger->id}: " . $e->getMessage());
+                        continue;
+                    }
+                }
+
+                return $dataLoggersTemp;
+            });
+        }
+        // endregion
+
+        // region Get Cached AQI Categories
+        private function getCachedAQICategories() {
+            return Cache::remember('aqi_categories', now()->addHours(24), function () {
+                return AqiCategories::select(['id', 'category_name_en', 'pm25_min', 'pm25_max'])
+                    ->orderBy('pm25_min')
+                    ->get()
+                    ->toArray();
+            });
+        }
+        // endregion
+
+        // region Find AQI Category
+        private function findAQICategory($pm25Value, $categories) {
+            foreach ($categories as $category) {
+                if ($pm25Value >= $category['pm25_min'] && $pm25Value <= $category['pm25_max']) {
+                    return $category;
+                }
+            }
+
+            // Return highest category if PM2.5 exceeds all ranges
+            return end($categories);
+        }
+        // endregion
+
+        // region Handle Detail Metric
         public function detailMetric(Request $request, $uid) {
             try {
+                $platform = Platforms::select(['uid', 'timezone'])->where('uid', $uid)->first();
 
-                $platform = Platforms::where('uid', $uid)->first();
-                // if (in_array(config('app.env'), ['production', 'staging'])) {
-                //
-                // } else {
-                //     $minDate = '2025-08-12 00:00';
-                //     $maxDate = '2025-08-12 23:59';
-                // }
+                if (!$platform) {
+                    return response()->json(['message' => 'Platform not found'], 404);
+                }
 
                 $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
                 $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
+
                 if ($request->input('startDate')) {
                     $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
                     $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
                 }
 
-                $dataLogger = Loggers::loggerData5Minutes($uid, $minDate, $maxDate, $platform->timezone)->get();
-                $dataLoggerTemp = [];
-                foreach ($dataLogger as $item) {
-                    if ($request->input('metric') == 'pm10') {
-                        $dataLoggerTemp[] = [
-                            'timestamp' => $item->datetime_unix,
-                            'value' => (float)$item->max_pm_10,
-                        ];
-                    }
+                $metricColumn = $this->getMetricColumn($request->input('metric'));
 
-                    if ($request->input('metric') == 'pm25') {
-                        $dataLoggerTemp[] = [
-                            'timestamp' => $item->datetime_unix,
-                            'value' => (float)$item->max_pm_25,
-                        ];
-                    }
+                $dataLogger = Loggers::select(['datetime_unix', $metricColumn])
+                    ->loggerData5Minutes($uid, $minDate, $maxDate, $platform->timezone)
+                    ->orderBy('datetime_unix', 'ASC')
+                    ->get();
 
-                    if ($request->input('metric') == 'tsp') {
-                        $dataLoggerTemp[] = [
-                            'timestamp' => $item->datetime_unix,
-                            'value' => (float)$item->max_tsp,
-                        ];
-                    }
-
-                    if ($request->input('metric') == 'noise') {
-                        $dataLoggerTemp[] = [
-                            'timestamp' => $item->datetime_unix,
-                            'value' => (float)$item->noise_leq ?? 0,
-                        ];
-                    }
-                }
+                $dataLoggerTemp = $dataLogger->map(function ($item) use ($metricColumn) {
+                    return [
+                        'timestamp' => $item->datetime_unix,
+                        'value' => (float)($item->{$metricColumn} ?? 0),
+                    ];
+                });
 
                 return response()->json([
                     'data' => $dataLoggerTemp,
@@ -312,56 +349,87 @@
                 ]);
 
             } catch (Exception $exception) {
+                Log::error('Detail metric error: ' . $exception->getMessage());
                 return response()->json([
-                    'message' => $exception->getMessage() . ' on line ' . $exception->getLine(),
-                    'file' => $exception->getFile(),
+                    'message' => 'Failed to load metric data',
                     'responseTime' => Carbon::now()
                 ], 500);
             }
         }
-        //endregion
+        // endregion
 
-        //region Handle Detail Heartbeat Platform
+        // region Get Metric Column
+        private function getMetricColumn($metric) {
+            $columns = [
+                'pm10' => 'max_pm_10',
+                'pm25' => 'max_pm_25',
+                'tsp' => 'max_tsp',
+                'noise' => 'noise_leq'
+            ];
+
+            return $columns[$metric] ?? 'max_pm_25';
+        }
+        // endregion
+
+        // region Handle Detail Platform Heartbeat
         public function handleDetailPlatformHeartbeat(Request $request, $uid) {
             try {
-                $platform = Platforms::where('uid', $uid)->first();
+                $platform = Platforms::select(['uid', 'timezone'])->where('uid', $uid)->first();
+
+                if (!$platform) {
+                    return response()->json(['message' => 'Platform not found'], 404);
+                }
+
                 $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
                 $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
+
                 if ($request->input('startDate')) {
                     $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
                     $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
                 }
 
-                $platformHeartbeat = PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone);
-                $totalDataHeartbeat = $platformHeartbeat->count();
-                $totalDataHeartbeatOnline = $platformHeartbeat->get()->where('heartbeat_status', '=', 'Online')->count();
-                $totalDataHeartbeatOffline = $platformHeartbeat->get()->where('heartbeat_status', '=', 'Offline')->count();
+                $platformHeartbeat = PlatformsHeartbeat::select(['uid', 'heartbeat_status', 'date_formated'])
+                    ->platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone);
 
-                $totalOnlinePercentage = 0;
-                $totalOfflinePercentage = 0;
-                if ($totalDataHeartbeat > 0) {
-                    $totalOnlinePercentage = round((($totalDataHeartbeatOnline / $totalDataHeartbeat) * 100));
-                    $totalOfflinePercentage = round((($totalDataHeartbeatOffline / $totalDataHeartbeat) * 100));
-                }
-
+                $totalCounts = $this->getHeartbeatCounts($platformHeartbeat);
                 $dataHeartbeat = $platformHeartbeat->paginate(20)->onEachSide(1);
+
                 return response()->json([
                     'message' => 'Load Successfully',
-                    'onlinePercent' => $totalOnlinePercentage,
-                    'offlinePercent' => $totalOfflinePercentage,
+                    'onlinePercent' => $totalCounts['online_percent'],
+                    'offlinePercent' => $totalCounts['offline_percent'],
                     'data' => $dataHeartbeat,
                     'responseTime' => Carbon::now()
                 ], 200);
+
             } catch (Exception $exception) {
+                Log::error('Platform heartbeat error: ' . $exception->getMessage());
                 return response()->json([
-                    'message' => $exception->getMessage() . ' on line ' . $exception->getLine(),
-                    'file' => $exception->getFile(),
+                    'message' => 'Failed to load heartbeat data',
                     'responseTime' => Carbon::now()
                 ], 500);
             }
         }
+        // endregion
 
-        //endregion
+        // region Get Heartbeat Counts
+        private function getHeartbeatCounts($query) {
+            $counts = $query->selectRaw('
+            COUNT(*) as total,
+            SUM(CASE WHEN heartbeat_status = "Online" THEN 1 ELSE 0 END) as online_count,
+            SUM(CASE WHEN heartbeat_status = "Offline" THEN 1 ELSE 0 END) as offline_count
+        ')->first();
+
+            $total = $counts->total;
+            $onlinePercent = $total > 0 ? round(($counts->online_count / $total) * 100) : 0;
+            $offlinePercent = $total > 0 ? round(($counts->offline_count / $total) * 100) : 0;
+
+            return [
+                'online_percent' => $onlinePercent,
+                'offline_percent' => $offlinePercent
+            ];
+        }
+        // endregion
 
         //region Handle Export Heartbeat Sensor
         public static function numToExcelAlpha($n): int|string {

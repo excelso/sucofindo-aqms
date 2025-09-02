@@ -88,14 +88,17 @@ document.addEventListener('DOMContentLoaded', function () {
     //endregion
 
     //region Handle AQI Card
-    new AirQualityCardManager({
+    const airQualityManager = new AirQualityCardManager({
         containerSelector: '.airQualityParent',
         batchSize: 50,
-        enableLazyLoading: true,
+        enableLazyLoading: false, // Disable lazy loading when using pagination
         enableCharts: true,
         realTimeUpdateInterval: 60000,
         apiEndpoint: '/dashboard/platforms',
-        autoLoadInitialData: false,
+        autoLoadInitialData: true,
+        enablePagination: true,
+        itemsPerPage: 20, // Default items per page
+        enableInfiniteScroll: true,
         onCctvClick: (id, cameraData) => {
             showModalLiveVideo(bodyCamera, id, cameraData)
         },
@@ -150,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
                 })
             })
-        }
+        },
     });
     //endregion
 
