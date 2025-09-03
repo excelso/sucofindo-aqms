@@ -131,6 +131,7 @@
 
                 return [
                     'uid' => $platform->uid,
+                    'uid_alias' => $platform->uid_alias,
                     'siteName' => $platform->sites->site_name ?? 'Unknown',
                     'status' => $status,
                     'emoji' => $statusEmo,

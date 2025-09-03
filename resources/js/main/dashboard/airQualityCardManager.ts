@@ -27,6 +27,7 @@ interface FilterOptions {
 
 interface AirQualityData {
     uid: string;
+    uid_alias: string;
     siteName: string;
     status: string;
     emoji?: string;
@@ -1772,7 +1773,7 @@ class AirQualityCardManager {
         // Header section
         const headerFlex = this.createElement('div', 'card-dashboard-header');
         const leftSection = this.createElement('div', 'left-section');
-        const idTitle = this.createElement('div', 'idle-title', data.uid);
+        const idTitle = this.createElement('div', 'idle-title', data.uid_alias);
 
         if (data.location) {
             const locationDiv = this.createElement('div', 'text-[12px] text-gray-500', data.location);
