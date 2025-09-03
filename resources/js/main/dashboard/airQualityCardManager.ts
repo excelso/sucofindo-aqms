@@ -184,6 +184,7 @@ class AirQualityCardManager {
     private chartInstances: Map<string, any> = new Map();
     private chartIntervals: Map<string, any> = new Map();
     private realTimeInterval?: number;
+    private isRealTimeActive: boolean = false;
     private socket?: Socket;
     private connectionStatus: 'connected' | 'disconnected' | 'error' = 'disconnected';
     private lastUpdateTime: Date = new Date();
@@ -248,19 +249,9 @@ class AirQualityCardManager {
 
         // Initialize periodic updates only if Socket.IO is disabled
         if (this.options.apiEndpoint && this.options.realTimeUpdateInterval && !this.options.enableSocketIO) {
-            const url = new URLSearchParams(new URL(window.location.href).searchParams);
-            if (url.size !== 0) {
-                if (url.get('date') === moment().format('YYYY-MM-DD')) {
-                    this.startRealTimeUpdates().catch((error) => {
-                        console.error('Failed to start real-time updates:', error);
-                    });
-                }
-            } else {
-                console.log('Realtime')
-                this.startRealTimeUpdates().catch((error) => {
-                    console.error('Failed to start real-time updates:', error);
-                });
-            }
+            this.startRealTimeUpdates().catch((error) => {
+                console.error('Failed to start real-time updates:', error);
+            });
         }
     }
     // endregion
@@ -1316,6 +1307,13 @@ class AirQualityCardManager {
                     url.searchParams.set('search', this.searchQuery);
                 }
 
+                // Include current filter parameters in real-time updates
+                Object.entries(this.filterOptions).forEach(([key, value]) => {
+                    if (value !== undefined && value !== null && value !== '') {
+                        url.searchParams.set(key, value.toString());
+                    }
+                });
+
                 const response = await fetch(url.toString());
 
                 if (!response.ok) {
@@ -1336,11 +1334,68 @@ class AirQualityCardManager {
             }
         };
 
-        // Initial load
+        // Initial data fetch
         await updateData();
 
-        // Setup periodic updates
-        this.realTimeInterval = window.setInterval(updateData, this.options.realTimeUpdateInterval!);
+        // Check if real-time should be enabled
+        if (this.shouldEnableRealTime()) {
+            console.log('✅ Starting real-time updates...');
+            this.isRealTimeActive = true;
+            this.realTimeInterval = window.setInterval(updateData, this.options.realTimeUpdateInterval!);
+        } else {
+            console.log('⏸️ Real-time updates disabled due to filters or non-current date');
+            this.isRealTimeActive = false;
+        }
+    }
+    // endregion
+
+    // region Should Enable Real Time
+    private shouldEnableRealTime(): boolean {
+        // Don't enable real-time if there's no interval configured
+        if (!this.options.realTimeUpdateInterval) {
+            return false;
+        }
+
+        // Check URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasUrlParams = Array.from(urlParams.entries()).length > 0;
+
+        if (hasUrlParams) {
+            const dateParam = urlParams.get('date');
+
+            // Only enable real-time if filtering by today's date
+            if (dateParam) {
+                const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+                const isToday = dateParam === today;
+
+                console.log(`📅 Date filter: ${dateParam}, Today: ${today}, Is Today: ${isToday}`);
+                return isToday;
+            }
+
+            // If there are other filters but no date filter, disable real-time
+            return false;
+        }
+
+        // Check internal filter options
+        if (this.hasActiveFilters()) {
+            const currentFilters = this.getCurrentFilterOptions();
+
+            // Only allow real-time if filtering by today's date or no date filter
+            if (currentFilters.date) {
+                const today = new Date().toISOString().split('T')[0];
+                const isToday = currentFilters.date === today;
+
+                console.log(`📅 Internal filter date: ${currentFilters.date}, Today: ${today}, Is Today: ${isToday}`);
+                return isToday;
+            }
+
+            // If there are other active filters but no date filter, disable real-time
+            return false;
+        }
+
+        // No filters active, enable real-time
+        console.log('🔄 No filters active, enabling real-time updates');
+        return true;
     }
     // endregion
 
@@ -2479,6 +2534,21 @@ class AirQualityCardManager {
             this.updateConnectionStatus('error');
             this.showError(error.message || 'Failed to filter data');
         }
+    }
+    // endregion
+
+    // region Get Current Filter Options
+    public getCurrentFilterOptions(): FilterOptions {
+        return { ...this.filterOptions };
+    }
+    // endregion
+
+    // region Has Active Filters
+    public hasActiveFilters(): boolean {
+        return Object.keys(this.filterOptions).length > 0 &&
+            Object.values(this.filterOptions).some(value =>
+                value !== undefined && value !== null && value !== ''
+            );
     }
     // endregion
 
