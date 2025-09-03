@@ -65,6 +65,7 @@
                 Route::get('detail-metric/{uid}', [ControllerDashboard::class, 'detailMetric']);
                 Route::get('webrtc-proxy', [WebRTCProxyController::class, 'proxyGet']);
                 Route::get('platform-heartbeat/{uid}', [ControllerDashboard::class, 'handleDetailPlatformHeartbeat']);
+                Route::get('platform-report/{uid}', [ControllerDashboard::class, 'handleDetailPlatformReport']);
                 Route::get('export-excel-heartbeat/{uid}', [ControllerDashboard::class, 'handleExportHeartbeat']);
             });
 
@@ -86,11 +87,16 @@
                 });
 
                 Route::group(['prefix' => 'platform-loggers'], function () {
-                    Route::get('/', [ControllerPlatformLoggers::class, 'index']);
+                    Route::get('/', [ControllerPlatformLoggers::class, 'index'])->name('master.platform-loggers');
                     Route::post('store', [ControllerPlatformLoggers::class, 'store']);
                     Route::get('detail/{platformId}', [ControllerPlatformLoggers::class, 'handleDetailPlatform']);
                     Route::put('update/{platformId}', [ControllerPlatformLoggers::class, 'update']);
                     Route::delete('delete/{platformId}', [ControllerPlatformLoggers::class, 'delete']);
+
+                    Route::group(['prefix' => 'calibration/{platformId}'], function () {
+                        Route::get('/', [ControllerPlatformLoggers::class, 'calibration']);
+                        Route::get('calibration-init', [ControllerPlatformLoggers::class, 'calibrationInit']);
+                    });
                 });
 
                 Route::group(['prefix' => 'users'], function () {

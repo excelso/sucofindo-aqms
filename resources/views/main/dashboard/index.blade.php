@@ -18,12 +18,14 @@
             <div class="mt-5 flex items-center justify-between">
                 <div class="flex items-center gap-2 text-[15px] font-bold">
                     <div>
-                        <i class="fas fa-eye"></i>
+                        <i class="fas fa-calendar-alt"></i>
                     </div>
-                    <div>Watchlist</div>
+                    <div>
+                        Date Period: <span class="datePeriod">{{ \Carbon\Carbon::now()->format('d M Y') }}</span>
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-2 text-[15px] font-bold">
+                <div class="flex items-center gap-2 text-[15px] font-bold cursor-pointer btnSearch">
                     <div>
                         <i class="fas fa-sort"></i>
                     </div>
@@ -39,7 +41,9 @@
         @include('main.dashboard.popup.cctv-record')
         @include('main.dashboard.popup.detail-parameter')
         @include('main.dashboard.popup.heartbeat-status')
+        @include('main.dashboard.popup.platform-report')
         @include('main.dashboard.popup.maps')
+        @include('main.dashboard.popup.pencarian')
     </div>
 </x-app-layout>
 

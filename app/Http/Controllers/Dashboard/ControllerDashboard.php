@@ -8,6 +8,7 @@
     use App\Models\Master\Platforms;
     use App\Models\Master\PlatformsHeartbeat;
     use App\Models\Users\UserPlatforms;
+    use avadim\FastExcelWriter\Style;
     use Carbon\Carbon;
     use Exception;
     use Illuminate\Http\Request;
@@ -85,8 +86,8 @@
         // region Process Platform Data
         private function processPlatformData($platform, $request = null) {
             // Cache key for platform data
-            $cacheKey = "platform_data_{$platform->uid}_" . ($request?->input('startDate') ?
-                    Carbon::parse($request->input('startDate'))->format('Y-m-d') :
+            $cacheKey = "platform_data_{$platform->uid}_" . ($request?->input('date') ?
+                    Carbon::parse($request->input('date'))->format('Y-m-d') :
                     Carbon::now()->timezone($platform->timezone)->format('Y-m-d'));
 
             return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($platform, $request) {
@@ -95,9 +96,9 @@
                 $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
                 $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
 
-                if ($request?->input('startDate')) {
-                    $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
-                    $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
+                if ($request?->input('date')) {
+                    $minDate = Carbon::parse($request->input('date'))->format('Y-m-d') . ' 00:00';
+                    $maxDate = Carbon::parse($request->input('date'))->format('Y-m-d') . ' 23:59';
                 }
 
                 // Get latest logger data dengan efficient query
@@ -330,9 +331,9 @@
                 $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
                 $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
 
-                if ($request->input('startDate')) {
-                    $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
-                    $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
+                if ($request->input('date')) {
+                    $minDate = Carbon::parse($request->input('date'))->format('Y-m-d') . ' 00:00';
+                    $maxDate = Carbon::parse($request->input('date'))->format('Y-m-d') . ' 23:59';
                 }
 
                 $metricColumn = $this->getMetricColumn($request->input('metric'));
@@ -390,22 +391,57 @@
                 $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
                 $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
 
-                if ($request->input('startDate')) {
-                    $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
-                    $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
+                if ($request->input('date')) {
+                    $minDate = Carbon::parse($request->input('date'))->format('Y-m-d') . ' 00:00';
+                    $maxDate = Carbon::parse($request->input('date'))->format('Y-m-d') . ' 23:59';
                 }
 
-                $platformHeartbeat = PlatformsHeartbeat::select(['uid', 'heartbeat_status', 'date_formated'])
-                    ->platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone);
+                $platformHeartbeat = PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone);
 
                 $totalCounts = $this->getHeartbeatCounts($platformHeartbeat);
-                $dataHeartbeat = $platformHeartbeat->paginate(20)->onEachSide(1);
 
                 return response()->json([
                     'message' => 'Load Successfully',
                     'onlinePercent' => $totalCounts['online_percent'],
                     'offlinePercent' => $totalCounts['offline_percent'],
-                    'data' => $dataHeartbeat,
+                    'data' => $platformHeartbeat->paginate(20)->onEachSide(1),
+                    'responseTime' => Carbon::now()
+                ], 200);
+
+            } catch (Exception $exception) {
+                Log::error('Platform heartbeat error: ' . $exception->getMessage());
+                return response()->json([
+                    'message' => 'Failed to load heartbeat data',
+                    'responseTime' => Carbon::now()
+                ], 500);
+            }
+        }
+        // endregion
+
+        // region Handle Detail Platform Report
+        public function handleDetailPlatformReport(Request $request, $uid) {
+            try {
+                $platform = Platforms::select(['uid', 'timezone'])->where('uid', $uid)->first();
+
+                if (!$platform) {
+                    return response()->json(['message' => 'Platform not found'], 404);
+                }
+
+                $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
+                $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
+
+                if ($request->input('date')) {
+                    $minDate = Carbon::parse($request->input('date'))->format('Y-m-d') . ' 00:00';
+                    $maxDate = Carbon::parse($request->input('date'))->format('Y-m-d') . ' 23:59';
+                }
+
+                $dataLogger = Loggers::reportLoggerData($platform->uid, $minDate, $maxDate, $platform->timezone, [
+                    'search' => $request->input()
+                ])->with('limit');
+
+                return response()->json([
+                    'message' => 'Load Successfully',
+                    'data' => $dataLogger->paginate(20)->onEachSide(1),
                     'responseTime' => Carbon::now()
                 ], 200);
 
@@ -529,9 +565,9 @@
                 $platform = Platforms::where('uid', $uid)->first();
                 $minDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d') . ' 00:00';
                 $maxDate = Carbon::now()->timezone($platform->timezone)->format('Y-m-d H:i');
-                if ($request->input('startDate')) {
-                    $minDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 00:00';
-                    $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
+                if ($request->input('date')) {
+                    $minDate = Carbon::parse($request->input('date'))->format('Y-m-d') . ' 00:00';
+                    $maxDate = Carbon::parse($request->input('date'))->format('Y-m-d') . ' 23:59';
                 }
 
                 PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone)

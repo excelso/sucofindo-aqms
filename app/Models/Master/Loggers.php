@@ -171,4 +171,66 @@
 
             $builder->orderBy('summary.datetime_unix', 'DESC');
         }
+
+        public function scopeLoggerDataDaily(Builder $builder, $uid, $startDate, $untilDate, $timezone): void {
+            $builder->withoutGlobalScopes();
+            $builder->from(function ($builder) use ($uid, $startDate, $untilDate, $timezone) {
+                // Subquery untuk data 10 menit (menggunakan scope yang sudah ada)
+                $builder->select([
+                    DB::raw('DATE(ten_minute_data.interval_time) AS tanggal'),
+                    'ten_minute_data.uid',
+                    DB::raw('MAX(ten_minute_data.link_video_recorded) AS link_video_recorded'),
+                    DB::raw('COUNT(*) AS total_intervals'),
+                    DB::raw('ROUND(AVG(ten_minute_data.pm_10), 0) AS pm_10'),
+                    DB::raw('ROUND(MAX(ten_minute_data.max_pm_10), 0) AS max_pm_10'),
+                    DB::raw('ROUND(AVG(ten_minute_data.pm_25), 0) AS pm_25'),
+                    DB::raw('ROUND(MAX(ten_minute_data.max_pm_25), 0) AS max_pm_25'),
+                    DB::raw('ROUND(AVG(ten_minute_data.tsp), 0) AS tsp'),
+                    DB::raw('ROUND(MAX(ten_minute_data.max_tsp), 0) AS max_tsp'),
+                    DB::raw('ROUND(AVG(ten_minute_data.noise), 2) AS noise'),
+                    DB::raw('ROUND(MAX(ten_minute_data.max_noise), 2) AS max_noise'),
+                    DB::raw('ROUND(AVG(ten_minute_data.noise_leq), 2) AS noise_leq'),
+                    DB::raw('ROUND(AVG(ten_minute_data.aqi_index)) AS aqi_index'),
+                    DB::raw('ROUND(MAX(ten_minute_data.max_aqi_index)) AS max_aqi_index'),
+                    DB::raw('ROUND(AVG(ten_minute_data.aqi_index_tsp)) AS aqi_index_tsp'),
+                    DB::raw('ROUND(MAX(ten_minute_data.max_aqi_index_tsp)) AS max_aqi_index_tsp'),
+                    DB::raw('IF(AVG(ten_minute_data.aqi_index_pm25) >= AVG(ten_minute_data.aqi_index_pm10), "PM 2.5", "PM 10") AS aqi_from')
+                ]);
+
+                $builder->from(function ($subBuilder) use ($uid, $timezone) {
+                    $subBuilder->select([
+                        'id',
+                        'uid',
+                        DB::raw('MAX(CASE WHEN link_video_recorded IS NOT NULL THEN link_video_recorded END) AS link_video_recorded')
+                    ]);
+                    $subBuilder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / 600) * 600), 'UTC', ?) AS interval_time", [$timezone]);
+                    $subBuilder->selectRaw('FLOOR(datetime_unix / 600) * 600 AS datetime_unix');
+                    $subBuilder->selectRaw('COUNT(*) AS record_count');
+                    $subBuilder->selectRaw('ROUND(AVG(pm_10), 0) AS pm_10');
+                    $subBuilder->selectRaw('MAX(pm_10) AS max_pm_10');
+                    $subBuilder->selectRaw('ROUND(AVG(pm_25), 0) AS pm_25');
+                    $subBuilder->selectRaw('MAX(pm_25) AS max_pm_25');
+                    $subBuilder->selectRaw('ROUND(AVG(tsp), 0) AS tsp');
+                    $subBuilder->selectRaw('MAX(tsp) AS max_tsp');
+                    $subBuilder->selectRaw('ROUND(AVG(noise), 2) AS noise');
+                    $subBuilder->selectRaw('MAX(noise) AS max_noise');
+                    $subBuilder->selectRaw('ROUND((10 * LOG10((1/count(*) * SUM(POWER(10, noise / 10))))), 2) AS noise_leq');
+                    $subBuilder->selectRaw('ROUND(AVG(aqi_index_pm25), 2) AS aqi_index_pm25');
+                    $subBuilder->selectRaw('ROUND(AVG(aqi_index_pm10), 2) AS aqi_index_pm10');
+                    $subBuilder->selectRaw('ROUND(AVG(aqi_index)) AS aqi_index');
+                    $subBuilder->selectRaw('MAX(aqi_index) AS max_aqi_index');
+                    $subBuilder->selectRaw('ROUND(AVG(aqi_index_tsp)) AS aqi_index_tsp');
+                    $subBuilder->selectRaw('MAX(aqi_index_tsp) AS max_aqi_index_tsp');
+                    $subBuilder->from('t_loggers');
+                    $subBuilder->where('uid', $uid);
+                    $subBuilder->groupByRaw('uid, FLOOR(datetime_unix / 600)');
+                    $subBuilder->orderByRaw('FLOOR(datetime_unix / 600) * 600');
+                }, 'ten_minute_data');
+
+                $builder->whereBetween('ten_minute_data.interval_time', [$startDate, $untilDate]);
+                $builder->groupByRaw('DATE(ten_minute_data.interval_time), ten_minute_data.uid');
+                $builder->orderBy('tanggal', 'DESC');
+
+            }, 'daily_summary');
+        }
     }

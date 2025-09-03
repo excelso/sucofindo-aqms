@@ -10,8 +10,16 @@ import HikvisionPTZController from "@/js/plugins/hikvisionPTZController";
 import {EnhancedVideoStreamHandler} from "@/js/plugins/EnhancedVideoStreamHandler";
 import OnvifPTZController from "@/js/plugins/OnvifPTZController";
 
+interface MenuItem {
+    text: string;
+    href?: string;
+    class: string;
+    icon?: string;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
+    const url = new URL(window.location.href)
 
     const closeModalForm: NodeListOf<HTMLElement> = document.querySelectorAll('.closeModalForm')
     const dataTables: NodeListOf<HTMLElement> = document.querySelectorAll('.data-tables')
@@ -88,6 +96,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalCctv: HTMLElement = document.querySelector('.modalCctv')
     const modalBody: HTMLElement = modalCctv.querySelector('.modal-body')
 
+    const dropdownMenu = createDropdownMenu()
+
     const modelSite = new DataSitesModel(companyId, companySiteId, {
         csrfToken
     });
@@ -126,6 +136,84 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         })
     })
+    //endregion
+
+    //region Handle Dropdown
+    function createDropdownMenu(): HTMLElement {
+        // Cek apakah dropdown sudah ada
+        const existingDropdown = document.getElementById('dropdownMenu');
+        if (existingDropdown) {
+            return existingDropdown;
+        }
+
+        // Buat elemen dropdown
+        const dropdown: HTMLElement = document.createElement('div');
+        dropdown.id = 'dropdownMenu';
+        dropdown.className = 'hidden absolute w-48 bg-white rounded-md shadow-lg z-50';
+
+        const dropdownContent: HTMLElement = document.createElement('div');
+        dropdownContent.className = 'py-1 rounded-md bg-white shadow-xs';
+
+        dropdown.appendChild(dropdownContent);
+        document.body.appendChild(dropdown);
+
+        return dropdown;
+    }
+
+    function generateMenuItems(platformId: string): MenuItem[] {
+        const menuItems: MenuItem[] = [];
+
+        menuItems.push({text: 'Edit', class: 'text-gray-700 btnEdit', icon: 'fas fa-edit'});
+        menuItems.push({text: 'Calibration', class: 'text-gray-700', icon: 'fas fa-rotate-right', href: `${url}/calibration/${platformId}`});
+
+        return menuItems;
+    }
+
+    function updateDropdownContent(platformId: string): void {
+        const dropdownContent = dropdownMenu.querySelector('.py-1');
+        if (dropdownContent) {
+            // Clear existing content
+            dropdownContent.innerHTML = '';
+
+            // Generate menu items based on status
+            const menuItems = generateMenuItems(platformId);
+
+            menuItems.forEach(item => {
+                const div: HTMLDivElement = document.createElement('div')
+
+                const link: HTMLAnchorElement = document.createElement('a');
+                if (item.href) {
+                    link.href = item?.href;
+                }
+                link.className = `block px-4 py-3 text-sm ${item.class} hover:bg-gray-100`;
+                link.innerHTML = `
+                    <i class="${item.icon} mr-2"></i> ${item.text}
+                `;
+
+                div.appendChild(link)
+                dropdownContent.appendChild(div);
+            });
+        }
+    }
+
+    function showDropdown(button: HTMLElement, platformId: string, callback?: () => void): void {
+        const rect: DOMRect = button.getBoundingClientRect();
+        const scrollTop: number = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft: number = window.pageXOffset || document.documentElement.scrollLeft;
+
+        dropdownMenu.style.top = (rect.bottom + scrollTop) + 'px';
+        dropdownMenu.style.left = (rect.right - dropdownMenu.offsetWidth + scrollLeft - 200) + 'px';
+        dropdownMenu.style.zIndex = '250';
+
+        // Update menu content based on status
+        updateDropdownContent(platformId);
+
+        dropdownMenu.classList.remove('hidden');
+
+        if (callback) {
+            callback();
+        }
+    }
     //endregion
 
     //region Handle Tabs
@@ -301,10 +389,210 @@ document.addEventListener('DOMContentLoaded', function () {
         dataTables.forEach((elm) => {
             const platformId = elm.getAttribute('data-id')
             const platformUid = elm.getAttribute('data-uid')
-            const btnEdit = elm.querySelector('.btnEdit')
             const btnCamera1 = elm.querySelector('.btnCamera1')
             const btnCamera2 = elm.querySelector('.btnCamera2')
             const btnCCTVHls = elm.querySelector('.btnCCTVHls')
+            const dropdownBtn: HTMLElement | null = elm.querySelector('.dropdownPlatform')
+
+            if (dropdownBtn) {
+                dropdownBtn.addEventListener('click', function (e: Event) {
+                    e.stopPropagation();
+
+                    if (!dropdownMenu.classList.contains('hidden') &&
+                            dropdownMenu.getAttribute('data-trigger') === this.getAttribute('data-id')) {
+                        dropdownMenu.classList.add('hidden');
+                        return;
+                    }
+
+                    dropdownMenu.classList.add('hidden');
+                    dropdownMenu.setAttribute('data-trigger', this.getAttribute('data-id') || '');
+                    showDropdown(this, platformId, () => {
+
+                        //region Handle Edit
+                        const btnEdit = dropdownMenu.querySelectorAll('.btnEdit')
+                        btnEdit.forEach((elm) => {
+                            elm.addEventListener('click', async function () {
+                                await waitLoader('Please wait...', 'Process of storing new Platform data.', async () => {
+                                    const response = await fetch(`/master/platform-loggers/detail/${platformId}`, {
+                                        method: 'GET',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': csrfToken
+                                        }
+                                    })
+
+                                    const {status} = response
+                                    const {message, data} = await response.json()
+                                    Swal.close()
+
+                                    if (status === 200) {
+                                        const {
+                                            company_site_id,
+                                            uid: data_uid,
+                                            cctv_link_1,
+                                            cctv_1_support_ptz,
+                                            cctv_link_2,
+                                            cctv_2_support_ptz,
+                                            cctv_link_hls,
+                                            cctv_portal_ip,
+                                            cctv_portal_username,
+                                            cctv_portal_password,
+                                            timezone,
+                                            lat,
+                                            lng,
+                                            logger_limit
+                                        } = data
+
+                                        const {
+                                            pm10_min,
+                                            pm10_min_buffer,
+                                            pm10_max_buffer,
+                                            pm10_max,
+                                            pm25_min,
+                                            pm25_min_buffer,
+                                            pm25_max_buffer,
+                                            pm25_max,
+                                            tsp_min,
+                                            tsp_min_buffer,
+                                            tsp_max_buffer,
+                                            tsp_max,
+                                            noise_min,
+                                            noise_min_buffer,
+                                            noise_max_buffer,
+                                            noise_max,
+                                        } = logger_limit || {}
+
+                                        showModalDialog(modalForm, `<i class="fas fa-edit mr-2"></i> Update Platform`, () => {
+                                            modelSite.setSelectedValue(company_site_id)
+                                            uidOld.value = data_uid
+                                            uid.value = data_uid
+                                            cctvLink1.value = cctv_link_1
+                                            cctv1IsSupportPTZ.checked = cctv_1_support_ptz === 1
+                                            cctvLink2.value = cctv_link_2
+                                            cctv2IsSupportPTZ.checked = cctv_2_support_ptz === 1
+                                            cctvLinkHls.value = cctv_link_hls
+                                            platformTimezone.value = timezone
+                                            platformTimezone.dispatchEvent(new Event('exbox.change'))
+                                            alamatLat.value = lat
+                                            alamatLng.value = lng
+                                            cctvPortalIP.value = cctv_portal_ip
+                                            cctvPortalUsername.value = cctv_portal_username
+                                            cctvPortalPassword.value = cctv_portal_password
+
+                                            pm10Min.value = pm10_min ?? 0
+                                            pm10MinBuffer.value = pm10_min_buffer ?? 0
+                                            pm10MaxBuffer.value = pm10_max_buffer ?? 0
+                                            pm10Max.value = pm10_max ?? 0
+
+                                            pm25Min.value = pm25_min ?? 0
+                                            pm25MinBuffer.value = pm25_min_buffer ?? 0
+                                            pm25MaxBuffer.value = pm25_max_buffer ?? 0
+                                            pm25Max.value = pm25_max ?? 0
+
+                                            tspMin.value = tsp_min ?? 0
+                                            tspMinBuffer.value = tsp_min_buffer ?? 0
+                                            tspMaxBuffer.value = tsp_max_buffer ?? 0
+                                            tspMax.value = tsp_max ?? 0
+
+                                            noiseMin.value = noise_min ?? 0
+                                            noiseMinBuffer.value = noise_min_buffer ?? 0
+                                            noiseMaxBuffer.value = noise_max_buffer ?? 0
+                                            noiseMax.value = noise_max ?? 0
+
+                                            if (btnSave) {
+                                                btnSave.addEventListener('click', function () {
+                                                    confirmAlert({
+                                                        title: 'Confirm',
+                                                        html: 'Are you sure want to update data Platform?',
+                                                        confirmButtonText: '<i class="fas fa-save mr-2"></i> Save Change',
+                                                        showDenyButton: true,
+                                                        denyButtonText: 'Cancel'
+                                                    }, async () => {
+                                                        await waitLoader('Please wait...', 'Process of updating Platform data.', async () => {
+                                                            const response = await fetch(`/master/platform-loggers/update/${platformId}`, {
+                                                                method: 'PUT',
+                                                                headers: {
+                                                                    'Content-Type': 'application/json',
+                                                                    'X-CSRF-TOKEN': csrfToken
+                                                                },
+                                                                body: JSON.stringify({
+                                                                    company_site_id: companySiteId.value,
+                                                                    uid_old: uidOld.value,
+                                                                    uid: uid.value,
+                                                                    cctv_link_1: cctvLink1.value,
+                                                                    cctv_1_support_ptz: cctv1IsSupportPTZ.checked ? 1 : 0,
+                                                                    cctv_link_2: cctvLink2.value,
+                                                                    cctv_2_support_ptz: cctv2IsSupportPTZ.checked ? 1 : 0,
+                                                                    cctv_link_hls: cctvLinkHls.value,
+                                                                    timezone: platformTimezone.value,
+                                                                    lat: alamatLat.value,
+                                                                    lng: alamatLng.value,
+                                                                    cctv_portal_ip: cctvPortalIP.value,
+                                                                    cctv_portal_username: cctvPortalUsername.value,
+                                                                    cctv_portal_password: cctvPortalPassword.value,
+                                                                    pm10_min: pm10Min.value,
+                                                                    pm10_min_buffer: pm10MinBuffer.value,
+                                                                    pm10_max_buffer: pm10MaxBuffer.value,
+                                                                    pm10_max: pm10Max.value,
+                                                                    pm25_min: pm25Min.value,
+                                                                    pm25_min_buffer: pm25MinBuffer.value,
+                                                                    pm25_max_buffer: pm25MaxBuffer.value,
+                                                                    pm25_max: pm25Max.value,
+                                                                    tsp_min: tspMin.value,
+                                                                    tsp_min_buffer: tspMinBuffer.value,
+                                                                    tsp_max_buffer: tspMaxBuffer.value,
+                                                                    tsp_max: tspMax.value,
+                                                                    noise_min: noiseMin.value,
+                                                                    noise_min_buffer: noiseMinBuffer.value,
+                                                                    noise_max_buffer: noiseMaxBuffer.value,
+                                                                    noise_max: noiseMax.value,
+                                                                })
+                                                            })
+
+                                                            await handleResponse(response)
+                                                        })
+                                                    })
+                                                })
+                                            }
+
+                                            showHiddenElm(btnDelete)
+                                            if (btnDelete) {
+                                                btnDelete.addEventListener('click', function () {
+                                                    confirmAlert({
+                                                        title: 'Confirm',
+                                                        html: 'Are you sure want to delete data Platform?',
+                                                        confirmButtonText: '<i class="fas fa-trash-can mr-2"></i> Yes, Delete it!',
+                                                        showDenyButton: true,
+                                                        denyButtonText: 'Cancel'
+                                                    }, async () => {
+                                                        await waitLoader('Please wait...', 'Process of updating Platform data.', async () => {
+                                                            const response = await fetch(`/master/platform-loggers/delete/${platformId}`, {
+                                                                method: 'DELETE',
+                                                                headers: {
+                                                                    'Content-Type': 'application/json',
+                                                                    'X-CSRF-TOKEN': csrfToken
+                                                                },
+                                                            })
+
+                                                            await handleResponse(response)
+                                                        })
+                                                    })
+                                                })
+                                            }
+                                        })
+                                    } else {
+                                        failureAlert({
+                                            html: message
+                                        })
+                                    }
+                                })
+                            })
+                        })
+                        //endregion
+
+                    });
+                });
+            }
 
             //region Handle Camera 1
             if (btnCamera1) {
@@ -354,6 +642,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             //endregion
 
+            //region Handle PTZ Control
             const handlePTZControl = async () => {
                 const onvif = new OnvifPTZController(csrfToken, platformUid);
                 cameraLive.setPTZCallbacks({
@@ -386,7 +675,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 })
             }
+            //endregion
 
+            //region Handle Camera HLS
             if (btnCCTVHls) {
                 btnCCTVHls.addEventListener('click', () => {
                     showModalDialog(modalCctv, `
@@ -404,185 +695,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     })
                 })
             }
-
-            if (btnEdit) {
-                btnEdit.addEventListener('click', async function () {
-                    await waitLoader('Please wait...', 'Process of storing new Platform data.', async () => {
-                        const response = await fetch(`/master/platform-loggers/detail/${platformId}`, {
-                            method: 'GET',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken
-                            }
-                        })
-
-                        const {status} = response
-                        const {message, data} = await response.json()
-                        Swal.close()
-
-                        if (status === 200) {
-                            const {
-                                company_site_id,
-                                uid: data_uid,
-                                cctv_link_1,
-                                cctv_1_support_ptz,
-                                cctv_link_2,
-                                cctv_2_support_ptz,
-                                cctv_link_hls,
-                                cctv_portal_ip,
-                                cctv_portal_username,
-                                cctv_portal_password,
-                                timezone,
-                                lat,
-                                lng,
-                                logger_limit
-                            } = data
-
-                            const {
-                                pm10_min,
-                                pm10_min_buffer,
-                                pm10_max_buffer,
-                                pm10_max,
-                                pm25_min,
-                                pm25_min_buffer,
-                                pm25_max_buffer,
-                                pm25_max,
-                                tsp_min,
-                                tsp_min_buffer,
-                                tsp_max_buffer,
-                                tsp_max,
-                                noise_min,
-                                noise_min_buffer,
-                                noise_max_buffer,
-                                noise_max,
-                            } = logger_limit || {}
-
-                            showModalDialog(modalForm, `<i class="fas fa-edit mr-2"></i> Update Platform`, () => {
-                                modelSite.setSelectedValue(company_site_id)
-                                uidOld.value = data_uid
-                                uid.value = data_uid
-                                cctvLink1.value = cctv_link_1
-                                cctv1IsSupportPTZ.checked = cctv_1_support_ptz === 1
-                                cctvLink2.value = cctv_link_2
-                                cctv2IsSupportPTZ.checked = cctv_2_support_ptz === 1
-                                cctvLinkHls.value = cctv_link_hls
-                                platformTimezone.value = timezone
-                                platformTimezone.dispatchEvent(new Event('exbox.change'))
-                                alamatLat.value = lat
-                                alamatLng.value = lng
-                                cctvPortalIP.value = cctv_portal_ip
-                                cctvPortalUsername.value = cctv_portal_username
-                                cctvPortalPassword.value = cctv_portal_password
-
-                                pm10Min.value = pm10_min ?? 0
-                                pm10MinBuffer.value = pm10_min_buffer ?? 0
-                                pm10MaxBuffer.value = pm10_max_buffer ?? 0
-                                pm10Max.value = pm10_max ?? 0
-
-                                pm25Min.value = pm25_min ?? 0
-                                pm25MinBuffer.value = pm25_min_buffer ?? 0
-                                pm25MaxBuffer.value = pm25_max_buffer ?? 0
-                                pm25Max.value = pm25_max ?? 0
-
-                                tspMin.value = tsp_min ?? 0
-                                tspMinBuffer.value = tsp_min_buffer ?? 0
-                                tspMaxBuffer.value = tsp_max_buffer ?? 0
-                                tspMax.value = tsp_max ?? 0
-
-                                noiseMin.value = noise_min ?? 0
-                                noiseMinBuffer.value = noise_min_buffer ?? 0
-                                noiseMaxBuffer.value = noise_max_buffer ?? 0
-                                noiseMax.value = noise_max ?? 0
-
-                                if (btnSave) {
-                                    btnSave.addEventListener('click', function () {
-                                        confirmAlert({
-                                            title: 'Confirm',
-                                            html: 'Are you sure want to update data Platform?',
-                                            confirmButtonText: '<i class="fas fa-save mr-2"></i> Save Change',
-                                            showDenyButton: true,
-                                            denyButtonText: 'Cancel'
-                                        }, async () => {
-                                            await waitLoader('Please wait...', 'Process of updating Platform data.', async () => {
-                                                const response = await fetch(`/master/platform-loggers/update/${platformId}`, {
-                                                    method: 'PUT',
-                                                    headers: {
-                                                        'Content-Type': 'application/json',
-                                                        'X-CSRF-TOKEN': csrfToken
-                                                    },
-                                                    body: JSON.stringify({
-                                                        company_site_id: companySiteId.value,
-                                                        uid_old: uidOld.value,
-                                                        uid: uid.value,
-                                                        cctv_link_1: cctvLink1.value,
-                                                        cctv_1_support_ptz: cctv1IsSupportPTZ.checked ? 1 : 0,
-                                                        cctv_link_2: cctvLink2.value,
-                                                        cctv_2_support_ptz: cctv2IsSupportPTZ.checked ? 1 : 0,
-                                                        cctv_link_hls: cctvLinkHls.value,
-                                                        timezone: platformTimezone.value,
-                                                        lat: alamatLat.value,
-                                                        lng: alamatLng.value,
-                                                        cctv_portal_ip: cctvPortalIP.value,
-                                                        cctv_portal_username: cctvPortalUsername.value,
-                                                        cctv_portal_password: cctvPortalPassword.value,
-                                                        pm10_min: pm10Min.value,
-                                                        pm10_min_buffer: pm10MinBuffer.value,
-                                                        pm10_max_buffer: pm10MaxBuffer.value,
-                                                        pm10_max: pm10Max.value,
-                                                        pm25_min: pm25Min.value,
-                                                        pm25_min_buffer: pm25MinBuffer.value,
-                                                        pm25_max_buffer: pm25MaxBuffer.value,
-                                                        pm25_max: pm25Max.value,
-                                                        tsp_min: tspMin.value,
-                                                        tsp_min_buffer: tspMinBuffer.value,
-                                                        tsp_max_buffer: tspMaxBuffer.value,
-                                                        tsp_max: tspMax.value,
-                                                        noise_min: noiseMin.value,
-                                                        noise_min_buffer: noiseMinBuffer.value,
-                                                        noise_max_buffer: noiseMaxBuffer.value,
-                                                        noise_max: noiseMax.value,
-                                                    })
-                                                })
-
-                                                await handleResponse(response)
-                                            })
-                                        })
-                                    })
-                                }
-
-                                showHiddenElm(btnDelete)
-                                if (btnDelete) {
-                                    btnDelete.addEventListener('click', function () {
-                                        confirmAlert({
-                                            title: 'Confirm',
-                                            html: 'Are you sure want to delete data Platform?',
-                                            confirmButtonText: '<i class="fas fa-trash-can mr-2"></i> Yes, Delete it!',
-                                            showDenyButton: true,
-                                            denyButtonText: 'Cancel'
-                                        }, async () => {
-                                            await waitLoader('Please wait...', 'Process of updating Platform data.', async () => {
-                                                const response = await fetch(`/master/platform-loggers/delete/${platformId}`, {
-                                                    method: 'DELETE',
-                                                    headers: {
-                                                        'Content-Type': 'application/json',
-                                                        'X-CSRF-TOKEN': csrfToken
-                                                    },
-                                                })
-
-                                                await handleResponse(response)
-                                            })
-                                        })
-                                    })
-                                }
-                            })
-                        } else {
-                            failureAlert({
-                                html: message
-                            })
-                        }
-                    })
-                })
-            }
+            //endregion
         })
     }
     //endregion
@@ -638,5 +751,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     //endregion
+
+    window.addEventListener('click', function () {
+        dropdownMenu.classList.add('hidden');
+    });
+
+    // Prevent dropdown from closing when clicking inside it
+    dropdownMenu.addEventListener('click', function (e) {
+        e.stopPropagation();
+    });
 
 })

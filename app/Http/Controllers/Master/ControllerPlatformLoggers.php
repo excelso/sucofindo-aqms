@@ -5,8 +5,10 @@
     use App\Http\Controllers\Controller;
     use App\Models\Master\Companies;
     use App\Models\Master\CompaniesSites;
+    use App\Models\Master\Loggers;
     use App\Models\Master\LoggersLimit;
     use App\Models\Master\Platforms;
+    use App\Models\Master\PlatformsCalibration;
     use Carbon\Carbon;
     use DB;
     use Exception;
@@ -298,4 +300,48 @@
             }
         }
         //endregion
+
+        //region Handle Page Calibration
+        public function calibration($platformId): View {
+            $dataPlatformsCalibration = PlatformsCalibration::paginate(20)->onEachSide(1);
+            return view($this->viewPath . '/calibration/index', [
+                'items' => $dataPlatformsCalibration,
+            ]);
+        }
+        //endregion
+
+        public function calibrationInit($platformId) {
+            try {
+
+                $dataPlatform = Platforms::where('id', $platformId)->first();
+
+                $minDate = Carbon::now()->subDays(7)->format('Y-m-d') . ' 00:00';
+                $maxDate = Carbon::now()->subDays(1)->format('Y-m-d') . ' 23:59';
+                $dataLogger = Loggers::loggerDataDaily($dataPlatform->uid, $minDate, $maxDate, $dataPlatform->timezone)->get();
+
+                $data = [];
+                foreach ($dataLogger as $logger) {
+                    $data[] = [
+                        'uid' => $logger->uid,
+                        'date_period' => $logger->tanggal,
+                        'pm25' => $logger->pm_25,
+                        'pm10' => $logger->pm_10,
+                        'tsp' => $logger->tsp,
+                    ];
+                }
+
+                return response()->json([
+                    'message' => 'Platform data deleted successfully',
+                    'data' => $data,
+                    'responseTime' => Carbon::now()
+                ]);
+
+            } catch (Exception $exception) {
+                return response()->json([
+                    'message' => $exception->getMessage() . ' on line ' . $exception->getLine(),
+                    'file' => $exception->getFile(),
+                    'responseTime' => Carbon::now()
+                ], 500);
+            }
+        }
     }

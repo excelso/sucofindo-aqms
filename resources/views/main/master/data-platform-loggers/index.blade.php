@@ -100,9 +100,9 @@
                                             <td class="text-left">{{ $item->sites->companies->company_name ?? '-' }}</td>
                                             <td class="text-center">{{ Carbon::parse($item->updated_at)->translatedFormat('d M Y H:i') }}</td>
                                             <td class="text-center">
-                                                <a href="javascript:void(0)" class="btnEdit">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
+                                                <button class="focus:outline-none dropdownPlatform p-2" data-id="row{{ $i }}">
+                                                    <i class="fas fa-ellipsis-vertical text-[18px]"></i>
+                                                </button>
                                             </td>
                                         </tr>
                                     @endforeach

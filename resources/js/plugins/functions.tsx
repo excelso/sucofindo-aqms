@@ -930,3 +930,9 @@ export function convertWebRTCToWhepUrl(webrtcUrl: string): string {
         console.error('Error converting WebRTC URL to WHEP:', error);
     }
 }
+
+export function htmlEntities(str) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(str, 'text/html');
+    return doc.documentElement.textContent;
+}

@@ -8,11 +8,21 @@ import {createSmoothGradient} from "@/js/main/dashboard/chartHelper";
 import {Dropdown} from 'flowbite';
 import type {DropdownOptions, DropdownInterface} from 'flowbite';
 import type {InstanceOptions} from 'flowbite';
+import moment from "moment";
 
 interface CameraData {
     cameraName: string;
     videoLink: string;
     supportPTZ: boolean;
+}
+
+interface FilterOptions {
+    date?: string; // Format: YYYY-MM-DD
+    status?: string;
+    siteName?: string;
+    location?: string;
+    isOnline?: boolean;
+    uid?: string;
 }
 
 interface AirQualityData {
@@ -115,6 +125,7 @@ interface CardManagerOptions {
     enablePagination?: boolean; // New option for pagination
     itemsPerPage?: number; // Items per page
     enableInfiniteScroll?: boolean; // Enable infinite scroll instead of traditional pagination
+    onStatusClick?: (id: string) => void;
     onCctvClick?: (id: string, cctvData: Array<CameraData>) => void;
     onMetricsClick?: (id: string, metrics: MetricsData) => void;
     onDataUpdate?: (updatedData: AirQualityData[]) => void;
@@ -161,7 +172,10 @@ interface LoggerEventData {
 }
 
 class AirQualityCardManager {
+
     // region Properties
+    private filterOptions: FilterOptions = {};
+    private originalData: AirQualityData[] = [];
     private data: AirQualityData[] = [];
     private container: HTMLElement | null = null;
     private options: CardManagerOptions;
@@ -234,9 +248,19 @@ class AirQualityCardManager {
 
         // Initialize periodic updates only if Socket.IO is disabled
         if (this.options.apiEndpoint && this.options.realTimeUpdateInterval && !this.options.enableSocketIO) {
-            this.startRealTimeUpdates().catch((error) => {
-                console.error('Failed to start real-time updates:', error);
-            });
+            const url = new URLSearchParams(new URL(window.location.href).searchParams);
+            if (url.size !== 0) {
+                if (url.get('date') === moment().format('YYYY-MM-DD')) {
+                    this.startRealTimeUpdates().catch((error) => {
+                        console.error('Failed to start real-time updates:', error);
+                    });
+                }
+            } else {
+                console.log('Realtime')
+                this.startRealTimeUpdates().catch((error) => {
+                    console.error('Failed to start real-time updates:', error);
+                });
+            }
         }
     }
     // endregion
@@ -1767,6 +1791,10 @@ class AirQualityCardManager {
             }
         }
 
+        if (this.options.onStatusClick) {
+            badge.addEventListener('click', () => this.options.onStatusClick!(data.uid))
+        }
+
         if (this.options.onHeartbeatStatusClick) {
             onlineContainer.addEventListener('click', () => this.options.onHeartbeatStatusClick!(data.uid));
         }
@@ -2371,6 +2399,127 @@ class AirQualityCardManager {
         this.data = filteredData;
         this.renderAll();
         this.data = originalData;
+    }
+
+    public async filterWithAPI(options: FilterOptions): Promise<void> {
+        try {
+            this.showLoading(true);
+            this.filterOptions = { ...options };
+
+            const url = new URL(this.options.apiEndpoint, window.location.origin);
+            url.searchParams.set('page', '1');
+            url.searchParams.set('per_page', this.options.itemsPerPage?.toString() || '20');
+
+            // Add filter parameters to URL
+            if (options.date) {
+                url.searchParams.set('date', options.date);
+            }
+            if (options.status) {
+                url.searchParams.set('status', options.status);
+            }
+            if (options.siteName) {
+                url.searchParams.set('siteName', options.siteName);
+            }
+            if (options.location) {
+                url.searchParams.set('location', options.location);
+            }
+            if (options.isOnline !== undefined) {
+                url.searchParams.set('isOnline', options.isOnline.toString());
+            }
+            if (options.uid) {
+                url.searchParams.set('uid', options.uid);
+            }
+
+            const response = await fetch(url.toString());
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+
+            // Handle paginated response
+            if (result.pagination) {
+                this.paginationData = result.pagination;
+                this.currentPage = result.pagination.current_page;
+            }
+
+            const newData: AirQualityData[] = Array.isArray(result.data) ? result.data : [];
+
+            // Update data
+            this.data = newData.map(item => ({
+                ...item,
+                lastUpdated: item.lastUpdated ? new Date(item.lastUpdated) : new Date()
+            }));
+
+            // Update cache
+            this.data.forEach(item => {
+                this.dataCache.set(item.uid, item);
+            });
+
+            this.lastUpdateTime = new Date();
+            this.updateConnectionStatus('connected');
+
+            // Render results
+            if (this.data.length === 0) {
+                this.showNoData();
+            } else {
+                this.showLoading(false);
+                this.renderAll();
+                this.renderPagination();
+            }
+
+            // Trigger callback if provided
+            if (this.options.onDataUpdate) {
+                this.options.onDataUpdate(this.data);
+            }
+
+        } catch (error) {
+            console.error('Error filtering data with API:', error);
+            this.updateConnectionStatus('error');
+            this.showError(error.message || 'Failed to filter data');
+        }
+    }
+    // endregion
+
+    // region Clear Filter
+    public clearFilter(): void {
+        this.filterOptions = {};
+
+        // Restore original data if available
+        if (this.originalData.length > 0) {
+            this.data = [...this.originalData];
+            this.originalData = [];
+        }
+
+        this.renderFilteredResults();
+    }
+    // endregion
+
+    // region Render Filtered Results
+    private renderFilteredResults(): void {
+        if (this.data.length === 0) {
+            this.showNoData();
+        } else {
+            this.showLoading(false);
+            this.renderAll();
+
+            // Reset pagination for filtered results
+            this.currentPage = 1;
+            this.paginationData = {
+                current_page: 1,
+                last_page: Math.ceil(this.data.length / (this.options.itemsPerPage || 20)),
+                per_page: this.options.itemsPerPage || 20,
+                total: this.data.length,
+                has_more_pages: false,
+                next_page_url: null,
+                prev_page_url: null
+            };
+
+            this.renderPagination();
+        }
+
+        console.log(`📊 Filtered results: ${this.data.length} platforms found`);
     }
     // endregion
 

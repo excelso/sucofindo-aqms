@@ -6,15 +6,15 @@ import {
     convertWebRTCToWhepUrl,
     formatter,
     getMetaContent, handleFixedTd,
-    handleFixedTheadTh,
-    renderPagination,
+    handleFixedTheadTh, hiddenElm, htmlEntities,
+    renderPagination, showHiddenElm,
     tableTooltip,
     triggerTableTooltip
 } from "@/js/plugins/functions";
 import {failureAlert, waitLoader} from "@/js/plugins/sweet-alert";
 import {SocketClient} from "@/js/plugins/SocketClient";
 import Swal from "sweetalert2";
-import moment from "moment";
+import moment from "moment-timezone";
 import MapsHelper from "@/js/plugins/mapsHelper";
 import VideoStreamHandler from "@/js/plugins/videoStreamHandler";
 import HikvisionPTZController from "@/js/plugins/hikvisionPTZController";
@@ -22,12 +22,15 @@ import videojs from "video.js";
 import {MediaMtxWhepPlayer} from "@/js/plugins/MediaMtxWhepPlayer";
 import {CamerasConfig, EnhancedVideoStreamHandler} from "@/js/plugins/EnhancedVideoStreamHandler";
 import OnvifPTZController from "@/js/plugins/OnvifPTZController";
+import {ExPicker} from "@/js/experiment/ex-picker";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
     const url = new URL(window.location.href)
+    const win: Window = window
 
     const appEnv: HTMLInputElement = document.querySelector('.app_env')
+    const datePeriod: HTMLElement = document.querySelector('.datePeriod')
     const modalCctv: HTMLElement = document.querySelector('.modalCctv')
     const modalBody: HTMLElement = modalCctv.querySelector('.modal-body')
     const bodyCamera: HTMLElement = modalBody.querySelector('.body-camera')
@@ -45,6 +48,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnDownload = modalHeartbeat.querySelector('.btnDownload')
     const tHeartbeatData = modalHeartbeat.querySelector('.tHeartbeatData')
     const footerHeartbeat = modalHeartbeat.querySelector('.footerHeartbeat')
+
+    const modalPlatformReport = document.querySelector('.modalPlatformReport')
+    const tReportData = modalPlatformReport.querySelector('.tReportData')
+    const reportNotFound = modalPlatformReport.querySelector('.reportNotFound')
+    const reportLoader = modalPlatformReport.querySelector('.reportLoader')
+    const footerReport = modalPlatformReport.querySelector('.footerReport')
+
+    const btnSearch = document.querySelector('.btnSearch')
+    const modalSearch = document.querySelector('.modalPencarian')
 
     const modalMaps = document.querySelector('.modalMaps')
     const mapsBody: HTMLDivElement = document.querySelector('#mapsBody')
@@ -83,6 +95,13 @@ document.addEventListener('DOMContentLoaded', function () {
             closeModalDialog(modalDetailParameter)
             closeModalDialog(modalHeartbeat)
             closeModalDialog(modalMaps)
+            closeModalDialog(modalPlatformReport, () => {
+                tReportData.innerHTML = null
+            })
+
+            if (modalSearch) {
+                closeModalDialog(modalSearch)
+            }
         })
     })
     //endregion
@@ -154,7 +173,80 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
             })
         },
+        onStatusClick: (uid) => {
+            handleModalReportPlatform(uid)
+        }
     });
+
+    const urlParams = new URLSearchParams(url.searchParams)
+    if (urlParams.size !== 0) {
+        datePeriod.textContent = moment(urlParams.get('date')).format('DD MMM YYYY')
+        airQualityManager.filterWithAPI({
+            date: urlParams.get('date'),
+        })
+    } else {
+        datePeriod.textContent = moment().format('DD MMM YYYY')
+    }
+    //endregion
+
+    //region Handle Search
+    if (btnSearch) {
+        btnSearch.addEventListener('click', function () {
+            showModalDialog(modalSearch, null, () => {
+                const btnResetSearch = modalSearch.querySelector('.btnResetSearch')
+                const date: HTMLInputElement = modalSearch.querySelector('.date')
+                const btnCari = modalSearch.querySelector<HTMLElement>('.btnSearch')
+
+                new ExPicker(date, {
+                    dateFormat: 'yyyy-mm-dd',
+                    firstYear: 1950,
+                    maxDate: moment().format('YYYY-MM-DD'),
+                })
+
+                modalSearch.addEventListener('keypress', function (ev: KeyboardEvent) {
+                    if (ev.key === 'Enter') {
+                        $(btnCari).trigger('click')
+                    }
+                })
+
+                btnCari.addEventListener('click', function () {
+                    const elmPencarian = modalSearch.querySelectorAll<HTMLInputElement>('[name]')
+                    elmPencarian.forEach((elm) => {
+                        const elmNames = elm.getAttribute('name')
+                        if (elm.value !== '') {
+                            url.searchParams.set(elmNames, elm.value)
+                        } else {
+                            url.searchParams.delete(elmNames)
+                        }
+                    })
+
+                    closeModalDialog(modalSearch, async () => {
+                        history.pushState(null, '', url.toString())
+                        datePeriod.textContent = moment(date.value).format('DD MMM YYYY')
+                        await airQualityManager.filterWithAPI({
+                            date: date.value
+                        })
+                    })
+                })
+
+                btnResetSearch.addEventListener('click', function () {
+                    const urlParams = new URLSearchParams(url.searchParams)
+                    if (urlParams.size !== 0) {
+                        [...urlParams.keys()].forEach((item) => {
+                            if (item !== 'sort') {
+                                url.searchParams.delete(item)
+                            }
+                        })
+
+                        closeModalDialog(modalSearch, async () => {
+                            history.pushState(null, '', url.toString())
+                            win.location = url.toString()
+                        })
+                    }
+                })
+            })
+        })
+    }
     //endregion
 
     //region Handle Open Video on AQI Chart
@@ -486,12 +578,15 @@ document.addEventListener('DOMContentLoaded', function () {
     //region Handle Modal Heartbeat Platform
     function handleModalHeartbeat(uid: string) {
         showModalDialog(modalHeartbeat, null, async () => {
-            renderData()
+            const urlParams = new URLSearchParams(url.searchParams)
+            renderData({
+                date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
+            })
         })
 
         function renderData(options?: any) {
             lookupData(options).then(response => {
-                renderBody(uid, response)
+                renderBody(uid, response, options.date)
 
                 const {dataResponse} = response as any
                 renderPagination(dataResponse, renderData, footerHeartbeat, options)
@@ -500,8 +595,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         function lookupData(options: any) {
             return new Promise(async (resolve, reject) => {
-                const {url: dataLinks} = options || {}
-                const dataUrl = dataLinks ?? `/dashboard/platform-heartbeat/${uid}`
+                const {url: dataLinks, date} = options || {}
+                const dataUrl = dataLinks ? `${dataLinks}&date=${date}` : `/dashboard/platform-heartbeat/${uid}?date=${date}`
                 const response = await fetch(dataUrl, {
                     method: 'GET',
                     headers: {
@@ -524,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
         }
 
-        function renderBody(uid: string, response: any) {
+        function renderBody(uid: string, response: any, date: string) {
             const {dataResponse, onlinePercent, offlinePercent} = response
             const {data} = dataResponse
 
@@ -533,7 +628,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (btnDownload) {
                 btnDownload.addEventListener('click', async function () {
-                    await handleExportHeartbeat(uid)
+                    await handleExportHeartbeat(uid, date)
                 })
             }
 
@@ -565,9 +660,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        async function handleExportHeartbeat(uid: string) {
+        async function handleExportHeartbeat(uid: string, date: string) {
             await waitLoader('Downloading...', 'This may take longer.', async () => {
-                const response = await fetch(`/dashboard/export-excel-heartbeat/${uid}`, {
+                const response = await fetch(`/dashboard/export-excel-heartbeat/${uid}?date=${date}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -598,6 +693,123 @@ document.addEventListener('DOMContentLoaded', function () {
                 setTimeout(() => URL.revokeObjectURL(urlBlob), 10000);
                 document.body.removeChild(aLink);
             });
+        }
+    }
+
+    //endregion
+
+    //region Handle Modal Report Platform
+    function handleModalReportPlatform(uid: string) {
+        showModalDialog(modalPlatformReport, null, async () => {
+            const urlParams = new URLSearchParams(url.searchParams)
+            renderData({
+                date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
+            })
+        })
+
+        function renderData(options?: any) {
+            hiddenElm(reportNotFound)
+            showHiddenElm(reportLoader)
+            lookupData(options).then(response => {
+                renderBody(uid, response)
+
+                hiddenElm(reportLoader)
+
+                const {dataResponse} = response as any
+                renderPagination(dataResponse, renderData, footerReport, options)
+            })
+        }
+
+        function lookupData(options: any) {
+            return new Promise(async (resolve, reject) => {
+                const {url: dataLinks, date} = options || {}
+                const dataUrl = dataLinks ? `${dataLinks}&date=${date}` : `/dashboard/platform-report/${uid}?date=${date}`
+                const response = await fetch(dataUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                })
+
+                const {status} = response
+                const {message, data} = await response.json()
+                if (status === 200) {
+                    resolve({
+                        dataResponse: data,
+                    })
+                } else {
+                    reject(message)
+                }
+            })
+        }
+
+        function renderBody(uid: string, response: any) {
+            const {dataResponse} = response
+            const {from, data} = dataResponse
+
+            const itemBodies = []
+            if (data.length !== 0) {
+                hiddenElm(reportNotFound)
+
+                let no = from
+                data.map((item: any) => {
+                    const {uid, datetime_unix, timezone, max_pm_25, max_pm_10, max_tsp, noise_leq, max_aqi_index, max_aqi_index_tsp, limit} = item
+                    const {
+                        tsp_max_buffer,
+                        tsp_max
+                    } = limit
+
+                    let status = 'Good'
+                    let statusColor = 'bg-green-200'
+                    let statusEmo = htmlEntities('&#x1F601;')
+                    if (max_tsp > tsp_max_buffer && max_tsp < tsp_max) {
+                        status = 'Moderate'
+                        statusColor = 'bg-orange-200'
+                        statusEmo = htmlEntities('&#x1F61E;')
+                    } else if (max_tsp > tsp_max) {
+                        status = 'Nod Good'
+                        statusColor = 'bg-red-300'
+                        statusEmo = htmlEntities('&#x1F922;')
+                    }
+
+                    const dateTime = moment.unix(datetime_unix).tz('Asia/Makassar');
+
+                    itemBodies.push(`
+                        <tr class="data-deduction">
+                            <td class="text-center">${no}</td>
+                            <td class="text-center">${uid}</td>
+                            <td class="text-center">${dateTime.format('DD MMM YYYY HH:mm:ss')}</td>
+                            <td class="text-right">${max_pm_25}</td>
+                            <td class="text-right">${max_pm_10}</td>
+                            <td class="text-right">${max_tsp}</td>
+                            <td class="text-right">${noise_leq}</td>
+                            <td class="text-center">
+                                ${max_aqi_index}
+                            </td>
+                            <td class="text-center">
+                                ${max_aqi_index_tsp}
+                            </td>
+                            <td class="text-left">
+                                <span class="status-badge inline-flex items-center rounded-full gap-1 px-[7px] py-[3px] ${statusColor} text-[12px] font-bold">
+                                    ${statusEmo} ${status}
+                                </span>
+                            </td>
+                        </tr>
+                    `)
+
+                    no++
+                })
+
+                tReportData.innerHTML = itemBodies.join('')
+
+                tableTooltip()
+                triggerTableTooltip()
+                handleFixedTheadTh()
+                handleFixedTd()
+            } else {
+                showHiddenElm(reportNotFound)
+            }
         }
     }
 
