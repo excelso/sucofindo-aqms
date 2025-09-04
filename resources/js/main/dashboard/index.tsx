@@ -338,8 +338,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     //region Handle Chart Detail
     async function handleDetailChart(uid: string, metric: MetricsData) {
+        let date = moment().format('YYYY-MM-DD')
+        const urlParams = new URLSearchParams(url.searchParams)
+        if (urlParams.size !== 0) {
+            date = urlParams.get('date')
+        }
 
-        const response = await fetch(`/dashboard/detail-metric/${uid}?metric=${metric.type}`, {
+        const response = await fetch(`/dashboard/detail-metric/${uid}?metric=${metric.type}?date=${date}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
