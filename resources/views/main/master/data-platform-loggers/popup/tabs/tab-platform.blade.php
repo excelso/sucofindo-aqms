@@ -46,6 +46,16 @@
         </div>
         <div class="form-group">
             <label>
+                Platform name
+                <span class="text-red-500 ml-1">*</span>
+            </label>
+            <div class="form-group-control">
+                <input type="text" class="form-control uidAlias" placeholder="...">
+            </div>
+            <ul class="uidAliasError"></ul>
+        </div>
+        <div class="form-group">
+            <label>
                 Timezone
                 <span class="text-red-500 ml-1">*</span>
             </label>

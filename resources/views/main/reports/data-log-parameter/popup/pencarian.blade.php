@@ -19,7 +19,7 @@
                     <select class="form-control select2-custom platformUid" name="platformUid">
                         @foreach($dataAllPlatform as $item)
                             @php($selected = request()->input('platformUid') == $item->uid ? 'selected' : '')
-                            <option value="{{ $item->uid }}" data-additional="{{ $item->sites->companies->company_name ?? '-' }} / {{ $item->sites->site_name ?? '-' }}" {{ $selected }}>{{ $item->uid }}</option>
+                            <option value="{{ $item->uid }}" data-additional="{{ $item->sites->companies->company_name ?? '-' }} / {{ $item->sites->site_name ?? '-' }}" {{ $selected }}>{{ $item->uid_alias }}</option>
                         @endforeach
                     </select>
                 </div>

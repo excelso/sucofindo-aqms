@@ -47,6 +47,7 @@
                         }
                     }
                 ],
+                'uid_alias' => 'required',
                 'cctv_link_1' => 'nullable|url',
                 'cctv_link_2' => 'nullable|url',
                 'cctv_link_hls' => 'nullable|url',
@@ -69,6 +70,7 @@
             ], [], [
                 'company_site_id' => 'Site Name',
                 'uid' => 'UID',
+                'uid_alias' => 'Platform Name',
                 'cctv_link' => 'CCTV Link (RTC)',
                 'cctv_link_hls' => 'CCTV Link (HLS)',
                 'timezone' => 'Timezone',
@@ -87,6 +89,7 @@
                     Platforms::create([
                         'company_site_id' => $request->input('company_site_id'),
                         'uid' => $request->input('uid'),
+                        'uid_alias' => $request->input('uid_alias'),
                         'cctv_link_1' => $request->input('cctv_link_1'),
                         'cctv_1_support_ptz' => $request->input('cctv_1_support_ptz'),
                         'cctv_link_2' => $request->input('cctv_link_2'),
@@ -178,6 +181,7 @@
                         }
                     }
                 ],
+                'uid_alias' => 'required',
                 'cctv_link_1' => 'nullable|url',
                 'cctv_link_2' => 'nullable|url',
                 'cctv_link_hls' => 'nullable|url',
@@ -200,6 +204,7 @@
             ], [], [
                 'company_site_id' => 'Site Name',
                 'uid' => 'UID',
+                'uid_alias' => 'Platform Name',
                 'cctv_link' => 'CCTV Link (RTC)',
                 'cctv_link_hls' => 'CCTV Link (HLS)',
                 'timezone' => 'Timezone',
@@ -219,6 +224,7 @@
                     Platforms::where('id', $platformId)->update([
                         'company_site_id' => $request->input('company_site_id'),
                         'uid' => $request->input('uid'),
+                        'uid_alias' => $request->input('uid_alias'),
                         'cctv_link_1' => $request->input('cctv_link_1'),
                         'cctv_1_support_ptz' => $request->input('cctv_1_support_ptz'),
                         'cctv_link_2' => $request->input('cctv_link_2'),

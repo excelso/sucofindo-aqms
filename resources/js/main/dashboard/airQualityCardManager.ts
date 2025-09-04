@@ -262,13 +262,13 @@ class AirQualityCardManager {
         if (!this.container) return;
 
         // Create loading element
-        this.loadingElement = this.createElement('div', 'flex justify-center items-center p-8');
-        this.loadingElement.innerHTML = `
-            <div class="flex flex-col items-center">
+        this.loadingElement = this.createElement('div', 'grid md:grid-cols-2 sm:grid-cols-1 grid-cols-3 gap-4');
+        this.loadingElement.innerHTML = Array.from({ length: 9 }, (_, index) => `
+            <div class="flex flex-col items-center p-6 border bg-white rounded-lg">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                <p class="text-gray-600">Loading platforms...</p>
+                Please Wait...
             </div>
-        `;
+        `).join('');
 
         // Create no data element
         this.noDataElement = this.createElement('div', 'flex justify-center items-center p-16');
@@ -449,7 +449,9 @@ class AirQualityCardManager {
         if (paginationEl) {
             this.container.insertBefore(fragment, paginationEl);
         } else {
-            this.container.appendChild(fragment);
+            const cardContainer = this.createElement('div', 'grid md:grid-cols-2 sm:grid-cols-1 grid-cols-3 gap-4')
+            cardContainer.appendChild(fragment);
+            this.container.appendChild(cardContainer);
         }
     }
     // endregion
@@ -1751,7 +1753,9 @@ class AirQualityCardManager {
             fragment.appendChild(card);
         });
 
-        this.container.appendChild(fragment);
+        const cardContainer = this.createElement('div', 'grid md:grid-cols-2 sm:grid-cols-1 grid-cols-3 gap-4')
+        cardContainer.appendChild(fragment);
+        this.container.appendChild(cardContainer);
 
         // Setup infinite scroll if enabled
         if (this.options.enableInfiniteScroll && this.paginationData?.has_more_pages) {

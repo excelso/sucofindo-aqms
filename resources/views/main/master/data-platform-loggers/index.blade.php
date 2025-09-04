@@ -51,6 +51,7 @@
                                 <tr class="sticky-header">
                                     <th class="text-center w-[50px]">No.</th>
                                     <th class="text-center w-[150px]">UID</th>
+                                    <th class="text-center w-[150px]">Platform Name</th>
                                     <th class="text-left w-[150px]">Camera 1 (RTC)</th>
                                     <th class="text-left w-[150px]">Camera 2 (RTC)</th>
                                     <th class="text-left w-[150px]">CCTV Link (HLS)</th>
@@ -58,7 +59,7 @@
                                     <th class="text-left w-[150px]">Site Name</th>
                                     <th class="text-left w-[150px]">Company Name</th>
                                     <th class="text-center w-[130px]">Update Date</th>
-                                    <th class="text-center w-[50px]">#</th>
+                                    <th data-sticky data-sticky-rw="0px" class="text-center w-[70px]">#</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -68,6 +69,7 @@
                                         <tr class="data-tables" data-id="{{ $item->id }}" data-uid="{{ $item->uid ?? '' }}">
                                             <td class="text-center">{{$i++}}</td>
                                             <td class="text-center">{{ $item->uid ?? '' }}</td>
+                                            <td class="text-center">{{ $item->uid_alias ?? '' }}</td>
                                             <td class="text-left">
                                                 @if($item->cctv_link_1)
                                                     <a class="cursor-pointer btnCamera1" data-href="{{ $item->cctv_link_1 }}" data-ptz="{{ $item->cctv_1_support_ptz ?? '0' }}">
@@ -99,7 +101,7 @@
                                             <td class="text-left">{{ $item->sites->site_name ?? '-' }}</td>
                                             <td class="text-left">{{ $item->sites->companies->company_name ?? '-' }}</td>
                                             <td class="text-center">{{ Carbon::parse($item->updated_at)->translatedFormat('d M Y H:i') }}</td>
-                                            <td class="text-center">
+                                            <td data-sticky data-sticky-rw="0px" class="text-center">
                                                 <button class="focus:outline-none dropdownPlatform p-2" data-id="row{{ $i }}">
                                                     <i class="fas fa-ellipsis-vertical text-[18px]"></i>
                                                 </button>

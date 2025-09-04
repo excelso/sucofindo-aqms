@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const uidOld: HTMLInputElement = modalForm.querySelector('.uidOld')
     const uid: HTMLInputElement = modalForm.querySelector('.uid')
     const uidError: HTMLElement = modalForm.querySelector('.uidError')
+    const uidAlias: HTMLInputElement = modalForm.querySelector('.uidAlias')
+    const uidAliasError: HTMLElement = modalForm.querySelector('.uidAliasError')
     const cctvLink1: HTMLInputElement = modalForm.querySelector('.cctvLink1')
     const cctvLink1Error: HTMLElement = modalForm.querySelector('.cctvLink1Error')
     const cctvLink2: HTMLInputElement = modalForm.querySelector('.cctvLink2')
@@ -164,7 +166,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const menuItems: MenuItem[] = [];
 
         menuItems.push({text: 'Edit', class: 'text-gray-700 btnEdit', icon: 'fas fa-edit'});
-        menuItems.push({text: 'Calibration', class: 'text-gray-700', icon: 'fas fa-rotate-right', href: `${url}/calibration/${platformId}`});
+        menuItems.push({
+            text: 'Calibration',
+            class: 'text-gray-700',
+            icon: 'fas fa-rotate-right',
+            href: `${url}/calibration/${platformId}`
+        });
 
         return menuItems;
     }
@@ -214,10 +221,12 @@ document.addEventListener('DOMContentLoaded', function () {
             callback();
         }
     }
+
     //endregion
 
     //region Handle Tabs
     let tab: Tabs | null = null
+
     function initializeTabs() {
         try {
             const roleExTabs: HTMLElement = document.querySelector('[data-role="exTabs"]')
@@ -311,6 +320,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     tab = initializeTabs()
+
     function showTab(tabId: string) {
         if (tab) {
             tab.show(tabId)
@@ -318,6 +328,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.warn('Tabs not initialized')
         }
     }
+
     //endregion
 
     //region Handle Store
@@ -344,6 +355,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     body: JSON.stringify({
                                         company_site_id: companySiteId.value,
                                         uid: uid.value,
+                                        uid_alias: uidAlias.value,
                                         cctv_link_1: cctvLink1.value,
                                         cctv_1_support_ptz: cctv1IsSupportPTZ.checked ? 1 : 0,
                                         cctv_link_2: cctvLink2.value,
@@ -429,6 +441,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                         const {
                                             company_site_id,
                                             uid: data_uid,
+                                            uid_alias,
                                             cctv_link_1,
                                             cctv_1_support_ptz,
                                             cctv_link_2,
@@ -466,6 +479,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                             modelSite.setSelectedValue(company_site_id)
                                             uidOld.value = data_uid
                                             uid.value = data_uid
+                                            uidAlias.value = uid_alias
                                             cctvLink1.value = cctv_link_1
                                             cctv1IsSupportPTZ.checked = cctv_1_support_ptz === 1
                                             cctvLink2.value = cctv_link_2
@@ -519,6 +533,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                                                     company_site_id: companySiteId.value,
                                                                     uid_old: uidOld.value,
                                                                     uid: uid.value,
+                                                                    uid_alias: uidAlias.value,
                                                                     cctv_link_1: cctvLink1.value,
                                                                     cctv_1_support_ptz: cctv1IsSupportPTZ.checked ? 1 : 0,
                                                                     cctv_link_2: cctvLink2.value,
@@ -723,6 +738,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const {
                     company_site_id,
                     uid,
+                    uid_alias,
                     cctv_link_1,
                     cctv_link_2,
                     cctv_link_hls,
@@ -734,6 +750,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 responseMessages(companySiteIdError, company_site_id)
                 responseMessages(uidError, uid)
+                responseMessages(uidAliasError, uid_alias)
                 responseMessages(cctvLink1Error, cctv_link_1)
                 responseMessages(cctvLink2Error, cctv_link_2)
                 responseMessages(cctvLinkHlsError, cctv_link_hls)
