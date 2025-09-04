@@ -344,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function () {
             date = urlParams.get('date')
         }
 
-        const response = await fetch(`/dashboard/detail-metric/${uid}?metric=${metric.type}?date=${date}`, {
+        const response = await fetch(`/dashboard/detail-metric/${uid}?metric=${metric.type}&date=${date}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
