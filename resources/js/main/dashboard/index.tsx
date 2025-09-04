@@ -785,7 +785,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 let no = from
                 data.map((item: any) => {
-                    const {uid, datetime_unix, timezone, max_pm_25, max_pm_10, max_tsp, noise_leq, max_aqi_index, max_aqi_index_tsp, limit} = item
+                    const {uid, uid_alias, datetime_unix, max_pm_25, max_pm_10, max_tsp, noise_leq, max_aqi_index, max_aqi_index_tsp, limit} = item
                     const {
                         tsp_max_buffer,
                         tsp_max

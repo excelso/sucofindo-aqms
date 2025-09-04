@@ -53,19 +53,15 @@
                 <div class="form-group-control">
                     <select class="form-control select2-custom" name="statusAqi">
                         <option value="">All Category</option>
-                        @foreach($dataAqiCat as $item)
-                            @php($selected = request()->input('statusAqi') == $item->id ? 'selected' : '')
-                            @php($emoji = mb_convert_encoding($item->emoji, 'UTF-8', 'HTML-ENTITIES'))
-                            @if($item->id == 3)
-                                <option value="{{ $item->id }}" data-additional="{{ $item->category_name }}" {{ $selected }}>
-                                    {{ $emoji }} {{ $item->category_name_en }}
-                                </option>
-                            @else
-                                <option value="{{ $item->id }}" {{ $selected }}>
-                                    {{ $emoji }} {{ $item->category_name_en }}
-                                </option>
-                            @endif
-                        @endforeach
+                        <option value="good" {{ request()->input('statusAqi') == 'good' ? 'selected' : '' }}>
+                            {{ mb_convert_encoding('&#x1F601;', 'UTF-8', 'HTML-ENTITIES') }} Good
+                        </option>
+                        <option value="mode" {{ request()->input('statusAqi') == 'mode' ? 'selected' : '' }}>
+                            {{ mb_convert_encoding('&#x1F61E;', 'UTF-8', 'HTML-ENTITIES') }} Moderate
+                        </option>
+                        <option value="nogo" {{ request()->input('statusAqi') == 'nogo' ? 'selected' : '' }}>
+                            {{ mb_convert_encoding('&#x1F922;', 'UTF-8', 'HTML-ENTITIES') }} Not Good
+                        </option>
                     </select>
                 </div>
             </div>

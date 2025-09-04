@@ -78,7 +78,7 @@
                                             @php($statusColor = 'bg-orange-200')
                                             @php($statusEmo = mb_convert_encoding('&#x1F61E;', 'UTF-8', 'HTML-ENTITIES'))
                                         @elseif($item->max_tsp > $item->limit->tsp_max)
-                                            @php($status = 'Nod Good')
+                                            @php($status = 'Not Good')
                                             @php($statusColor = 'bg-red-300')
                                             @php($statusEmo = mb_convert_encoding('&#x1F922;', 'UTF-8', 'HTML-ENTITIES'))
                                         @else

@@ -168,7 +168,13 @@
             }
 
             if (isset($search['statusAqi']) && $search['statusAqi'] != '') {
-                $builder->where('t_aqi_categories.id', $search['statusAqi']);
+                if ($search['statusAqi'] == 'good') {
+                    $builder->where(DB::raw('CASE WHEN summary.max_tsp < t_loggers_limit.tsp_max_buffer THEN 1 ELSE 0 END'), '=', 1);
+                } else if ($search['statusAqi'] == 'mode') {
+                    $builder->where(DB::raw('CASE WHEN summary.max_tsp > t_loggers_limit.tsp_max_buffer AND summary.max_tsp < t_loggers_limit.tsp_max THEN 1 ELSE 0 END'), '=', 1);
+                } else {
+                    $builder->where(DB::raw('CASE WHEN summary.max_tsp > t_loggers_limit.tsp_max THEN 1 ELSE 0 END'), '=', 1);
+                }
             }
 
             $builder->orderBy('summary.datetime_unix', 'DESC');
