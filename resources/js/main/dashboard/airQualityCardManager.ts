@@ -1336,7 +1336,7 @@ class AirQualityCardManager {
         };
 
         // Initial data fetch
-        await updateData();
+        // await updateData();
 
         // Check if real-time should be enabled
         if (this.shouldEnableRealTime()) {
