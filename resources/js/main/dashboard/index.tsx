@@ -50,6 +50,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const footerHeartbeat = modalHeartbeat.querySelector('.footerHeartbeat')
 
     const modalPlatformReport = document.querySelector('.modalPlatformReport')
+    const goodStatus = modalPlatformReport.querySelector('.goodStatus')
+    const goodLimit = modalPlatformReport.querySelector('.goodLimit')
+    const modeStatus = modalPlatformReport.querySelector('.modeStatus')
+    const modeLimit = modalPlatformReport.querySelector('.modeLimit')
+    const nogoStatus = modalPlatformReport.querySelector('.nogoStatus')
+    const nogoLimit = modalPlatformReport.querySelector('.nogoLimit')
     const tReportData = modalPlatformReport.querySelector('.tReportData')
     const reportNotFound = modalPlatformReport.querySelector('.reportNotFound')
     const reportLoader = modalPlatformReport.querySelector('.reportLoader')
@@ -738,10 +744,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
 
                 const {status} = response
-                const {message, data} = await response.json()
+                const {message, limit_tsp_min, limit_tsp_max_buffer, limit_tsp_max, good_status, mode_status, nogo_status, data} = await response.json()
                 if (status === 200) {
                     resolve({
                         dataResponse: data,
+                        limit_tsp_min,
+                        limit_tsp_max_buffer,
+                        limit_tsp_max,
+                        good_status,
+                        mode_status,
+                        nogo_status,
                     })
                 } else {
                     reject(message)
@@ -750,8 +762,22 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function renderBody(uid: string, response: any) {
-            const {dataResponse} = response
+            const {
+                dataResponse,
+                limit_tsp_max_buffer,
+                limit_tsp_max,
+                good_status,
+                mode_status,
+                nogo_status
+            } = response
             const {from, data} = dataResponse
+
+            goodStatus.textContent = `${good_status}%`
+            goodLimit.textContent = `< ${limit_tsp_max_buffer} µg/m³`
+            modeStatus.textContent = `${mode_status}%`
+            modeLimit.textContent = `${limit_tsp_max_buffer} µg/m³ - ${limit_tsp_max} µg/m³`
+            nogoStatus.textContent = `${nogo_status}%`
+            nogoLimit.textContent = `> ${limit_tsp_max} µg/m³`
 
             const itemBodies = []
             if (data.length !== 0) {

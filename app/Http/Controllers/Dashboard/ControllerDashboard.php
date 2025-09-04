@@ -436,12 +436,35 @@
                     $maxDate = Carbon::parse($request->input('date'))->format('Y-m-d') . ' 23:59';
                 }
 
+                $dataLoggerStatus = Loggers::reportLoggerData($platform->uid, $minDate, $maxDate, $platform->timezone, [
+                    'search' => $request->input()
+                ]);
+
+                $dataLoggerStatus->selectRaw('COUNT(*) as total');
+                $dataLoggerStatus->selectRaw('SUM(CASE WHEN summary.max_tsp < t_loggers_limit.tsp_max_buffer THEN 1 ELSE 0 END) as good_status');
+                $dataLoggerStatus->selectRaw('SUM(CASE WHEN summary.max_tsp > t_loggers_limit.tsp_max_buffer AND summary.max_tsp < t_loggers_limit.tsp_max THEN 1 ELSE 0 END) as moderate_status');
+                $dataLoggerStatus->selectRaw('SUM(CASE WHEN summary.max_tsp > t_loggers_limit.tsp_max THEN 1 ELSE 0 END) as not_good_status');
+                $dataLoggerStatus->selectRaw('t_loggers_limit.tsp_min');
+                $dataLoggerStatus->selectRaw('t_loggers_limit.tsp_max_buffer');
+                $dataLoggerStatus->selectRaw('t_loggers_limit.tsp_max');
+                $dataStatusCount = $dataLoggerStatus->first();
+
+                $goodStatus = $dataStatusCount->total > 0 ? round(($dataStatusCount->good_status / $dataStatusCount->total) * 100) : 0;
+                $modeStatus = $dataStatusCount->total > 0 ? round(($dataStatusCount->moderate_status / $dataStatusCount->total) * 100) : 0;
+                $nogoStatus = $dataStatusCount->total > 0 ? round(($dataStatusCount->not_good_status / $dataStatusCount->total) * 100) : 0;
+
                 $dataLogger = Loggers::reportLoggerData($platform->uid, $minDate, $maxDate, $platform->timezone, [
                     'search' => $request->input()
                 ])->with('limit');
 
                 return response()->json([
                     'message' => 'Load Successfully',
+                    'limit_tsp_min' => $dataStatusCount->tsp_min ?? 0,
+                    'limit_tsp_max_buffer' => $dataStatusCount->tsp_max_buffer ?? 0,
+                    'limit_tsp_max' => $dataStatusCount->tsp_max ?? 0,
+                    'good_status' => $goodStatus,
+                    'mode_status' => $modeStatus,
+                    'nogo_status' => $nogoStatus,
                     'data' => $dataLogger->paginate(20)->onEachSide(1),
                     'responseTime' => Carbon::now()
                 ], 200);
@@ -459,10 +482,10 @@
         // region Get Heartbeat Counts
         private function getHeartbeatCounts($query) {
             $counts = $query->selectRaw('
-            COUNT(*) as total,
-            SUM(CASE WHEN heartbeat_status = "Online" THEN 1 ELSE 0 END) as online_count,
-            SUM(CASE WHEN heartbeat_status = "Offline" THEN 1 ELSE 0 END) as offline_count
-        ')->first();
+                COUNT(*) as total,
+                SUM(CASE WHEN heartbeat_status = "Online" THEN 1 ELSE 0 END) as online_count,
+                SUM(CASE WHEN heartbeat_status = "Offline" THEN 1 ELSE 0 END) as offline_count
+            ')->first();
 
             $total = $counts->total;
             $onlinePercent = $total > 0 ? round(($counts->online_count / $total) * 100) : 0;

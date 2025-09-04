@@ -98,8 +98,8 @@
             $builder->withoutGlobalScopes();
             $builder->from(function ($builder) use ($uid, $timezone, $search) {
                 $builder->select([
-                    'id',
-                    'uid',
+                    't_loggers.id',
+                    't_loggers.uid',
                     DB::raw('MAX(CASE WHEN link_video_recorded IS NOT NULL THEN link_video_recorded END) AS link_video_recorded')
                 ]);
                 // Gunakan timezone yang sama dengan parameter
@@ -123,14 +123,16 @@
                 $builder->from('t_loggers');
 
                 if (isset($search['platformUid']) && $search['platformUid'] != '') {
-                    $builder->where('uid', $search['platformUid']);
+                    $builder->where('t_loggers.uid', $search['platformUid']);
                 } else {
-                    $builder->where('uid', $uid);
+                    $builder->where('t_loggers.uid', $uid);
                 }
 
-                $builder->groupByRaw('uid, FLOOR(datetime_unix / 600)');
+                $builder->groupByRaw('t_loggers.uid, FLOOR(datetime_unix / 600)');
                 $builder->orderByRaw('FLOOR(datetime_unix / 600) * 600');
             }, 'summary');
+
+            $builder->leftJoin('t_loggers_limit', 't_loggers_limit.uid', '=', 'summary.uid');
 
             // Join dengan t_aqi_categories untuk mendapatkan kategori
             $builder->leftJoin('t_aqi_categories', function ($join) {
