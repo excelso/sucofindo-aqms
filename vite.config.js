@@ -25,6 +25,7 @@ export default defineConfig({
                 'resources/js/main/master/data-platform-loggers/index-calibration.tsx',
                 'resources/js/main/reports/index.tsx',
                 'resources/js/main/master/data-sites/index.tsx',
+                'resources/js/main/master/data-sites-location/index.tsx',
                 'resources/js/main/master/data-users/index.tsx',
             ],
             refresh: true,
