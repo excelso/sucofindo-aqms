@@ -26,6 +26,21 @@ document.addEventListener('DOMContentLoaded', function () {
         csrfToken
     });
 
+    //region Handle Close Modal
+    closeModalForm.forEach((elm: Element) => {
+        elm.addEventListener('click', function () {
+            if (modalForm) {
+                closeModalDialog(modalForm, () => {
+                    modelSite.setSelectedValue('')
+
+                    locationName.value = ''
+                    responseMessages(locationNameError, null)
+                })
+            }
+        })
+    })
+    //endregion
+
     //region Handle Create
     if (btnCreate) {
         btnCreate.addEventListener('click', function () {
