@@ -21,17 +21,31 @@
             </label>
             <ul class="companyIdError"></ul>
         </div>
-        <div class="form-group">
-            <label>
-                Site Name
-                <span class="text-red-500 ml-1">*</span>
-            </label>
-            <div class="form-group-control">
-                <select class="form-select select2-custom companySiteId">
-                    <option value="">...</option>
-                </select>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="form-group">
+                <label>
+                    Site Name
+                    <span class="text-red-500 ml-1">*</span>
+                </label>
+                <div class="form-group-control">
+                    <select class="form-select select2-custom companySiteId">
+                        <option value="">...</option>
+                    </select>
+                </div>
+                <ul class="companySiteIdError"></ul>
             </div>
-            <ul class="companySiteIdError"></ul>
+            <div class="form-group">
+                <label>
+                    Location Name
+                    <span class="text-red-500 ml-1">*</span>
+                </label>
+                <div class="form-group-control">
+                    <select class="form-select select2-custom companySiteLocationId">
+                        <option value="">...</option>
+                    </select>
+                </div>
+                <ul class="companySiteLocationIdError"></ul>
+            </div>
         </div>
         <div class="form-group">
             <label>

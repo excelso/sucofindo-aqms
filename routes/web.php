@@ -2,9 +2,11 @@
 
     use App\Http\Controllers\ControllerNotification;
     use App\Http\Controllers\Dashboard\ControllerDashboard;
+    use App\Http\Controllers\Dashboard\PlatformAirQualityController;
     use App\Http\Controllers\HikvisionPTZController;
     use App\Http\Controllers\Master\ControllerPlatformLoggers;
     use App\Http\Controllers\Master\ControllerSites;
+    use App\Http\Controllers\Master\ControllerSitesLocation;
     use App\Http\Controllers\Master\ControllerUsers;
     use App\Http\Controllers\OnvifPTZController;
     use App\Http\Controllers\PTZController;
@@ -61,6 +63,9 @@
 
             Route::get('/', [ControllerDashboard::class, 'index'])->name('dashboard');
             Route::group(['prefix' => 'dashboard'], function () {
+                // Route::get('platforms', [PlatformAirQualityController::class, 'getPlatformsList']);
+                Route::get('platform/{uid}/data', [PlatformAirQualityController::class, 'getPlatformData']);
+
                 Route::get('platforms', [ControllerDashboard::class, 'getDataPlatforms']);
                 Route::get('detail-metric/{uid}', [ControllerDashboard::class, 'detailMetric']);
                 Route::get('webrtc-proxy', [WebRTCProxyController::class, 'proxyGet']);
@@ -84,6 +89,15 @@
                     Route::put('update/{siteId}', [ControllerSites::class, 'update']);
                     Route::delete('delete/{siteId}', [ControllerSites::class, 'delete']);
                     Route::get('data-site', [ControllerSites::class, 'handleDataSite']);
+                });
+
+                Route::group(['prefix' => 'sites-location'], function () {
+                    Route::get('/', [ControllerSitesLocation::class, 'index']);
+                    Route::post('store', [ControllerSitesLocation::class, 'store']);
+                    Route::get('detail/{locationId}', [ControllerSitesLocation::class, 'handleDetailLocation']);
+                    Route::put('update/{locationId}', [ControllerSitesLocation::class, 'update']);
+                    Route::delete('delete/{locationId}', [ControllerSitesLocation::class, 'delete']);
+                    Route::get('data-location', [ControllerSitesLocation::class, 'handleDataLocation']);
                 });
 
                 Route::group(['prefix' => 'platform-loggers'], function () {

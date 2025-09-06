@@ -38,6 +38,7 @@
         public function store(Request $request) {
             $validator = Validator::make($request->all(), [
                 'company_site_id' => 'required',
+                'company_site_location_id' => 'required',
                 'uid' => [
                     'required',
                     function ($attribute, $value, $fail) {
@@ -69,6 +70,7 @@
                 ],
             ], [], [
                 'company_site_id' => 'Site Name',
+                'company_site_location_id' => 'Location Name',
                 'uid' => 'UID',
                 'uid_alias' => 'Platform Name',
                 'cctv_link' => 'CCTV Link (RTC)',
@@ -88,6 +90,7 @@
                 DB::transaction(function () use ($request) {
                     Platforms::create([
                         'company_site_id' => $request->input('company_site_id'),
+                        'company_site_location_id' => $request->input('company_site_location_id'),
                         'uid' => $request->input('uid'),
                         'uid_alias' => $request->input('uid_alias'),
                         'cctv_link_1' => $request->input('cctv_link_1'),
@@ -170,6 +173,7 @@
         public function update(Request $request, $platformId) {
             $validator = Validator::make($request->all(), [
                 'company_site_id' => 'required',
+                'company_site_location_id' => 'required',
                 'uid' => [
                     'required',
                     function ($attribute, $value, $fail) use ($request) {
@@ -203,6 +207,7 @@
                 ],
             ], [], [
                 'company_site_id' => 'Site Name',
+                'company_site_location_id' => 'Location Name',
                 'uid' => 'UID',
                 'uid_alias' => 'Platform Name',
                 'cctv_link' => 'CCTV Link (RTC)',
@@ -223,6 +228,7 @@
                 DB::transaction(function () use ($platformId, $request) {
                     Platforms::where('id', $platformId)->update([
                         'company_site_id' => $request->input('company_site_id'),
+                        'company_site_location_id' => $request->input('company_site_location_id'),
                         'uid' => $request->input('uid'),
                         'uid_alias' => $request->input('uid_alias'),
                         'cctv_link_1' => $request->input('cctv_link_1'),

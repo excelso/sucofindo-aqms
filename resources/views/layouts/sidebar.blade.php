@@ -64,6 +64,13 @@
                         </a>
                     </li>
                     <li class="navItem">
+                        <a class="navLink {{Request::segment(2) == 'master' && Request::segment(3) == 'sites-location' ? 'navLinkActive' : ''}}" href="/master/sites-location">
+                            <div class="navText">
+                                <p>Location</p>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="navItem">
                         <a class="navLink {{Request::segment(2) == 'master' && Request::segment(3) == 'platform-loggers' ? 'navLinkActive' : ''}}" href="/master/platform-loggers">
                             <div class="navText">
                                 <p>Platform Loggers</p>

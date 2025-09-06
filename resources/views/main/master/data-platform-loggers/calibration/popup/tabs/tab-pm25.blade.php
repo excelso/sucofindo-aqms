@@ -36,7 +36,7 @@
                     </div>
                 </div>
             </div>
-            <div class="grid grid-cols-3 gap-4 bg-gray-50 px-4 py-4 mb-2 rounded-md">
+            <div class="grid grid-cols-2 gap-4 bg-gray-50 px-4 py-4 mb-2 rounded-md">
                 <div class="form-group !mb-0">
                     <label>
                         <div class="w-[7px] bg-[rgb(0,124,255)] mr-2"></div>
@@ -53,15 +53,6 @@
                     </label>
                     <label class="form-group-control">
                         <input class="form-control pm25Intercept number" disabled>
-                    </label>
-                </div>
-                <div class="form-group !mb-0">
-                    <label>
-                        <div class="w-[7px] bg-gray-400 mr-2"></div>
-                        Offset
-                    </label>
-                    <label class="form-group-control">
-                        <input class="form-control pm25FinalOffset number" disabled>
                     </label>
                 </div>
             </div>

@@ -56,6 +56,7 @@
                                     <th class="text-left w-[150px]">Camera 2 (RTC)</th>
                                     <th class="text-left w-[150px]">CCTV Link (HLS)</th>
                                     <th class="text-left w-[150px]">Timezone</th>
+                                    <th class="text-left w-[150px]">Location Name</th>
                                     <th class="text-left w-[150px]">Site Name</th>
                                     <th class="text-left w-[150px]">Company Name</th>
                                     <th class="text-center w-[130px]">Update Date</th>
@@ -98,8 +99,9 @@
                                                 @endif
                                             </td>
                                             <td class="text-left">{{ $item->timezone ?? '-' }}</td>
-                                            <td class="text-left">{{ $item->sites->site_name ?? '-' }}</td>
-                                            <td class="text-left">{{ $item->sites->companies->company_name ?? '-' }}</td>
+                                            <td class="text-left">{{ $item->sitesLocation->location_name ?? '-' }}</td>
+                                            <td class="text-left">{{ $item->sitesLocation->sites->site_name ?? '-' }}</td>
+                                            <td class="text-left">{{ $item->sitesLocation->sites->companies->company_name ?? '-' }}</td>
                                             <td class="text-center">{{ Carbon::parse($item->updated_at)->translatedFormat('d M Y H:i') }}</td>
                                             <td data-sticky data-sticky-rw="0px" class="text-center">
                                                 <button class="focus:outline-none dropdownPlatform p-2" data-id="row{{ $i }}">

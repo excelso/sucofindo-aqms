@@ -42,7 +42,7 @@
                     </div>
                 </div>
             </div>
-            <div class="relative overflow-y-auto !max-h-[calc(100vh-21.5rem)] !min-h-[calc(100vh-21.5rem)]">
+            <div class="relative overflow-y-auto !max-h-[calc(100vh-22.5rem)] !min-h-[calc(100vh-22.5rem)]">
                 <table class="table table-fixed">
                     <thead>
                         <tr class="sticky-header">

@@ -23,6 +23,7 @@ import {MediaMtxWhepPlayer} from "@/js/plugins/MediaMtxWhepPlayer";
 import {CamerasConfig, EnhancedVideoStreamHandler} from "@/js/plugins/EnhancedVideoStreamHandler";
 import OnvifPTZController from "@/js/plugins/OnvifPTZController";
 import {ExPicker} from "@/js/experiment/ex-picker";
+import {PlatformAirQualityManager} from "@/js/main/dashboard/platformAirQualityManager";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
@@ -40,6 +41,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const modalDetailParameter = document.querySelector('.modalDetailParameter')
     const bodyChart: HTMLElement = modalDetailParameter.querySelector('.bodyChart')
+    const paramNotFound = modalDetailParameter.querySelector('.paramNotFound')
+    const paramLoader = modalDetailParameter.querySelector('.paramLoader')
     const regulationNote: HTMLDivElement = modalDetailParameter.querySelector('.regulationNote')
 
     const modalHeartbeat = document.querySelector('.modalHeartbeat')
@@ -47,6 +50,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const offlinePercentage = modalHeartbeat.querySelector('.offlinePercentage')
     const btnDownload = modalHeartbeat.querySelector('.btnDownload')
     const tHeartbeatData = modalHeartbeat.querySelector('.tHeartbeatData')
+    const heartbeatNotFound = modalHeartbeat.querySelector('.heartbeatNotFound')
+    const heartbeatLoader = modalHeartbeat.querySelector('.heartbeatLoader')
     const footerHeartbeat = modalHeartbeat.querySelector('.footerHeartbeat')
 
     const modalPlatformReport = document.querySelector('.modalPlatformReport')
@@ -99,7 +104,12 @@ document.addEventListener('DOMContentLoaded', function () {
             })
 
             closeModalDialog(modalDetailParameter)
-            closeModalDialog(modalHeartbeat)
+            closeModalDialog(modalHeartbeat, () => {
+                onlinePercentage.textContent = `0%`
+                offlinePercentage.textContent = `0%`
+                tHeartbeatData.innerHTML = null
+            })
+
             closeModalDialog(modalMaps)
             closeModalDialog(modalPlatformReport, () => {
                 tReportData.innerHTML = null
@@ -344,6 +354,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     //region Handle Chart Detail
     async function handleDetailChart(uid: string, metric: MetricsData) {
+        hiddenElm(paramNotFound)
+        showHiddenElm(paramLoader)
+
         let date = moment().format('YYYY-MM-DD')
         const urlParams = new URLSearchParams(url.searchParams)
         if (urlParams.size !== 0) {
@@ -454,6 +467,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // endregion
 
+        hiddenElm(paramLoader)
         const chartData = data.map((item) => ({
             x: item.timestamp * 1000,
             y: item.value,
@@ -596,8 +610,12 @@ document.addEventListener('DOMContentLoaded', function () {
         })
 
         function renderData(options?: any) {
+            hiddenElm(heartbeatNotFound)
+            showHiddenElm(heartbeatLoader)
             lookupData(options).then(response => {
                 renderBody(uid, response, options.date)
+
+                hiddenElm(heartbeatLoader)
 
                 const {dataResponse} = response as any
                 renderPagination(dataResponse, renderData, footerHeartbeat, options)
@@ -668,6 +686,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 triggerTableTooltip()
                 handleFixedTheadTh()
                 handleFixedTd()
+            } else {
+                showHiddenElm(heartbeatNotFound)
             }
         }
 

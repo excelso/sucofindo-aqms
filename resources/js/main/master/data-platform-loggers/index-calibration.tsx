@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                                 Value (Sensor)
                                             </label>
                                             <label class="form-group-control">
-                                                <input class="form-control number pm25ValueSensor" disabled value="${pm25}">
+                                                <input class="form-control number pm25ValueSensor" value="${pm25}">
                                             </label>
                                             <ul class="pm25ValueSensorError"></ul>
                                         </div>
@@ -258,8 +258,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                             YSum += parseFloat(pm25ValueSample.value)
                                         })
 
-                                        const X = XSum / pm25Calibrate.length;
-                                        const Y = YSum / pm25Calibrate.length;
+
+                                        const X = parseFloat(numberFormat({maximumFractionDigits: 2}).format(XSum / pm25Calibrate.length));
+                                        const Y = parseFloat(numberFormat({maximumFractionDigits: 2}).format(YSum / pm25Calibrate.length));
 
                                         let pem = 0
                                         let pen = 0
@@ -271,16 +272,16 @@ document.addEventListener('DOMContentLoaded', function () {
                                             pen += Math.pow((parseFloat(pm25ValueSensor.value) - X), 2)
                                         })
 
-                                        const m = (pem / pen)
+                                        const m = parseFloat(numberFormat({maximumFractionDigits: 2}).format((pem / pen)))
                                         const intercept = (Y - (m * X))
 
                                         pm25Kemiringan.value = `${numberFormat({
                                             maximumFractionDigits: 2,
-                                        }).format(m)}`
+                                        }).format(m / 144)}`
 
                                         pm25Intercept.value = `${numberFormat({
                                             maximumFractionDigits: 2,
-                                        }).format(intercept)}`
+                                        }).format(intercept / 144)}`
                                     }
                                 })
                             }

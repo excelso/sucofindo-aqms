@@ -18,6 +18,7 @@
         protected $table = 't_platforms';
         protected $fillable = [
             'company_site_id',
+            'company_site_location_id',
             'uid',
             'uid_alias',
             'cctv_link_1',
@@ -41,6 +42,10 @@
 
         public function sites(): BelongsTo {
             return $this->belongsTo(CompaniesSites::class, 'company_site_id', 'id');
+        }
+
+        public function sitesLocation(): BelongsTo {
+            return $this->belongsTo(CompaniesSitesLocation::class, 'company_site_location_id', 'id');
         }
 
         public function loggerLimit(): HasOne {

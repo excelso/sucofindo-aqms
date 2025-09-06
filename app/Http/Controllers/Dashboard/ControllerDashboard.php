@@ -86,9 +86,7 @@
         // region Process Platform Data
         private function processPlatformData($platform, $request = null) {
             // Cache key for platform data
-            $cacheKey = "platform_data_{$platform->uid}_" . ($request?->input('date') ?
-                    Carbon::parse($request->input('date'))->format('Y-m-d') :
-                    Carbon::now()->timezone($platform->timezone)->format('Y-m-d'));
+            $cacheKey = "platform_data_{$platform->uid}_" . ($request?->input('date') ? Carbon::parse($request->input('date'))->format('Y-m-d') : Carbon::now()->timezone($platform->timezone)->format('Y-m-d'));
 
             return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($platform, $request) {
 
@@ -132,7 +130,7 @@
                 return [
                     'uid' => $platform->uid,
                     'uid_alias' => $platform->uid_alias,
-                    'siteName' => $platform->sites->site_name ?? 'Unknown',
+                    'siteName' => $platform->sitesLocation->location_name ?? 'Unknown',
                     'status' => $status,
                     'emoji' => $statusEmo,
                     'colorCode' => $statusColor,
@@ -397,9 +395,10 @@
                     $maxDate = Carbon::parse($request->input('date'))->format('Y-m-d') . ' 23:59';
                 }
 
+                $platformHeartbeatCalc = PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone);
                 $platformHeartbeat = PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone);
 
-                $totalCounts = $this->getHeartbeatCounts($platformHeartbeat);
+                $totalCounts = $this->getHeartbeatCounts($platformHeartbeatCalc);
 
                 return response()->json([
                     'message' => 'Load Successfully',

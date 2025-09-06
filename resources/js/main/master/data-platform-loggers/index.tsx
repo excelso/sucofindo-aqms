@@ -9,6 +9,7 @@ import VideoStreamHandler from "@/js/plugins/videoStreamHandler";
 import HikvisionPTZController from "@/js/plugins/hikvisionPTZController";
 import {EnhancedVideoStreamHandler} from "@/js/plugins/EnhancedVideoStreamHandler";
 import OnvifPTZController from "@/js/plugins/OnvifPTZController";
+import DataSitesLocationModel from "@/js/main/master/data-sites-location/model/DataSitesLocationModel";
 
 interface MenuItem {
     text: string;
@@ -28,6 +29,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const companyId: HTMLSelectElement = modalForm.querySelector('.companyId')
     const companySiteId: HTMLSelectElement = modalForm.querySelector('.companySiteId')
     const companySiteIdError: HTMLElement = modalForm.querySelector('.companySiteIdError')
+    const companySiteLocationId: HTMLSelectElement = modalForm.querySelector('.companySiteLocationId')
+    const companySiteLocationIdError: HTMLElement = modalForm.querySelector('.companySiteLocationIdError')
     const uidOld: HTMLInputElement = modalForm.querySelector('.uidOld')
     const uid: HTMLInputElement = modalForm.querySelector('.uid')
     const uidError: HTMLElement = modalForm.querySelector('.uidError')
@@ -101,6 +104,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const dropdownMenu = createDropdownMenu()
 
     const modelSite = new DataSitesModel(companyId, companySiteId, {
+        csrfToken
+    });
+
+    const modelSiteLocation = new DataSitesLocationModel(companySiteId, companySiteLocationId, {
         csrfToken
     });
 
@@ -354,6 +361,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     },
                                     body: JSON.stringify({
                                         company_site_id: companySiteId.value,
+                                        company_site_location_id: companySiteLocationId.value,
                                         uid: uid.value,
                                         uid_alias: uidAlias.value,
                                         cctv_link_1: cctvLink1.value,
@@ -440,6 +448,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     if (status === 200) {
                                         const {
                                             company_site_id,
+                                            company_site_location_id,
                                             uid: data_uid,
                                             uid_alias,
                                             cctv_link_1,
@@ -477,6 +486,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                                         showModalDialog(modalForm, `<i class="fas fa-edit mr-2"></i> Update Platform`, () => {
                                             modelSite.setSelectedValue(company_site_id)
+                                            modelSiteLocation.setSelectedValue(company_site_location_id)
                                             uidOld.value = data_uid
                                             uid.value = data_uid
                                             uidAlias.value = uid_alias
@@ -531,6 +541,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                                                 },
                                                                 body: JSON.stringify({
                                                                     company_site_id: companySiteId.value,
+                                                                    company_site_location_id: companySiteLocationId.value,
                                                                     uid_old: uidOld.value,
                                                                     uid: uid.value,
                                                                     uid_alias: uidAlias.value,
@@ -737,6 +748,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const {
                     company_site_id,
+                    company_site_location_id,
                     uid,
                     uid_alias,
                     cctv_link_1,
@@ -749,6 +761,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 } = errorValidation
 
                 responseMessages(companySiteIdError, company_site_id)
+                responseMessages(companySiteLocationId, company_site_location_id)
                 responseMessages(uidError, uid)
                 responseMessages(uidAliasError, uid_alias)
                 responseMessages(cctvLink1Error, cctv_link_1)
