@@ -31,10 +31,7 @@
                 </label>
             </div>
             <div class="form-group">
-                <label>
-                    Site Name
-                    <span class="text-red-500 ml-1">*</span>
-                </label>
+                <label>Site Name</label>
                 <div class="form-group-control">
                     <select class="form-select select2-custom srcCompanySiteId" name="site_id" data-selected="{{ request()->input('site_id') }}">
                         <option value="">...</option>
