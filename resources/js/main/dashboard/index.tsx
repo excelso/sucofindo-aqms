@@ -23,7 +23,7 @@ import {MediaMtxWhepPlayer} from "@/js/plugins/MediaMtxWhepPlayer";
 import {CamerasConfig, EnhancedVideoStreamHandler} from "@/js/plugins/EnhancedVideoStreamHandler";
 import OnvifPTZController from "@/js/plugins/OnvifPTZController";
 import {ExPicker} from "@/js/experiment/ex-picker";
-import {PlatformAirQualityManager} from "@/js/main/dashboard/platformAirQualityManager";
+import {PlatformSkeletonManager} from "@/js/main/dashboard/platformSkeletonManager";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
@@ -123,20 +123,16 @@ document.addEventListener('DOMContentLoaded', function () {
     //endregion
 
     //region Handle AQI Card
-    const airQualityManager = new AirQualityCardManager({
+    const platform = new PlatformSkeletonManager({
         containerSelector: '.airQualityParent',
-        batchSize: 50,
-        enableLazyLoading: false, // Disable lazy loading when using pagination
-        enableCharts: true,
-        realTimeUpdateInterval: 60000,
         apiEndpoint: '/dashboard/platforms',
-        autoLoadInitialData: true,
-        enablePagination: true,
-        itemsPerPage: 20, // Default items per page
-        enableInfiniteScroll: true,
-        onCctvClick: (id, cameraData) => {
-            showModalLiveVideo(bodyCamera, id, cameraData)
-        },
+        apiEndpointData: '/dashboard/platform/{uid}/data',
+        enableCharts: true,
+        realTimeUpdateInterval: 120000,
+        enableSocketIO: false,
+
+        // Event handlers
+        onCctvClick: (uid, cameraData) => showModalLiveVideo(bodyCamera, uid, cameraData),
         onMetricsClick: (uid, metrics) => {
             showModalDialog(modalDetailParameter, `<i class="fas fa-file mr-2"></i> ${uid}`, async () => {
                 let regulation = 'Noise: KepmenLH Nomor 48 Tahun 1996'
@@ -151,9 +147,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 regulationNote.textContent = regulation
                 await handleDetailChart(uid, metrics)
             })
-        },
-        onConnectionStatus: (status) => {
-            console.log('Connection status:', status);
         },
         onClickAirIndexPoint: async (events, pointData) => {
             const {linkVideo} = pointData
@@ -197,13 +190,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const urlParams = new URLSearchParams(url.searchParams)
     if (urlParams.size !== 0) {
         datePeriod.textContent = moment(urlParams.get('date')).format('DD MMM YYYY')
-        airQualityManager.filterWithAPI({
-            date: urlParams.get('date'),
-        })
     } else {
         datePeriod.textContent = moment().format('DD MMM YYYY')
     }
-    //endregion
 
     //region Handle Search
     if (btnSearch) {
@@ -239,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     closeModalDialog(modalSearch, async () => {
                         history.pushState(null, '', url.toString())
                         datePeriod.textContent = moment(date.value).format('DD MMM YYYY')
-                        await airQualityManager.filterWithAPI({
+                        await platform.filter({
                             date: date.value
                         })
                     })
@@ -255,8 +244,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         })
 
                         closeModalDialog(modalSearch, async () => {
+                            datePeriod.textContent = moment().format('DD MMM YYYY')
                             history.pushState(null, '', url.toString())
-                            win.location = url.toString()
+                            await platform.filter({})
+                            platform.checkAndRestartRealTime()
                         })
                     }
                 })
@@ -764,7 +755,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
 
                 const {status} = response
-                const {message, limit_tsp_min, limit_tsp_max_buffer, limit_tsp_max, good_status, mode_status, nogo_status, data} = await response.json()
+                const {
+                    message,
+                    limit_tsp_min,
+                    limit_tsp_max_buffer,
+                    limit_tsp_max,
+                    good_status,
+                    mode_status,
+                    nogo_status,
+                    data
+                } = await response.json()
                 if (status === 200) {
                     resolve({
                         dataResponse: data,
@@ -805,7 +805,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 let no = from
                 data.map((item: any) => {
-                    const {uid, uid_alias, datetime_unix, max_pm_25, max_pm_10, max_tsp, noise_leq, max_aqi_index, max_aqi_index_tsp, limit} = item
+                    const {
+                        uid,
+                        uid_alias,
+                        datetime_unix,
+                        max_pm_25,
+                        max_pm_10,
+                        max_tsp,
+                        noise_leq,
+                        max_aqi_index,
+                        max_aqi_index_tsp,
+                        limit
+                    } = item
                     const {
                         tsp_max_buffer,
                         tsp_max

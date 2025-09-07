@@ -63,10 +63,10 @@
 
             Route::get('/', [ControllerDashboard::class, 'index'])->name('dashboard');
             Route::group(['prefix' => 'dashboard'], function () {
-                // Route::get('platforms', [PlatformAirQualityController::class, 'getPlatformsList']);
+                Route::get('platforms', [PlatformAirQualityController::class, 'getPlatformsList']);
                 Route::get('platform/{uid}/data', [PlatformAirQualityController::class, 'getPlatformData']);
 
-                Route::get('platforms', [ControllerDashboard::class, 'getDataPlatforms']);
+                // Route::get('platforms', [ControllerDashboard::class, 'getDataPlatforms']);
                 Route::get('detail-metric/{uid}', [ControllerDashboard::class, 'detailMetric']);
                 Route::get('webrtc-proxy', [WebRTCProxyController::class, 'proxyGet']);
                 Route::get('platform-heartbeat/{uid}', [ControllerDashboard::class, 'handleDetailPlatformHeartbeat']);

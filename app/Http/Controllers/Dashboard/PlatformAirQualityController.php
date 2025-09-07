@@ -3,6 +3,7 @@
     namespace App\Http\Controllers\Dashboard;
 
     use App\Http\Controllers\Controller;
+    use App\Models\Master\LoggersLimit;
     use App\Models\Master\Platforms;
     use App\Models\Master\Loggers;
     use App\Models\Master\PlatformsHeartbeat;
@@ -32,16 +33,23 @@
                 }
 
                 // Get platforms list
-                $platforms = Platforms::select([
-                    'uid',
-                    'uid_alias',
-                    'cctv_link_1',
-                    'cctv_link_2',
-                    'cctv_1_support_ptz',
-                    'cctv_2_support_ptz'
-                ])->dataPlatformByUserPlatform($userPlatformId, $isTrial)->get();
+                $platforms = Platforms::dataPlatformByUserPlatform($userPlatformId, $isTrial)
+                    ->with('sitesLocation')->get();
 
-                return response()->json($platforms);
+                $platformTemp = [];
+                foreach ($platforms as $platform) {
+                    $platformTemp[] = [
+                        'uid' => $platform->uid,
+                        'uid_alias' => $platform->uid_alias,
+                        'siteName' => $platform->sitesLocation->location_name ?? 'Unknown',
+                        'cctvLink1' => $platform->cctv_link_1,
+                        'cctv1IsSupportPTZ' => $platform->cctv_1_support_ptz,
+                        'cctvLink2' => $platform->cctv_link_2,
+                        'cctv2IsSupportPTZ' => $platform->cctv_2_support_ptz,
+                    ];
+                }
+
+                return response()->json($platformTemp);
 
             } catch (Exception $e) {
                 Log::error('Error getting platforms list: ' . $e->getMessage());
@@ -106,13 +114,14 @@
                 $airIndexData = $this->getAirIndexData($uid, $minDate, $maxDate, $timezone);
 
                 return response()->json([
+                    'date' => $request->input('date'),
                     'uid' => $platform->uid,
                     'uid_alias' => $platform->uid_alias,
                     'siteName' => $platform->sitesLocation->location_name ?? 'Unknown',
                     'status' => $status['status'],
                     'emoji' => $status['emoji'],
                     'colorCode' => $status['colorCode'],
-                    'metrics' => $this->formatMetrics($dataLastLogger),
+                    'metrics' => $this->formatMetrics($uid, $dataLastLogger),
                     'isOnline' => $platformHeartbeat && $platformHeartbeat->heartbeat_status === 'Online',
                     'location' => $platform->sitesLocation->location_name ?? null,
                     'timezone' => $platform->timezone,
@@ -140,8 +149,8 @@
          * Get latest logger data
          */
         private function getLatestLoggerData($uid, $minDate, $maxDate, $timezone) {
-            return Loggers::with('limit')
-                ->loggerData5Minutes($uid, $minDate, $maxDate, $timezone)
+            return Loggers::loggerData5Minutes($uid, $minDate, $maxDate, $timezone)
+                ->with('limit')
                 ->orderBy('datetime_unix', 'DESC')
                 ->first();
         }
@@ -192,46 +201,36 @@
         /**
          * Format metrics data
          */
-        private function formatMetrics($dataLastLogger) {
-            if (!$dataLastLogger || !isset($dataLastLogger->limit)) {
-                return [
-                    'pm10' => ['value' => 0, 'bml_min' => 0, 'bml_min_buffer' => 0, 'bml_max_buffer' => 0, 'bml_max' => 0],
-                    'pm25' => ['value' => 0, 'bml_min' => 0, 'bml_min_buffer' => 0, 'bml_max_buffer' => 0, 'bml_max' => 0],
-                    'tsp' => ['value' => 0, 'bml_min' => 0, 'bml_min_buffer' => 0, 'bml_max_buffer' => 0, 'bml_max' => 0],
-                    'noise' => ['value' => 0, 'bml_min' => 0, 'bml_min_buffer' => 0, 'bml_max_buffer' => 0, 'bml_max' => 0]
-                ];
-            }
-
-            $limit = $dataLastLogger->limit;
-
+        private function formatMetrics($uid, $dataLastLogger) {
+            $platformLimit = LoggersLimit::where('uid', $uid)->first();
             return [
                 'pm10' => [
                     'value' => $dataLastLogger->max_pm_10 ?? 0,
-                    'bml_min' => $limit->pm10_min ?? 0,
-                    'bml_min_buffer' => $limit->pm10_min_buffer ?? 0,
-                    'bml_max_buffer' => $limit->pm10_max_buffer ?? 0,
-                    'bml_max' => $limit->pm10_max ?? 0,
+                    'bml_min' => $platformLimit->pm10_min ?? 0,
+                    'bml_min_buffer' => $platformLimit->pm10_min_buffer ?? 0,
+                    'bml_max_buffer' => $platformLimit->pm10_max_buffer ?? 0,
+                    'bml_max' => $platformLimit->pm10_max ?? 0,
                 ],
                 'pm25' => [
                     'value' => $dataLastLogger->max_pm_25 ?? 0,
-                    'bml_min' => $limit->pm25_min ?? 0,
-                    'bml_min_buffer' => $limit->pm25_min_buffer ?? 0,
-                    'bml_max_buffer' => $limit->pm25_max_buffer ?? 0,
-                    'bml_max' => $limit->pm25_max ?? 0,
+                    'bml_min' => $platformLimit->pm25_min ?? 0,
+                    'bml_min_buffer' => $platformLimit->pm25_min_buffer ?? 0,
+                    'bml_max_buffer' => $platformLimit->pm25_max_buffer ?? 0,
+                    'bml_max' => $platformLimit->pm25_max ?? 0,
                 ],
                 'tsp' => [
                     'value' => $dataLastLogger->max_tsp ?? 0,
-                    'bml_min' => $limit->tsp_min ?? 0,
-                    'bml_min_buffer' => $limit->tsp_min_buffer ?? 0,
-                    'bml_max_buffer' => $limit->tsp_max_buffer ?? 0,
-                    'bml_max' => $limit->tsp_max ?? 0,
+                    'bml_min' => $platformLimit->tsp_min ?? 0,
+                    'bml_min_buffer' => $platformLimit->tsp_min_buffer ?? 0,
+                    'bml_max_buffer' => $platformLimit->tsp_max_buffer ?? 0,
+                    'bml_max' => $platformLimit->tsp_max ?? 0,
                 ],
                 'noise' => [
                     'value' => $dataLastLogger->noise_leq ?? 0,
-                    'bml_min' => $limit->noise_min ?? 0,
-                    'bml_min_buffer' => $limit->noise_min_buffer ?? 0,
-                    'bml_max_buffer' => $limit->noise_max_buffer ?? 0,
-                    'bml_max' => $limit->noise_max ?? 0,
+                    'bml_min' => $platformLimit->noise_min ?? 0,
+                    'bml_min_buffer' => $platformLimit->noise_min_buffer ?? 0,
+                    'bml_max_buffer' => $platformLimit->noise_max_buffer ?? 0,
+                    'bml_max' => $platformLimit->noise_max ?? 0,
                 ]
             ];
         }
@@ -253,7 +252,6 @@
             ])
                 ->loggerData5Minutes($uid, $minDate, $maxDate, $timezone)
                 ->orderBy('datetime_unix', 'ASC')
-                ->limit(288) // Last 24 hours
                 ->get();
 
             $data = [];
@@ -265,7 +263,7 @@
                     'pm25' => $logger->max_pm_25,
                     'pm10' => $logger->max_pm_10,
                     'tsp' => $logger->max_tsp,
-                    'aqi_from' => $logger->aqi_from ?? 'PM 2.5',
+                    'aqi_from' => $logger->aqi_from,
                     'link_video_id' => $logger->link_video_id,
                     'link_video_status' => $logger->link_video_status,
                     'link_video_recorded' => $logger->link_video_recorded,
