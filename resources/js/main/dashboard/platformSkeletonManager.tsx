@@ -1521,6 +1521,24 @@ class PlatformSkeletonManager {
         this.chartInstances.set(`${cardId}-${type}`, chart);
     }
 
+    private getTickIntervalByDuration(startTimestamp: number, endTimestamp: number): number {
+        const durationHours = (endTimestamp - startTimestamp) / (1000 * 60 * 60);
+
+        if (durationHours <= 2) {
+            return 15 * 60 * 1000; // 15 menit untuk data <= 2 jam
+        } else if (durationHours <= 6) {
+            return 30 * 60 * 1000; // 30 menit untuk data <= 6 jam
+        } else if (durationHours <= 12) {
+            return 60 * 60 * 1000; // 1 jam untuk data <= 12 jam
+        } else if (durationHours <= 24) {
+            return 3600 * 3000; // 3 jam untuk data <= 24 jam
+        } else if (durationHours <= 48) {
+            return 4 * 60 * 60 * 1000; // 4 jam untuk data <= 48 jam
+        } else {
+            return 6 * 60 * 60 * 1000; // 6 jam untuk data > 48 jam
+        }
+    }
+
     private createAirIndexChart(element: HTMLElement, data: Array<{
         timestamp: number;
         value: number;
@@ -1576,6 +1594,14 @@ class PlatformSkeletonManager {
 
         const gradient = createSmoothGradient(minY, maxY);
 
+        let tickInterval = 3600 * 1000; // Default 1 jam
+        if (processedData.length > 0) {
+            const timestamps = processedData.map(point => point.x).sort((a, b) => a - b);
+            const startTime = timestamps[0];
+            const endTime = timestamps[timestamps.length - 1];
+            tickInterval = this.getTickIntervalByDuration(startTime, endTime);
+        }
+
         const chart = Highcharts.chart({
             chart: {
                 renderTo: element,
@@ -1609,7 +1635,7 @@ class PlatformSkeletonManager {
                 gridLineWidth: 0,
                 gridLineColor: '#eee',
                 gridLineDashStyle: 'Dash',
-                tickInterval: 3600 * 2000,
+                tickInterval: tickInterval,
             },
             yAxis: {
                 title: {
