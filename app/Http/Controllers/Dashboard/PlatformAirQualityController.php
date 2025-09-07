@@ -46,6 +46,8 @@
                         'cctv1IsSupportPTZ' => $platform->cctv_1_support_ptz,
                         'cctvLink2' => $platform->cctv_link_2,
                         'cctv2IsSupportPTZ' => $platform->cctv_2_support_ptz,
+                        'timezone' => $platform->timezone,
+                        'locale' => 'en-US',
                     ];
                 }
 
