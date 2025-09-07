@@ -128,6 +128,7 @@
         {{-- Bagian Include (Modal) --}}
         @include('main.master.data-platform-loggers.popup.form')
         @include('main.master.data-platform-loggers.popup.cctv')
+        @include('main.master.data-platform-loggers.popup.pencarian')
     </div>
 </x-app-layout>
 

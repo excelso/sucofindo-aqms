@@ -21,6 +21,7 @@ interface MenuItem {
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
     const url = new URL(window.location.href)
+    const win: Window = window
 
     const closeModalForm: NodeListOf<HTMLElement> = document.querySelectorAll('.closeModalForm')
     const dataTables: NodeListOf<HTMLElement> = document.querySelectorAll('.data-tables')
@@ -101,6 +102,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalCctv: HTMLElement = document.querySelector('.modalCctv')
     const modalBody: HTMLElement = modalCctv.querySelector('.modal-body')
 
+    const btnSearch = document.querySelector('.btnSearch')
+    const modalPencarian = document.querySelector('.modalPencarian')
+
     const dropdownMenu = createDropdownMenu()
 
     const modelSite = new DataSitesModel(companyId, companySiteId, {
@@ -143,8 +147,57 @@ document.addEventListener('DOMContentLoaded', function () {
                     cameraLive.destroy();
                 })
             }
+
+            if (modalPencarian) {
+                closeModalDialog(modalPencarian)
+            }
         })
     })
+    //endregion
+
+    //region Handle Pencarian
+    if (btnSearch !== null) {
+        btnSearch.addEventListener('click', function () {
+            showModalDialog(modalPencarian, null, () => {
+                const srcCompanyId = document.querySelector<HTMLSelectElement>('.srcCompanyId')
+                const srcCompanySiteId = document.querySelector<HTMLSelectElement>('.srcCompanySiteId')
+                const srcCompanySiteLocationId = document.querySelector<HTMLSelectElement>('.srcCompanySiteLocationId')
+                const btnCari = document.querySelector<HTMLElement>('.btnCari')
+                const btnResetPencarian = document.querySelector<HTMLElement>('.btnResetPencarian')
+
+                new DataSitesModel(srcCompanyId, srcCompanySiteId, {
+                    csrfToken
+                });
+
+                new DataSitesLocationModel(srcCompanySiteId, srcCompanySiteLocationId, {
+                    csrfToken
+                });
+
+                btnResetPencarian.addEventListener('click', function () {
+                    win.location = `${url.pathname}`
+                })
+
+                modalPencarian.addEventListener('keypress', function (ev: KeyboardEvent) {
+                    if (ev.key === 'Enter') {
+                        $(btnCari).trigger('click');
+                    }
+                })
+
+                btnCari.addEventListener('click', function () {
+                    const elmPencarian = modalPencarian.querySelectorAll<HTMLInputElement>('[name]')
+                    const text_result = []
+                    elmPencarian.forEach((elm) => {
+                        const elmNames = elm.getAttribute('name')
+                        if (elm.value !== '')
+                            text_result.push(`${elmNames}=${elm.value}`)
+                    })
+
+                    const win: Window = window
+                    win.location = `${url.pathname}?${text_result.join('&')}`
+                })
+            })
+        })
+    }
     //endregion
 
     //region Handle Dropdown

@@ -31,10 +31,7 @@
                 </label>
             </div>
             <div class="form-group">
-                <label>
-                    Site Name
-                    <span class="text-red-500 ml-1">*</span>
-                </label>
+                <label>Site Name</label>
                 <div class="form-group-control">
                     <select class="form-select select2-custom srcCompanySiteId" name="site_id" data-selected="{{ request()->input('site_id') }}">
                         <option value="">...</option>
@@ -44,7 +41,21 @@
             <div class="form-group">
                 <label>Location Name</label>
                 <div class="form-group-control">
-                    <input type="text" class="form-control" name="location_name" value="{{ request()->input('location_name') }}" placeholder="..."/>
+                    <select class="form-select select2-custom srcCompanySiteLocationId" name="location_id" data-selected="{{ request()->input('location_id') }}">
+                        <option value="">...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>UID</label>
+                <div class="form-group-control">
+                    <input type="text" class="form-control" name="uid" value="{{ request()->input('uid') }}" placeholder="...">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Platform name</label>
+                <div class="form-group-control">
+                    <input type="text" class="form-control" name="uid_alias" value="{{ request()->input('uid_alias') }}" placeholder="...">
                 </div>
             </div>
         </div>

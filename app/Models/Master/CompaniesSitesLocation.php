@@ -38,6 +38,10 @@
 
             $builder->select('*');
 
+            if (!empty($search['site_id'])) {
+                $builder->where('company_site_id', '=', $search['site_id']);
+            }
+
             if (!empty($search['location_name'])) {
                 $builder->where('location_name', 'like', '%' . $search['location_name'] . '%');
             }

@@ -22,6 +22,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnSave: HTMLElement = modalForm.querySelector('.btnSave')
     const btnDelete: HTMLElement = modalForm.querySelector('.btnDelete')
 
+    const btnSearch = document.querySelector('.btnSearch')
+    const modalPencarian = document.querySelector('.modalPencarian')
+
     const modelSite = new DataSitesModel(companyId, companySiteId, {
         csrfToken
     });
@@ -37,8 +40,52 @@ document.addEventListener('DOMContentLoaded', function () {
                     responseMessages(locationNameError, null)
                 })
             }
+
+            if (modalPencarian) {
+                closeModalDialog(modalPencarian)
+            }
         })
     })
+    //endregion
+
+    //region Handle Pencarian
+    if (btnSearch !== null) {
+        btnSearch.addEventListener('click', function () {
+            showModalDialog(modalPencarian, null, () => {
+                const srcCompanyId = document.querySelector<HTMLSelectElement>('.srcCompanyId')
+                const srcCompanySiteId = document.querySelector<HTMLSelectElement>('.srcCompanySiteId')
+                const btnCari = document.querySelector<HTMLElement>('.btnCari')
+                const btnResetPencarian = document.querySelector<HTMLElement>('.btnResetPencarian')
+
+                new DataSitesModel(srcCompanyId, srcCompanySiteId, {
+                    csrfToken
+                });
+
+                btnResetPencarian.addEventListener('click', function () {
+                    win.location = `${url.pathname}`
+                })
+
+                modalPencarian.addEventListener('keypress', function (ev: KeyboardEvent) {
+                    if (ev.key === 'Enter') {
+                        $(btnCari).trigger('click');
+                    }
+                })
+
+                btnCari.addEventListener('click', function () {
+                    const elmPencarian = modalPencarian.querySelectorAll<HTMLInputElement>('[name]')
+                    const text_result = []
+                    elmPencarian.forEach((elm) => {
+                        const elmNames = elm.getAttribute('name')
+                        if (elm.value !== '')
+                            text_result.push(`${elmNames}=${elm.value}`)
+                    })
+
+                    const win: Window = window
+                    win.location = `${url.pathname}?${text_result.join('&')}`
+                })
+            })
+        })
+    }
     //endregion
 
     //region Handle Create

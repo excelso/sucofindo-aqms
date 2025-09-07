@@ -66,6 +66,27 @@
         }
 
         public function scopeDataPlatforms(Builder $builder, $options = []): void {
+            $search = [];
+            if (count($options) != 0) {
+                $search = $options['search'];
+            }
+
+            if (!empty($search['site_id'])) {
+                $builder->where('company_site_id', '=', $search['site_id']);
+            }
+
+            if (!empty($search['location_id'])) {
+                $builder->where('company_site_location_id', '=', $search['location_id']);
+            }
+
+            if (!empty($search['uid'])) {
+                $builder->where('uid', 'like', '%' . $search['uid'] . '%');
+            }
+
+            if (!empty($search['uid_alias'])) {
+                $builder->where('uid_alias', 'like', '%' . $search['uid_alias'] . '%');
+            }
+
             $builder->orderBy('uid', 'ASC');
         }
 

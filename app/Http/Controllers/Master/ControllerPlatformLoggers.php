@@ -27,7 +27,9 @@
 
         public function index(): View {
             $dataCompanies = Companies::all();
-            $dataPlatforms = Platforms::dataPlatforms();
+            $dataPlatforms = Platforms::dataPlatforms([
+                'search' => request()->input()
+            ]);
             return view($this->viewPath . '/index', [
                 'items' => $dataPlatforms->paginate(20)->onEachSide(1),
                 'companies' => $dataCompanies,
