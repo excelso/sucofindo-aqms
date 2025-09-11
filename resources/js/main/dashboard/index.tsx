@@ -646,6 +646,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const {dataResponse, onlinePercent, offlinePercent} = response
             const {data} = dataResponse
 
+            let currentFilterStatus = 'All'
             onlinePercentage.textContent = `${onlinePercent}%`
             onlinePercentageBody.addEventListener('click', () => {
                 const urlParams = new URLSearchParams(url.searchParams)
@@ -653,6 +654,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
                     filterStatus: 'Online'
                 })
+                currentFilterStatus = 'Online'
             })
 
             offlinePercentage.textContent = `${offlinePercent}%`
@@ -662,11 +664,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
                     filterStatus: 'Offline'
                 })
+                currentFilterStatus = 'Offline'
             })
 
             if (btnDownload) {
                 btnDownload.addEventListener('click', async function () {
-                    await handleExportHeartbeat(uid, date)
+                    await handleExportHeartbeat(uid, date, currentFilterStatus)
                 })
             }
 
@@ -696,13 +699,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 handleFixedTheadTh()
                 handleFixedTd()
             } else {
+                tHeartbeatData.innerHTML = null
                 showHiddenElm(heartbeatNotFound)
             }
         }
 
-        async function handleExportHeartbeat(uid: string, date: string) {
+        async function handleExportHeartbeat(uid: string, date: string, filterStatus: string) {
             await waitLoader('Downloading...', 'This may take longer.', async () => {
-                const response = await fetch(`/dashboard/export-excel-heartbeat/${uid}?date=${date}`, {
+                const response = await fetch(`/dashboard/export-excel-heartbeat/${uid}?date=${date}&status=${filterStatus}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
