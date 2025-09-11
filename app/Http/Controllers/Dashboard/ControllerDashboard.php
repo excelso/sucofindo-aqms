@@ -398,7 +398,7 @@
                 }
 
                 $platformHeartbeatCalc = PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone);
-                $platformHeartbeat = PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone);
+                $platformHeartbeat = PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone, $request->input('filterStatus') ?? null);
 
                 $totalCounts = $this->getHeartbeatCounts($platformHeartbeatCalc);
 
@@ -408,7 +408,7 @@
                     'offlinePercent' => $totalCounts['offline_percent'],
                     'data' => $platformHeartbeat->paginate(20)->onEachSide(1),
                     'responseTime' => Carbon::now()
-                ], 200);
+                ], 200, [], JSON_PRETTY_PRINT);
 
             } catch (Exception $exception) {
                 Log::error('Platform heartbeat error: ' . $exception->getMessage());

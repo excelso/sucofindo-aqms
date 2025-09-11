@@ -15,11 +15,11 @@
         <div class="modal-body overflow-y-auto !max-h-[calc(100vh-15rem)] !min-h-[calc(100vh-15rem)] !p-0">
             <div class="p-6 flex items-center justify-between gap-4">
                 <div class="flex items-center gap-4">
-                    <div>
+                    <div class="onlinePercentageBody cursor-pointer">
                         <div class="font-bold text-[14px]">Total Online</div>
                         <div class="text-[13px] onlinePercentage">0%</div>
                     </div>
-                    <div class="border-l-[2px] border-r-gray-100 pl-4">
+                    <div class="offlinePercentageBody cursor-pointer border-l-[2px] border-r-gray-100 pl-4">
                         <div class="font-bold text-[14px]">Total Offline</div>
                         <div class="text-[13px] offlinePercentage">0%</div>
                     </div>

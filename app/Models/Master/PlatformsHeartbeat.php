@@ -25,7 +25,7 @@
             'datetime_unix',
         ];
 
-        public function scopePlatformsHeartbeat(Builder $builder, $uid, $startDate, $untilDate, $timezone): void {
+        public function scopePlatformsHeartbeat(Builder $builder, $uid, $startDate, $untilDate, $timezone, $filterStatus = null): void {
             $builder->select([
                 'uid',
                 'heartbeat_status',
@@ -34,6 +34,11 @@
 
             $builder->whereRaw("CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'UTC', ?) BETWEEN ? AND ?", [$timezone, $startDate, $untilDate]);
             $builder->where('uid', $uid);
+            if ($filterStatus) {
+                if ($filterStatus != 'All') {
+                    $builder->where('heartbeat_status', $filterStatus);
+                }
+            }
             $builder->orderBy('date_formated', 'DESC');
         }
     }

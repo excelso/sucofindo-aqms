@@ -47,7 +47,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const modalHeartbeat = document.querySelector('.modalHeartbeat')
     const onlinePercentage = modalHeartbeat.querySelector('.onlinePercentage')
+    const onlinePercentageBody = modalHeartbeat.querySelector('.onlinePercentageBody')
     const offlinePercentage = modalHeartbeat.querySelector('.offlinePercentage')
+    const offlinePercentageBody = modalHeartbeat.querySelector('.offlinePercentageBody')
     const btnDownload = modalHeartbeat.querySelector('.btnDownload')
     const tHeartbeatData = modalHeartbeat.querySelector('.tHeartbeatData')
     const heartbeatNotFound = modalHeartbeat.querySelector('.heartbeatNotFound')
@@ -597,6 +599,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const urlParams = new URLSearchParams(url.searchParams)
             renderData({
                 date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
+                filterStatus: 'All'
             })
         })
 
@@ -615,8 +618,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         function lookupData(options: any) {
             return new Promise(async (resolve, reject) => {
-                const {url: dataLinks, date} = options || {}
-                const dataUrl = dataLinks ? `${dataLinks}&date=${date}` : `/dashboard/platform-heartbeat/${uid}?date=${date}`
+                const {url: dataLinks, date, filterStatus} = options || {}
+                const dataUrl = dataLinks ? `${dataLinks}&date=${date}&status=${filterStatus}` : `/dashboard/platform-heartbeat/${uid}?date=${date}&status=${filterStatus}`
                 const response = await fetch(dataUrl, {
                     method: 'GET',
                     headers: {
@@ -644,7 +647,22 @@ document.addEventListener('DOMContentLoaded', function () {
             const {data} = dataResponse
 
             onlinePercentage.textContent = `${onlinePercent}%`
+            onlinePercentageBody.addEventListener('click', () => {
+                const urlParams = new URLSearchParams(url.searchParams)
+                renderData({
+                    date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
+                    filterStatus: 'Online'
+                })
+            })
+
             offlinePercentage.textContent = `${offlinePercent}%`
+            offlinePercentageBody.addEventListener('click', () => {
+                const urlParams = new URLSearchParams(url.searchParams)
+                renderData({
+                    date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
+                    filterStatus: 'Offline'
+                })
+            })
 
             if (btnDownload) {
                 btnDownload.addEventListener('click', async function () {
