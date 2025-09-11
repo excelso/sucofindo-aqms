@@ -398,7 +398,7 @@
                 }
 
                 $platformHeartbeatCalc = PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone);
-                $platformHeartbeat = PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone, $request->input('filterStatus') ?? null);
+                $platformHeartbeat = PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone, $request->input('status') ?? null);
 
                 $totalCounts = $this->getHeartbeatCounts($platformHeartbeatCalc);
 
