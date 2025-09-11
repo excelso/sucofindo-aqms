@@ -8,9 +8,11 @@
     use App\Models\Master\Platforms;
     use App\Models\Master\PlatformsHeartbeat;
     use App\Models\Users\UserPlatforms;
+    use avadim\FastExcelWriter\Excel;
     use avadim\FastExcelWriter\Style;
     use Carbon\Carbon;
     use Exception;
+    use File;
     use Illuminate\Http\Request;
     use Illuminate\Support\Facades\Cache;
     use Illuminate\Support\Facades\DB;
