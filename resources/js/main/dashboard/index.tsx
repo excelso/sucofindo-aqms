@@ -601,29 +601,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
                 filterStatus: 'All'
             })
-
-            let currentFilterStatus = 'All'
-            onlinePercentageBody.addEventListener('click', () => {
-                renderData({
-                    date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
-                    filterStatus: 'Online'
-                })
-                currentFilterStatus = 'Online'
-            });
-
-            offlinePercentageBody.addEventListener('click', () => {
-                renderData({
-                    date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
-                    filterStatus: 'Offline'
-                })
-                currentFilterStatus = 'Offline'
-            });
-
-            if (btnDownload) {
-                btnDownload.addEventListener('click', async function () {
-                    await handleExportHeartbeat(uid, urlParams.get('date') ?? moment().format('YYYY-MM-DD'), currentFilterStatus)
-                })
-            }
         })
 
         function renderData(options?: any) {
@@ -669,8 +646,32 @@ document.addEventListener('DOMContentLoaded', function () {
             const {dataResponse, onlinePercent, offlinePercent} = response
             const {data} = dataResponse
 
+            let currentFilterStatus = 'All'
             onlinePercentage.textContent = `${onlinePercent}%`
+            onlinePercentageBody.addEventListener('click', () => {
+                const urlParams = new URLSearchParams(url.searchParams)
+                renderData({
+                    date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
+                    filterStatus: 'Online'
+                })
+                currentFilterStatus = 'Online'
+            })
+
             offlinePercentage.textContent = `${offlinePercent}%`
+            offlinePercentageBody.addEventListener('click', () => {
+                const urlParams = new URLSearchParams(url.searchParams)
+                renderData({
+                    date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
+                    filterStatus: 'Offline'
+                })
+                currentFilterStatus = 'Offline'
+            })
+
+            if (btnDownload) {
+                btnDownload.addEventListener('click', async function () {
+                    await handleExportHeartbeat(uid, date, currentFilterStatus)
+                })
+            }
 
             const itemBodies = []
             if (data.length !== 0) {
