@@ -595,7 +595,7 @@
                     $maxDate = Carbon::parse($request->input('date'))->format('Y-m-d') . ' 23:59';
                 }
 
-                PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone)
+                PlatformsHeartbeat::platformsHeartbeat($platform->uid, $minDate, $maxDate, $platform->timezone, $request->input('status') ?? null)
                     ->chunk(50, function ($platformHeartbeatsChunk) use ($sheet) {
                         $rowNumber = 0;
                         $rows = [];
