@@ -21,6 +21,7 @@
                             <div class="goodStatus text-[14px] font-bold">0%</div>
                         </div>
                         <div class="text-[12px] ml-[25px]">BML : <span class="goodLimit">0 µg/m³</span></div>
+                        <div class="text-[12px] ml-[25px]">AQI : <span class="goodLimitAQI">0 µg/m³</span></div>
                     </div>
                 </div>
                 <div class="bg-gray-200 rounded-md p-4">
@@ -30,6 +31,7 @@
                             <div class="modeStatus text-[14px] font-bold">0%</div>
                         </div>
                         <div class="text-[12px] ml-[25px]">BML : <span class="modeLimit">0 µg/m³ - 0 µg/m³</span></div>
+                        <div class="text-[12px] ml-[25px]">AQI : <span class="modeLimitAQI">0 µg/m³ - 0 µg/m³</span></div>
                     </div>
                 </div>
                 <div class="bg-gray-200 rounded-md p-4">
@@ -39,6 +41,7 @@
                             <div class="nogoStatus text-[14px] font-bold">0%</div>
                         </div>
                         <div class="text-[12px] ml-[25px]">BML : <span class="nogoLimit">0 µg/m³</span></div>
+                        <div class="text-[12px] ml-[25px]">AQI : <span class="nogoLimitAQI">0 µg/m³</span></div>
                     </div>
                 </div>
             </div>

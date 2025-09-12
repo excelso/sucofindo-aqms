@@ -421,6 +421,84 @@
         // endregion
 
         // region Handle Detail Platform Report
+        public function calculateAQIFromTSP($tspValue)
+        {
+            try {
+                // Get AQI category based on TSP value
+                $aqiCategory = DB::table('t_aqi_categories')
+                    ->where('tsp_min', '<=', $tspValue)
+                    ->where('tsp_max', '>=', $tspValue)
+                    ->first();
+
+                if (!$aqiCategory) {
+                    // If TSP value exceeds all ranges, get the highest category
+                    $aqiCategory = DB::table('t_aqi_categories')
+                        ->orderBy('tsp_max', 'desc')
+                        ->first();
+
+                    if (!$aqiCategory) {
+                        throw new Exception('No AQI categories found in database');
+                    }
+
+                    // For values exceeding the highest range, use maximum AQI
+                    return [
+                        'aqi_value' => $aqiCategory->aqi_max,
+                        'category_name' => $aqiCategory->category_name,
+                        'category_name_en' => $aqiCategory->category_name_en,
+                        'color_code' => $aqiCategory->color_code,
+                        'emoji' => $aqiCategory->emoji,
+                        'health_advice' => $aqiCategory->health_advice,
+                        'is_exceeded' => true,
+                        'tsp_value' => $tspValue
+                    ];
+                }
+
+                // Calculate AQI using linear interpolation formula
+                // AQI = ((AQI_high - AQI_low) / (TSP_high - TSP_low)) * (TSP - TSP_low) + AQI_low
+
+                $aqiHigh = $aqiCategory->aqi_max;
+                $aqiLow = $aqiCategory->aqi_min;
+                $tspHigh = $aqiCategory->tsp_max;
+                $tspLow = $aqiCategory->tsp_min;
+
+                $aqiValue = (($aqiHigh - $aqiLow) / ($tspHigh - $tspLow)) * ($tspValue - $tspLow) + $aqiLow;
+                $aqiValue = round($aqiValue);
+
+                return [
+                    'aqi_value' => $aqiValue,
+                    'category_name' => $aqiCategory->category_name,
+                    'category_name_en' => $aqiCategory->category_name_en,
+                    'color_code' => $aqiCategory->color_code,
+                    'emoji' => $aqiCategory->emoji,
+                    'health_advice' => $aqiCategory->health_advice,
+                    'is_exceeded' => false,
+                    'tsp_value' => $tspValue,
+                    'tsp_range' => [
+                        'min' => $tspLow,
+                        'max' => $tspHigh
+                    ],
+                    'aqi_range' => [
+                        'min' => $aqiLow,
+                        'max' => $aqiHigh
+                    ]
+                ];
+
+            } catch (Exception $e) {
+                Log::error('AQI calculation error: ' . $e->getMessage());
+                return [
+                    'aqi_value' => 0,
+                    'category_name' => 'Error',
+                    'category_name_en' => 'Error',
+                    'color_code' => '#000000',
+                    'emoji' => '❌',
+                    'health_advice' => 'Unable to calculate AQI',
+                    'is_exceeded' => false,
+                    'tsp_value' => $tspValue,
+                    'error' => $e->getMessage()
+                ];
+            }
+        }
+
         public function handleDetailPlatformReport(Request $request, $uid) {
             try {
                 $platform = Platforms::select(['uid', 'timezone'])->where('uid', $uid)->first();
@@ -454,6 +532,10 @@
                 $modeStatus = $dataStatusCount->total > 0 ? round(($dataStatusCount->moderate_status / $dataStatusCount->total) * 100) : 0;
                 $nogoStatus = $dataStatusCount->total > 0 ? round(($dataStatusCount->not_good_status / $dataStatusCount->total) * 100) : 0;
 
+                $tspMinAQI = $this->calculateAQIFromTSP($dataStatusCount->tsp_min ?? 0);
+                $tspMaxBufferAQI = $this->calculateAQIFromTSP($dataStatusCount->tsp_max_buffer ?? 0);
+                $tspMaxAQI = $this->calculateAQIFromTSP($dataStatusCount->tsp_max ?? 0);
+
                 $dataLogger = Loggers::reportLoggerData($platform->uid, $minDate, $maxDate, $platform->timezone, [
                     'search' => $request->input()
                 ])->with('limit');
@@ -461,8 +543,11 @@
                 return response()->json([
                     'message' => 'Load Successfully',
                     'limit_tsp_min' => $dataStatusCount->tsp_min ?? 0,
+                    'limit_tsp_min_aqi' => $tspMinAQI['aqi_value'],
                     'limit_tsp_max_buffer' => $dataStatusCount->tsp_max_buffer ?? 0,
+                    'limit_tsp_max_buffer_aqi' => $tspMaxBufferAQI['aqi_value'],
                     'limit_tsp_max' => $dataStatusCount->tsp_max ?? 0,
+                    'limit_tsp_max_aqi' => $tspMaxAQI['aqi_value'],
                     'good_status' => $goodStatus,
                     'mode_status' => $modeStatus,
                     'nogo_status' => $nogoStatus,

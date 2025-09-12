@@ -59,10 +59,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalPlatformReport = document.querySelector('.modalPlatformReport')
     const goodStatus = modalPlatformReport.querySelector('.goodStatus')
     const goodLimit = modalPlatformReport.querySelector('.goodLimit')
+    const goodLimitAQI = modalPlatformReport.querySelector('.goodLimitAQI')
     const modeStatus = modalPlatformReport.querySelector('.modeStatus')
     const modeLimit = modalPlatformReport.querySelector('.modeLimit')
+    const modeLimitAQI = modalPlatformReport.querySelector('.modeLimitAQI')
     const nogoStatus = modalPlatformReport.querySelector('.nogoStatus')
     const nogoLimit = modalPlatformReport.querySelector('.nogoLimit')
+    const nogoLimitAQI = modalPlatformReport.querySelector('.nogoLimitAQI')
     const tReportData = modalPlatformReport.querySelector('.tReportData')
     const reportNotFound = modalPlatformReport.querySelector('.reportNotFound')
     const reportLoader = modalPlatformReport.querySelector('.reportLoader')
@@ -780,8 +783,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 const {
                     message,
                     limit_tsp_min,
+                    limit_tsp_min_aqi,
                     limit_tsp_max_buffer,
+                    limit_tsp_max_buffer_aqi,
                     limit_tsp_max,
+                    limit_tsp_max_aqi,
                     good_status,
                     mode_status,
                     nogo_status,
@@ -791,8 +797,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     resolve({
                         dataResponse: data,
                         limit_tsp_min,
+                        limit_tsp_min_aqi,
                         limit_tsp_max_buffer,
+                        limit_tsp_max_buffer_aqi,
                         limit_tsp_max,
+                        limit_tsp_max_aqi,
                         good_status,
                         mode_status,
                         nogo_status,
@@ -807,7 +816,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const {
                 dataResponse,
                 limit_tsp_max_buffer,
+                limit_tsp_max_buffer_aqi,
                 limit_tsp_max,
+                limit_tsp_max_aqi,
                 good_status,
                 mode_status,
                 nogo_status
@@ -816,10 +827,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             goodStatus.textContent = `${good_status}%`
             goodLimit.textContent = `< ${limit_tsp_max_buffer} µg/m³`
+            goodLimitAQI.textContent = `< ${limit_tsp_max_buffer_aqi} µg/m³`
             modeStatus.textContent = `${mode_status}%`
             modeLimit.textContent = `${limit_tsp_max_buffer} µg/m³ - ${limit_tsp_max} µg/m³`
+            modeLimitAQI.textContent = `${limit_tsp_max_buffer_aqi} µg/m³ - ${limit_tsp_max_aqi} µg/m³`
             nogoStatus.textContent = `${nogo_status}%`
             nogoLimit.textContent = `> ${limit_tsp_max} µg/m³`
+            nogoLimitAQI.textContent = `> ${limit_tsp_max_aqi} µg/m³`
 
             const itemBodies = []
             if (data.length !== 0) {
