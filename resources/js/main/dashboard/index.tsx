@@ -700,6 +700,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const itemBodies = []
             if (data.length !== 0) {
+                hiddenElm(heartbeatNotFound)
                 data.map((item: any, index: number) => {
                     const {uid, heartbeat_status, date_formated} = item
 
