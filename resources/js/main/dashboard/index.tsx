@@ -598,20 +598,66 @@ document.addEventListener('DOMContentLoaded', function () {
 
     //region Handle Modal Heartbeat Platform
     function handleModalHeartbeat(uid: string) {
+        let currentFilterStatus = 'All'
+
         showModalDialog(modalHeartbeat, null, async () => {
             const urlParams = new URLSearchParams(url.searchParams)
             renderData({
                 date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
-                filterStatus: 'All'
+                filterStatus: currentFilterStatus // ✅ Gunakan current filter
             })
+
+            setupEventListeners()
         })
+
+        function setupEventListeners() {
+            onlinePercentageBody.removeEventListener('click', handleOnlineClick)
+            offlinePercentageBody.removeEventListener('click', handleOfflineClick)
+            btnDownload?.removeEventListener('click', handleDownloadClick)
+
+            // Add new listeners
+            onlinePercentageBody.addEventListener('click', handleOnlineClick)
+            offlinePercentageBody.addEventListener('click', handleOfflineClick)
+            if (btnDownload) {
+                btnDownload.addEventListener('click', handleDownloadClick)
+            }
+        }
+
+        function handleOnlineClick() {
+            const urlParams = new URLSearchParams(url.searchParams)
+            currentFilterStatus = 'Online'
+            renderData({
+                date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
+                filterStatus: 'Online'
+            })
+        }
+
+        function handleOfflineClick() {
+            const urlParams = new URLSearchParams(url.searchParams)
+            currentFilterStatus = 'Offline'
+            renderData({
+                date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
+                filterStatus: 'Offline'
+            })
+        }
+
+        async function handleDownloadClick() {
+            const urlParams = new URLSearchParams(url.searchParams)
+            const currentDate = urlParams.get('date') ?? moment().format('YYYY-MM-DD')
+            await handleExportHeartbeat(uid, currentDate, currentFilterStatus)
+        }
 
         function renderData(options?: any) {
             hiddenElm(heartbeatNotFound)
             showHiddenElm(heartbeatLoader)
+
+            // ✅ Update currentFilterStatus jika ada di options
+            if (options?.filterStatus) {
+                currentFilterStatus = options.filterStatus
+            }
+
             lookupData(options).then(response => {
                 renderBody(uid, response, options.date)
-
                 hiddenElm(heartbeatLoader)
 
                 const {dataResponse} = response as any
@@ -649,32 +695,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const {dataResponse, onlinePercent, offlinePercent} = response
             const {data} = dataResponse
 
-            let currentFilterStatus = 'All'
             onlinePercentage.textContent = `${onlinePercent}%`
-            onlinePercentageBody.addEventListener('click', () => {
-                const urlParams = new URLSearchParams(url.searchParams)
-                renderData({
-                    date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
-                    filterStatus: 'Online'
-                })
-                currentFilterStatus = 'Online'
-            })
-
             offlinePercentage.textContent = `${offlinePercent}%`
-            offlinePercentageBody.addEventListener('click', () => {
-                const urlParams = new URLSearchParams(url.searchParams)
-                renderData({
-                    date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
-                    filterStatus: 'Offline'
-                })
-                currentFilterStatus = 'Offline'
-            })
-
-            if (btnDownload) {
-                btnDownload.addEventListener('click', async function () {
-                    await handleExportHeartbeat(uid, date, currentFilterStatus)
-                })
-            }
 
             const itemBodies = []
             if (data.length !== 0) {
