@@ -22,7 +22,7 @@
 
         public function handle(): void {
             $date1 = $this->option('date1') ?? Carbon::now()->subDays(30)->format('Y-m-d');
-            $date2 = $this->option('date2') ?? Carbon::now()->format('Y-m-d');
+            $date2 = $this->option('date2') ?? Carbon::now()->subDays(1)->format('Y-m-d');
 
             // Validate date format
             if (!$this->isValidDate($date1)) {
