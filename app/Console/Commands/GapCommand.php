@@ -51,7 +51,7 @@
             $this->info("Found {$totalPlatforms} platforms to process");
             $this->newLine();
 
-            // Create progress bar
+            // Create progress bar for platforms
             $progressBar = $this->output->createProgressBar($totalPlatforms);
             $progressBar->setFormat('verbose');
 
@@ -73,7 +73,14 @@
                         $this->newLine();
                         $this->info("  └─ UID: {$platform->uid} - Found {$gapCount} gaps to fill");
 
+                        // Create progress bar for inserting gaps
+                        $insertProgressBar = $this->output->createProgressBar($gapCount);
+                        $insertProgressBar->setFormat('    Inserting: %current%/%max% [%bar%] %percent:3s%% %message%');
+
+                        $insertedCount = 0;
                         foreach ($handleGap as $gap) {
+                            $insertProgressBar->setMessage("Record " . ($insertedCount + 1), 'message');
+
                             Loggers::create([
                                 'uid' => $gap['uid'],
                                 'pm_25' => $gap['pm_25'],
@@ -87,7 +94,13 @@
                                 'aqi_from' => $gap['aqi_from'],
                                 'datetime_unix' => $gap['prev_datetime_unix'],
                             ]);
+
+                            $insertedCount++;
+                            $insertProgressBar->advance();
                         }
+
+                        $insertProgressBar->finish();
+                        $this->newLine();
 
                         $totalGapsCreated += $gapCount;
                         $this->info("  └─ Successfully created {$gapCount} gap records");
