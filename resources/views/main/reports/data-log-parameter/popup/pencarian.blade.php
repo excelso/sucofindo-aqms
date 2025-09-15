@@ -65,6 +65,15 @@
                     </select>
                 </div>
             </div>
+            <div class="form-group">
+                <label>Interval Data</label>
+                <div class="form-group-control">
+                    <select class="form-control select2-custom" name="intervalData">
+                        <option value="600" {{ request()->input('intervalData') == '600' ? 'selected' : '' }}>10 Minute</option>
+                        <option value="60" {{ request()->input('intervalData') == '60' ? 'selected' : '' }}>1 Minute</option>
+                    </select>
+                </div>
+            </div>
         </div>
         <div class="modal-footer justify-between">
             <div>

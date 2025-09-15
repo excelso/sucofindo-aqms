@@ -34,6 +34,7 @@
             'link_video_message',
             'tipe_logger',
             'datetime_unix',
+            'aqi_index_tsp',
         ];
 
         public function limit(): HasOne|Loggers|Builder {
@@ -95,16 +96,21 @@
                 $search = $options['search'];
             }
 
+            $intervalData = 600;
+            if (isset($search['intervalData']) && $search['intervalData'] != '') {
+                $intervalData = $search['intervalData'];
+            }
+
             $builder->withoutGlobalScopes();
-            $builder->from(function ($builder) use ($uid, $timezone, $search) {
+            $builder->from(function ($builder) use ($uid, $timezone, $search, $intervalData) {
                 $builder->select([
                     't_loggers.id',
                     't_loggers.uid',
                     DB::raw('MAX(CASE WHEN link_video_recorded IS NOT NULL THEN link_video_recorded END) AS link_video_recorded')
                 ]);
                 // Gunakan timezone yang sama dengan parameter
-                $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / 600) * 600), 'UTC', ?) AS interval_time", [$timezone]);
-                $builder->selectRaw('FLOOR(datetime_unix / 600) * 600 AS datetime_unix');
+                $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / ?) * ?), 'UTC', ?) AS interval_time", [$intervalData, $intervalData, $timezone]);
+                $builder->selectRaw('FLOOR(datetime_unix / ?) * ? AS datetime_unix', [$intervalData, $intervalData]);
                 $builder->selectRaw('COUNT(*) AS record_count');
                 $builder->selectRaw('ROUND(AVG(pm_10), 0) AS pm_10');
                 $builder->selectRaw('MAX( pm_10 ) AS max_pm_10');
@@ -128,8 +134,8 @@
                     $builder->where('t_loggers.uid', $uid);
                 }
 
-                $builder->groupByRaw('t_loggers.uid, FLOOR(datetime_unix / 600)');
-                $builder->orderByRaw('FLOOR(datetime_unix / 600) * 600');
+                $builder->groupByRaw('t_loggers.uid, FLOOR(datetime_unix / ?)', [$intervalData]);
+                $builder->orderByRaw('FLOOR(datetime_unix / ?) * ?', [$intervalData, $intervalData]);
             }, 'summary');
 
             $builder->leftJoin('t_loggers_limit', 't_loggers_limit.uid', '=', 'summary.uid');
