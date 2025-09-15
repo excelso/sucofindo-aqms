@@ -215,6 +215,15 @@
                         $globalRowNumber++;
 
                         $aqiCat = mb_convert_encoding($item->emoji, 'UTF-8', 'HTML-ENTITIES') . ' ' . $item->category_name_en;
+
+                        if ($item->max_tsp > $item->limit->tsp_max_buffer && $item->max_tsp < $item->limit->tsp_max) {
+                            $status = 'Moderate';
+                        } else if ($item->max_tsp > $item->limit->tsp_max) {
+                            $status = 'Not Good';
+                        } else {
+                            $status = 'Good';
+                        }
+
                         $rows[] = [
                             $globalRowNumber,
                             $item->uid,
@@ -225,7 +234,7 @@
                             $item->noise_leq,
                             $item->max_aqi_index ?? 0,
                             $item->max_aqi_index_tsp ?? 0,
-                            $aqiCat,
+                            $status,
                         ];
                     }
 

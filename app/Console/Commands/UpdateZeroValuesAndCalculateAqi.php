@@ -2,6 +2,7 @@
 
     namespace App\Console\Commands;
 
+    use Carbon\Carbon;
     use Exception;
     use Illuminate\Console\Command;
     use Illuminate\Support\Collection;
@@ -16,7 +17,8 @@
          */
         protected $signature = 'aqi:update-zero-values
                            {--uid= : Specific UID to process}
-                           {--date= : Specific date to process (Y-m-d format)}
+                           {--date1= : Specific date to process (Y-m-d format)}
+                           {--date2= : Specific date to process (Y-m-d format)}
                            {--limit=100 : Limit number of records to process}';
 
         /**
@@ -33,12 +35,13 @@
             $this->info('Starting AQI update process...');
 
             $uid = $this->option('uid');
-            $date = $this->option('date');
+            $date1 = $this->option('date1') ?? Carbon::now()->subDays(30)->format('Y-m-d');
+            $date2 = $this->option('date2') ?? Carbon::now()->format('Y-m-d');
             $limit = $this->option('limit');
 
             try {
                 // Get records with zero values
-                $zeroValueRecords = $this->getZeroValueRecords($uid, $date, $limit);
+                $zeroValueRecords = $this->getZeroValueRecords($uid, $date1, $date2, $limit);
 
                 if ($zeroValueRecords->isEmpty()) {
                     $this->info('No records with zero values found.');
@@ -82,7 +85,7 @@
         /**
          * Get records with zero values
          */
-        private function getZeroValueRecords($uid = null, $date = null, $limit = 100): Collection {
+        private function getZeroValueRecords($uid = null, $date1 = null, $date2 = null, $limit = 100): Collection {
             $query = DB::table('t_loggers')
                 ->where(function ($q) {
                     $q->where('pm_25', '=', 0)
@@ -94,11 +97,10 @@
                 $query->where('uid', $uid);
             }
 
-            if ($date) {
-                $query->whereDate(DB::raw('CONVERT_TZ(FROM_UNIXTIME(datetime_unix), "UTC", "Asia/Makassar")'), $date);
-            }
+            $query->whereDate(DB::raw('CONVERT_TZ(FROM_UNIXTIME(datetime_unix), "UTC", "Asia/Makassar")'), '>=',  $date1);
+            $query->whereDate(DB::raw('CONVERT_TZ(FROM_UNIXTIME(datetime_unix), "UTC", "Asia/Makassar")'), '<=',  $date2);
 
-            return $query->limit($limit)->get();
+            return $query->get();
         }
 
         /**
