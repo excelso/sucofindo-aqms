@@ -186,6 +186,49 @@
             $builder->orderBy('summary.datetime_unix', 'DESC');
         }
 
+        public function scopeReportLoggerPerMenitData(Builder $builder, $uid, $startDate, $untilDate, $timezone, $options = []): void {
+            $search = [];
+            if (count($options) != 0) {
+                $search = $options['search'];
+            }
+
+            // $builder->select('t_loggers.* ');
+            // $builder->select('pm_10 AS max_pm_10');
+            // $builder->select('pm_25 AS max_pm_25');
+            // $builder->select('tsp AS max_tsp');
+            // // $builder->selectRaw('ROUND((10 * LOG10((1/count(*) * SUM(POWER(10, noise / 10))))), 2) AS noise_leq');
+            // $builder->select('aqi_index AS max_aqi_index');
+            // $builder->select('aqi_index_tsp AS max_aqi_index_tsp');
+
+            $builder->leftJoin('t_loggers_limit', 't_loggers_limit.uid', '=', 't_loggers.uid');
+
+            if (isset($search['platformUid']) && $search['platformUid'] != '') {
+                $builder->where('t_loggers.uid', $search['platformUid']);
+            } else {
+                $builder->where('t_loggers.uid', $uid);
+            }
+
+            if (!empty($search['startDate']) && !empty($search['untilDate'])) {
+                $builder->whereBetween(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_loggers.datetime_unix, "%Y-%m-%d %H:%i" ), "UTC", "' . $timezone . '" )'), [$search['startDate'], $search['untilDate']]);
+            } elseif (!empty($search['startDate'])) {
+                $builder->where(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_loggers.datetime_unix, "%Y-%m-%d %H:%i" ), "UTC", "' . $timezone . '" )'), '=', $search['startDate']);
+            } else {
+                $builder->whereBetween(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_loggers.datetime_unix, "%Y-%m-%d %H:%i" ), "UTC", "' . $timezone . '" )'), [$startDate, $untilDate]);
+            }
+
+            if (isset($search['statusAqi']) && $search['statusAqi'] != '') {
+                if ($search['statusAqi'] == 'good') {
+                    $builder->where(DB::raw('CASE WHEN t_loggers.tsp < t_loggers_limit.tsp_max_buffer THEN 1 ELSE 0 END'), '=', 1);
+                } else if ($search['statusAqi'] == 'mode') {
+                    $builder->where(DB::raw('CASE WHEN t_loggers.tsp > t_loggers_limit.tsp_max_buffer AND t_loggers.tsp < t_loggers_limit.tsp_max THEN 1 ELSE 0 END'), '=', 1);
+                } else {
+                    $builder->where(DB::raw('CASE WHEN t_loggers.tsp > t_loggers_limit.tsp_max THEN 1 ELSE 0 END'), '=', 1);
+                }
+            }
+
+            $builder->orderBy('t_loggers.datetime_unix', 'DESC');
+        }
+
         public function scopeLoggerDataDaily(Builder $builder, $uid, $startDate, $untilDate, $timezone): void {
             $builder->withoutGlobalScopes();
             $builder->from(function ($builder) use ($uid, $startDate, $untilDate, $timezone) {

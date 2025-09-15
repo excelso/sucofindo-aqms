@@ -53,9 +53,22 @@
                 $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
             }
 
-            $dataLogger = Loggers::reportLoggerData($dataPlatform->uid, $minDate, $maxDate, $dataPlatform->timezone, [
-                'search' => $request->input()
-            ])->with('limit');
+            if ($request->input('intervalData') != null) {
+                if ($request->input('intervalData') == '600') {
+                    $dataLogger = Loggers::reportLoggerData($dataPlatform->uid, $minDate, $maxDate, $dataPlatform->timezone, [
+                        'search' => $request->input()
+                    ])->with('limit');
+                } else {
+                    $dataLogger = Loggers::reportLoggerPerMenitData($dataPlatform->uid, $minDate, $maxDate, $dataPlatform->timezone, [
+                        'search' => $request->input()
+                    ])->with('limit');
+                }
+            } else {
+                $dataLogger = Loggers::reportLoggerData($dataPlatform->uid, $minDate, $maxDate, $dataPlatform->timezone, [
+                    'search' => $request->input()
+                ])->with('limit');
+            }
+
 
             return view($this->viewPath . '/index', [
                 'items' => $dataLogger->paginate(20)->onEachSide(1),
@@ -205,9 +218,23 @@
                     $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
                 }
 
-                Loggers::reportLoggerData($dataPlatform->uid, $minDate, $maxDate, $dataPlatform->timezone, [
-                    'search' => $request->input()
-                ])->chunk(50, function ($loggers) use ($sheet, $dataPlatform) {
+                if ($request->input('intervalData') != null) {
+                    if ($request->input('intervalData') == '600') {
+                        $dataLogger = Loggers::reportLoggerData($dataPlatform->uid, $minDate, $maxDate, $dataPlatform->timezone, [
+                            'search' => $request->input()
+                        ])->with('limit');
+                    } else {
+                        $dataLogger = Loggers::reportLoggerPerMenitData($dataPlatform->uid, $minDate, $maxDate, $dataPlatform->timezone, [
+                            'search' => $request->input()
+                        ])->with('limit');
+                    }
+                } else {
+                    $dataLogger = Loggers::reportLoggerData($dataPlatform->uid, $minDate, $maxDate, $dataPlatform->timezone, [
+                        'search' => $request->input()
+                    ])->with('limit');
+                }
+
+                $dataLogger->chunk(50, function ($loggers) use ($sheet, $dataPlatform) {
 
                     static $globalRowNumber = 0;
                     $rows = [];
@@ -216,9 +243,10 @@
 
                         $aqiCat = mb_convert_encoding($item->emoji, 'UTF-8', 'HTML-ENTITIES') . ' ' . $item->category_name_en;
 
-                        if ($item->max_tsp > $item->limit->tsp_max_buffer && $item->max_tsp < $item->limit->tsp_max) {
+                        $tsp = $item->max_tsp ?? $item->tsp;
+                        if ($tsp > $item->limit->tsp_max_buffer && $tsp < $item->limit->tsp_max) {
                             $status = 'Moderate';
-                        } else if ($item->max_tsp > $item->limit->tsp_max) {
+                        } else if ($tsp > $item->limit->tsp_max) {
                             $status = 'Not Good';
                         } else {
                             $status = 'Good';
@@ -228,12 +256,12 @@
                             $globalRowNumber,
                             $item->uid,
                             Carbon::parse($item->datetime_unix)->setTimezone($dataPlatform->timezone)->format('Y-m-d H:i:s') ?? '',
-                            $item->max_pm_25 ?? 0,
-                            $item->max_pm_10 ?? 0,
-                            $item->max_tsp ?? 0,
-                            $item->noise_leq,
-                            $item->max_aqi_index ?? 0,
-                            $item->max_aqi_index_tsp ?? 0,
+                            $item->max_pm_25 ?? $item->pm_25,
+                            $item->max_pm_10 ?? $item->pm_10,
+                            $item->max_tsp ?? $item->tsp,
+                            $item->noise_leq ?? $item->noise,
+                            $item->max_aqi_index ?? $item->aqi_index,
+                            $item->max_aqi_index_tsp ?? $item->aqi_index_tsp,
                             $status,
                         ];
                     }

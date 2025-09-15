@@ -73,11 +73,12 @@
                                 @if(isset($items) && count($items) !== 0)
                                     @foreach($items as $item)
 
-                                        @if($item->max_tsp > $item->limit->tsp_max_buffer && $item->max_tsp < $item->limit->tsp_max)
+                                        @php($tsp = $item->max_tsp ?? $item->tsp)
+                                        @if($tsp > $item->limit->tsp_max_buffer && $tsp < $item->limit->tsp_max)
                                             @php($status = 'Moderate')
                                             @php($statusColor = 'bg-orange-200')
                                             @php($statusEmo = mb_convert_encoding('&#x1F61E;', 'UTF-8', 'HTML-ENTITIES'))
-                                        @elseif($item->max_tsp > $item->limit->tsp_max)
+                                        @elseif($tsp > $item->limit->tsp_max)
                                             @php($status = 'Not Good')
                                             @php($statusColor = 'bg-red-300')
                                             @php($statusEmo = mb_convert_encoding('&#x1F922;', 'UTF-8', 'HTML-ENTITIES'))
@@ -91,12 +92,12 @@
                                             <td class="text-center">{{$i++}}</td>
                                             <td class="text-center">{{ $item->uid ?? '' }}</td>
                                             <td class="text-center">{{ Carbon::parse($item->datetime_unix)->setTimezone($platform->timezone)->format('d M Y H:i:s') ?? '' }}</td>
-                                            <td class="text-right">{{ $item->max_pm_25 ?? '' }}</td>
-                                            <td class="text-right">{{ $item->max_pm_10 ?? '' }}</td>
-                                            <td class="text-right">{{ $item->max_tsp ?? '' }}</td>
-                                            <td class="text-right">{{ $item->noise_leq ?? '' }}</td>
-                                            <td class="text-right">{{ $item->max_aqi_index ?? '' }}</td>
-                                            <td class="text-right">{{ $item->max_aqi_index_tsp ?? '' }}</td>
+                                            <td class="text-right">{{ $item->max_pm_25 ?? $item->pm_25 }}</td>
+                                            <td class="text-right">{{ $item->max_pm_10 ?? $item->pm_10 }}</td>
+                                            <td class="text-right">{{ $item->max_tsp ?? $item->tsp }}</td>
+                                            <td class="text-right">{{ $item->noise_leq ?? $item->noise }}</td>
+                                            <td class="text-right">{{ $item->max_aqi_index ?? $item->aqi_index }}</td>
+                                            <td class="text-right">{{ $item->max_aqi_index_tsp ?? $item->aqi_index_tsp }}</td>
                                             <td class="text-left">
                                                 <span class="status-badge inline-flex items-center rounded-full gap-1 px-[7px] py-[3px] {{ $statusColor }} text-[12px] font-bold">
                                                     {{ $statusEmo }} {{ $status }}
