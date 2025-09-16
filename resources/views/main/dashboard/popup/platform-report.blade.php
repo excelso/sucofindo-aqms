@@ -20,8 +20,8 @@
                             <div class="text-[14px] font-bold">{{ mb_convert_encoding('&#x1F601;', 'UTF-8', 'HTML-ENTITIES') }} Good</div>
                             <div class="goodStatus text-[14px] font-bold">0%</div>
                         </div>
-                        <div class="text-[12px] ml-[25px]">BML : <span class="goodLimit">0 µg/m³</span></div>
-                        <div class="text-[12px] ml-[25px]">AQI : <span class="goodLimitAQI">0 µg/m³</span></div>
+                        <div class="flex text-[12px] ml-[25px]"><div class="w-[30px]">BML</div> <span class="goodLimit"> : 0 µg/m³</span></div>
+                        <div class="flex text-[12px] ml-[25px]"><div class="w-[30px]">AQI</div> <span class="goodLimitAQI"> : 0</span></div>
                     </div>
                 </div>
                 <div class="bg-gray-200 rounded-md p-4">
@@ -30,8 +30,8 @@
                             <div class="text-[14px] font-bold">{{ mb_convert_encoding('&#x1F61E;', 'UTF-8', 'HTML-ENTITIES') }} Moderate</div>
                             <div class="modeStatus text-[14px] font-bold">0%</div>
                         </div>
-                        <div class="text-[12px] ml-[25px]">BML : <span class="modeLimit">0 µg/m³ - 0 µg/m³</span></div>
-                        <div class="text-[12px] ml-[25px]">AQI : <span class="modeLimitAQI">0 µg/m³ - 0 µg/m³</span></div>
+                        <div class="flex text-[12px] ml-[25px]"><div class="w-[30px]">BML</div> <span class="modeLimit"> : 0 µg/m³ - 0 µg/m³</span></div>
+                        <div class="flex text-[12px] ml-[25px]"><div class="w-[30px]">AQI</div> <span class="modeLimitAQI"> : 0 - 0</span></div>
                     </div>
                 </div>
                 <div class="bg-gray-200 rounded-md p-4">
@@ -40,8 +40,8 @@
                             <div class="text-[14px] font-bold">{{ mb_convert_encoding('&#x1F922;', 'UTF-8', 'HTML-ENTITIES') }} Not Good</div>
                             <div class="nogoStatus text-[14px] font-bold">0%</div>
                         </div>
-                        <div class="text-[12px] ml-[25px]">BML : <span class="nogoLimit">0 µg/m³</span></div>
-                        <div class="text-[12px] ml-[25px]">AQI : <span class="nogoLimitAQI">0 µg/m³</span></div>
+                        <div class="flex text-[12px] ml-[25px]"><div class="w-[30px]">BML</div> <span class="nogoLimit"> : 0 µg/m³</span></div>
+                        <div class="flex text-[12px] ml-[25px]"><div class="w-[30px]">AQI</div> <span class="nogoLimitAQI"> : 0</span></div>
                     </div>
                 </div>
             </div>

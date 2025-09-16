@@ -849,14 +849,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const {from, data} = dataResponse
 
             goodStatus.textContent = `${good_status}%`
-            goodLimit.textContent = `< ${limit_tsp_max_buffer} µg/m³`
-            goodLimitAQI.textContent = `< ${limit_tsp_max_buffer_aqi} µg/m³`
-            modeStatus.textContent = `${mode_status}%`
-            modeLimit.textContent = `${limit_tsp_max_buffer} µg/m³ - ${limit_tsp_max} µg/m³`
-            modeLimitAQI.textContent = `${limit_tsp_max_buffer_aqi} µg/m³ - ${limit_tsp_max_aqi} µg/m³`
-            nogoStatus.textContent = `${nogo_status}%`
-            nogoLimit.textContent = `> ${limit_tsp_max} µg/m³`
-            nogoLimitAQI.textContent = `> ${limit_tsp_max_aqi} µg/m³`
+            goodLimit.textContent = ` : < ${limit_tsp_max_buffer} µg/m³`
+            goodLimitAQI.textContent = ` : < ${limit_tsp_max_buffer_aqi}`
+            modeStatus.textContent = ` : ${mode_status}%`
+            modeLimit.textContent = ` : ${limit_tsp_max_buffer} µg/m³ - ${limit_tsp_max} µg/m³`
+            modeLimitAQI.textContent = ` : ${limit_tsp_max_buffer_aqi} - ${limit_tsp_max_aqi}`
+            nogoStatus.textContent = ` : ${nogo_status}%`
+            nogoLimit.textContent = ` : > ${limit_tsp_max} µg/m³`
+            nogoLimitAQI.textContent = ` : > ${limit_tsp_max_aqi}`
 
             const itemBodies = []
             if (data.length !== 0) {
