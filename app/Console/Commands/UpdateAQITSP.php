@@ -195,10 +195,10 @@
 
             // Apply date filters if provided
             if ($this->option('date-from')) {
-                $query->whereDate('datetime_unix', '>=', $this->option('date-from'));
+                $query->whereDate(DB::raw('CONVERT_TZ( FROM_UNIXTIME( datetime_unix, "%Y-%m-%d %H:%i" ), "UTC", "Asia/Makassar" )'), '>=', $this->option('date-from'));
             }
             if ($this->option('date-to')) {
-                $query->whereDate('datetime_unix', '<=', $this->option('date-to'));
+                $query->whereDate(DB::raw('CONVERT_TZ( FROM_UNIXTIME( datetime_unix, "%Y-%m-%d %H:%i" ), "UTC", "Asia/Makassar" )'), '<=', $this->option('date-to'));
             }
 
             // Only process records that need updating (null or different TSP values)
