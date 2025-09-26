@@ -5,6 +5,8 @@ import VideoStreamHandler from "@/js/plugins/videoStreamHandler";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
+    const url = new URL(window.location.href)
+    const win: Window = window
 
     const closeModalForm: NodeListOf<HTMLElement> = document.querySelectorAll('.closeModalForm')
     const dataTables: NodeListOf<HTMLElement> = document.querySelectorAll('.data-tables')
@@ -45,11 +47,17 @@ document.addEventListener('DOMContentLoaded', function () {
         btnSearch.addEventListener('click', function () {
             showModalDialog(modalPencarian, null, () => {
                 const btnCari = document.querySelector<HTMLElement>('.btnCari')
+                const btnResetPencarian = document.querySelector<HTMLElement>('.btnResetPencarian')
+
                 modalPencarian.addEventListener('keypress', function (ev) {
                     // @ts-ignore
                     if (ev.key === 'Enter') {
                         $(btnCari).trigger('click');
                     }
+                })
+
+                btnResetPencarian.addEventListener('click', function () {
+                    win.location = `${url.pathname}`
                 })
 
                 btnCari.addEventListener('click', function () {
@@ -62,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     })
 
                     const win: Window = window
-                    win.location = `/reports/logs-parameter?${text_result.join('&')}`
+                    win.location = `${url}?${text_result.join('&')}`
                 })
             })
         })

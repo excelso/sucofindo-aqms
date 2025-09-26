@@ -130,8 +130,8 @@ document.addEventListener('DOMContentLoaded', function () {
     //region Handle AQI Card
     const platform = new PlatformSkeletonManager({
         containerSelector: '.airQualityParent',
-        apiEndpoint: '/dashboard/platforms',
-        apiEndpointData: '/dashboard/platform/{uid}/data',
+        apiEndpoint: '/aqms/dashboard/platforms',
+        apiEndpointData: '/aqms/dashboard/platform/{uid}/data',
         enableCharts: true,
         realTimeUpdateInterval: 120000,
         enableSocketIO: false,

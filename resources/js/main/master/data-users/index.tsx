@@ -8,6 +8,8 @@ import {ExBox} from "@/js/experiment/ex-box";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')
+    const url = new URL(window.location.href)
+    const win: Window = window
 
     const closeModalForm: NodeListOf<HTMLElement> = document.querySelectorAll('.closeModalForm')
     const dataTables: NodeListOf<HTMLElement> = document.querySelectorAll('.data-tables')
@@ -137,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function () {
     //region Handle SID Code
     async function handleSIDCode() {
         await waitLoader('Mohon Tunggu...', 'Mengambil data User', async () => {
-            const response = await fetch(`/master/users/get-user-sso?sid_code=${sidCode.value}`, {
+            const response = await fetch(`${url}/get-user-sso?sid_code=${sidCode.value}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -243,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             denyButtonText: 'No'
                         }, async () => {
                             await waitLoader('Please wait...', 'Process of storing new User data.', async () => {
-                                const response = await fetch('/master/users/store', {
+                                const response = await fetch(`${url}/store`, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -282,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (btnEdit) {
                 btnEdit.addEventListener('click', async function () {
                     await waitLoader('Please wait...', 'Loading User data', async () => {
-                        const response = await fetch(`/master/users/detail/${userId}`, {
+                        const response = await fetch(`${url}/detail/${userId}`, {
                             method: 'GET',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -348,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                             denyButtonText: 'No'
                                         }, async () => {
                                             await waitLoader('Please wait...', 'Process updating of User data.', async () => {
-                                                const response = await fetch(`/master/users/update/${userId}`, {
+                                                const response = await fetch(`${url}/update/${userId}`, {
                                                     method: 'PUT',
                                                     headers: {
                                                         'Content-Type': 'application/json',
@@ -388,7 +390,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                             denyButtonText: 'No'
                                         }, async () => {
                                             await waitLoader('Please wait...', 'Process deleting of User data.', async () => {
-                                                const response = await fetch(`/master/users/delete/${userId}`, {
+                                                const response = await fetch(`${url}/delete/${userId}`, {
                                                     method: 'DELETE',
                                                     headers: {
                                                         'Content-Type': 'application/json',

@@ -132,7 +132,7 @@ export default class DataSitesModel {
      * Fetches site data from the server
      */
     private async fetchSiteData(companyId: string): Promise<ExBoxOptionData[]> {
-        const response = await fetch(`/master/sites/data-site?company_id=${companyId}`, {
+        const response = await fetch(`/aqms/master/sites/data-site?company_id=${companyId}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

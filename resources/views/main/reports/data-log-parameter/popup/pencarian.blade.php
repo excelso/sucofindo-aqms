@@ -77,7 +77,7 @@
         </div>
         <div class="modal-footer justify-between">
             <div>
-                <a href="/reports/logs-parameter" class="ds-btn ds-btn-error btnResetPencarian">
+                <a class="ds-btn ds-btn-error btnResetPencarian">
                     <i class="fas fa-refresh"></i>
                 </a>
             </div>

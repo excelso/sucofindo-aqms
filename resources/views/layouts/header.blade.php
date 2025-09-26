@@ -8,6 +8,40 @@
             </div>
 
             <div class="flex items-center">
+                <div class="p-[10px]">
+                    <div id="dropdownProjectButton" data-dropdown-toggle="dropdownProject" data-dropdown-offset-skidding="-60" class="dropdown-button cursor-pointer" type="button">
+                        <div class="flex items-center capitalize">
+                            <span class="truncate sm:hidden">{{ request()->is('*/aqms*') ? 'BeAQMS' : 'BeSparing' }}</span>
+                        </div>
+                    </div>
+
+                    <div id="dropdownProject" class="dropdown-panel overflow-y-auto max-h-[350px] w-[250px]">
+                        <ul aria-labelledby="dropdown">
+                            <li>
+                                <a rel="alternate" href="{{ route('aqms.dashboard') }}">
+                                    <div class="flex items-center">
+                                        <div class="ml-2 overflow-hidden">
+                                            <div class="truncate">
+                                                BeAQMS
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li>
+                                <a rel="alternate" href="{{ route('sparing.dashboard') }}">
+                                    <div class="flex items-center">
+                                        <div class="ml-2 overflow-hidden">
+                                            <div class="truncate">
+                                                BeSparing
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
                 <div class="p-[10px] !hidden">
                     <div id="dropdownLangButton" data-dropdown-toggle="dropdownLang" data-dropdown-offset-skidding="-60" class="dropdown-button cursor-pointer" type="button">
                         <div class="flex items-center capitalize">
@@ -88,7 +122,7 @@
     </div>
     <footer class="footer-menu">
         <div>
-            AQMS @2024
+            {{ request()->is('*/aqms*') ? 'BeAQMS' : 'BeSparing' }} @2024
         </div>
         <div>
             Powered by SUCOFINDO

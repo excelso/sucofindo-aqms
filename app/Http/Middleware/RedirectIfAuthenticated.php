@@ -28,7 +28,7 @@
                         }
                     }
 
-                    return redirect('/');
+                    return redirect()->intended(route('aqms.dashboard'));
                 }
             }
 

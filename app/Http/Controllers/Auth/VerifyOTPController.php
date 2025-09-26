@@ -15,7 +15,7 @@
         public function index() {
             // Jika sudah verify OTP, redirect ke dashboard
             if (session()->has('otp_verified')) {
-                return redirect()->route('dashboard');
+                return redirect()->route('aqms.dashboard');
             }
 
             if (!auth()->check()) {

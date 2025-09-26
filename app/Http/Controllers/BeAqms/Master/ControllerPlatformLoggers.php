@@ -1,10 +1,9 @@
 <?php
 
-    namespace App\Http\Controllers\Master;
+    namespace App\Http\Controllers\BeAqms\Master;
 
     use App\Http\Controllers\Controller;
     use App\Models\Master\Companies;
-    use App\Models\Master\CompaniesSites;
     use App\Models\Master\Loggers;
     use App\Models\Master\LoggersLimit;
     use App\Models\Master\Platforms;
@@ -14,7 +13,6 @@
     use Exception;
     use Illuminate\Http\Request;
     use Illuminate\Support\Facades\Validator;
-    use Illuminate\Validation\Rule;
     use Illuminate\View\View;
     use Throwable;
 

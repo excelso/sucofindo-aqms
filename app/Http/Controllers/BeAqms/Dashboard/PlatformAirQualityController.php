@@ -1,17 +1,16 @@
 <?php
 
-    namespace App\Http\Controllers\Dashboard;
+    namespace App\Http\Controllers\BeAqms\Dashboard;
 
     use App\Http\Controllers\Controller;
+    use App\Models\Master\Loggers;
     use App\Models\Master\LoggersLimit;
     use App\Models\Master\Platforms;
-    use App\Models\Master\Loggers;
     use App\Models\Master\PlatformsHeartbeat;
     use App\Models\Users\UserPlatforms;
     use Carbon\Carbon;
     use Exception;
     use Illuminate\Http\Request;
-    use Illuminate\Support\Facades\DB;
     use Illuminate\Support\Facades\Log;
 
     class PlatformAirQualityController extends Controller {

@@ -1,24 +1,20 @@
 <?php
 
-    namespace App\Http\Controllers\Reports;
+    namespace App\Http\Controllers\BeAqms\Reports;
 
     use App\Http\Controllers\Controller;
     use App\Models\Master\AqiCategories;
     use App\Models\Master\Companies;
-    use App\Models\Master\CompaniesSites;
     use App\Models\Master\Loggers;
     use App\Models\Master\Platforms;
     use App\Models\Users\UserPlatforms;
     use avadim\FastExcelWriter\Excel;
     use avadim\FastExcelWriter\Style;
     use Carbon\Carbon;
-    use DB;
     use Exception;
     use Illuminate\Http\Request;
     use Illuminate\Support\Facades\File;
-    use Illuminate\Support\Facades\Validator;
     use Illuminate\View\View;
-    use Throwable;
 
     class ControllerReportLogParameter extends Controller {
         protected string $viewPath;

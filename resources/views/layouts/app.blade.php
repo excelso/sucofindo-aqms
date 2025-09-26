@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     {{-- <meta name="login-employee-id" content="{{ Auth::user()->id }}"> --}}
 
-    <title>@yield('title') - {{ config('app.name', 'Laravel') }}</title>
+    <title>@yield('title') - {{ request()->is('*/aqms*') ? 'BeAQMS' : 'BeSparing' }}</title>
     <link rel="shortcut icon" href="{{ asset('/images/favicon.png') }}?date={{ date('Hmi') }}"/>
 
     <!-- Fonts -->

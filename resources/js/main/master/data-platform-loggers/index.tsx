@@ -406,7 +406,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             denyButtonText: 'Cancel'
                         }, async () => {
                             await waitLoader('Please wait...', 'Process of storing new Platform data.', async () => {
-                                const response = await fetch('/master/platform-loggers/store', {
+                                const response = await fetch('${url}/store', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         btnEdit.forEach((elm) => {
                             elm.addEventListener('click', async function () {
                                 await waitLoader('Please wait...', 'Process of storing new Platform data.', async () => {
-                                    const response = await fetch(`/master/platform-loggers/detail/${platformId}`, {
+                                    const response = await fetch(`${url}/detail/${platformId}`, {
                                         method: 'GET',
                                         headers: {
                                             'Content-Type': 'application/json',
@@ -586,7 +586,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                                         denyButtonText: 'Cancel'
                                                     }, async () => {
                                                         await waitLoader('Please wait...', 'Process of updating Platform data.', async () => {
-                                                            const response = await fetch(`/master/platform-loggers/update/${platformId}`, {
+                                                            const response = await fetch(`${url}/update/${platformId}`, {
                                                                 method: 'PUT',
                                                                 headers: {
                                                                     'Content-Type': 'application/json',
@@ -645,7 +645,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                                         denyButtonText: 'Cancel'
                                                     }, async () => {
                                                         await waitLoader('Please wait...', 'Process of updating Platform data.', async () => {
-                                                            const response = await fetch(`/master/platform-loggers/delete/${platformId}`, {
+                                                            const response = await fetch(`${url}/delete/${platformId}`, {
                                                                 method: 'DELETE',
                                                                 headers: {
                                                                     'Content-Type': 'application/json',

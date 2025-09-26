@@ -132,7 +132,7 @@ export default class DataSitesLocationModel {
      * Fetches site data from the server
      */
     private async fetchSiteLocationData(siteId: string): Promise<ExBoxOptionData[]> {
-        const response = await fetch(`/master/sites-location/data-location?site_id=${siteId}`, {
+        const response = await fetch(`/aqms/master/sites-location/data-location?site_id=${siteId}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

@@ -26,7 +26,7 @@
 
             if (config('app.env') == 'local') {
                 session(['otp_verified' => true]);
-                return redirect()->intended();
+                return redirect()->intended(route('aqms.dashboard'));
             } else {
                 return redirect()->intended(route('verify-otp', absolute: false));
             }
@@ -40,6 +40,6 @@
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
-            return redirect('/');
+            return redirect()->route('login');
         }
     }

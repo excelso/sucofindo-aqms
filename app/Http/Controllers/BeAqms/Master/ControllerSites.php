@@ -1,6 +1,6 @@
 <?php
 
-    namespace App\Http\Controllers\Master;
+    namespace App\Http\Controllers\BeAqms\Master;
 
     use App\Http\Controllers\Controller;
     use App\Models\Master\Companies;

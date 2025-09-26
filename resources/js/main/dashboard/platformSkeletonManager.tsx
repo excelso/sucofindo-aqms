@@ -183,8 +183,8 @@ class PlatformSkeletonManager {
     // region Constructor
     constructor(options: PlatformSkeletonManagerOptions = {}) {
         this.options = {
-            apiEndpoint: '/dashboard/platforms',
-            apiEndpointData: '/dashboard/platform/{uid}/data',
+            apiEndpoint: '/aqms/dashboard/platforms',
+            apiEndpointData: '/aqms/dashboard/platform/{uid}/data',
             enableCharts: true,
             realTimeUpdateInterval: 30000, // 30 seconds
             enableSocketIO: false,

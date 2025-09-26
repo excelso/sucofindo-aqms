@@ -1,6 +1,6 @@
 <?php
 
-    namespace App\Http\Controllers\Master\Geo;
+    namespace App\Http\Controllers\BeAqms\Master\Geo;
 
     use App\Helper\Hash;
     use App\Http\Controllers\Controller;
@@ -10,22 +10,19 @@
     use App\Models\Employee\Employee;
     use App\Models\Employee\EmployeeAllowance;
     use App\Models\Employee\EmployeeCommission;
-    use App\Models\Employee\EmployeeReimbursement;
     use App\Models\Employee\EmployeePayCut;
-    use App\Models\Master\Geo\GeoCity;
-    use App\Models\Users\User;
+    use App\Models\Employee\EmployeeReimbursement;
+    use App\Models\Master\Geo\GeoDistrict;
     use Carbon\Carbon;
     use Exception;
     use Illuminate\Http\Request;
-    use Illuminate\Support\Facades\Validator;
-    use Illuminate\View\View;
 
-    class ControllerGeoCity extends Controller {
-        public function getCityByProvId(Request $request) {
+    class ControllerGeoDistrict extends Controller {
+        public function getDistrictByCityId(Request $request) {
             try {
-                $dataCity = GeoCity::where('provinsi_id', $request->input('prov-id'))->get();
+                $dataDistrict = GeoDistrict::where('kabupaten_id', $request->input('city-id'))->get();
                 return response()->json([
-                    'data' => $dataCity,
+                    'data' => $dataDistrict,
                     'responseTime' => Carbon::now()
                 ]);
             } catch (Exception $exception) {

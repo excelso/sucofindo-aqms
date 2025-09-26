@@ -1,6 +1,6 @@
 <?php
 
-    namespace App\Http\Controllers\Dashboard;
+    namespace App\Http\Controllers\BeAqms\Dashboard;
 
     use App\Http\Controllers\Controller;
     use App\Models\Master\AqiCategories;
