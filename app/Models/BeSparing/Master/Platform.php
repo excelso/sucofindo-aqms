@@ -14,6 +14,7 @@
     class Platform extends Model {
         use Compoships, SoftDeletes;
 
+        protected $connection = 'sparing-mysql';
         protected $guarded = [];
         protected $table = 't_platform';
 

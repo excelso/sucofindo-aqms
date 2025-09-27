@@ -148,6 +148,56 @@
                         </li>
                     </ul>
                 </li>
+
+                @if(in_array(request()->user()->user_level, ['super_admin', 'admin']))
+                    <li class="navItem {{Request::segment(3) == 'master' ? 'mm-active' : ''}}">
+                        <a class="navLink {{Request::segment(3) == 'master' ? 'navLinkActive' : ''}}">
+                            <div class="flex items-center justify-start">
+                                <div class="navIcon">
+                                    <i class="fas fa-briefcase"></i>
+                                </div>
+                                <div class="navText">
+                                    <p>Master</p>
+                                </div>
+                            </div>
+                            <div class="navArrowDown">
+                                <i class="fa fa-caret-right"></i>
+                            </div>
+                        </a>
+                        <ul class="navTreeview">
+                            @if(request()->user()->user_level == 'super_admin')
+                                <li class="navItem hidden">
+                                    <a class="navLink {{Request::segment(2) == 'sparing' && Request::segment(3) == 'master' && Request::segment(4) == 'customer' ? 'navLinkActive' : ''}}" href="/master/customer">
+                                        <div class="navText">
+                                            <p>Data Perusahaan</p>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li class="navItem">
+                                    <a class="navLink {{Request::segment(2) == 'sparing' && Request::segment(3) == 'master' && Request::segment(4) == 'lokasi' ? 'navLinkActive' : ''}}" href="{{ route('sparing.master.lokasi') }}">
+                                        <div class="navText">
+                                            <p>Data Site / Lokasi</p>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li class="navItem">
+                                    <a class="navLink {{Request::segment(2) == 'sparing' && Request::segment(3) == 'master' && Request::segment(4) == 'site' ? 'navLinkActive' : ''}}" href="{{ route('sparing.master.site') }}">
+                                        <div class="navText">
+                                            <p>Data WMP</p>
+                                        </div>
+                                    </a>
+                                </li>
+                            @endif
+                            <li class="navItem">
+                                <a class="navLink {{Request::segment(2) == 'sparing' && Request::segment(3) == 'master' && Request::segment(4) == 'logger' ? 'navLinkActive' : ''}}" href="{{ route('sparing.master.logger') }}">
+                                    <div class="navText">
+                                        <p>Data Logger</p>
+                                    </div>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                @endif
             </ul>
         @endif
     </div>

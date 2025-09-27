@@ -8,6 +8,10 @@
     use App\Http\Controllers\BeAqms\Master\ControllerUsers;
     use App\Http\Controllers\BeAqms\Reports\ControllerReportLogParameter;
     use App\Http\Controllers\BeSparing\Dashboard\BeSparingControllerMaps;
+    use App\Http\Controllers\BeSparing\Master\BeSparingControllerCustomer;
+    use App\Http\Controllers\BeSparing\Master\BeSparingControllerCustomerLokasi;
+    use App\Http\Controllers\BeSparing\Master\BeSparingControllerLogger;
+    use App\Http\Controllers\BeSparing\Master\BeSparingControllerSite;
     use App\Http\Controllers\ControllerNotification;
     use App\Http\Controllers\OnvifPTZController;
     use App\Http\Controllers\Settings\ControllerChangePassword;
@@ -57,10 +61,42 @@
             'middleware' => ['localeSessionRedirect', 'localizationRedirect', 'localeViewPath']
         ], function () {
 
+            //region Sparing Routing
             Route::prefix('sparing')->group(function () {
                 Route::get('/', [BeSparingControllerMaps::class, 'index'])->name('sparing.dashboard');
-            });
 
+                Route::prefix('master')->group(function () {
+                    Route::prefix('customer')->group(function () {
+                        Route::post('data-customer-by-id', [BeSparingControllerCustomer::class, 'handleCustomerById']);
+                    });
+
+                    Route::prefix('lokasi')->group(function () {
+                        Route::get('/', [BeSparingControllerCustomerLokasi::class, 'index'])->name('sparing.master.lokasi');
+                        Route::post('store', [BeSparingControllerCustomerLokasi::class, 'store']);
+                        Route::post('update', [BeSparingControllerCustomerLokasi::class, 'update']);
+                        Route::delete('delete', [BeSparingControllerCustomerLokasi::class, 'delete']);
+                        Route::get('data-lokasi-by-customer', [BeSparingControllerCustomerLokasi::class, 'handleLokasiByCustomer']);
+                    });
+
+                    Route::prefix('site')->group(function () {
+                        Route::get('/', [BeSparingControllerSite::class, 'index'])->name('sparing.master.site');
+                        Route::post('store', [BeSparingControllerSite::class, 'store']);
+                        Route::post('update', [BeSparingControllerSite::class, 'update']);
+                        Route::delete('delete', [BeSparingControllerSite::class, 'delete']);
+                        Route::get('data-site-by-customer-lokasi', [BeSparingControllerSite::class, 'handleSiteByCustomerLokasi']);
+                    });
+
+                    Route::prefix('logger')->group(function () {
+                        Route::get('/', [BeSparingControllerLogger::class, 'index'])->name('sparing.master.logger');
+                        Route::post('store', [BeSparingControllerLogger::class, 'store']);
+                        Route::post('update', [BeSparingControllerLogger::class, 'update']);
+                        Route::delete('delete', [BeSparingControllerLogger::class, 'delete']);
+                    });
+                });
+            });
+            //endregion
+
+            //region AQMS Routing
             Route::prefix('aqms')->group(function () {
                 Route::prefix('notifikasi')->group(function () {
                     Route::get('data-notif', [ControllerNotification::class, 'getDataNotifikasi']);
@@ -177,6 +213,7 @@
                         ->name('onvif.ptz.debug');
                 });
             });
+            //endregion
         });
 
     });

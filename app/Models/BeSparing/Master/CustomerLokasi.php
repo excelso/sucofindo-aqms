@@ -2,10 +2,6 @@
 
     namespace App\Models\BeSparing\Master;
 
-    use App\Models\Master\Geo\Desa;
-    use App\Models\Master\Geo\Kabupaten;
-    use App\Models\Master\Geo\Kecamatan;
-    use App\Models\Master\Geo\Provinsi;
     use Awobaz\Compoships\Compoships;
     use Awobaz\Compoships\Database\Eloquent\Relations\BelongsTo;
     use Awobaz\Compoships\Database\Eloquent\Relations\HasMany;
@@ -16,6 +12,7 @@
     class CustomerLokasi extends Model {
         use Compoships, SoftDeletes;
 
+        protected $connection = 'sparing-mysql';
         protected $guarded = [];
         protected $table = 't_customer_lokasi';
 
