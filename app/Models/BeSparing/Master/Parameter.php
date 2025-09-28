@@ -12,6 +12,7 @@
     class Parameter extends Model {
         use Compoships;
 
+        protected $connection = 'sparing-mysql';
         protected $guarded = [];
         protected $table = 't_parameter';
 

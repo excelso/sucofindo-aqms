@@ -936,3 +936,8 @@ export function htmlEntities(str) {
     const doc = parser.parseFromString(str, 'text/html');
     return doc.documentElement.textContent;
 }
+
+export function truncateToDecimals(num: number, decimals: number) {
+    const multiplier = Math.pow(10, decimals);
+    return (Math.floor(num * multiplier) / multiplier).toFixed(decimals);
+}

@@ -149,6 +149,45 @@
                     </ul>
                 </li>
 
+                <li class="navItem {{Request::segment(3) == 'reports' ? 'mm-active' : ''}}">
+                    <a class="navLink {{Request::segment(3) == 'reports' ? 'navLinkActive' : ''}}">
+                        <div class="flex items-center justify-start">
+                            <div class="navIcon">
+                                <i class="fas fa-file-circle-check"></i>
+                            </div>
+                            <div class="navText">
+                                <p>Reports</p>
+                            </div>
+                        </div>
+                        <div class="navArrowDown">
+                            <i class="fa fa-caret-right"></i>
+                        </div>
+                    </a>
+                    <ul class="navTreeview">
+                        <li class="navItem">
+                            <a class="navLink {{Request::segment(2) == 'sparing' && Request::segment(3) == 'reports' && Request::segment(4) == 'logs-parameter' ? 'navLinkActive' : ''}}" href="{{ route('sparing.reports.logs-parameter') }}">
+                                <div class="navText">
+                                    <p>Logs Parameter</p>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="navItem">
+                            <a class="navLink {{Request::segment(2) == 'sparing' && Request::segment(3) == 'reports' && Request::segment(4) == 'water-quality' ? 'navLinkActive' : ''}}" href="{{ route('sparing.reports.water-quality') }}">
+                                <div class="navText">
+                                    <p>Water Quality</p>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="navItem">
+                            <a class="navLink {{Request::segment(2) == 'sparing' && Request::segment(3) == 'reports' && Request::segment(4) == 'weekly-report' ? 'navLinkActive' : ''}}" href="/reports/weekly-report">
+                                <div class="navText">
+                                    <p>Weekly Report</p>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
                 @if(in_array(request()->user()->user_level, ['super_admin', 'admin']))
                     <li class="navItem {{Request::segment(3) == 'master' ? 'mm-active' : ''}}">
                         <a class="navLink {{Request::segment(3) == 'master' ? 'navLinkActive' : ''}}">

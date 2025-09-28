@@ -11,7 +11,10 @@
     use App\Http\Controllers\BeSparing\Master\BeSparingControllerCustomer;
     use App\Http\Controllers\BeSparing\Master\BeSparingControllerCustomerLokasi;
     use App\Http\Controllers\BeSparing\Master\BeSparingControllerLogger;
+    use App\Http\Controllers\BeSparing\Master\BeSparingControllerPlatform;
     use App\Http\Controllers\BeSparing\Master\BeSparingControllerSite;
+    use App\Http\Controllers\BeSparing\Reports\BeSparingControllerLogsParameter;
+    use App\Http\Controllers\BeSparing\Reports\BeSparingControllerWaterQuality;
     use App\Http\Controllers\ControllerNotification;
     use App\Http\Controllers\OnvifPTZController;
     use App\Http\Controllers\Settings\ControllerChangePassword;
@@ -65,6 +68,29 @@
             Route::prefix('sparing')->group(function () {
                 Route::get('/', [BeSparingControllerMaps::class, 'index'])->name('sparing.dashboard');
 
+                Route::prefix('reports')->group(function () {
+                    Route::prefix('logs-parameter')->group(function () {
+                        Route::get('/', [BeSparingControllerLogsParameter::class, 'index'])->name('sparing.reports.logs-parameter');
+                        Route::get('export-excel', [BeSparingControllerLogsParameter::class, 'handleExportExcel'])->name('sparing.reports.logs-parameter.export-excel');
+                    });
+
+                    Route::prefix('water-quality')->group(function () {
+                        Route::get('/', [BeSparingControllerWaterQuality::class, 'index'])->name('sparing.reports.water-quality');
+                        Route::post('data-charts', [BeSparingControllerWaterQuality::class, 'handleDataCharts']);
+                        Route::post('data-persentase', [BeSparingControllerWaterQuality::class, 'handleDataPersentase']);
+                        Route::get('data-table', [BeSparingControllerWaterQuality::class, 'handleDataTable']);
+                        Route::get('export-excel', [BeSparingControllerWaterQuality::class, 'handleExportExcel'])->name('sparing.reports.water-quality.export-excel');
+                    });
+
+                    // Route::prefix('weekly-report')->group(function () {
+                    //     Route::get('/', [ControllerWeeklyReport::class, 'index']);
+                    //     Route::post('data-avg-parameter', [ControllerWeeklyReport::class, 'handleDataAvgParameterWeekly']);
+                    //     Route::post('data-entry-charts', [ControllerWeeklyReport::class, 'handleDataEntryCharts']);
+                    //     Route::post('data-comply-charts', [ControllerWeeklyReport::class, 'handleDataComplyCharts']);
+                    //     Route::post('data-sensor-charts', [ControllerWeeklyReport::class, 'handleDataSensorCharts']);
+                    // });
+                });
+
                 Route::prefix('master')->group(function () {
                     Route::prefix('customer')->group(function () {
                         Route::post('data-customer-by-id', [BeSparingControllerCustomer::class, 'handleCustomerById']);
@@ -91,6 +117,10 @@
                         Route::post('store', [BeSparingControllerLogger::class, 'store']);
                         Route::post('update', [BeSparingControllerLogger::class, 'update']);
                         Route::delete('delete', [BeSparingControllerLogger::class, 'delete']);
+                    });
+
+                    Route::prefix('platform')->group(function () {
+                        Route::get('data-platform-by-industri', [BeSparingControllerPlatform::class, 'handlePlatformParamByIndustri']);
                     });
                 });
             });

@@ -334,6 +334,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const lookCustomerId: HTMLInputElement = modalPencarian.querySelector('.lookCustomerId')
                 const lookCustomerLokasiId: HTMLSelectElement = modalPencarian.querySelector('.lookCustomerLokasiId')
                 const lookSiteId: HTMLSelectElement = modalPencarian.querySelector('.lookSiteId')
+                const btnResetPencarian = document.querySelector<HTMLElement>('.btnResetPencarian')
 
                 new DataCustomerLokasiModel(lookCustomerId, lookCustomerLokasiId)
                 new DataSiteModel(lookCustomerLokasiId, lookSiteId)
@@ -343,6 +344,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (ev.key === 'Enter') {
                         $(btnCari).trigger('click');
                     }
+                })
+
+                btnResetPencarian.addEventListener('click', function () {
+                    win.location = `${url.pathname}`
                 })
 
                 btnCari.addEventListener('click', function () {
@@ -355,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     })
 
                     const win: Window = window
-                    win.location = `/master/logger?${text_result.join('&')}`
+                    win.location = `${url.pathname}?${text_result.join('&')}`
                 })
             })
         })
@@ -630,7 +635,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (btnEdit) {
                 $(btnEdit).off('click').on('click', function () {
-                    showModalDialog(modalForm, '<i class="fas fa-edit mr-2"></i> Update Logger', () => {
+                    showModalDialog(modalForm, '<i class="fas fa-edit mr-2"></i> Update Logger', async () => {
 
                         showHiddenElmAndText(btnHapus)
 
@@ -715,12 +720,23 @@ document.addEventListener('DOMContentLoaded', function () {
                         const customerLokasiModel = new DataCustomerLokasiModel(customerId, customerLokasiId)
                         const siteModel = new DataSiteModel(customerLokasiId, siteId)
 
-                        $(customerId).val(customer_id).trigger('change.select2')
-                        $(serialNumber).val(serial_number)
-                        $(siteIdOld).val(site_id)
-                        customerLokasiModel.selectedData(customer_id, customer_lokasi_id)
-                        siteModel.selectedData(customer_lokasi_id, site_id)
-                        $(tipeLogger).val(tipe_logger).trigger('change.select2')
+                        customerId.value = customer_id
+                        customerId.dispatchEvent(new Event('exbox.change'))
+                        await customerLokasiModel.setSelectedAndUpdate(customer_lokasi_id)
+
+                        await new Promise(resolve => setTimeout(resolve, 400))
+
+                        customerLokasiId.value = customer_lokasi_id
+                        customerLokasiId.dispatchEvent(new Event('exbox.change'))
+
+                        siteIdOld.value = site_id
+                        await siteModel.setSelectedAndUpdate(`${site_id}`)
+
+                        tipeLogger.value = tipe_logger
+                        tipeLogger.dispatchEvent(new Event('exbox.change'))
+
+                        serialNumber.value = serial_number
+
                         $(platformUidOld).val(uid)
                         $(platformUid).val(uid)
                         $(lokasiPlatform).val(`${lat}, ${lng}`)
@@ -1020,7 +1036,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     denyButtonText: 'Tidak'
                                 }, async () => {
                                     await waitLoader('Mohon Tunggu...', 'Menyimpan Perubahan data Logger', async () => {
-                                        const response = await fetch('/master/logger/update', {
+                                        const response = await fetch(`${url.pathname}/update`, {
                                             method: 'POST',
                                             headers: {
                                                 // 'Content-Type': 'application/json',
@@ -1046,7 +1062,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     denyButtonText: 'Tidak'
                                 }, async () => {
                                     await waitLoader('Mohon Tunggu...', 'Menghapus data Logger', async () => {
-                                        const response = await fetch('/master/logger/delete', {
+                                        const response = await fetch(`${url.pathname}/delete`, {
                                             method: 'DELETE',
                                             headers: {
                                                 'Content-Type': 'application/json',

@@ -4,14 +4,13 @@ import {getMetaContent} from "@/js/plugins/functions";
 
 // Types and interfaces
 interface SiteData {
-    id: string;
-    nama_site: string;
+    item: string;
 }
 
-export default class DataSiteModel {
-    private readonly elmCustomerLokasiId: HTMLSelectElement | HTMLInputElement;
-    private readonly elmSite: HTMLSelectElement;
-    private readonly elmSiteChoice: ExBox;
+export default class DataPlatformsIndustriModel {
+    private readonly elmPlatId: HTMLSelectElement | HTMLInputElement;
+    private readonly elmParaId: HTMLSelectElement;
+    private readonly elmParaIdChoice: ExBox;
     private readonly options: Required<{
         csrfToken: string;
     }>;
@@ -21,25 +20,25 @@ export default class DataSiteModel {
 
     /**
      * Creates an instance of Site
-     * @param elmCustomerLokasiId - Company select/input element
-     * @param elmSite - Site select element
+     * @param elmPlatId - Company select/input element
+     * @param elmParaId - Site select element
      * @param options - Configuration options
      */
     constructor(
-            elmCustomerLokasiId?: HTMLSelectElement | HTMLInputElement,
-            elmSite?: HTMLSelectElement,
+            elmPlatId?: HTMLSelectElement | HTMLInputElement,
+            elmParaId?: HTMLSelectElement,
             options?: {
                 csrfToken?: string;
             }
     ) {
-        this.elmCustomerLokasiId = elmCustomerLokasiId ?? document.querySelector('.customerLokasiId');
-        this.elmSite = elmSite ?? document.querySelector('.companySiteId');
-        this.elmSiteChoice = new ExBox(this.elmSite);
+        this.elmPlatId = elmPlatId ?? document.querySelector('.platformId');
+        this.elmParaId = elmParaId ?? document.querySelector('.parameterId');
+        this.elmParaIdChoice = new ExBox(this.elmParaId);
         this.options = {
             csrfToken: options?.csrfToken ?? getMetaContent('csrf-token')
         };
 
-        if (!this.elmCustomerLokasiId || !this.elmSite) {
+        if (!this.elmPlatId || !this.elmParaId) {
             throw new Error('Required elements not found');
         }
 
@@ -56,7 +55,7 @@ export default class DataSiteModel {
             if (customerSelected) {
                 await this.loadAndDisplaySite(customerSelected);
 
-                const siteSelected = this.elmSite.getAttribute('data-selected');
+                const siteSelected = this.elmParaId.getAttribute('data-selected');
                 if (siteSelected) {
                     this.setSelectedValue(siteSelected);
                 }
@@ -70,7 +69,7 @@ export default class DataSiteModel {
      * Sets up event listeners for the component
      */
     private setupEventListeners(): void {
-        this.elmCustomerLokasiId.addEventListener('change', this.handleCompanyChange.bind(this));
+        this.elmPlatId.addEventListener('change', this.handleCompanyChange.bind(this));
     }
 
     /**
@@ -79,12 +78,12 @@ export default class DataSiteModel {
     private async handleCompanyChange(event: Event): Promise<void> {
         try {
             const target = event.target as HTMLSelectElement | HTMLInputElement;
-            const customerSelectedId = target.value;
+            const platSelectedId = target.value;
 
             this.resetSiteSelection();
 
-            if (customerSelectedId) {
-                await this.loadAndDisplaySite(customerSelectedId);
+            if (platSelectedId) {
+                await this.loadAndDisplaySite(platSelectedId);
                 if (this.selectedValue) {
                     this.setSelectedValue(this.selectedValue);
                 }
@@ -97,17 +96,17 @@ export default class DataSiteModel {
     /**
      * Loads and displays site data for a given unit
      */
-    private async loadAndDisplaySite(customerLokasiId: string): Promise<void> {
+    private async loadAndDisplaySite(platformId: string): Promise<void> {
         if (this.isLoading) return;
 
         try {
             this.isLoading = true;
-            const data = await this.getSiteData(customerLokasiId);
+            const data = await this.getSiteData(platformId);
             this.displaySiteData(data);
 
             // Ensure selected value is set after data is displayed
             if (this.selectedValue) {
-                this.elmSiteChoice.setSelected(this.selectedValue);
+                this.elmParaIdChoice.setSelected(this.selectedValue);
             }
         } catch (error) {
             this.handleError('Failed to load site data', error);
@@ -119,20 +118,20 @@ export default class DataSiteModel {
     /**
      * Fetches site data from the server or cache
      */
-    private async getSiteData(customerLokasiId: string): Promise<ExBoxOptionData[]> {
-        const cachedData = this.cachedData.get(customerLokasiId);
+    private async getSiteData(platformId: string): Promise<ExBoxOptionData[]> {
+        const cachedData = this.cachedData.get(platformId);
         if (cachedData) return cachedData;
 
-        const data = await this.fetchSiteData(customerLokasiId);
-        this.cachedData.set(customerLokasiId, data);
+        const data = await this.fetchSiteData(platformId);
+        this.cachedData.set(platformId, data);
         return data;
     }
 
     /**
      * Fetches site data from the server
      */
-    private async fetchSiteData(customerLokasiId: string): Promise<ExBoxOptionData[]> {
-        const response = await fetch(`/sparing/master/site/data-site-by-customer-lokasi?customer_lokasi_id=${customerLokasiId}`, {
+    private async fetchSiteData(platformId: string): Promise<ExBoxOptionData[]> {
+        const response = await fetch(`/sparing/master/platform/data-platform-by-industri?platform_id=${platformId}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -157,7 +156,7 @@ export default class DataSiteModel {
     /**
      * Transforms raw site data into ExBox option format
      */
-    private transformSiteData(data: SiteData[]): ExBoxOptionData[] {
+    private transformSiteData(data: any[]): ExBoxOptionData[] {
         const defaultOption: ExBoxOptionData = {
             value: '',
             label: '...',
@@ -169,9 +168,9 @@ export default class DataSiteModel {
 
         return [
             defaultOption,
-            ...data.map(({id, nama_site}) => ({
-                value: id,
-                label: nama_site,
+            ...data.map((item) => ({
+                value: item,
+                label: item,
                 additional: '',
                 infos: ''
             }))
@@ -182,24 +181,24 @@ export default class DataSiteModel {
      * Displays site data in the select element
      */
     private displaySiteData(data: ExBoxOptionData[]): void {
-        this.elmSiteChoice.createOptionDataElement(data);
+        this.elmParaIdChoice.createOptionDataElement(data);
     }
 
     /**
      * Gets the selected unit value
      */
     private getCompanySelected(): string | null {
-        if (this.elmCustomerLokasiId instanceof HTMLSelectElement) {
-            return this.elmCustomerLokasiId.value || this.elmCustomerLokasiId.getAttribute('data-selected');
+        if (this.elmPlatId instanceof HTMLSelectElement) {
+            return this.elmPlatId.value || this.elmPlatId.getAttribute('data-selected');
         }
-        return this.elmCustomerLokasiId.value;
+        return this.elmPlatId.value;
     }
 
     /**
      * Resets the site selection
      */
     private resetSiteSelection(): void {
-        this.elmSiteChoice.clearData();
+        this.elmParaIdChoice.clearData();
         this.selectedValue = '';
     }
 
@@ -218,10 +217,10 @@ export default class DataSiteModel {
     public async setSelectedAndUpdate(value: string): Promise<void> {
         try {
             this.selectedValue = value;
-            const customerSelectedId = this.getCompanySelected();
-            if (!customerSelectedId) return;
+            const platSelectedId = this.getCompanySelected();
+            if (!platSelectedId) return;
 
-            await this.loadAndDisplaySite(customerSelectedId);
+            await this.loadAndDisplaySite(platSelectedId);
         } catch (error) {
             this.handleError('Failed to set selected value', error);
         }
@@ -232,7 +231,7 @@ export default class DataSiteModel {
      */
     public setSelectedValue(value: string): void {
         this.selectedValue = value;
-        this.elmSiteChoice.setSelected(value);
+        this.elmParaIdChoice.setSelected(value);
     }
 
     /**
@@ -254,9 +253,9 @@ export default class DataSiteModel {
      * Legacy method for backward compatibility
      * @deprecated Use setSelectedAndUpdate instead
      */
-    public selectedData(customerSelectedId: string, siteId: string): void {
-        this.loadAndDisplaySite(customerSelectedId).then(() => {
-            this.setSelectedValue(siteId);
+    public selectedData(platSelectedId: string, paraId: string): void {
+        this.loadAndDisplaySite(platSelectedId).then(() => {
+            this.setSelectedValue(paraId);
         });
     }
 }
