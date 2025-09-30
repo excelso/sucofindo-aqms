@@ -15,6 +15,7 @@
     use App\Http\Controllers\BeSparing\Master\BeSparingControllerSite;
     use App\Http\Controllers\BeSparing\Reports\BeSparingControllerLogsParameter;
     use App\Http\Controllers\BeSparing\Reports\BeSparingControllerWaterQuality;
+    use App\Http\Controllers\BeSparing\Reports\BeSparingControllerWeeklyReport;
     use App\Http\Controllers\ControllerNotification;
     use App\Http\Controllers\OnvifPTZController;
     use App\Http\Controllers\Settings\ControllerChangePassword;
@@ -67,6 +68,13 @@
             //region Sparing Routing
             Route::prefix('sparing')->group(function () {
                 Route::get('/', [BeSparingControllerMaps::class, 'index'])->name('sparing.dashboard');
+                Route::prefix('dashboard')->group(function () {
+                    Route::prefix('maps')->group(function () {
+                        Route::get('/', [BeSparingControllerMaps::class, 'index'])->name('sparing.dashboard.maps');
+                        Route::post('data-platform', [BeSparingControllerMaps::class, 'handleDataPlatform']);
+                        Route::post('data-platform-marker', [BeSparingControllerMaps::class, 'handleDataPlatformMarker']);
+                    });
+                });
 
                 Route::prefix('reports')->group(function () {
                     Route::prefix('logs-parameter')->group(function () {
@@ -82,13 +90,13 @@
                         Route::get('export-excel', [BeSparingControllerWaterQuality::class, 'handleExportExcel'])->name('sparing.reports.water-quality.export-excel');
                     });
 
-                    // Route::prefix('weekly-report')->group(function () {
-                    //     Route::get('/', [ControllerWeeklyReport::class, 'index']);
-                    //     Route::post('data-avg-parameter', [ControllerWeeklyReport::class, 'handleDataAvgParameterWeekly']);
-                    //     Route::post('data-entry-charts', [ControllerWeeklyReport::class, 'handleDataEntryCharts']);
-                    //     Route::post('data-comply-charts', [ControllerWeeklyReport::class, 'handleDataComplyCharts']);
-                    //     Route::post('data-sensor-charts', [ControllerWeeklyReport::class, 'handleDataSensorCharts']);
-                    // });
+                    Route::prefix('weekly-report')->group(function () {
+                        Route::get('/', [BeSparingControllerWeeklyReport::class, 'index'])->name('sparing.reports.weekly-report');
+                        Route::post('data-avg-parameter', [BeSparingControllerWeeklyReport::class, 'handleDataAvgParameterWeekly']);
+                        Route::post('data-entry-charts', [BeSparingControllerWeeklyReport::class, 'handleDataEntryCharts']);
+                        Route::post('data-comply-charts', [BeSparingControllerWeeklyReport::class, 'handleDataComplyCharts']);
+                        Route::post('data-sensor-charts', [BeSparingControllerWeeklyReport::class, 'handleDataSensorCharts']);
+                    });
                 });
 
                 Route::prefix('master')->group(function () {

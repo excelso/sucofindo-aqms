@@ -114,6 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const btnCari = document.querySelector<HTMLElement>('.btnCari')
                 const platformUid: HTMLSelectElement = document.querySelector('.platformUid')
                 const parameterId: HTMLSelectElement = document.querySelector('.parameterId')
+                const btnResetPencarian = document.querySelector<HTMLElement>('.btnResetPencarian')
 
                 new DataPlatformsIndustriModel(platformUid, parameterId)
 
@@ -121,6 +122,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (ev.key === 'Enter') {
                         $(btnCari).trigger('click');
                     }
+                })
+
+                btnResetPencarian.addEventListener('click', function () {
+                    win.location = `${url.pathname}`
                 })
 
                 $(btnCari).off('click').on('click', function () {

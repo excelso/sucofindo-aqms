@@ -3,8 +3,8 @@
     namespace App\Http\Controllers\BeAqms\Master;
 
     use App\Http\Controllers\Controller;
-    use App\Models\Master\Companies;
-    use App\Models\Master\CompaniesSites;
+    use App\Models\BeAqms\Master\Companies;
+    use App\Models\BeAqms\Master\CompaniesSites;
     use Carbon\Carbon;
     use DB;
     use Exception;

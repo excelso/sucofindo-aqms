@@ -1,17 +1,15 @@
 <?php
 
-    namespace App\Models\Master;
+    namespace App\Models\BeAqms\Master;
 
     use Awobaz\Compoships\Compoships;
-    use Awobaz\Compoships\Database\Eloquent\Relations\BelongsTo;
-    use Illuminate\Database\Eloquent\Builder;
     use Illuminate\Database\Eloquent\Model;
     use Illuminate\Database\Eloquent\SoftDeletes;
-    use Illuminate\Support\Facades\DB;
 
     class ExternalCompany extends Model {
         use Compoships, SoftDeletes;
 
+        protected $connection = 'aqms-mysql';
         protected $guarded = [];
         protected $table = 't_external_company';
     }

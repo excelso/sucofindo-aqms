@@ -3,8 +3,8 @@
     namespace App\Http\Controllers\BeAqms\Master;
 
     use App\Http\Controllers\Controller;
-    use App\Models\Master\Companies;
-    use App\Models\Master\ExternalEmployee;
+    use App\Models\BeAqms\Master\Companies;
+    use App\Models\BeAqms\Master\ExternalEmployee;
     use App\Models\Users\User;
     use App\Models\Users\UserPlatforms;
     use Carbon\Carbon;

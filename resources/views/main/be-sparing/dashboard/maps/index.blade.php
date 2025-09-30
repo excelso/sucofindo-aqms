@@ -33,4 +33,4 @@
     </div>
 </x-app-layout>
 
-@vite(['resources/js/main/dashboard/maps/index.tsx'])
+@vite(['resources/js/main/be-sparing/dashboard/maps/index.tsx'])

@@ -1,12 +1,13 @@
 <?php
 
-    namespace App\Models\Master;
+    namespace App\Models\BeAqms\Master;
 
     use Illuminate\Database\Eloquent\Builder;
     use Illuminate\Database\Eloquent\Model;
 
     class AqiCategories extends Model {
 
+        protected $connection = 'aqms-mysql';
         protected $table = 't_aqi_categories';
         protected $fillable = [
             'category_name',

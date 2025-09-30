@@ -2,12 +2,12 @@
 
     namespace App\Console\Commands;
 
-    use App\Models\Master\Loggers;
-    use App\Models\Master\Platforms;
+    use App\Models\BeAqms\Master\Loggers;
+    use App\Models\BeAqms\Master\Platforms;
+    use Exception;
     use Illuminate\Console\Command;
     use Illuminate\Support\Facades\DB;
     use Illuminate\Support\Facades\Log;
-    use Exception;
 
     class UpdateAQITSP extends Command {
         /**

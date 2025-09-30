@@ -1,18 +1,14 @@
 <?php
 
-    namespace App\Models\Master;
+    namespace App\Models\BeAqms\Master;
 
-    use App\Models\Master\Geo\GeoProvince;
-    use App\Models\Users\User;
-    use DB;
-    use Illuminate\Database\Eloquent\Builder;
     use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\BelongsTo;
     use Illuminate\Database\Eloquent\SoftDeletes;
 
     class LoggersLimit extends Model {
         use SoftDeletes;
 
+        protected $connection = 'aqms-mysql';
         protected $keyType = 'string';
         public $incrementing = false;
         protected $table = 't_loggers_limit';

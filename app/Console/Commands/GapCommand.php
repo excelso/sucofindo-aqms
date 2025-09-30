@@ -2,16 +2,13 @@
 
     namespace App\Console\Commands;
 
-    use App\Models\Master\Loggers;
-    use App\Models\Master\Platforms;
-    use App\Models\Master\PlatformsHeartbeat;
+    use App\Models\BeAqms\Master\Loggers;
+    use App\Models\BeAqms\Master\Platforms;
     use Carbon\Carbon;
     use DB;
     use Exception;
     use Illuminate\Console\Command;
     use Illuminate\Support\Collection;
-    use Illuminate\Support\Str;
-    use phpseclib3\Net\SSH2;
 
     class GapCommand extends Command {
         protected $signature = 'handle:gap

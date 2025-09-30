@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 
 class Notification extends Model {
 
+    protected $connection = 'aqms-mysql';
     protected $keyType = 'string';
     public $incrementing = false;
     protected $table = 't_notification';

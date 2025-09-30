@@ -1,20 +1,13 @@
 <?php
 
-    namespace App\Models\Master;
+    namespace App\Models\BeAqms\Master;
 
-    use App\Models\Master\Geo\GeoProvince;
-    use App\Models\Users\User;
-    use DB;
     use Illuminate\Database\Eloquent\Builder;
     use Illuminate\Database\Eloquent\Model;
-    use Illuminate\Database\Eloquent\Relations\BelongsTo;
-    use Illuminate\Database\Eloquent\Relations\HasOne;
-    use Illuminate\Database\Eloquent\SoftDeletes;
-    use Illuminate\Support\Collection;
-    use LaravelIdea\Helper\App\Models\Master\_IH_PlatformsHeartbeat_QB;
 
     class PlatformsHeartbeat extends Model {
 
+        protected $connection = 'aqms-mysql';
         protected $keyType = 'string';
         public $incrementing = false;
         protected $table = 't_platforms_heartbeat';

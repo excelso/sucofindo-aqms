@@ -1,7 +1,7 @@
 import {getDeviceConfig} from "@/js/plugins/breakpoint";
 import {Dropdown, Popover} from 'flowbite';
 import $ from "jquery";
-import moment from "moment";
+import moment from "moment-timezone";
 
 let throttleTimer: boolean;
 
@@ -940,4 +940,38 @@ export function htmlEntities(str) {
 export function truncateToDecimals(num: number, decimals: number) {
     const multiplier = Math.pow(10, decimals);
     return (Math.floor(num * multiplier) / multiplier).toFixed(decimals);
+}
+
+export function elapsedDate(time: number, timezone?: string) {
+    const currDateTz = timezone ? moment().tz(timezone).format('YYYY-MM-DD HH:mm:ss') : moment().format('YYYY-MM-DD HH:mm:ss')
+    const currUnixTz = moment(currDateTz).unix()
+    const lastDateTz = timezone ? moment(time).tz(timezone).format('YYYY-MM-DD HH:mm:ss') : moment(time).format('YYYY-MM-DD HH:mm:ss')
+    const lastUnixTz = moment(lastDateTz).unix()
+    let dateDiffSecond = currUnixTz - lastUnixTz
+
+    let token = 'yang lalu'
+    if (dateDiffSecond < 0) {
+        token = 'dari sekarang'
+        dateDiffSecond = Math.abs(dateDiffSecond)
+    }
+
+    let label: string;
+    if (dateDiffSecond < 60) {
+        label = `${Math.floor(dateDiffSecond)} detik ${token}`
+    } else if (dateDiffSecond >= 60 && dateDiffSecond < 3600) {
+        label = `${Math.floor(dateDiffSecond / 60)} menit ${token}`
+    } else if (dateDiffSecond >= 3600 && dateDiffSecond < 86400) {
+        label = `${Math.floor(dateDiffSecond / 3600)} jam ${token}`
+    } else if (dateDiffSecond >= 86400 && dateDiffSecond < 604800) {
+        label = `${Math.floor(dateDiffSecond / 86400)} hari ${token}`
+    } else if (dateDiffSecond >= 604800 && dateDiffSecond < 2629800) {
+        label = `${Math.floor(dateDiffSecond / 604800)} minggu ${token}`
+    } else if (dateDiffSecond >= 2629800 && dateDiffSecond < 31557600) {
+        label = `${Math.floor(dateDiffSecond / 2629800)} bulan ${token}`
+    } else if (dateDiffSecond >= 31557600) {
+        label = `${Math.floor(dateDiffSecond / 31557600)} tahun ${token}`
+    }
+
+    return label
+
 }

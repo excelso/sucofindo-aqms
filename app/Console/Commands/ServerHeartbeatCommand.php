@@ -2,12 +2,11 @@
 
     namespace App\Console\Commands;
 
-    use App\Models\Master\Platforms;
-    use App\Models\Master\PlatformsHeartbeat;
+    use App\Models\BeAqms\Master\Platforms;
+    use App\Models\BeAqms\Master\PlatformsHeartbeat;
     use Carbon\Carbon;
     use Exception;
     use Illuminate\Console\Command;
-    use Illuminate\Support\Str;
     use phpseclib3\Net\SSH2;
 
     class ServerHeartbeatCommand extends Command {

@@ -3,11 +3,11 @@
     namespace App\Http\Controllers\BeAqms\Master;
 
     use App\Http\Controllers\Controller;
-    use App\Models\Master\Companies;
-    use App\Models\Master\Loggers;
-    use App\Models\Master\LoggersLimit;
-    use App\Models\Master\Platforms;
-    use App\Models\Master\PlatformsCalibration;
+    use App\Models\BeAqms\Master\Companies;
+    use App\Models\BeAqms\Master\Loggers;
+    use App\Models\BeAqms\Master\LoggersLimit;
+    use App\Models\BeAqms\Master\Platforms;
+    use App\Models\BeAqms\Master\PlatformsCalibration;
     use Carbon\Carbon;
     use DB;
     use Exception;

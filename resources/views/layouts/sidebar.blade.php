@@ -115,8 +115,8 @@
             </ul>
         @else
             <ul class="metismenu" id="menu">
-                <li class="navItem {{Request::segment(1) == 'dashboard' ? 'mm-active' : ''}}">
-                    <a class="navLink {{Request::segment(1) == 'dashboard' ? 'navLinkActive' : ''}}">
+                <li class="navItem {{Request::segment(3) == 'dashboard' ? 'mm-active' : ''}}">
+                    <a class="navLink {{Request::segment(3) == 'dashboard' ? 'navLinkActive' : ''}}">
                         <div class="flex items-center justify-start">
                             <div class="navIcon">
                                 <i class="fas fa-house"></i>
@@ -132,7 +132,7 @@
                     <ul class="navTreeview">
                         @if(in_array(request()->user()->user_level, ['super_admin', 'admin']))
                             <li class="navItem">
-                                <a class="navLink {{Request::segment(1) == 'dashboard' && Request::segment(2) == 'hasil-pengukuran' ? 'navLinkActive' : ''}}" href="/dashboard/hasil-pengukuran">
+                                <a class="navLink {{Request::segment(2) == 'sparing' && Request::segment(3) == 'dashboard' && Request::segment(3) == 'hasil-pengukuran' ? 'navLinkActive' : ''}}" href="/dashboard/hasil-pengukuran">
                                     <div class="navText">
                                         <p>Hasil Pengukuran</p>
                                     </div>
@@ -140,7 +140,7 @@
                             </li>
                         @endif
                         <li class="navItem">
-                            <a class="navLink {{Request::segment(1) == 'dashboard' && Request::segment(2) == 'maps' ? 'navLinkActive' : ''}}" href="/dashboard/maps">
+                            <a class="navLink {{Request::segment(2) == 'sparing' && Request::segment(3) == 'dashboard' && Request::segment(3) == 'maps' ? 'navLinkActive' : ''}}" href="{{ route('sparing.dashboard.maps') }}">
                                 <div class="navText">
                                     <p>Peta Sebaran</p>
                                 </div>
@@ -179,7 +179,7 @@
                             </a>
                         </li>
                         <li class="navItem">
-                            <a class="navLink {{Request::segment(2) == 'sparing' && Request::segment(3) == 'reports' && Request::segment(4) == 'weekly-report' ? 'navLinkActive' : ''}}" href="/reports/weekly-report">
+                            <a class="navLink {{Request::segment(2) == 'sparing' && Request::segment(3) == 'reports' && Request::segment(4) == 'weekly-report' ? 'navLinkActive' : ''}}" href="{{ route('sparing.reports.weekly-report') }}">
                                 <div class="navText">
                                     <p>Weekly Report</p>
                                 </div>
