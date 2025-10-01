@@ -789,6 +789,7 @@ class PlatformSkeletonManager {
 
             // Create air index chart
             setTimeout(() => {
+                this.currentAQISource.set(cardId, 'tsp');
                 this.createAirIndexChart(airIndexChart, data.airIndexData || [], cardId);
             }, 200);
         }
@@ -1748,6 +1749,8 @@ class PlatformSkeletonManager {
                 const isHighValue = item.value > 50;
                 const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.timestamp * 1000);
                 const aqiFrom = currentSource === 'tsp' ? `TSP: ${item.tsp} µg/m³` : item.aqi_from;
+
+                console.log('xxxx', currentSource)
 
                 if (linkVideoPoint.linkVideoRecorded) {
                     if (currentSource === 'tsp') {
