@@ -721,7 +721,7 @@ class PlatformSkeletonManager {
             ddButton.id = `${cardId}-dropdownButton`;
             ddButton.type = 'button';
             ddButton.innerHTML = `
-                <span class="subText">Based on PM 2.5 / PM 10</span>
+                <span class="subText">Based on TSP</span>
                 <svg class="w-3 h-3" aria-hidden="true" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
                 </svg>
@@ -1557,7 +1557,8 @@ class PlatformSkeletonManager {
         const platformTimezone = platform?.timezone || 'Asia/Jakarta';
         const platformLocale = platform?.locale || 'id-ID';
 
-        const currentSource = this.currentAQISource.get(cardId) || 'pm25_pm10';
+        // Default Metric Data TSP
+        const currentSource = this.currentAQISource.get(cardId) || 'tsp';
 
         const processedData = data.map(item => {
             const aqiValue = currentSource === 'pm25_pm10' ? item.value : item.value_tsp;
@@ -1739,7 +1740,7 @@ class PlatformSkeletonManager {
         const chart = this.chartInstances.get(chartKey);
 
         if (chart && chart.series && chart.series[0]) {
-            const currentSource = this.currentAQISource.get(cardId) || 'pm25_pm10';
+            const currentSource = this.currentAQISource.get(cardId) || 'tsp';
 
             const chartData = airIndexData.map((item, index) => {
                 const markerColor = this.getAQIColor(item.value);
