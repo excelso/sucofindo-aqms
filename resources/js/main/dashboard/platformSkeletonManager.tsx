@@ -791,6 +791,7 @@ class PlatformSkeletonManager {
             setTimeout(() => {
                 this.currentAQISource.set(cardId, 'tsp');
                 this.createAirIndexChart(airIndexChart, data.airIndexData || [], cardId);
+                this.updateAirIndexChart(cardId, data.airIndexData || [])
             }, 200);
         }
     }
