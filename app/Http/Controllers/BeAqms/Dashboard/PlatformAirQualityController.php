@@ -25,7 +25,7 @@
                 $isTrial = 0;
 
                 if ($request->user()->user_level != 'super_admin') {
-                    $isTrial = 1;
+                    // $isTrial = 0;
                     $userPlatformIds = UserPlatforms::userPlatforms($request->user()->id)
                         ->pluck('platform_id');
                     $userPlatformId = $userPlatformIds->toArray();

@@ -29,7 +29,7 @@
             $userPlatformId = null;
             $isTrial = 0;
             if (request()->user()->user_level != 'super_admin') {
-                $isTrial = 1;
+                // $isTrial = 1;
                 $userPlatformIds = UserPlatforms::userPlatforms(request()->user()->id)->get();
                 foreach ($userPlatformIds as $platformId) {
                     $userPlatformId[] = $platformId->platform_id;
