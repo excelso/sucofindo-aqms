@@ -5,8 +5,8 @@
         <div class="login-left-container">
             <div class="login-box flex-col justify-center">
                 <div class="login-header">
-                    <img src="{{url('/images/logo-color.png')}}" class="mx-auto w-[250px]" alt="Logo"/>
-                    <div class="mt-7">
+                    <img src="{{url('/images/logo-enviro1.png')}}" class="mx-auto w-[250px]" alt="Logo"/>
+                    <div class="mt-7 !hidden">
                         <div class="font-bold text-5xl">
                             BeAQMS
                         </div>
@@ -84,7 +84,7 @@
                 </form>
 
                 <div class="login-footer">
-                    <div>AQMS @2025</div>
+                    <div>Be Enviro @2025</div>
                     <div>Powered By PT. Berau Coal</div>
                 </div>
             </div>

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\BeAqms;
 
 use App\Models\Users\User;
 use Illuminate\Database\Eloquent\Builder;

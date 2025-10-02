@@ -29,7 +29,7 @@
                                 </a>
                             </li>
                             <li>
-                                <a rel="alternate" href="{{ route('sparing.dashboard') }}">
+                                <a rel="alternate" href="{{ route('sparing.dashboard.maps') }}">
                                     <div class="flex items-center">
                                         <div class="ml-2 overflow-hidden">
                                             <div class="truncate">

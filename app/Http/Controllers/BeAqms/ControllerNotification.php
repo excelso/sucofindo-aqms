@@ -1,15 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\BeAqms;
 
-use App\Jobs\FirebaseSendMessage;
-use App\Jobs\NotificationRead;
+use App\Http\Controllers\Controller;
+use App\Models\BeAqms\Notification;
 use App\Models\BeAqms\NotificationReaded;
-use App\Models\Master\Karyawan\User;
-use App\Models\Master\Karyawan\UserFirebase;
-use App\Models\Notification;
-use App\Models\Notifikasi;
-use App\Models\NotifikasiRead;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -111,7 +106,7 @@ class ControllerNotification extends Controller {
             // }
             //endregion
 
-            $this->dispatch(new NotificationRead(request()->user()->user_uniq_id));
+            $this->dispatch(new BeSparingNotificationRead(request()->user()->user_uniq_id));
             return response()->json([
                 'message' => 'Baca semua Notifikasi berhasil',
                 'responseTime' => now()
@@ -222,7 +217,7 @@ class ControllerNotification extends Controller {
             $payload = $options['payload'];
 
             $this->dispatch(
-                new FirebaseSendMessage([
+                new BeSparingFirebaseSendMessage([
                     'to' => $to,
                     'title' => $title,
                     'body' => $body,
@@ -272,7 +267,7 @@ class ControllerNotification extends Controller {
 
     public function testFirebaseQueue(): JsonResponse {
         try {
-            $this->dispatch(new FirebaseSendMessage([
+            $this->dispatch(new BeSparingFirebaseSendMessage([
                 'to' => 'e6qVpc9wEnU9nDcyHwMHXk:APA91bESNskbtADoBdC2BX8h9ElDeuPNRgyNJS_1XJEKM6HS2vIEil6-GR0PmhSLO1BbMspgQomy7FGmuSc9YQ_MsQZGfoMeJ5V6eSU-x-w8pUo2nYIGE_rSqCklQONloA-_uJ2NlQGz',
                 'title' => 'Test',
                 'body' => 'Hallo ini Test Notif',

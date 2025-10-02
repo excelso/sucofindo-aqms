@@ -1,5 +1,6 @@
 <?php
 
+    use App\Http\Controllers\BeAqms\ControllerNotification;
     use App\Http\Controllers\BeAqms\Dashboard\ControllerDashboard;
     use App\Http\Controllers\BeAqms\Dashboard\PlatformAirQualityController;
     use App\Http\Controllers\BeAqms\Master\ControllerPlatformLoggers;
@@ -7,6 +8,7 @@
     use App\Http\Controllers\BeAqms\Master\ControllerSitesLocation;
     use App\Http\Controllers\BeAqms\Master\ControllerUsers;
     use App\Http\Controllers\BeAqms\Reports\ControllerReportLogParameter;
+    use App\Http\Controllers\BeSparing\BeSparingControllerNotifikasi;
     use App\Http\Controllers\BeSparing\Dashboard\BeSparingControllerMaps;
     use App\Http\Controllers\BeSparing\Master\BeSparingControllerCustomer;
     use App\Http\Controllers\BeSparing\Master\BeSparingControllerCustomerLokasi;
@@ -16,7 +18,6 @@
     use App\Http\Controllers\BeSparing\Reports\BeSparingControllerLogsParameter;
     use App\Http\Controllers\BeSparing\Reports\BeSparingControllerWaterQuality;
     use App\Http\Controllers\BeSparing\Reports\BeSparingControllerWeeklyReport;
-    use App\Http\Controllers\ControllerNotification;
     use App\Http\Controllers\OnvifPTZController;
     use App\Http\Controllers\Settings\ControllerChangePassword;
     use App\Http\Controllers\Settings\WebRTCProxyController;
@@ -131,6 +132,16 @@
                         Route::get('data-platform-by-industri', [BeSparingControllerPlatform::class, 'handlePlatformParamByIndustri']);
                     });
                 });
+
+                Route::prefix('notifikasi')->group(function () {
+                    Route::get('data-notif', [BeSparingControllerNotifikasi::class, 'getDataNotifikasi']);
+                    Route::get('count-data-notif', [BeSparingControllerNotifikasi::class, 'getCountNotifikasi']);
+                    Route::get('mark-all-read', [BeSparingControllerNotifikasi::class, 'markAllReadNotifikasi']);
+                    Route::post('read-notif', [BeSparingControllerNotifikasi::class, 'readNotifikasi']);
+                    Route::prefix('firebase')->group(function () {
+                        Route::post('save-token', [BeSparingControllerNotifikasi::class, 'saveFirebaseRegToken']);
+                    });
+                });
             });
             //endregion
 
@@ -138,6 +149,7 @@
             Route::prefix('aqms')->group(function () {
                 Route::prefix('notifikasi')->group(function () {
                     Route::get('data-notif', [ControllerNotification::class, 'getDataNotifikasi']);
+                    Route::get('count-data-notif', [ControllerNotification::class, 'getCountNotifikasi']);
                 });
 
                 Route::get('/', [ControllerDashboard::class, 'index'])->name('aqms.dashboard');

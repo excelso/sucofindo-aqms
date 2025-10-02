@@ -132,7 +132,7 @@
                     <ul class="navTreeview">
                         @if(in_array(request()->user()->user_level, ['super_admin', 'admin']))
                             <li class="navItem">
-                                <a class="navLink {{Request::segment(2) == 'sparing' && Request::segment(3) == 'dashboard' && Request::segment(3) == 'hasil-pengukuran' ? 'navLinkActive' : ''}}" href="/dashboard/hasil-pengukuran">
+                                <a class="navLink {{Request::segment(2) == 'sparing' && Request::segment(3) == 'dashboard' && Request::segment(4) == 'hasil-pengukuran' ? 'navLinkActive' : ''}}" href="/dashboard/hasil-pengukuran">
                                     <div class="navText">
                                         <p>Hasil Pengukuran</p>
                                     </div>
@@ -140,7 +140,7 @@
                             </li>
                         @endif
                         <li class="navItem">
-                            <a class="navLink {{Request::segment(2) == 'sparing' && Request::segment(3) == 'dashboard' && Request::segment(3) == 'maps' ? 'navLinkActive' : ''}}" href="{{ route('sparing.dashboard.maps') }}">
+                            <a class="navLink {{Request::segment(2) == 'sparing' && Request::segment(3) == 'dashboard' && Request::segment(4) == 'maps' ? 'navLinkActive' : ''}}" href="{{ route('sparing.dashboard.maps') }}">
                                 <div class="navText">
                                     <p>Peta Sebaran</p>
                                 </div>

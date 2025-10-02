@@ -143,7 +143,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const getDataNotifikasi = async (loadMore?: any) => {
         $(dataNotifLoader).show()
         $(dataNotifEmpty).hide()
-        const response = await fetch(loadMore ? `/notifikasi/data-notif?loadMore=${loadMore}` : `/notifikasi/data-notif`, {
+
+        const url = new URL(window.location.href)
+        let urlNotifikasi = '/aqms/notifikasi/data-notif';
+        if (url.pathname.includes('sparing')) {
+            urlNotifikasi = '/sparing/notifikasi/data-notif'
+        }
+
+        const response = await fetch(loadMore ? `${urlNotifikasi}?loadMore=${loadMore}` : urlNotifikasi, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -220,7 +227,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const getCountNotifikasi = async () => {
-        const response = await fetch('/notifikasi/count-data-notif', {
+        const url = new URL(window.location.href)
+        let urlNotifikasi = '/aqms/notifikasi/count-data-notif';
+        if (url.pathname.includes('sparing')) {
+            urlNotifikasi = '/sparing/notifikasi/count-data-notif'
+        }
+
+        const response = await fetch(urlNotifikasi, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -559,12 +572,5 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     }
     //endregion
-
-    if (!url.pathname.includes('payrolls/payroll-process/create')) {
-        const payrollLocalData = localStorage.getItem('payroll')
-        if (payrollLocalData) {
-            localStorage.removeItem('payroll')
-        }
-    }
 
 })

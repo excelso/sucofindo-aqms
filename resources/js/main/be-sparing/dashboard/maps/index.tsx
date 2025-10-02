@@ -1,6 +1,6 @@
 import {Loader} from "@googlemaps/js-api-loader";
 import {checkClassList, delay, elapsedDate, getMetaContent, removeElmClass} from "@/js/plugins/functions";
-import {Marker, MarkerClusterer} from "@googlemaps/markerclusterer";
+import {MarkerClusterer} from "@googlemaps/markerclusterer";
 import tzLookup from "tz-lookup"
 
 document.addEventListener('DOMContentLoaded', function () {

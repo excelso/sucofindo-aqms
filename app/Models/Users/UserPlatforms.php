@@ -10,6 +10,7 @@
 
     class UserPlatforms extends Model {
 
+        protected $connection = 'aqms-mysql';
         protected $table = 't_users_platforms';
         protected $fillable = [
             'user_id',
