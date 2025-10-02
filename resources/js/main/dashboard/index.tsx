@@ -359,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function () {
             date = urlParams.get('date')
         }
 
-        const response = await fetch(`/dashboard/detail-metric/${uid}?metric=${metric.type}&date=${date}`, {
+        const response = await fetch(`/aqms/dashboard/detail-metric/${uid}?metric=${metric.type}&date=${date}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -668,7 +668,7 @@ document.addEventListener('DOMContentLoaded', function () {
         function lookupData(options: any) {
             return new Promise(async (resolve, reject) => {
                 const {url: dataLinks, date, filterStatus} = options || {}
-                const dataUrl = dataLinks ? `${dataLinks}&date=${date}&status=${filterStatus}` : `/dashboard/platform-heartbeat/${uid}?date=${date}&status=${filterStatus}`
+                const dataUrl = dataLinks ? `${dataLinks}&date=${date}&status=${filterStatus}` : `/aqms/dashboard/platform-heartbeat/${uid}?date=${date}&status=${filterStatus}`
                 const response = await fetch(dataUrl, {
                     method: 'GET',
                     headers: {
@@ -793,7 +793,7 @@ document.addEventListener('DOMContentLoaded', function () {
         function lookupData(options: any) {
             return new Promise(async (resolve, reject) => {
                 const {url: dataLinks, date} = options || {}
-                const dataUrl = dataLinks ? `${dataLinks}&date=${date}` : `/dashboard/platform-report/${uid}?date=${date}`
+                const dataUrl = dataLinks ? `${dataLinks}&date=${date}` : `/aqms/dashboard/platform-report/${uid}?date=${date}`
                 const response = await fetch(dataUrl, {
                     method: 'GET',
                     headers: {
