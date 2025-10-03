@@ -7,7 +7,7 @@
         @if(request()->is('*/aqms*'))
             <ul class="metismenu" id="menu">
                 <li class="navItem">
-                    <a href="/" class="navLink {{Request::segment(2) == '' || Request::segment(2) == 'summary' ? 'navLinkActive' : ''}}">
+                    <a href="/" class="navLink {{Request::segment(3) == '' ? 'navLinkActive' : ''}}">
                         <div class="flex items-center justify-start">
                             <div class="navIcon">
                                 <i class="fas fa-house"></i>

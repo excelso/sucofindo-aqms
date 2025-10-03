@@ -27,7 +27,6 @@
                 <img src="{{ url('/images/bg-biogas.png') }}" alt="Biogas Illustration">
             </div>
         </div>
-
         <!-- Backdrop + Modal -->
         <div class="backdrop" id="backdrop" aria-hidden="true">
             <x-auth-session-status class="mb-4" :status="session('status')"/>
@@ -40,8 +39,10 @@
                     <div class="form-group">
                         <label> Username / Email </label>
                         <div class="form-group-control">
-                            <div class="form-control-prepend-icon">
-                                <i class="fa fa-envelope"></i>
+                            <div class="form-control-prepend">
+                                <div class="form-control-prepend-text">
+                                    <i class="fa fa-envelope"></i>
+                                </div>
                             </div>
                             <input type="text" name="email" class="form-control input email" placeholder="name@mail.com"/>
                         </div>
@@ -56,14 +57,18 @@
                     <div class="form-group">
                         <label> Password </label>
                         <div class="form-group-control">
-                            <div class="form-control-prepend-icon">
-                                <i class="fa fa-lock"></i>
+                            <div class="form-control-prepend">
+                                <div class="form-control-prepend-text">
+                                    <i class="fa fa-lock"></i>
+                                </div>
                             </div>
                             <input type="password" name="password" class="form-control passw" placeholder="··················"/>
-                            <div class="form-control-append-icon">
-                                <a class="show-pass btnLookPass">
-                                    <i class="fas fa-eye-slash"></i>
-                                </a>
+                            <div class="form-control-append">
+                                <div class="form-control-append-text">
+                                    <a class="show-pass btnLookPass">
+                                        <i class="fas fa-eye-slash"></i>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                         @if(count($errors) != 0 && isset($errors->get('password')[0]))
@@ -136,4 +141,4 @@
     </div>
 </x-guest-layout>
 
-{{--@vite(['resources/js/login/index.tsx'])--}}
+@vite(['resources/js/login/index.tsx'])
