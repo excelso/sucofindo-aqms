@@ -32,7 +32,6 @@ export default defineConfig({
                 'resources/js/main/be-sparing/dashboard/hasil-pengukuran/index.tsx',
                 'resources/js/main/be-sparing/dashboard/maps/index.tsx',
                 'resources/js/main/be-sparing/dashboard/maps/summary/index.tsx',
-                'resources/js/main/be-sparing/master/data-customer/index.tsx',
                 'resources/js/main/be-sparing/master/data-customer-lokasi/index.tsx',
                 'resources/js/main/be-sparing/master/data-site/index.tsx',
                 'resources/js/main/be-sparing/master/data-logger/index.tsx',
