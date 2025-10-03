@@ -1,11 +1,10 @@
 import Highcharts from 'highcharts'
-import HighchartsStock from "highcharts/highstock"
 import {
     getMetaContent, handleFixedTd, handleFixedTheadTh,
     hiddenElm,
     compareArrays,
     renderPagination,
-    showHiddenElmAndText, timeAgo, formatBytes, dateDiff, elapsedDate,
+    showHiddenElmAndText, timeAgo, formatBytes, elapsedDate,
 } from "@/js/plugins/functions";
 import {failureAlert} from "@/js/plugins/sweet-alert";
 import moment from "moment-timezone";
@@ -19,7 +18,6 @@ import {
 import {closeModalDialog, showModalDialog} from "@/js/plugins/modal";
 import {Tabs} from "flowbite";
 import type {TabItem, TabsOptions} from 'flowbite';
-import Select2Platform from "@/js/main/dashboard/maps/summary/select2-platform";
 
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -114,14 +112,14 @@ document.addEventListener('DOMContentLoaded', function () {
     //endregion
 
     //region Handle Panggil Fungsi
-    new Select2Platform(platformUid)
+    // new Select2Platform(platformUid)
     let tipeLogger = '1'
 
     $(platformUid).attr('disabled', 'disabled')
     $(platformUid).on('change', function () {
         tipeLogger = $(this).find(':selected').data('tipe-logger')
         tipeLoggerSelected.value = tipeLogger
-        window.history.replaceState({}, null, `/dashboard/maps/summary/detail/${$(this).val()}/${tipeLogger}`)
+        window.history.replaceState({}, null, `/sparing/dashboard/maps/summary/detail/${$(this).val()}/${tipeLogger}`)
         $(this).attr('disabled', 'disabled')
 
         handlePlatformInfo({
@@ -220,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function () {
         $(statusPowerPlatform).html(`<div class="skeleton-box w-[100px] !h-[20px] rounded-full"></div>`)
         $(parameterId).attr('disabled', 'disabled')
 
-        const response = await fetch('/dashboard/maps/summary/data-platform', {
+        const response = await fetch(`/sparing/dashboard/maps/summary/data-platform`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -331,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function () {
     //region Handle Data Card
     async function handleLastParameterData(options: OptionsLastParam) {
         const {platformUid, tipeLogger} = options
-        const response = await fetch('/dashboard/maps/summary/data-last-parameter', {
+        const response = await fetch(`/sparing/dashboard/maps/summary/data-last-parameter`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -556,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const footerDataTempTable = modalTemperature.querySelector('.footerDataTempTable')
 
             //region Handle Chart Temperature
-            const response = await fetch('/dashboard/maps/summary/data-charts', {
+            const response = await fetch(`/sparing/dashboard/maps/summary/data-charts`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -593,7 +591,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
 
-                HighchartsStock.chart({
+                // @ts-ignore
+                Highcharts.chart({
                     chart: {
                         renderTo: bodyTempChart,
                         type: 'column',
@@ -803,7 +802,7 @@ document.addEventListener('DOMContentLoaded', function () {
             //region Handle Card
             async function handleLastPowerStatus(options: OptionsLastParam) {
                 const {platformUid, timezone} = options
-                const response = await fetch('/dashboard/maps/summary/data-power-status', {
+                const response = await fetch(`/sparing/dashboard/maps/summary/data-power-status`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -850,7 +849,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             //region Handle Charts
             async function handlePowerStatusChart(type, title, bodyChart: HTMLElement) {
-                const response = await fetch('/dashboard/maps/summary/data-power-status-charts', {
+                const response = await fetch(`/sparing/dashboard/maps/summary/data-power-status-charts`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -975,7 +974,7 @@ document.addEventListener('DOMContentLoaded', function () {
             $(dataTidakMutu).html('<div class="skeleton-box w-[80px] !h-6 rounded"></div>')
         }
 
-        const response = await fetch('/dashboard/maps/summary/data-persentase', {
+        const response = await fetch(`/sparing/dashboard/maps/summary/data-persentase`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1043,7 +1042,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         $(bodyChart).html('<div class="skeleton-box w-[100%] !h-[400px] rounded"></div>')
 
-        const response = await fetch('/dashboard/maps/summary/data-charts', {
+        const response = await fetch(`/sparing/dashboard/maps/summary/data-charts`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1082,7 +1081,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
-            charts = HighchartsStock.chart({
+            charts = Highcharts.chart({
                 chart: {
                     renderTo: bodyChart,
                     type: 'column',
@@ -1169,7 +1168,7 @@ document.addEventListener('DOMContentLoaded', function () {
     //region Handle Chart Last Param
     async function handleChartsLastParam(options: OptionsChartLastParam) {
         const {platformUid, tipeLogger, parameterId} = options
-        const response = await fetch('/dashboard/maps/summary/data-charts-last-param', {
+        const response = await fetch(`/sparing/dashboard/maps/summary/data-charts-last-param`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1205,7 +1204,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const {platformUid, statusPlatform, tipeLogger, url, search} = options || {}
             const qSearch = search ? `?search=${search}&platformUid=${platformUid}&statusPlatform=${statusPlatform}&tipeLogger=${tipeLogger}` : `?platformUid=${platformUid}&statusPlatform=${statusPlatform}&tipeLogger=${tipeLogger}`
 
-            const response = await fetch(url || `${dataUrl.origin}/dashboard/maps/summary/data-table${qSearch}`, {
+            const response = await fetch(url || `/sparing/dashboard/maps/summary/data-table${qSearch}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1442,7 +1441,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnLihatDokumen) {
         btnLihatDokumen.addEventListener('click', function () {
             showModalDialog(modalDokumen, '<i class="fas fa-file mr-2"></i> Dokumen', async () => {
-                const response = await fetch('/dashboard/maps/summary/data-dokumen', {
+                const response = await fetch(`/sparing/dashboard/maps/summary/data-dokumen`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

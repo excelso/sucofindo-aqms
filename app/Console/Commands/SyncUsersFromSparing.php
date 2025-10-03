@@ -2,11 +2,14 @@
 
     namespace App\Console\Commands;
 
+    use App\Models\Users\User;
+    use Exception;
     use Illuminate\Console\Command;
     use App\Models\BeAqms\User as AqmsUser;
     use App\Models\BeSparing\User as SparingUser;
     use Illuminate\Support\Facades\DB;
     use Illuminate\Support\Str;
+    use Symfony\Component\Console\Command\Command as CommandAlias;
 
     class SyncUsersFromSparing extends Command {
         protected $signature = 'sync:users-from-sparing
@@ -22,10 +25,18 @@
             $onlyNew = $this->option('only-new');
 
             try {
+                // Cek apakah kolom id_sparing ada
+                if (!$this->checkIdSparingColumn()) {
+                    $this->error('Column id_sparing does not exist in AQMS t_users table!');
+                    $this->error('Please run: ALTER TABLE t_users ADD COLUMN id_sparing INT NULL AFTER id;');
+                    return CommandAlias::FAILURE;
+                }
+
                 DB::connection('aqms-mysql')->beginTransaction();
 
                 // Ambil semua user dari Sparing
                 $sparingUsers = SparingUser::whereNotNull('user_uniq_id')
+                    ->where('user_uniq_id', '!=', '')
                     ->where('deleted_at', null)
                     ->get();
 
@@ -34,6 +45,7 @@
                 $created = 0;
                 $updated = 0;
                 $skipped = 0;
+                $linkedByEmail = 0;
 
                 $progressBar = $this->output->createProgressBar($sparingUsers->count());
                 $progressBar->start();
@@ -41,7 +53,6 @@
                 foreach ($sparingUsers as $sparingUser) {
                     // Cek apakah user_uniq_id valid UUID
                     if (empty($sparingUser->user_uniq_id)) {
-
                         $this->warn("\nSkipping user {$sparingUser->id} - Invalid UUID: {$sparingUser->user_uniq_id}");
                         $skipped++;
                         $progressBar->advance();
@@ -52,6 +63,7 @@
                     $aqmsUser = AqmsUser::find($sparingUser->user_uniq_id);
 
                     if ($aqmsUser) {
+                        // UUID sama
                         if ($onlyNew) {
                             $skipped++;
                             $progressBar->advance();
@@ -60,18 +72,40 @@
 
                         if ($force) {
                             // Update existing user
-                            $aqmsUser->update($this->mapUserData($sparingUser));
+                            $aqmsUser->update(array_merge(
+                                ['id_sparing' => $sparingUser->id],
+                                $this->mapUserData($sparingUser)
+                            ));
                             $updated++;
                         } else {
+                            // Update hanya id_sparing tanpa mengubah data lain
+                            $aqmsUser->update(['id_sparing' => $sparingUser->id]);
                             $skipped++;
                         }
                     } else {
-                        // Create new user
-                        AqmsUser::create(array_merge(
-                            ['id' => $sparingUser->user_uniq_id],
-                            $this->mapUserData($sparingUser)
-                        ));
-                        $created++;
+                        // UUID tidak sama, cek berdasarkan email
+                        $existingUserByEmail = AqmsUser::where('email', $sparingUser->email)
+                            ->whereNotNull('email')
+                            ->first();
+
+                        if ($existingUserByEmail) {
+                            // Email sama tapi UUID berbeda - update id_sparing saja
+                            $existingUserByEmail->update([
+                                'id_sparing' => $sparingUser->id
+                            ]);
+                            $linkedByEmail++;
+                            $this->info("\nLinked user by email: {$sparingUser->email} (AQMS UUID: {$existingUserByEmail->id}) -> id_sparing: {$sparingUser->id}");
+                        } else {
+                            // User baru, belum ada di AQMS
+                            User::create(array_merge(
+                                [
+                                    'id' => $sparingUser->user_uniq_id,
+                                    'id_sparing' => $sparingUser->id,
+                                ],
+                                $this->mapUserData($sparingUser)
+                            ));
+                            $created++;
+                        }
                     }
 
                     $progressBar->advance();
@@ -88,25 +122,39 @@
                     [
                         ['Created', $created],
                         ['Updated', $updated],
+                        ['Linked by Email', $linkedByEmail],
                         ['Skipped', $skipped],
                         ['Total', $sparingUsers->count()],
                     ]
                 );
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 DB::connection('aqms-mysql')->rollBack();
                 $this->error('Error: ' . $e->getMessage());
                 $this->error($e->getTraceAsString());
-                return Command::FAILURE;
+                return CommandAlias::FAILURE;
             }
 
-            return Command::SUCCESS;
+            return CommandAlias::SUCCESS;
+        }
+
+        /**
+         * Cek apakah kolom id_sparing ada di tabel
+         */
+        private function checkIdSparingColumn(): bool {
+            try {
+                $columns = DB::connection('aqms-mysql')
+                    ->select("SHOW COLUMNS FROM t_users LIKE 'id_sparing'");
+                return !empty($columns);
+            } catch (Exception $e) {
+                return false;
+            }
         }
 
         /**
          * Map data dari Sparing ke format AQMS
          */
-        private function mapUserData($sparingUser) {
+        private function mapUserData($sparingUser): array {
             return [
                 'tipe_user' => $sparingUser->tipe_user,
                 'sid_code' => $sparingUser->sid_code,

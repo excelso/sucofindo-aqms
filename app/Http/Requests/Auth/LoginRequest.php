@@ -2,7 +2,9 @@
 
     namespace App\Http\Requests\Auth;
 
+    use App\Models\BeSparing\Karyawan\UserSite;
     use App\Models\Users\User;
+    use App\Models\Users\UserPlatforms;
     use Carbon\Carbon;
     use Illuminate\Auth\Events\Lockout;
     use Illuminate\Foundation\Http\FormRequest;
@@ -60,6 +62,13 @@
 
                 (new User)->where('email', $this->input('email'))->update([
                     'last_login' => Carbon::now()
+                ]);
+
+                $dataUserSite = UserSite::where('user_id', $user->id_sparing)->where('status_site', 1)->get();
+                $userPlatformIds = UserPlatforms::userPlatforms($user->id)->where('is_active', 1)->get();
+                session([
+                    'use_sparing' => $dataUserSite->count(),
+                    'use_aqms' => $userPlatformIds->count(),
                 ]);
 
                 if ($user == null) {

@@ -11,6 +11,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const url = new URL(window.location.href)
     const win: Window = window
 
+    type CheckboxElement = HTMLInputElement & {
+        indeterminate: boolean
+    }
+
     const closeModalForm: NodeListOf<HTMLElement> = document.querySelectorAll('.closeModalForm')
     const dataTables: NodeListOf<HTMLElement> = document.querySelectorAll('.data-tables')
     const btnCreate = document.querySelector('.btnCreate')
@@ -40,6 +44,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnSave: HTMLElement = modalForm.querySelector('.btnSave')
     const btnDelete: HTMLElement = modalForm.querySelector('.btnDelete')
     const siteMonitor: HTMLElement = modalForm.querySelector('#site-monitor')
+
+    const siteMonitorSparing: HTMLElement = modalForm.querySelector('#site-monitor-sparing')
+    const searchInput: HTMLInputElement = siteMonitorSparing.querySelector('.searchInput')
+    const checkAll: HTMLInputElement = siteMonitorSparing.querySelector('.checkAll')
+    const checkCustomers = Array.from(siteMonitorSparing.querySelectorAll('.checkCustomer')).filter(isCheckbox)
+    const checkSites = Array.from(siteMonitorSparing.querySelectorAll('.checkSite')).filter(isCheckbox)
+    const typeLoggers = Array.from(siteMonitorSparing.querySelectorAll('.typeLoggerIn, .typeLoggerRe')).filter(isCheckbox)
 
     const siteMonitorHandler = new SiteMonitorHandler(siteMonitor)
     const exTipeUser = new ExBox(tipeUser)
@@ -139,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function () {
     //region Handle SID Code
     async function handleSIDCode() {
         await waitLoader('Mohon Tunggu...', 'Mengambil data User', async () => {
-            const response = await fetch(`${url}/get-user-sso?sid_code=${sidCode.value}`, {
+            const response = await fetch(`${url.pathname}/get-user-sso?sid_code=${sidCode.value}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -245,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             denyButtonText: 'No'
                         }, async () => {
                             await waitLoader('Please wait...', 'Process of storing new User data.', async () => {
-                                const response = await fetch(`${url}/store`, {
+                                const response = await fetch(`${url.pathname}/store`, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -284,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (btnEdit) {
                 btnEdit.addEventListener('click', async function () {
                     await waitLoader('Please wait...', 'Loading User data', async () => {
-                        const response = await fetch(`${url}/detail/${userId}`, {
+                        const response = await fetch(`${url.pathname}/detail/${userId}`, {
                             method: 'GET',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -304,10 +315,12 @@ document.addEventListener('DOMContentLoaded', function () {
                                 email,
                                 user_level,
                                 status_user,
-                                user_platforms
+                                user_platforms,
+                                user_sites
                             } = data
 
                             showModalDialog(modalForm, `<i class="fas fa-user-edit mr-2"></i> Update User`, () => {
+                                handleCheckbox()
 
                                 //region Handle Fill Forms
                                 exTipeUser.setSelected(tipe_user)
@@ -327,6 +340,24 @@ document.addEventListener('DOMContentLoaded', function () {
                                 exRoleId.setSelected(user_level)
                                 exStatusUser.setSelected(status_user)
                                 siteMonitorHandler.setPermissions(user_platforms)
+
+                                let checkboxChecked = []
+
+                                user_sites.map((site: any) => {
+                                    const {customer_id, site_id, user_sites_tipe_logger} = site
+                                    checkboxChecked.push({
+                                        customer_id: customer_id,
+                                        site_id: site_id,
+                                        type_logger: user_sites_tipe_logger.map((item: any) => {
+                                            return {
+                                                id: item.id,
+                                                type_logger: item.tipe_logger
+                                            }
+                                        })
+                                    })
+                                })
+
+                                setCheckboxesFromData(checkboxChecked)
                                 //endregion
 
                                 //region Handle Save Update
@@ -342,6 +373,37 @@ document.addEventListener('DOMContentLoaded', function () {
                                             })
                                         })
 
+                                        const sites = []
+                                        checkSites.forEach(siteCheckbox => {
+                                            if (siteCheckbox.checked || siteCheckbox.indeterminate) {
+                                                const customerId = Number(siteCheckbox.dataset.parent)
+                                                const siteId = Number(siteCheckbox.dataset.id)
+
+                                                if (isNaN(customerId) || isNaN(siteId)) return
+
+                                                const internalLogger = siteMonitorSparing.querySelector<CheckboxElement>(`.typeLoggerIn[data-parent="${customerId}"][data-parent-site="${siteId}"]`)
+                                                const reEngineerLogger = siteMonitorSparing.querySelector<CheckboxElement>(`.typeLoggerRe[data-parent="${customerId}"][data-parent-site="${siteId}"]`)
+
+                                                console.log(internalLogger)
+                                                const typeLogger: [any, any] = [
+                                                    {
+                                                        id: internalLogger.getAttribute('data-id') ?? 'x',
+                                                        type_logger: internalLogger && internalLogger.checked ? 1 : 0
+                                                    },
+                                                    {
+                                                        id: reEngineerLogger.getAttribute('data-id') ?? 'x',
+                                                        type_logger: reEngineerLogger && reEngineerLogger.checked ? 2 : 0
+                                                    }
+                                                ]
+
+                                                sites.push({
+                                                    customer_id: customerId,
+                                                    site_id: siteId,
+                                                    type_logger: typeLogger
+                                                })
+                                            }
+                                        })
+
                                         confirmAlert({
                                             title: 'Confirm',
                                             html: 'Are you sure want to update User data?',
@@ -350,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                             denyButtonText: 'No'
                                         }, async () => {
                                             await waitLoader('Please wait...', 'Process updating of User data.', async () => {
-                                                const response = await fetch(`${url}/update/${userId}`, {
+                                                const response = await fetch(`${url.pathname}/update/${userId}`, {
                                                     method: 'PUT',
                                                     headers: {
                                                         'Content-Type': 'application/json',
@@ -367,7 +429,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                                         re_password: rePasswordUser.value,
                                                         role_id: roleId.value,
                                                         status_user: statusUser.value,
-                                                        site_permission: sitePermissionDatas
+                                                        site_permission: sitePermissionDatas,
+                                                        sites: sites
                                                     })
                                                 })
 
@@ -390,7 +453,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                             denyButtonText: 'No'
                                         }, async () => {
                                             await waitLoader('Please wait...', 'Process deleting of User data.', async () => {
-                                                const response = await fetch(`${url}/delete/${userId}`, {
+                                                const response = await fetch(`${url.pathname}/delete/${userId}`, {
                                                     method: 'DELETE',
                                                     headers: {
                                                         'Content-Type': 'application/json',
@@ -418,6 +481,215 @@ document.addEventListener('DOMContentLoaded', function () {
 
         })
     }
+    //endregion
+
+    //region Handle Check Box
+    searchInput.addEventListener('input', function() {
+        filterTable(this.value)
+    })
+
+    //region Handle Checkbox dari data Existing
+    function setCheckboxesFromData(data: any[]): void {
+        // Reset semua checkbox
+        checkCustomers.forEach(customer => customer.checked = false)
+        checkSites.forEach(site => site.checked = false)
+        typeLoggers.forEach(logger => logger.checked = false)
+
+        // console.log(data)
+        data.forEach((item: any) => {
+            const siteCheckbox = checkSites.find(site =>
+                    Number(site.dataset.parent) === item.customer_id &&
+                    Number(site.dataset.id) === item.site_id
+            )
+
+            if (siteCheckbox) {
+                siteCheckbox.checked = true
+
+                const internalLogger = siteMonitorSparing.querySelector<CheckboxElement>(
+                        `.typeLoggerIn[data-parent="${item.customer_id}"][data-parent-site="${item.site_id}"]`
+                )
+                const reEngineerLogger = siteMonitorSparing.querySelector<CheckboxElement>(
+                        `.typeLoggerRe[data-parent="${item.customer_id}"][data-parent-site="${item.site_id}"]`
+                )
+
+                if (internalLogger) {
+                    if (item.type_logger.length !== 0) {
+                        internalLogger.checked = item.type_logger[0].type_logger === 1
+                        internalLogger.setAttribute('data-id', item.type_logger[0].id)
+                    }
+                }
+
+                if (reEngineerLogger) {
+                    if (item.type_logger.length !== 0) {
+                        if (item.type_logger[1]) {
+                            reEngineerLogger.checked = item.type_logger[1].type_logger === 2
+                            reEngineerLogger.setAttribute('data-id', item.type_logger[1].id)
+                        }
+                    }
+                }
+            }
+        })
+
+        updateCheckboxStatus()
+    }
+    //endregion
+
+    //region Handle Checkbox
+    function handleCheckbox() {
+        checkAll.addEventListener('change', function () {
+            const isChecked = this.checked
+            checkCustomers.forEach(customer => {
+                customer.checked = isChecked
+                customer.indeterminate = false
+            })
+            checkSites.forEach(site => {
+                site.checked = isChecked
+                site.indeterminate = false
+            })
+            typeLoggers.forEach(logger => logger.checked = isChecked)
+        })
+
+        checkCustomers.forEach(customer => {
+            customer.addEventListener('change', function () {
+                const customerId = this.dataset.id
+                if (!customerId) return
+
+                const isChecked = this.checked
+                const relatedSites = Array.from(siteMonitorSparing.querySelectorAll<CheckboxElement>(`.checkSite[data-parent="${customerId}"]`)).filter(isCheckbox)
+                const relatedLoggers = Array.from(siteMonitorSparing.querySelectorAll<CheckboxElement>(`[data-parent="${customerId}"][data-type-logger="true"]`)).filter(isCheckbox)
+
+                relatedSites.forEach(site => {
+                    site.checked = isChecked
+                    site.indeterminate = false
+                })
+                relatedLoggers.forEach(logger => logger.checked = isChecked)
+
+                this.indeterminate = false
+                updateCheckboxStatus()
+            })
+        })
+
+        checkSites.forEach(site => {
+            site.addEventListener('change', function () {
+                const siteId = this.dataset.id
+                if (!siteId) return
+
+                const isChecked = this.checked
+                const relatedLoggers = Array.from(siteMonitorSparing.querySelectorAll<CheckboxElement>(`[data-parent-site="${siteId}"][data-type-logger="true"]`)).filter(isCheckbox)
+
+                relatedLoggers.forEach(logger => logger.checked = isChecked)
+
+                this.indeterminate = false
+                updateCheckboxStatus()
+            })
+        })
+
+        typeLoggers.forEach(logger => {
+            logger.addEventListener('change', updateCheckboxStatus)
+        })
+    }
+    //endregion
+
+    //region Filter Table
+    function isHTMLElement(element: Element): element is HTMLElement {
+        return element instanceof HTMLElement
+    }
+
+    function setRowVisibility(row: Element, isVisible: boolean) {
+        if (isHTMLElement(row)) {
+            row.style.display = isVisible ? '' : 'none'
+        }
+    }
+
+    function filterTable(searchTerm: string): void {
+        const rows = Array.from(siteMonitorSparing.querySelectorAll('tbody tr'))
+        const lowercaseSearchTerm = searchTerm.toLowerCase()
+        let visibleCustomers = new Set<string>()
+
+        rows.forEach((row: HTMLElement, index) => {
+            if (row.classList.contains('parent')) {
+                // Baris customer
+                const customerId = row.querySelector('.checkCustomer')?.getAttribute('data-id')
+                row.style.display = visibleCustomers.has(customerId || '') ? '' : 'none'
+            } else if (row.classList.contains('child') && row.querySelector('.checkSite')) {
+                // Baris site
+                const siteName = row.querySelector('td:nth-child(2) div')?.textContent?.toLowerCase()
+                const isVisible = siteName?.includes(lowercaseSearchTerm) || searchTerm === ''
+                const customerId = row.querySelector('.checkSite')?.getAttribute('data-parent')
+
+                if (isVisible && customerId) {
+                    visibleCustomers.add(customerId)
+                }
+
+                setRowVisibility(row, isVisible)
+
+                // Atur visibility untuk dua baris berikutnya (Internal dan Re-Engineer)
+                if (rows[index + 1]) setRowVisibility(rows[index + 1], isVisible)
+                if (rows[index + 2]) setRowVisibility(rows[index + 2], isVisible)
+            }
+        })
+
+        // Tampilkan kembali baris customer yang memiliki site yang cocok
+        rows.forEach((row: HTMLElement) => {
+            if (row.classList.contains('parent')) {
+                const customerId = row.querySelector('.checkCustomer')?.getAttribute('data-id')
+                row.style.display = visibleCustomers.has(customerId || '') ? '' : 'none'
+            }
+        })
+
+        updateCheckboxStatus()
+    }
+    //endregion
+
+    //region Update Checkbox Check Status
+    function updateCheckboxStatus() {
+        checkCustomers.forEach(customerCheckbox => {
+            const customerId = customerCheckbox.dataset.id
+            if (!customerId) return
+
+            const relatedSites = Array.from(siteMonitorSparing.querySelectorAll<CheckboxElement>(`.checkSite[data-parent="${customerId}"]`)).filter(isCheckbox)
+            const relatedLoggers = Array.from(siteMonitorSparing.querySelectorAll<CheckboxElement>(`[data-parent="${customerId}"][data-type-logger="true"]`)).filter(isCheckbox)
+
+            const checkedSites = relatedSites.filter(site => site.checked)
+            const checkedLoggers = relatedLoggers.filter(logger => logger.checked)
+
+            if (checkedSites.length === 0 && checkedLoggers.length === 0) {
+                customerCheckbox.checked = false
+                customerCheckbox.indeterminate = false
+            } else if (checkedSites.length === relatedSites.length && checkedLoggers.length === relatedLoggers.length) {
+                customerCheckbox.checked = true
+                customerCheckbox.indeterminate = false
+            } else {
+                customerCheckbox.checked = false
+                customerCheckbox.indeterminate = true
+            }
+        })
+
+        checkSites.forEach(siteCheckbox => {
+            const siteId = siteCheckbox.dataset.id
+            if (!siteId) return
+
+            const relatedLoggers = Array.from(siteMonitorSparing.querySelectorAll<CheckboxElement>(`[data-parent-site="${siteId}"][data-type-logger="true"]`)).filter(isCheckbox)
+
+            const allLoggersChecked = relatedLoggers.every(logger => logger.checked)
+            const someLoggersChecked = relatedLoggers.some(logger => logger.checked)
+
+            siteCheckbox.checked = allLoggersChecked
+            siteCheckbox.indeterminate = !allLoggersChecked && someLoggersChecked
+        })
+
+        const allCustomersChecked = checkCustomers.every(customer => customer.checked)
+        const someCustomersChecked = checkCustomers.some(customer => customer.checked || customer.indeterminate)
+
+        checkAll.checked = allCustomersChecked
+        checkAll.indeterminate = !allCustomersChecked && someCustomersChecked
+    }
+
+    function isCheckbox(element: Element): element is CheckboxElement {
+        return element instanceof HTMLInputElement && element.type === 'checkbox'
+    }
+    //endregion
+
     //endregion
 
     //region Handle Response

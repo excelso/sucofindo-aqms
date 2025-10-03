@@ -226,10 +226,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         footerWindow = `
                             <div class="p-0">
                                 <div class="flex items-center justify-between">
-                                    <a class="p-4 flex-1 text-center hover:bg-gray-300 cursor-pointer font-bold border-r" href="/dashboard/maps/summary/detail/${uid}/1">
+                                    <a class="p-4 flex-1 text-center hover:bg-gray-300 cursor-pointer font-bold border-r" href="/sparing/dashboard/maps/summary/detail/${uid}/1">
                                         Internal
                                     </a>
-                                    <a class="p-4 flex-1 text-center hover:bg-gray-300 cursor-pointer font-bold" href="/dashboard/maps/summary/detail/${uid}/2">
+                                    <a class="p-4 flex-1 text-center hover:bg-gray-300 cursor-pointer font-bold" href="/sparing/dashboard/maps/summary/detail/${uid}/2">
                                         KLHK
                                     </a>
                                 </div>

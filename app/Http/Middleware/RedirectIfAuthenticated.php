@@ -7,6 +7,8 @@
     use Illuminate\Http\Request;
     use Illuminate\Http\Response;
     use Illuminate\Support\Facades\Auth;
+    use Psr\Container\ContainerExceptionInterface;
+    use Psr\Container\NotFoundExceptionInterface;
 
     class RedirectIfAuthenticated {
         /**
@@ -28,7 +30,15 @@
                         }
                     }
 
-                    return redirect()->intended(route('aqms.dashboard'));
+                    try {
+                        if (session()->get('use_aqms') != 0) {
+                            return redirect()->intended(route('aqms.dashboard'));
+                        } else {
+                            return redirect()->intended(route('sparing.dashboard.hasil-pengukuran'));
+                        }
+                    } catch (NotFoundExceptionInterface|ContainerExceptionInterface $e) {
+                        return redirect()->intended(route('aqms.dashboard'));
+                    }
                 }
             }
 

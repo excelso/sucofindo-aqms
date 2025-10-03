@@ -975,3 +975,22 @@ export function elapsedDate(time: number, timezone?: string) {
     return label
 
 }
+
+export function elapsedHours(unixTimestamp: number, timezone?: string): string {
+    // Waktu sekarang dengan pertimbangan timezone jika ada
+    const now = timezone ? moment().tz(timezone) : moment();
+
+    // Konversi UNIX timestamp ke moment dengan pertimbangan timezone
+    const lastOnline = timezone
+            ? moment.unix(unixTimestamp).tz(timezone)
+            : moment.unix(unixTimestamp);
+
+    // Hitung selisih dalam jam
+    const hoursDiff = now.diff(lastOnline, 'hours');
+
+    // Tentukan apakah waktu sudah berlalu atau akan datang
+    const token = hoursDiff >= 0 ? 'yang lalu' : 'dari sekarang';
+
+    // Ambil nilai absolut untuk menghindari angka negatif
+    return `${Math.abs(hoursDiff)} jam ${token}`;
+}

@@ -1,5 +1,6 @@
 <?php
 
+    use App\Http\Controllers\Auth\AuthenticatedSessionController;
     use App\Http\Controllers\BeAqms\ControllerNotification;
     use App\Http\Controllers\BeAqms\Dashboard\ControllerDashboard;
     use App\Http\Controllers\BeAqms\Dashboard\PlatformAirQualityController;
@@ -8,8 +9,11 @@
     use App\Http\Controllers\BeAqms\Master\ControllerSitesLocation;
     use App\Http\Controllers\BeAqms\Master\ControllerUsers;
     use App\Http\Controllers\BeAqms\Reports\ControllerReportLogParameter;
+    use App\Http\Controllers\BeEnviro\BeEnviroControllerDashboard;
     use App\Http\Controllers\BeSparing\BeSparingControllerNotifikasi;
+    use App\Http\Controllers\BeSparing\Dashboard\BeSparingControllerHasilPengukuran;
     use App\Http\Controllers\BeSparing\Dashboard\BeSparingControllerMaps;
+    use App\Http\Controllers\BeSparing\Dashboard\BeSparingControllerSummary;
     use App\Http\Controllers\BeSparing\Master\BeSparingControllerCustomer;
     use App\Http\Controllers\BeSparing\Master\BeSparingControllerCustomerLokasi;
     use App\Http\Controllers\BeSparing\Master\BeSparingControllerLogger;
@@ -60,20 +64,49 @@
     //endregion
 
     Route::redirect('/', '/login')->name('home');
+    // Route::get('/', [AuthenticatedSessionController::class, 'create'])->name('landing-page');
+
     Route::middleware(['auth', 'verified', 'otp.verified'])->group(function () {
         Route::group([
             'prefix' => LaravelLocalization::setLocale(),
             'middleware' => ['localeSessionRedirect', 'localizationRedirect', 'localeViewPath']
         ], function () {
 
+            Route::prefix('enviro')->group(function () {
+                Route::get('/', [BeEnviroControllerDashboard::class, 'index'])->name('enviro.dashboard');
+            });
+
             //region Sparing Routing
             Route::prefix('sparing')->group(function () {
                 Route::get('/', [BeSparingControllerMaps::class, 'index'])->name('sparing.dashboard');
                 Route::prefix('dashboard')->group(function () {
+                    Route::prefix('hasil-pengukuran')->group(function () {
+                        Route::get('/', [BeSparingControllerHasilPengukuran::class, 'index'])->name('sparing.dashboard.hasil-pengukuran');
+                        Route::get('data-info-platform', [BeSparingControllerHasilPengukuran::class, 'handleInfoPlatform']);
+                        Route::get('data-platforms', [BeSparingControllerHasilPengukuran::class, 'handleDataPlatforms']);
+                        Route::post('data-charts', [BeSparingControllerHasilPengukuran::class, 'getPeriodicParameterChart']);
+                        Route::post('data-charts-last-param', [BeSparingControllerHasilPengukuran::class, 'getLastPeriodicParameterChart']);
+                        Route::get('data-detail-platform', [BeSparingControllerHasilPengukuran::class, 'handleDetailPlatform']);
+                        Route::get('data-lost-platform', [BeSparingControllerHasilPengukuran::class, 'handleLostPlatform']);
+                    });
+
                     Route::prefix('maps')->group(function () {
                         Route::get('/', [BeSparingControllerMaps::class, 'index'])->name('sparing.dashboard.maps');
                         Route::post('data-platform', [BeSparingControllerMaps::class, 'handleDataPlatform']);
                         Route::post('data-platform-marker', [BeSparingControllerMaps::class, 'handleDataPlatformMarker']);
+
+                        Route::prefix('summary')->group(function () {
+                            Route::get('detail/{uid}/{tipeLogger}', [BeSparingControllerSummary::class, 'index']);
+                            Route::post('data-platform', [BeSparingControllerSummary::class, 'handleDataPlatform']);
+                            Route::post('data-last-parameter', [BeSparingControllerSummary::class, 'handleDataLastParameter']);
+                            Route::post('data-persentase', [BeSparingControllerSummary::class, 'handleDataPersentase']);
+                            Route::post('data-charts', [BeSparingControllerSummary::class, 'handleDataCharts']);
+                            Route::post('data-charts-last-param', [BeSparingControllerSummary::class, 'handleDataChartsLastParam']);
+                            Route::post('data-power-status', [BeSparingControllerSummary::class, 'handleDataChartPower']);
+                            Route::post('data-power-status-charts', [BeSparingControllerSummary::class, 'handleDataChartPowerStatus']);
+                            Route::get('data-table', [BeSparingControllerSummary::class, 'handleDataTable']);
+                            Route::post('data-dokumen', [BeSparingControllerSummary::class, 'handleDataDokumen']);
+                        });
                     });
                 });
 
@@ -131,6 +164,15 @@
                     Route::prefix('platform')->group(function () {
                         Route::get('data-platform-by-industri', [BeSparingControllerPlatform::class, 'handlePlatformParamByIndustri']);
                     });
+
+                    Route::group(['prefix' => 'users'], function () {
+                        Route::get('/', [ControllerUsers::class, 'index'])->name('sparing.master.users');
+                        Route::get('get-user-sso', [ControllerUsers::class, 'getUserSSO']);
+                        Route::post('store', [ControllerUsers::class, 'store']);
+                        Route::get('detail/{userId}', [ControllerUsers::class, 'handleDetailUser']);
+                        Route::put('update/{userId}', [ControllerUsers::class, 'update']);
+                        Route::delete('delete/{userId}', [ControllerUsers::class, 'delete']);
+                    });
                 });
 
                 Route::prefix('notifikasi')->group(function () {
@@ -140,6 +182,13 @@
                     Route::post('read-notif', [BeSparingControllerNotifikasi::class, 'readNotifikasi']);
                     Route::prefix('firebase')->group(function () {
                         Route::post('save-token', [BeSparingControllerNotifikasi::class, 'saveFirebaseRegToken']);
+                    });
+                });
+
+                Route::group(['prefix' => 'settings'], function () {
+                    Route::group(['prefix' => 'change-password'], function () {
+                        Route::get('/', [ControllerChangePassword::class, 'index'])->name('sparing.settings.change-password');
+                        Route::post('update', [ControllerChangePassword::class, 'updatePassword']);
                     });
                 });
             });
@@ -215,12 +264,10 @@
                 });
 
                 Route::group(['prefix' => 'settings'], function () {
-                    //region Change Password
                     Route::group(['prefix' => 'change-password'], function () {
                         Route::get('/', [ControllerChangePassword::class, 'index'])->name('settings.change-password');
                         Route::post('update', [ControllerChangePassword::class, 'updatePassword']);
                     });
-                    //endregion
                 });
 
                 Route::prefix('onvif')->group(function () {
@@ -264,6 +311,7 @@
                 });
             });
             //endregion
+
         });
 
     });

@@ -15,7 +15,7 @@
     class User extends Authenticatable {
         use HasFactory, Notifiable;
 
-        // protected $connection = 'aqms-mysql';
+        protected $connection = 'aqms-mysql';
         protected $keyType = 'string';
         public $incrementing = false;
 
@@ -36,6 +36,7 @@
             'init_master',
             'is_showing',
             'deleted_at',
+            'id',
         ];
 
         protected $hidden = [

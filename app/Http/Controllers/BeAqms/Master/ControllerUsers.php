@@ -5,6 +5,10 @@
     use App\Http\Controllers\Controller;
     use App\Models\BeAqms\Master\Companies;
     use App\Models\BeAqms\Master\ExternalEmployee;
+    use App\Models\BeSparing\Karyawan\UserSite;
+    use App\Models\BeSparing\Karyawan\UserSiteTipeLogger;
+    use App\Models\BeSparing\Master\Customer;
+    use App\Models\BeSparing\Master\Site;
     use App\Models\Users\User;
     use App\Models\Users\UserPlatforms;
     use Carbon\Carbon;
@@ -30,9 +34,14 @@
 
             $dataCompanies = Companies::all();
             $dataUsers = User::dataUsers();
+
+            $dataCustomer = Customer::get();
+            $dataTotalSite = Site::get()->count();
             return view($this->viewPath . '/index', [
                 'items' => $dataUsers->paginate(20)->onEachSide(1),
                 'companies' => $dataCompanies,
+                'customers' => $dataCustomer,
+                'totalSite' => $dataTotalSite,
             ]);
         }
 
@@ -173,7 +182,28 @@
             try {
 
                 $detailUser = User::dataUserById($userId)
-                    ->with('userPlatforms:user_id,platform_id,type_logger,is_active')->first();
+                    ->with([
+                        'userPlatforms:user_id,platform_id,type_logger,is_active',
+                        'userSites' => function ($q) {
+                            $q->where('status_site', 1);
+                        }, 'userSites.userSitesTipeLogger'
+                    ])->first();
+
+                // if ($detailUser && $detailUser->userSites) {
+                //     $detailUser->user_sites = $detailUser->userSites->flatMap(function ($userSite) {
+                //         return $userSite->userSitesTipeLogger->map(function ($tipeLogger) use ($userSite) {
+                //             return [
+                //                 'user_id' => $userSite->user_id,
+                //                 'platform_id' => $userSite->site_id,
+                //                 'type_logger' => $tipeLogger->tipe_logger,
+                //                 'is_active' => $userSite->status_site,
+                //             ];
+                //         });
+                //     })->values();
+                //
+                //     // Hapus relation userSites yang nested
+                //     unset($detailUser->userSites);
+                // }
 
                 return response()->json([
                     'message' => 'Load Success!',
@@ -254,14 +284,14 @@
 
             try {
 
-                if ($request->input('role_id') != 'super_admin') {
-                    if (count($request->input('site_permission')) == 0) {
-                        return response()->json([
-                            'message' => 'No Monitoring Site configuration selected',
-                            'responseTime' => now()
-                        ], 400);
-                    }
-                }
+                // if ($request->input('role_id') != 'super_admin') {
+                //     if (count($request->input('site_permission')) == 0) {
+                //         return response()->json([
+                //             'message' => 'No Monitoring Site configuration selected',
+                //             'responseTime' => now()
+                //         ], 400);
+                //     }
+                // }
 
                 DB::transaction(function () use ($request, $userId) {
                     User::where('id', $userId)->update([
@@ -320,7 +350,74 @@
                             'is_active' => 1
                         ]);
                     }
+
+                    $sparingUserId = User::select('id_sparing')->where('id', $userId)->first();
+
+                    $userSitesExist = [];
+                    $dataSites = json_decode(json_encode($request->input('sites')), false);
+                    foreach ($dataSites as $item) {
+                        $userSitesExist[] = $item->site_id;
+
+                        $userSites = UserSite::where('user_id', $sparingUserId->id_sparing)
+                            ->where('customer_id', $item->customer_id)
+                            ->where('site_id', $item->site_id)
+                            ->get()->first();
+
+                        if (isset($userSites)) {
+                            (new UserSite)->where('user_id', $sparingUserId->id_sparing)
+                                ->where('customer_id', $item->customer_id)
+                                ->where('site_id', $item->site_id)
+                                ->update([
+                                    'status_site' => 1,
+                                ]);
+
+                            foreach ($item->type_logger as $tipeLogger) {
+                                UserSiteTipeLogger::updateOrCreate([
+                                    'id' => $tipeLogger->id,
+                                    'users_sites_id' => $userSites->id,
+                                ], [
+                                    'users_sites_id' => $userSites->id,
+                                    'tipe_logger' => $tipeLogger->type_logger
+                                ]);
+                            }
+                        } else {
+                            $userSite = (new UserSite)->create([
+                                'user_id' => $sparingUserId->id_sparing,
+                                'customer_id' => $item->customer_id,
+                                'site_id' => $item->site_id,
+                                'status_site' => 1,
+                            ]);
+
+                            foreach ($item->type_logger as $tipeLogger) {
+                                UserSiteTipeLogger::create([
+                                    'users_sites_id' => $userSite->id,
+                                    'tipe_logger' => $tipeLogger->type_logger
+                                ]);
+                            }
+                        }
+                    }
+
+                    $userSites = UserSite::where('user_id', $sparingUserId->id_sparing)->where('status_site', 1)->get();
+                    foreach ($userSites as $item) {
+                        if (!in_array($item->site_id, $userSitesExist)) {
+                            (new UserSite)->where('id', $item->id)->update([
+                                'user_id' => $sparingUserId->id_sparing,
+                                'customer_id' => $item['customer_id'],
+                                'site_id' => $item['site_id'],
+                                'status_site' => 0,
+                            ]);
+                        }
+                    }
                 });
+
+                $user = User::where('id', $userId)->first();
+
+                $dataUserSite = UserSite::where('user_id', $user->id_sparing)->where('status_site', 1)->get();
+                $userPlatformIds = UserPlatforms::userPlatforms($user->id)->where('is_active', 1)->get();
+                session([
+                    'use_sparing' => $dataUserSite->count(),
+                    'use_aqms' => $userPlatformIds->count(),
+                ]);
 
                 return response()->json([
                     'message' => 'Update User data saved successfully',

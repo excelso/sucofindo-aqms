@@ -3,6 +3,7 @@
     namespace App\Models\Users;
 
     use App\Models\BeAqms\Master\Companies;
+    use App\Models\BeSparing\Karyawan\UserSite;
     use Illuminate\Database\Eloquent\Builder;
     use Illuminate\Database\Eloquent\Factories\HasFactory;
     use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,6 +35,8 @@
             'init_master',
             'is_showing',
             'deleted_at',
+            'id',
+            'id_sparing',
         ];
 
         protected $hidden = [
@@ -65,6 +68,10 @@
 
         public function userPlatforms(): User|Builder|HasMany {
             return $this->hasMany(UserPlatforms::class, 'user_id', 'id');
+        }
+
+        public function userSites(): User|Builder|HasMany {
+            return $this->hasMany(UserSite::class, 'user_id', 'id_sparing');
         }
 
         public function scopeDataUsers(Builder $builder, $options = []): void {

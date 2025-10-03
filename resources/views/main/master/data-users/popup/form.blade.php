@@ -1,5 +1,5 @@
 <div class="modal hidden modalForm">
-    <div class="modal-main xl:!w-[40%] lg:!w-[40%] sm:!w-[90%]">
+    <div class="modal-main !w-[calc(1440px-450px)] xl:!w-[40%] lg:!w-[40%] sm:!w-[90%]">
         <div class="modal-head">
             <div class="flex justify-between items-center">
                 <div class="modal-title">
@@ -22,7 +22,12 @@
                     </li>
                     <li class="mr-2">
                         <button class="inline-block p-4" data-tabs-target="#site-monitor">
-                            <i class="fas fa-desktop mr-2"></i> Site Monitoring
+                            <i class="fas fa-desktop mr-2"></i> Site Monitoring (AQMS)
+                        </button>
+                    </li>
+                    <li class="mr-2">
+                        <button class="inline-block p-4" data-tabs-target="#site-monitor-sparing">
+                            <i class="fas fa-desktop mr-2"></i> Site Monitoring (SPARING)
                         </button>
                     </li>
                 </ul>
@@ -232,6 +237,87 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+                <div class="hidden rounded-lg" id="site-monitor-sparing">
+                    <div class="mt-5 overflow-y-auto border-b">
+                        <div class="flex p-5">
+                            <div class="flex items-center">
+                                <div class="form-group !mb-0">
+                                    <div class="form-group-control !mt-0">
+                                        <input type="text" class="form-control searchInput" placeholder="Search...">
+                                    </div>
+                                </div>
+                                <div><i class="fas fa-search ml-2"></i></div>
+                            </div>
+                        </div>
+
+                        <table class="table table-fixed tableSite">
+                            <thead>
+                                <tr class="sticky-header !top-[120px]">
+                                    <th class="text-center w-[30px] !border-l-[1px]">No</th>
+                                    <th class="text-left w-[150px]">Nama Perusahaan / Site</th>
+                                    <th class="text-center w-[70px] !border-r-[1px]">
+                                        <label>
+                                            <input type="checkbox" class="checkAll">
+                                            <input type="hidden" class="totalSite" value="{{ $totalSite }}">
+                                        </label>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php($no = 0)
+                                @foreach($customers as $item)
+                                    @php($no++)
+
+                                    <tr class="parent">
+                                        <td class="text-center !border-l-[1px]">{{ $no }}</td>
+                                        <td class="text-left">{{ $item->nama_perusahaan }}</td>
+                                        <td class="text-center !border-r-[1px]">
+                                            <label>
+                                                <input type="checkbox" class="checkCustomer" data-id="{{ $item->id }}" value="{{ $item->id }}">
+                                            </label>
+                                        </td>
+                                    </tr>
+
+                                    @foreach($item->site as $site)
+                                        <tr class="child">
+                                            <td class="text-center !border-l-[1px]"></td>
+                                            <td class="text-left">
+                                                <div class="ml-7">{{ $site->nama_site }}</div>
+                                            </td>
+                                            <td class="text-center !border-r-[1px]">
+                                                <label>
+                                                    <input type="checkbox" class="checkSite" data-parent="{{ $site->customer_id }}" data-id="{{ $site->id }}" value="{{ $site->id }}">
+                                                </label>
+                                            </td>
+                                        </tr>
+                                        <tr class="child">
+                                            <td class="text-center !border-l-[1px]"></td>
+                                            <td class="text-left">
+                                                <div class="ml-12">Internal</div>
+                                            </td>
+                                            <td class="text-center !border-r-[1px]">
+                                                <label>
+                                                    <input type="checkbox" class="typeLoggerIn" data-type-logger="true" data-parent="{{ $site->customer_id }}" data-parent-site="{{ $site->id }}" value="1">
+                                                </label>
+                                            </td>
+                                        </tr>
+                                        <tr class="child">
+                                            <td class="text-center !border-l-[1px]"></td>
+                                            <td class="text-left">
+                                                <div class="ml-12">Re - Engineer</div>
+                                            </td>
+                                            <td class="text-center !border-r-[1px]">
+                                                <label>
+                                                    <input type="checkbox" class="typeLoggerRe" data-type-logger="true" data-parent="{{ $site->customer_id }}" data-parent-site="{{ $site->id }}" value="2">
+                                                </label>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
