@@ -10,6 +10,7 @@ export default defineConfig({
             input: [
                 'resources/css/app.scss',
                 'resources/js/app.tsx',
+                'resources/css/landing-page.css',
                 'resources/css/ex-autocomplete.scss',
                 'resources/css/experiment-expicker.scss',
                 'resources/css/experiment-exbox.scss',
