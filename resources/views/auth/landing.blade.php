@@ -20,7 +20,7 @@
             </div>
             <div class="text-box">
                 <h1 class="title">Better Energy, Brighter Future</h1>
-                <p class="subtitle">Enabling a greener future through pioneering sustainable biogas solutions.</p>
+                <p class="subtitle">Enabling a brighter future through becoming an exponential energy transformer.</p>
                 <button class="btn-login" id="loginBtn">Login</button>
             </div>
             <div class="image-box">
