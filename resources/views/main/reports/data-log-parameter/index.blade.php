@@ -74,18 +74,23 @@
                                     @foreach($items as $item)
 
                                         @php($tsp = $item->max_tsp ?? $item->tsp)
-                                        @if($tsp > $item->limit->tsp_max_buffer && $tsp < $item->limit->tsp_max)
-                                            @php($status = 'Moderate')
-                                            @php($statusColor = 'bg-orange-200')
-                                            @php($statusEmo = mb_convert_encoding('&#x1F61E;', 'UTF-8', 'HTML-ENTITIES'))
-                                        @elseif($tsp > $item->limit->tsp_max)
-                                            @php($status = 'Not Good')
-                                            @php($statusColor = 'bg-red-300')
-                                            @php($statusEmo = mb_convert_encoding('&#x1F922;', 'UTF-8', 'HTML-ENTITIES'))
-                                        @else
-                                            @php($status = 'Good')
-                                            @php($statusColor = 'bg-green-200')
-                                            @php($statusEmo = mb_convert_encoding('&#x1F601;', 'UTF-8', 'HTML-ENTITIES'))
+                                        @php($status = 'Good')
+                                        @php($statusColor = 'bg-green-200')
+                                        @php($statusEmo = mb_convert_encoding('&#x1F601;', 'UTF-8', 'HTML-ENTITIES'))
+                                        @if($item->limit)
+                                            @if($tsp > $item->limit->tsp_max_buffer && $tsp < $item->limit->tsp_max)
+                                                @php($status = 'Moderate')
+                                                @php($statusColor = 'bg-orange-200')
+                                                @php($statusEmo = mb_convert_encoding('&#x1F61E;', 'UTF-8', 'HTML-ENTITIES'))
+                                            @elseif($tsp > $item->limit->tsp_max)
+                                                @php($status = 'Not Good')
+                                                @php($statusColor = 'bg-red-300')
+                                                @php($statusEmo = mb_convert_encoding('&#x1F922;', 'UTF-8', 'HTML-ENTITIES'))
+                                            @else
+                                                @php($status = 'Good')
+                                                @php($statusColor = 'bg-green-200')
+                                                @php($statusEmo = mb_convert_encoding('&#x1F601;', 'UTF-8', 'HTML-ENTITIES'))
+                                            @endif
                                         @endif
 
                                         <tr class="data-tables" data-id="{{ $item->id }}" data-uid="{{ $item->uid ?? '' }}">
