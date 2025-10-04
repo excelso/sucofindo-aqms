@@ -21,18 +21,12 @@
         public function getPlatformsList(Request $request) {
             try {
                 // User platform filtering
-                $userPlatformId = null;
-                $isTrial = 0;
-
-                if ($request->user()->user_level != 'super_admin') {
-                    // $isTrial = 0;
-                    $userPlatformIds = UserPlatforms::userPlatforms($request->user()->id)
-                        ->pluck('platform_id');
-                    $userPlatformId = $userPlatformIds->toArray();
-                }
+                $userPlatformIds = UserPlatforms::userPlatforms($request->user()->id)
+                    ->pluck('platform_id');
+                $userPlatformId = $userPlatformIds->toArray();
 
                 // Get platforms list
-                $platforms = Platforms::dataPlatformByUserPlatform($userPlatformId, $isTrial)
+                $platforms = Platforms::dataPlatformByUserPlatform($userPlatformId)
                     ->with('sitesLocation')->get();
 
                 $platformTemp = [];

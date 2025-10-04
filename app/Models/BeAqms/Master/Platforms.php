@@ -60,7 +60,7 @@
                 }
             }
 
-            $builder->where('is_trial', '=', $isTrial);
+            // $builder->where('is_trial', '=', $isTrial);
             $builder->orderBy('uid', 'ASC');
         }
 

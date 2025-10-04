@@ -27,21 +27,17 @@
             $dataCompanies = Companies::all();
 
             $userPlatformId = null;
-            $isTrial = 0;
-            if (request()->user()->user_level != 'super_admin') {
-                // $isTrial = 1;
-                $userPlatformIds = UserPlatforms::userPlatforms(request()->user()->id)->get();
-                foreach ($userPlatformIds as $platformId) {
-                    $userPlatformId[] = $platformId->platform_id;
-                }
+            $userPlatformIds = UserPlatforms::userPlatforms(request()->user()->id)->get();
+            foreach ($userPlatformIds as $platformId) {
+                $userPlatformId[] = $platformId->platform_id;
             }
 
-            $dataAllPlatform = Platforms::dataPlatformByUserPlatform($userPlatformId, $isTrial)
+            $dataAllPlatform = Platforms::dataPlatformByUserPlatform($userPlatformId)
                 ->with('sites')->get();
 
             $dataAqiCat = AqiCategories::all();
 
-            $dataPlatform = Platforms::dataPlatformByUserPlatform($userPlatformId, $isTrial)->first();
+            $dataPlatform = Platforms::dataPlatformByUserPlatform($userPlatformId)->first();
             $minDate = Carbon::now()->timezone($dataPlatform->timezone)->format('Y-m-d') . ' 00:00';
             $maxDate = Carbon::now()->timezone($dataPlatform->timezone)->format('Y-m-d') . ' 23:59';
             if ($request->input('startDate')) {
