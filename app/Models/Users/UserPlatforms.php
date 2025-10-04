@@ -24,6 +24,7 @@
                 't_users_platforms.platform_id'
             ]);
             $builder->where('user_id', $user_id);
+            $builder->where('is_active', '=', 1);
             $builder->groupBy(['platform_id']);
         }
 
