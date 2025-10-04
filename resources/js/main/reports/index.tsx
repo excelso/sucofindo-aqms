@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     })
 
                     const win: Window = window
-                    win.location = `${url}?${text_result.join('&')}`
+                    win.location = `${url.pathname}?${text_result.join('&')}`
                 })
             })
         })
