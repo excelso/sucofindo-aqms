@@ -33,7 +33,9 @@
         public function index(): View {
 
             $dataCompanies = Companies::all();
-            $dataUsers = User::dataUsers();
+            $dataUsers = User::dataUsers([
+                'search' => request()->input(),
+            ]);
 
             $dataCustomer = Customer::get();
             $dataTotalSite = Site::get()->count();
