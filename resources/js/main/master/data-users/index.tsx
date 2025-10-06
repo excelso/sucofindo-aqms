@@ -52,6 +52,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const checkSites = Array.from(siteMonitorSparing.querySelectorAll('.checkSite')).filter(isCheckbox)
     const typeLoggers = Array.from(siteMonitorSparing.querySelectorAll('.typeLoggerIn, .typeLoggerRe')).filter(isCheckbox)
 
+    const btnPencarian: Element = document.querySelector('.btnPencarian')
+    const modalPencarian: HTMLInputElement = document.querySelector('.modalPencarian')
+
     const siteMonitorHandler = new SiteMonitorHandler(siteMonitor)
     const exTipeUser = new ExBox(tipeUser)
     const exRoleId = new ExBox(roleId)
@@ -145,6 +148,40 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         })
     })
+    //endregion
+
+    //region Handle Pencarian
+    if (btnPencarian !== null) {
+        btnPencarian.addEventListener('click', function () {
+            showModalDialog(modalPencarian, null, () => {
+                const btnCari = document.querySelector<HTMLElement>('.btnCari')
+                const btnResetPencarian = document.querySelector<HTMLElement>('.btnResetPencarian')
+
+                modalPencarian.addEventListener('keypress', function (ev) {
+                    if (ev.key === 'Enter') {
+                        $(btnCari).trigger('click')
+                    }
+                })
+
+                btnResetPencarian.addEventListener('click', function () {
+                    win.location = `${url.pathname}`
+                })
+
+                btnCari.addEventListener('click', function () {
+                    const elmPencarian = modalPencarian.querySelectorAll<HTMLInputElement>('[name]')
+                    const text_result = []
+                    elmPencarian.forEach((elm) => {
+                        const elmNames = elm.getAttribute('name')
+                        if (elm.value !== '')
+                            text_result.push(`${elmNames}=${elm.value}`)
+                    })
+
+                    const win: Window = window
+                    win.location = `${url.pathname}?${text_result.join('&')}`
+                })
+            })
+        })
+    }
     //endregion
 
     //region Handle SID Code

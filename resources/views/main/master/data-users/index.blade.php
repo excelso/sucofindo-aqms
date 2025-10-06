@@ -115,6 +115,7 @@
 
         {{-- Bagian Include (Modal) --}}
         @include('main.master.data-users.popup.form')
+        @include('main.master.data-users.popup.pencarian')
     </div>
 </x-app-layout>
 
