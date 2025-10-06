@@ -26,7 +26,7 @@
             <div class="form-group">
                 <label>Full Name</label>
                 <label class="form-group-control">
-                    <input name="nama_lengkap" class="form-control" value="{{isset($_GET['nama_lengkap']) && $_GET['nama_lengkap'] != '' ? $_GET['nama_lengkap'] : ''}}" placeholder="..."/>
+                    <input name="full_name" class="form-control" value="{{isset($_GET['full_name']) && $_GET['full_name'] != '' ? $_GET['full_name'] : ''}}" placeholder="..."/>
                 </label>
             </div>
             <div class="form-group">
@@ -60,7 +60,7 @@
         </div>
         <div class="modal-footer justify-between">
             <div>
-                <a class="ds-btn ds-btn-error btnResetPecarian">
+                <a class="ds-btn ds-btn-error btnResetPencarian">
                     <i class="fas fa-refresh"></i>
                 </a>
             </div>

@@ -75,7 +75,32 @@
         }
 
         public function scopeDataUsers(Builder $builder, $options = []): void {
+            $search = [];
+            if (count($options) != 0) {
+                $search = $options['search'];
+            }
+
             $builder->select('*');
+
+            if (!empty($search['tipe_user'])) {
+                $builder->where('tipe_user', '=', $search['tipe_user']);
+            }
+
+            if (!empty($search['full_name'])) {
+                $builder->where('nama_lengkap', 'like', '%' . $search['full_name'] . '%');
+            }
+
+            if (!empty($search['email'])) {
+                $builder->where('email', 'like', '%' . $search['email'] . '%');
+            }
+
+            if (!empty($search['role'])) {
+                $builder->where('user_level', '=', $search['role']);
+            }
+
+            if (!empty($search['status'])) {
+                $builder->where('status_user', '=', $search['status']);
+            }
         }
 
         public function scopeDataUserById(Builder $builder, $userId): void {
