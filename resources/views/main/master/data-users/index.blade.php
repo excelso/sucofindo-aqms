@@ -24,7 +24,7 @@
             </div>
             <div class="flex flex-row items-center">
                 <div class="mr-3">
-                    <a class="cursor-pointer btnSearch ml-2">
+                    <a class="cursor-pointer btnPencarian ml-2">
                         <i class="fas fa-search mr-2"></i> Search
                     </a>
                 </div>
