@@ -66,6 +66,10 @@
     Route::redirect('/', '/login')->name('home');
     // Route::get('/', [AuthenticatedSessionController::class, 'create'])->name('landing-page');
 
+    // Route::get('test-otp', function () {
+    //     return view('auth.verify-otp');
+    // });
+
     Route::middleware(['auth', 'verified', 'otp.verified'])->group(function () {
         Route::group([
             'prefix' => LaravelLocalization::setLocale(),

@@ -12,7 +12,7 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet"/>
 
     <!-- Scripts -->
-    @vite(['resources/css/landing-page.css', 'resources/css/app.scss'])
+    @vite(['resources/css/app.scss', 'resources/css/landing-page.css', 'resources/js/app.tsx'])
     {{-- <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script> --}}
 </head>
 <body class="font-sans text-gray-900 antialiased">

@@ -284,22 +284,6 @@ label {
     font-size: 14px
 }
 
-input[type="text"], input[type="password"] {
-    width: 100%;
-    padding: 12px 12px;
-    border-radius: 10px;
-    border: 1px solid #cbd5e1;
-    outline: none;
-    transition: border-color .2s, box-shadow .2s;
-    font-size: 15px;
-    color: var(--ink);
-}
-
-input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 4px rgba(163, 212, 50, .18)
-}
-
 .aux {
     display: flex;
     align-items: center;
