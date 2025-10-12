@@ -126,10 +126,10 @@
         </div>
 
         {{-- Bagian Include (Modal) --}}
-        @include('main.master.data-platform-loggers.popup.form')
-        @include('main.master.data-platform-loggers.popup.cctv')
-        @include('main.master.data-platform-loggers.popup.pencarian')
+        @include('main.be-aqms.master.data-platform-loggers.popup.form')
+        @include('main.be-aqms.master.data-platform-loggers.popup.cctv')
+        @include('main.be-aqms.master.data-platform-loggers.popup.pencarian')
     </div>
 </x-app-layout>
 
-@vite(['resources/js/main/master/data-platform-loggers/index.tsx'])
+@vite(['resources/js/main/be-aqms/master/data-platform-loggers/index.tsx'])

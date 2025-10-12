@@ -21,13 +21,15 @@ export default defineConfig({
                 'resources/js/login/index.tsx',
                 'resources/js/login/verify-otp.tsx',
                 'resources/js/main/dashboard/index.tsx',
-                'resources/js/main/settings/change-password/index.tsx',
-                'resources/js/main/master/data-platform-loggers/index.tsx',
-                'resources/js/main/master/data-platform-loggers/index-calibration.tsx',
-                'resources/js/main/reports/index.tsx',
+
+                'resources/js/main/be-aqms/master/data-platform-loggers/index.tsx',
+                'resources/js/main/be-aqms/master/data-platform-loggers/index-calibration.tsx',
                 'resources/js/main/master/data-sites/index.tsx',
                 'resources/js/main/master/data-sites-location/index.tsx',
-                'resources/js/main/master/data-users/index.tsx',
+                'resources/js/main/reports/index.tsx',
+
+                'resources/js/main/be-enviro/users/index.tsx',
+                'resources/js/main/be-enviro/settings/change-password/index.tsx',
 
                 'resources/js/main/be-sparing/dashboard/hasil-pengukuran/index.tsx',
                 'resources/js/main/be-sparing/dashboard/maps/index.tsx',

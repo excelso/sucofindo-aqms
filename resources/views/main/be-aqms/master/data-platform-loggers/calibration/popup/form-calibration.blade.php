@@ -16,32 +16,26 @@
             <div class="flex justify-between items-center border-b border-gray-200 sticky top-0 z-[1] bg-white">
                 <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" data-tabs-toggle="#tabPlatform" data-role="exTabs">
                     <li class="mr-2">
-                        <button class="inline-block p-4" data-tabs-target="#platform">
-                            <i class="fas fa-microchip mr-2"></i> Data Platform
+                        <button class="inline-block p-4" data-tabs-target="#pm25">
+                            <i class="fas fa-microchip mr-2"></i> PM 2.5
                         </button>
                     </li>
                     <li class="mr-2">
-                        <button class="inline-block p-4" data-tabs-target="#bml">
-                            <i class="fas fa-chart-line mr-2"></i> BML
+                        <button class="inline-block p-4" data-tabs-target="#pm10">
+                            <i class="fas fa-microchip mr-2"></i> PM 10
                         </button>
                     </li>
                     <li class="mr-2">
-                        <button class="inline-block p-4" data-tabs-target="#camera">
-                            <i class="fas fa-camera mr-2"></i> Camera
-                        </button>
-                    </li>
-                    <li class="mr-2">
-                        <button class="inline-block p-4" data-tabs-target="#maps">
-                            <i class="fas fa-map-location mr-2"></i> Map Location
+                        <button class="inline-block p-4" data-tabs-target="#tsp">
+                            <i class="fas fa-microchip mr-2"></i> TSP
                         </button>
                     </li>
                 </ul>
             </div>
 
-            @include('main.master.data-platform-loggers.popup.tabs.tab-platform')
-            @include('main.master.data-platform-loggers.popup.tabs.tab-bml')
-            @include('main.master.data-platform-loggers.popup.tabs.tab-camera')
-            @include('main.master.data-platform-loggers.popup.tabs.tab-maps')
+            @include('main.be-aqms.master.data-platform-loggers.calibration.popup.tabs.tab-pm25')
+            @include('main.be-aqms.master.data-platform-loggers.calibration.popup.tabs.tab-pm10')
+            @include('main.be-aqms.master.data-platform-loggers.calibration.popup.tabs.tab-tsp')
         </div>
         <div class="modal-footer justify-between">
             <div>

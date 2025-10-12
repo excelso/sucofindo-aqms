@@ -76,4 +76,4 @@
     </div>
 </x-app-layout>
 
-@vite(['resources/js/main/settings/change-password/index.tsx'])
+@vite(['resources/js/main/be-enviro/settings/change-password/index.tsx'])

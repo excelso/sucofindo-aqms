@@ -1,15 +1,15 @@
 <?php
 
-    use App\Http\Controllers\Auth\AuthenticatedSessionController;
     use App\Http\Controllers\BeAqms\ControllerNotification;
     use App\Http\Controllers\BeAqms\Dashboard\ControllerDashboard;
     use App\Http\Controllers\BeAqms\Dashboard\PlatformAirQualityController;
     use App\Http\Controllers\BeAqms\Master\ControllerPlatformLoggers;
     use App\Http\Controllers\BeAqms\Master\ControllerSites;
     use App\Http\Controllers\BeAqms\Master\ControllerSitesLocation;
-    use App\Http\Controllers\BeAqms\Master\ControllerUsers;
     use App\Http\Controllers\BeAqms\Reports\ControllerReportLogParameter;
     use App\Http\Controllers\BeEnviro\BeEnviroControllerDashboard;
+    use App\Http\Controllers\BeEnviro\ControllerUsers;
+    use App\Http\Controllers\BeEnviro\Settings\ControllerChangePassword;
     use App\Http\Controllers\BeSparing\BeSparingControllerNotifikasi;
     use App\Http\Controllers\BeSparing\Dashboard\BeSparingControllerHasilPengukuran;
     use App\Http\Controllers\BeSparing\Dashboard\BeSparingControllerMaps;
@@ -23,7 +23,6 @@
     use App\Http\Controllers\BeSparing\Reports\BeSparingControllerWaterQuality;
     use App\Http\Controllers\BeSparing\Reports\BeSparingControllerWeeklyReport;
     use App\Http\Controllers\OnvifPTZController;
-    use App\Http\Controllers\Settings\ControllerChangePassword;
     use App\Http\Controllers\Settings\WebRTCProxyController;
     use App\Http\Helper\ExImage;
     use Illuminate\Support\Facades\Route;

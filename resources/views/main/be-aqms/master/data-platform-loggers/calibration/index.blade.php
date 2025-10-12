@@ -93,7 +93,7 @@
             </div>
         </div>
 
-        @include('main.master.data-platform-loggers.calibration.popup.form-calibration')
+        @include('main.be-aqms.master.data-platform-loggers.calibration.popup.form-calibration')
     </div>
 </x-app-layout>
 

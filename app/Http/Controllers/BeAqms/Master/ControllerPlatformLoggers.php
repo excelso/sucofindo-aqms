@@ -20,7 +20,7 @@
         protected string $viewPath;
 
         public function __construct() {
-            $this->viewPath = 'main/master/data-platform-loggers';
+            $this->viewPath = 'main/be-aqms/master/data-platform-loggers';
         }
 
         public function index(): View {

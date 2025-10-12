@@ -114,9 +114,9 @@
         </div>
 
         {{-- Bagian Include (Modal) --}}
-        @include('main.master.data-users.popup.form')
-        @include('main.master.data-users.popup.pencarian')
+        @include('main.be-enviro.users.popup.form')
+        @include('main.be-enviro.users.popup.pencarian')
     </div>
 </x-app-layout>
 
-@vite(['resources/js/main/master/data-users/index.tsx'])
+@vite(['resources/js/main/be-enviro/users/index.tsx'])

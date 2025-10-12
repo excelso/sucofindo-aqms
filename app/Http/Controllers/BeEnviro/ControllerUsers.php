@@ -1,6 +1,6 @@
 <?php
 
-    namespace App\Http\Controllers\BeAqms\Master;
+    namespace App\Http\Controllers\BeEnviro;
 
     use App\Http\Controllers\Controller;
     use App\Models\BeAqms\Master\Companies;
@@ -27,7 +27,7 @@
         protected string $viewPath;
 
         public function __construct() {
-            $this->viewPath = 'main/master/data-users';
+            $this->viewPath = 'main/be-enviro/users';
         }
 
         public function index(): View {

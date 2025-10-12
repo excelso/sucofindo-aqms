@@ -2,7 +2,7 @@ import {closeModalDialog, showModalDialog} from "@/js/plugins/modal";
 import {getMetaContent, hide, responseMessages, show} from "@/js/plugins/functions";
 import {confirmAlert, failureAlert, successAlert, waitLoader} from "@/js/plugins/sweet-alert";
 import {TabItem, Tabs} from "flowbite";
-import {SiteMonitorHandler} from "@/js/main/master/data-users/SiteMonitorHandler";
+import {SiteMonitorHandler} from "@/js/main/be-enviro/users/SiteMonitorHandler";
 import Swal from "sweetalert2";
 import {ExBox} from "@/js/experiment/ex-box";
 
@@ -145,6 +145,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     hide(btnDelete)
                 })
+            }
+
+            if (modalPencarian) {
+                closeModalDialog(modalPencarian)
             }
         })
     })

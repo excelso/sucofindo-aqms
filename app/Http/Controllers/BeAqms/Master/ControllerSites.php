@@ -17,7 +17,7 @@
         protected string $viewPath;
 
         public function __construct() {
-            $this->viewPath = 'main/master/data-sites';
+            $this->viewPath = 'main/be-aqms/master/data-sites';
         }
 
         public function index(Request $request): View {

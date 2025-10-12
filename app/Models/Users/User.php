@@ -101,6 +101,8 @@
             if (!empty($search['status'])) {
                 $builder->where('status_user', '=', $search['status']);
             }
+
+            $builder->orderBy('nama_lengkap');
         }
 
         public function scopeDataUserById(Builder $builder, $userId): void {

@@ -1,6 +1,6 @@
 <?php
 
-    namespace App\Http\Controllers\Settings;
+    namespace App\Http\Controllers\BeEnviro\Settings;
 
     use App\Http\Controllers\Controller;
     use App\Models\Users\User;
@@ -17,11 +17,11 @@
         protected string $viewPath;
 
         public function __construct() {
-            $this->viewPath = 'main/settings/change-password';
+            $this->viewPath = 'main/be-enviro/settings/change-password';
         }
 
         public function index(): View {
-            return view($this->viewPath . '/index');
+            return view($this->viewPath . '.index');
         }
 
         public function updatePassword(Request $request): JsonResponse {

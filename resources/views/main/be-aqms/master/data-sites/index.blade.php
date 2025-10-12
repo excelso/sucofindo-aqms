@@ -88,8 +88,8 @@
         </div>
 
         {{-- Bagian Include (Modal) --}}
-        @include('main.master.data-sites.popup.form')
-        @include('main.master.data-sites.popup.pencarian')
+        @include('main.be-aqms.master.data-sites.popup.form')
+        @include('main.be-aqms.master.data-sites.popup.pencarian')
     </div>
 </x-app-layout>
 
