@@ -12,7 +12,7 @@
                     <div class="p-[10px]">
                         <div id="dropdownProjectButton" data-dropdown-toggle="dropdownProject" data-dropdown-offset-skidding="-60" class="dropdown-button cursor-pointer" type="button">
                             <div class="flex items-center capitalize">
-                                <span class="truncate sm:hidden">{{ request()->is('*/aqms*') ? 'BeAQMS' : 'BeSparing' }}</span>
+                                <span class="truncate sm:hidden">{{ request()->is('aqms') ? 'BeAQMS' : 'BeSparing' }}</span>
                             </div>
                         </div>
 
@@ -118,14 +118,16 @@
             </div>
         </div>
     </nav>
+
     @include('layouts.sidebar')
     @include('layouts.notif')
+
     <div class="content-wrapper">
         {{ $slot }}
     </div>
     <footer class="footer-menu">
         <div>
-            {{ request()->is('*/aqms*') ? 'BeAQMS' : 'BeSparing' }} @2024
+            {{ request()->is('aqms') ? 'BeAQMS' : 'BeSparing' }} @2024
         </div>
         <div>
             Powered by SUCOFINDO
