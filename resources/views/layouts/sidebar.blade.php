@@ -7,7 +7,7 @@
         @if(request()->is('aqms*'))
             <ul class="metismenu" id="menu">
                 <li class="navItem">
-                    <a href="{{ route('aqms.dashboard') }}" class="navLink {{Request::segment(2) == '' ? 'navLinkActive' : ''}}">
+                    <a href="{{ route('aqms.dashboard') }}" class="navLink {{ Request::segment(1) == 'aqms' && Request::segment(2) == '' ? 'navLinkActive' : '' }}">
                         <div class="flex items-center justify-start">
                             <div class="navIcon">
                                 <i class="fas fa-house"></i>
