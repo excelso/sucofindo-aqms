@@ -53,7 +53,7 @@
                     DB::raw('MAX(CASE WHEN link_video_recorded IS NOT NULL THEN link_video_recorded END) AS link_video_recorded')
                 ]);
                 // Gunakan timezone yang sama dengan parameter
-                $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / 600) * 600), 'UTC', ?) AS interval_time", [$timezone]);
+                $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / 600) * 600), 'Asia/Makassar', ?) AS interval_time", [$timezone]);
                 $builder->selectRaw('FLOOR(datetime_unix / 600) * 600 AS datetime_unix');
                 $builder->selectRaw('COUNT(*) AS record_count');
                 $builder->selectRaw('ROUND(AVG(pm_10), 0) AS pm_10');
@@ -107,7 +107,7 @@
                     DB::raw('MAX(CASE WHEN link_video_recorded IS NOT NULL THEN link_video_recorded END) AS link_video_recorded')
                 ]);
                 // Gunakan timezone yang sama dengan parameter
-                $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / ?) * ?), 'UTC', ?) AS interval_time", [$intervalData, $intervalData, $timezone]);
+                $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / ?) * ?), 'Asia/Makassar', ?) AS interval_time", [$intervalData, $intervalData, $timezone]);
                 $builder->selectRaw('FLOOR(datetime_unix / ?) * ? AS datetime_unix', [$intervalData, $intervalData]);
                 $builder->selectRaw('COUNT(*) AS record_count');
                 $builder->selectRaw('ROUND(AVG(pm_10), 0) AS pm_10');
@@ -190,11 +190,11 @@
             }
 
             if (!empty($search['startDate']) && !empty($search['untilDate'])) {
-                $builder->whereBetween(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_loggers.datetime_unix, "%Y-%m-%d %H:%i" ), "UTC", "' . $timezone . '" )'), [$search['startDate'], $search['untilDate']]);
+                $builder->whereBetween(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_loggers.datetime_unix, "%Y-%m-%d %H:%i" ), "Asia/Makassar", "' . $timezone . '" )'), [$search['startDate'], $search['untilDate']]);
             } elseif (!empty($search['startDate'])) {
-                $builder->where(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_loggers.datetime_unix, "%Y-%m-%d %H:%i" ), "UTC", "' . $timezone . '" )'), '=', $search['startDate']);
+                $builder->where(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_loggers.datetime_unix, "%Y-%m-%d %H:%i" ), "Asia/Makassar", "' . $timezone . '" )'), '=', $search['startDate']);
             } else {
-                $builder->whereBetween(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_loggers.datetime_unix, "%Y-%m-%d %H:%i" ), "UTC", "' . $timezone . '" )'), [$startDate, $untilDate]);
+                $builder->whereBetween(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_loggers.datetime_unix, "%Y-%m-%d %H:%i" ), "Asia/Makassar", "' . $timezone . '" )'), [$startDate, $untilDate]);
             }
 
             if (isset($search['statusAqi']) && $search['statusAqi'] != '') {
@@ -241,7 +241,7 @@
                         'uid',
                         DB::raw('MAX(CASE WHEN link_video_recorded IS NOT NULL THEN link_video_recorded END) AS link_video_recorded')
                     ]);
-                    $subBuilder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / 600) * 600), 'UTC', ?) AS interval_time", [$timezone]);
+                    $subBuilder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / 600) * 600), 'Asia/Makassar', ?) AS interval_time", [$timezone]);
                     $subBuilder->selectRaw('FLOOR(datetime_unix / 600) * 600 AS datetime_unix');
                     $subBuilder->selectRaw('COUNT(*) AS record_count');
                     $subBuilder->selectRaw('ROUND(AVG(pm_10), 0) AS pm_10');
