@@ -2,9 +2,11 @@
 
     namespace App\Models\BeAqms\Master;
 
+    use DB;
     use Illuminate\Database\Eloquent\Builder;
     use Illuminate\Database\Eloquent\Model;
     use Illuminate\Database\Eloquent\Relations\BelongsTo;
+    use Illuminate\Database\Eloquent\Relations\HasMany;
     use Illuminate\Database\Eloquent\Relations\HasOne;
     use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -51,6 +53,11 @@
             return $this->hasOne(LoggersLimit::class, 'uid', 'uid');
         }
 
+        public function platformsHeartbeat(): HasMany {
+            return $this->hasMany(PlatformsHeartbeat::class, 'uid', 'uid')
+                ->orderBy('datetime_unix', 'DESC');
+        }
+
         public function scopeDataPlatformByUserPlatform(Builder $builder, $platformId = null, $isTrial = null): void {
             if ($platformId) {
                 if (is_array($platformId)) {
@@ -91,5 +98,43 @@
 
         public function scopeDataPlatformsById(Builder $builder, $id): void {
             $builder->where('id', $id);
+        }
+
+        public function scopeDataPlatformSearchByUserPlatform(Builder $builder, $platformId = null, $search = null): void {
+            if ($platformId) {
+                if (is_array($platformId)) {
+                    $builder->whereIn('id', $platformId);
+                } else {
+                    $builder->where('id', $platformId);
+                }
+            }
+
+            $builder->select([
+                't_platforms.*',
+                DB::raw('LOWER(tHelp.heartbeat_status) AS heartbeat_status'),
+            ]);
+            $builder->leftJoin(DB::raw('
+                (
+                    SELECT
+                        h.uid,
+                        h.datetime_unix,
+                        FROM_UNIXTIME( h.datetime_unix, "%Y-%m-%d %H:%i" ) AS datetime_formatted,
+                        h.heartbeat_status
+                    FROM
+                        t_platforms_heartbeat h
+                        INNER JOIN (
+                            SELECT
+                                uid,
+                                MAX( datetime_unix ) AS max_datetime
+                            FROM
+                                t_platforms_heartbeat
+                            GROUP BY
+                                uid
+                        ) AS latest ON h.uid = latest.uid AND h.datetime_unix = latest.max_datetime
+                ) AS tHelp
+            '), 'tHelp.uid', '=', 't_platforms.uid');
+
+            $builder->where('is_active', '=', 1);
+            $builder->orderBy('uid', 'ASC');
         }
     }

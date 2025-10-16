@@ -1425,6 +1425,18 @@
         @apply flex justify-end
     }
 
+    .online-status-container {
+        @apply flex items-center gap-1;
+    }
+
+    .online-status-container .online {
+        @apply h-[10px] w-[10px] rounded-full bg-green-500
+    }
+
+    .online-status-container .offline {
+        @apply h-[10px] w-[10px] rounded-full bg-red-500
+    }
+
     //region Carousel
     .tw-carousel {
         @apply relative w-full h-full
@@ -1472,6 +1484,60 @@
         }
     }
     //endregion
+
+    /* List Site Chips (huruf + label) — stabil tanpa jitter */
+    .list-site {
+        /* item dasar */
+        .list-item {
+            @apply cursor-pointer bg-gray-100 rounded-full ps-1.5 pe-1.5 py-1.5 shadow-md transition-all duration-300 ease-out;
+        }
+
+        /* avatar (huruf) jangan sampai menyusut/geser */
+        .list-item .avatar {
+            @apply relative inline-flex items-center justify-center w-7 h-7 overflow-hidden bg-gray-500 rounded-full shrink-0;
+        }
+
+        /* teks default: sembunyi (tanpa padding & tanpa margin) */
+        .list-item .list-item-text {
+            @apply font-bold text-[13px] whitespace-nowrap overflow-hidden max-w-0 opacity-0 translate-x-1 ml-0 transition-all duration-300 ease-out;
+        }
+
+        /* hover / focus: tampil halus + beri jarak via margin (bukan padding) */
+        .list-item:hover,
+        .list-item:focus-within { /* tidak mengubah padding parent agar stabil */ }
+
+        .list-item:hover .list-item-text,
+        .list-item:focus-within .list-item-text {
+            @apply max-w-[10rem] opacity-100 translate-x-0 ps-1.5 pe-1.5;
+        }
+
+        /* FORCE OPEN dengan .is-open (bisa di parent atau di span) */
+        .list-item.is-open .list-item-text,
+        .list-item .list-item-text.is-open,
+        .list-item:has(.is-open) .list-item-text {
+            @apply max-w-[10rem] opacity-100 translate-x-0 ps-1.5 pe-1.5;
+        }
+
+        /* helper lebar opsional */
+        .list-item .list-item-text.lw-8  { @apply max-w-[8rem];  }
+        .list-item .list-item-text.lw-12 { @apply max-w-[12rem]; }
+    }
+
+    /* Left panel: fade only (no slide) */
+    .left-panel {
+        @apply opacity-0 pointer-events-none transition-opacity duration-300 ease-out;
+    }
+
+    /* Muncul saat input di .searchbox fokus */
+    .content-main:has(.searchbox:focus-within) .left-panel {
+        @apply opacity-100 pointer-events-auto;
+    }
+
+    /* Opsi: paksa tetap terbuka lewat class manual */
+    .left-panel.is-open {
+        @apply opacity-100 pointer-events-auto;
+    }
+
 }
 
 .clip-circle-0 {

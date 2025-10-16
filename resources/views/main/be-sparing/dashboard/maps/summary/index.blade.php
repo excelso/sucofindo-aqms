@@ -4,7 +4,7 @@
         <div class="content-header">
             <div class="content-title !items-start">
                 <div class="mr-4">
-                    <a href="/dashboard/maps" class="mt-2 !text-[24px]">
+                    <a href="{{ route('sparing.dashboard.maps') }}" class="mt-2 !text-[24px]">
                         <i class="fas fa-arrow-circle-left"></i>
                     </a>
                 </div>
@@ -35,7 +35,7 @@
                 <div class="ml-2">
                     <input type="hidden" class="userLevel" value="{{ Auth::user()->user_level }}">
                     <div class="form-group">
-                        <label class="form-group-control w-[320px]">
+                        <div class="form-group-control bg-white w-[320px]">
                             <select class="form-control select2-custom platformUid">
                                 @foreach($dataPlatform as $item)
                                     @php($selected = request()->segment(5) == $item->uid && request()->segment(6) == $item->tipe_logger ? 'selected' : '')
@@ -46,10 +46,10 @@
                                     @endif
                                 @endforeach
                             </select>
-                        </label>
+                        </div>
                     </div>
                 </div>
-                <div class="ml-2">
+                <div class="ml-2 !hidden">
                     <button id="dropdownMenuIconButton" data-dropdown-toggle="dropdownTable" data-dropdown-offset-skidding="-80">
                         <i class="fas fa-ellipsis-v text-[26px] px-2"></i>
                     </button>

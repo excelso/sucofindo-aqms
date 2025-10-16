@@ -7,7 +7,10 @@
     use App\Models\BeAqms\Master\Loggers;
     use App\Models\BeAqms\Master\Platforms;
     use App\Models\BeAqms\Master\PlatformsHeartbeat;
+    use App\Models\BeSparing\Karyawan\UserSite;
+    use App\Models\BeSparing\Master\Platform;
     use App\Models\Users\UserPlatforms;
+    use Auth;
     use avadim\FastExcelWriter\Excel;
     use avadim\FastExcelWriter\Style;
     use Carbon\Carbon;
@@ -33,5 +36,116 @@
             ]);
         }
         // endregion
+
+        //region Handle Data Platforms
+        public function handleDataPlatforms(Request $request) {
+            try {
+
+                if ($request->input('titleType') == 'SPARING') {
+                    $dataUserSite = UserSite::where('user_id', request()->user()->id)->where('status_site', 1)->get();
+                    $site_ids = [];
+                    foreach ($dataUserSite as $item) {
+                        $site_ids[] = $item->site_id;
+                    }
+
+                    $dataLogger = Platform::platformBySearch($request->input('search'), $site_ids)->with([
+                        'site:id,nama_site,customer_lokasi_id',
+                        'site.customerLokasi:id,customer_id,nama_lokasi',
+                        'site.customerLokasi.customer:id,nama_perusahaan'
+                    ])->get();
+                } else {
+                    $userPlatformId = null;
+                    $userPlatformIds = UserPlatforms::userPlatforms(request()->user()->id)->get();
+                    foreach ($userPlatformIds as $platformId) {
+                        $userPlatformId[] = $platformId->platform_id;
+                    }
+
+                    $dataLogger = Platforms::dataPlatformSearchByUserPlatform($userPlatformId)
+                        ->with([
+                            'sites',
+                            'sites.companies',
+                            'sitesLocation'
+                        ])->get();
+                }
+
+                return response()->json([
+                    'userLevel' => Auth::user()->user_level ?? '',
+                    'data' => $dataLogger,
+                ]);
+
+            } catch (Exception $exception) {
+                return response()->json([
+                    'message' => $exception->getMessage(),
+                    'code' => $exception->getCode(),
+                    'responseTime' => now()
+                ], 500);
+            }
+        }
+        //endregion
+
+        //region Handle Data Platforms
+        public function handleDataPlatformsMarker(Request $request) {
+            try {
+
+                $dataPlatformSparing = Platform::platformMarker()->with([
+                    'site:id,nama_site,customer_lokasi_id',
+                    'site.customerLokasi:id,customer_id,nama_lokasi',
+                    'site.customerLokasi.customer:id,nama_perusahaan'
+                ])->get()->map(function ($item) {
+                    return [
+                        'platform_type' => 'sparing',
+                        'uid' => $item->uid,
+                        'lat' => $item->lat,
+                        'lng' => $item->lng,
+                        'company_name' => $item->site->customerLokasi->customer->nama_perusahaan,
+                        'location' => $item->site->customerLokasi->nama_lokasi,
+                        'status_online' => $item->status_platform ?? 'offline',
+                        'tipe_logger' => $item->tipe_logger ?? 1,
+                        'total_logger' => $item->total_logger ?? 1,
+                    ];
+                });
+
+                $userPlatformId = null;
+                $userPlatformIds = UserPlatforms::userPlatforms(request()->user()->id)->get();
+                foreach ($userPlatformIds as $platformId) {
+                    $userPlatformId[] = $platformId->platform_id;
+                }
+
+                $dataPlatformAqms = Platforms::dataPlatformSearchByUserPlatform($userPlatformId)->with([
+                        'sites',
+                        'sites.companies',
+                        'sitesLocation'
+                    ])->get()->map(function ($item) {
+                        return [
+                            'platform_type' => 'aqms',
+                            'uid' => $item->uid,
+                            'lat' => $item->lat,
+                            'lng' => $item->lng,
+                            'company_name' => $item->sites->companies->company_name,
+                            'location' => $item->sites->site_name,
+                            'status_online' => $item->heartbeat_status ?? 'offline',
+                            'tipe_logger' => $item->tipe_logger ?? 1,
+                            'total_logger' => 1,
+                        ];
+                    });
+
+                $mergedData = $dataPlatformSparing->keyBy('uid')
+                    ->merge($dataPlatformAqms->keyBy('uid'))
+                    ->values();
+
+                return response()->json([
+                    'userLevel' => Auth::user()->user_level ?? '',
+                    'data' => $mergedData,
+                ]);
+
+            } catch (Exception $exception) {
+                return response()->json([
+                    'message' => $exception->getMessage(),
+                    'code' => $exception->getCode(),
+                    'responseTime' => now()
+                ], 500);
+            }
+        }
+        //endregion
 
     }

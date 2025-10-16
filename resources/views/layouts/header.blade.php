@@ -19,6 +19,17 @@
                         <div id="dropdownProject" class="dropdown-panel overflow-y-auto max-h-[350px] w-[250px]">
                             <ul aria-labelledby="dropdown">
                                 <li>
+                                    <a rel="alternate" href="{{ route('enviro.dashboard') }}">
+                                        <div class="flex items-center">
+                                            <div class="ml-2 overflow-hidden">
+                                                <div class="truncate">
+                                                    BeEnviro Maps
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li>
                                     <a rel="alternate" href="{{ route('aqms.dashboard') }}">
                                         <div class="flex items-center">
                                             <div class="ml-2 overflow-hidden">
@@ -44,37 +55,6 @@
                         </div>
                     </div>
                 @endif
-
-                <div class="p-[10px] !hidden">
-                    <div id="dropdownLangButton" data-dropdown-toggle="dropdownLang" data-dropdown-offset-skidding="-60" class="dropdown-button cursor-pointer" type="button">
-                        <div class="flex items-center capitalize">
-                            @php($imgLocale = asset('images/locales/en.png'))
-                            @if(LaravelLocalization::getCurrentLocale() == 'id')
-                                @php($imgLocale = asset('images/locales/id.png'))
-                            @endif
-                            <img src="{{ $imgLocale }}" class="mr-2" alt="en" width="24">
-                            <span class="sm:hidden">{{ LaravelLocalization::getCurrentLocale() }}</span>
-                        </div>
-                    </div>
-
-                    <div id="dropdownLang" class="dropdown-panel w-[250px]">
-                        <ul aria-labelledby="dropdown">
-                            @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
-                                @php($imgLocale = asset('images/locales/en.png'))
-                                @if($localeCode == 'id')
-                                    @php($imgLocale = asset('images/locales/id.png'))
-                                @endif
-                                <li>
-                                    <a rel="alternate" hreflang="{{ $localeCode }}" href="{{ LaravelLocalization::getLocalizedURL($localeCode, null, [], true) }}">
-                                        <div class="flex items-center">
-                                            <img src="{{ $imgLocale }}" class="mr-2" alt="en" width="24"> {{ $properties['native'] }}
-                                        </div>
-                                    </a>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                </div>
 
                 <div class="py-[10px] px-[15px] relative cursor-pointer toggle-notif">
                     <div class="absolute top-[2px] right-[0px] data-count-notif hidden">

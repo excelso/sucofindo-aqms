@@ -30,10 +30,14 @@
                 session(['otp_verified' => true]);
 
                 try {
-                    if (session()->get('use_aqms') != 0) {
-                        return redirect()->intended(route('aqms.dashboard'));
+                    if (session()->get('use_aqms') != 0 && session()->get('use_sparing') != 0) {
+                        return redirect()->intended(route('enviro.dashboard'));
                     } else {
-                        return redirect()->intended(route('sparing.dashboard.hasil-pengukuran'));
+                        if (session()->get('use_aqms') != 0) {
+                            return redirect()->intended(route('aqms.dashboard'));
+                        } else {
+                            return redirect()->intended(route('sparing.dashboard.hasil-pengukuran'));
+                        }
                     }
                 } catch (NotFoundExceptionInterface|ContainerExceptionInterface $e) {
                     return redirect()->intended(route('aqms.dashboard'));
