@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             imageUrl: 'https://placehold.co/70',
                             title: uid,
                             subtitle: `${company_name} / ${site_name}`,
-                            status: heartbeat_status,
+                            status: heartbeat_status !== null ? heartbeat_status : 'offline',
                             imageAlt: `${uid}`
                         };
 
