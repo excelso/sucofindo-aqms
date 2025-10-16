@@ -136,13 +136,14 @@
                 $dataDebit = [];
                 $dataTss = [];
                 foreach ($dataCharts as $item) {
-                    $dataTime = Carbon::createFromFormat('Y-m-d H:i:s', $item->datetime)->setTimezone($timezone)->format('Y-m-d H:i:s');
-                    $dataTimeUnix = Carbon::parse($dataTime)->getPreciseTimestamp(3);
+                    $dataTime = Carbon::parse($item->datetime)->setTimezone($timezone);
+                    $dataTimeUnix = $dataTime->getPreciseTimestamp(3);
+                    $dataTimeFormatted = $dataTime->format('Y-m-d H:i:s');
 
                     $dataPh[] = [
                         'x' => $dataTimeUnix,
                         'y' => round($item->ph, 2),
-                        'z' => $dataTime
+                        'z' => $dataTimeFormatted
                     ];
 
                     $dataDebit[] = [
@@ -219,8 +220,8 @@
                 $dataCharts = Parameter::dataCharts($request->input('platformUid'), $request->input('tipeLogger'), $minDate, $maxDate, $timezone, 'DESC')->first();
 
                 if ($dataCharts) {
-                    $dataTime = Carbon::createFromFormat('Y-m-d H:i:s', $dataCharts->datetime)->setTimezone($timezone)->format('Y-m-d H:i:s');
-                    $dataTimeUnix = Carbon::parse($dataTime)->getPreciseTimestamp(3);
+                    $dataTime = Carbon::parse($dataCharts->datetime)->setTimezone($timezone);
+                    $dataTimeUnix = $dataTime->getPreciseTimestamp(3);
 
                     $data = [
                         [
