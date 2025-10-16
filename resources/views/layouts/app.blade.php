@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     {{-- <meta name="login-employee-id" content="{{ Auth::user()->id }}"> --}}
 
-    <title>@yield('title') - {{ request()->is('aqms') ? 'BeAQMS' ? request()->is('sparing') : 'BeSparing' : 'BeEnviro' }}</title>
+    <title>@yield('title') - {{ request()->is('aqms*') ? 'BeAQMS' ? request()->is('sparing*') : 'BeSparing' : 'BeEnviro' }}</title>
     <link rel="shortcut icon" href="{{ asset('/images/favicon.png') }}?date={{ date('Hmi') }}"/>
 
     <!-- Fonts -->
@@ -35,7 +35,7 @@
     <script src="{{ asset('js/plugins/select2/select2.js') }}"></script>
 </head>
 <body>
-    @if(!request()->is('enviro'))
+    @if(!request()->is('enviro*'))
         @include('layouts.header')
     @else
         {{ $slot }}

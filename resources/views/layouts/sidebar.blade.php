@@ -1,10 +1,10 @@
 <aside class="main-sidebar darkMode">
     <div class="brand">
         <img alt="logo" src="{{ asset('images/logo-white.png') }}" class="brand-logo"/>
-        <h2 class="brand-label">{{ request()->is('aqms') ? 'BeAQMS' : 'BeSparing' }}</h2>
+        <h2 class="brand-label">{{ request()->is('aqms*') ? 'BeAQMS' : 'BeSparing' }}</h2>
     </div>
     <div class="sidebar">
-        @if(request()->is('aqms'))
+        @if(request()->is('aqms*'))
             <ul class="metismenu" id="menu">
                 <li class="navItem">
                     <a href="/" class="navLink {{Request::segment(3) == '' ? 'navLinkActive' : ''}}">
@@ -113,7 +113,7 @@
                     </ul>
                 </li>
             </ul>
-        @elseif(request()->is('sparing'))
+        @elseif(request()->is('sparing*'))
             <ul class="metismenu" id="menu">
                 <li class="navItem {{Request::segment(3) == 'dashboard' ? 'mm-active' : ''}}">
                     <a class="navLink {{Request::segment(3) == 'dashboard' ? 'navLinkActive' : ''}}">
