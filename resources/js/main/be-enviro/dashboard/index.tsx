@@ -304,11 +304,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     headerContent.className = 'font-bold';
                     headerContent.innerHTML = `${platform_type === 'sparing' ? 'SPARING' : 'AQMS'} - ${uid}`
 
+                    let badgeStatus = 'ds-badge-success'
+                    if (status_online === 'offline')
+                        badgeStatus = 'ds-badge-error'
+
+                    let statusPlatform = 'Online'
+                    if (status_online === 'offline') {
+                        statusPlatform = 'Offline'
+                    }
+
                     let footerContent = `
                         <div class="mt-3">
                             <div class="flex items-center justify-between">
                                 <a class="text-blue-500" href="/${platform_type}/dashboard/maps/summary/detail/${uid}/1">View Detail <i class="fas fa-arrow-right ml-2"></i></a>
-                                <div class="ds-badge ds-badge-outline ds-badge-success !text-[11px] capitalize ml-10">Online</div>
+                                <div class="ds-badge ds-badge-outline ${badgeStatus} !text-[11px] capitalize ml-10">${statusPlatform}</div>
                             </div>
                         </div>
                     `;
@@ -333,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="mt-3">
                                 <div class="flex items-center justify-between">
                                     <a class="text-blue-500" href="/aqms/reports/logs-parameter?platformUid=${uid}">View Report <i class="fas fa-arrow-right ml-2"></i></a>
-                                    <div class="ds-badge ds-badge-outline ds-badge-success !text-[11px] capitalize ml-10">Online</div>
+                                    <div class="ds-badge ds-badge-outline ${badgeStatus} !text-[11px] capitalize ml-10">${statusPlatform}</div>
                                 </div>
                             </div>
                         `;
