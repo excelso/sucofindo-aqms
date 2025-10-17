@@ -30,13 +30,16 @@
          */
         public function boot(): void {
             if (config('app.env') != 'local') {
-                $currentHost = request()->getHost();
+                if ($this->app->runningInConsole()) {
+                    return;
+                }
 
-                $httpAllowedDomains = [
-                    'aqms-logger.beraucoal.co.id',
+                $host = request()->getHost();
+                $httpsOnlyDomains = [
+                    'beenviro.beraucoal.co.id',
                 ];
 
-                if (!in_array($currentHost, $httpAllowedDomains)) {
+                if (in_array($host, $httpsOnlyDomains, true)) {
                     URL::forceScheme('https');
                 }
             }
