@@ -11,7 +11,7 @@ class OnvifPTZController {
     constructor(csrfToken: string, cameraId: string) {
         this.csrfToken = csrfToken;
         this.cameraId = cameraId;
-        this.baseUrl = '/onvif/onvif-ptz'; // Update base URL untuk ONVIF
+        this.baseUrl = '/aqms/onvif/onvif-ptz'; // Update base URL untuk ONVIF
     }
 
     /**
