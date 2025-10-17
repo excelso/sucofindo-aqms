@@ -30,7 +30,15 @@
          */
         public function boot(): void {
             if (config('app.env') != 'local') {
-                URL::forceScheme('https');
+                $currentHost = request()->getHost();
+
+                $httpAllowedDomains = [
+                    'aqms-logger.beraucoal.co.id',
+                ];
+
+                if (!in_array($currentHost, $httpAllowedDomains)) {
+                    URL::forceScheme('https');
+                }
             }
 
             Auth::provider('external-api', function ($app, array $config) {
