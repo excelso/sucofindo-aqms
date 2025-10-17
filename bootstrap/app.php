@@ -9,6 +9,7 @@
     use Illuminate\Foundation\Application;
     use Illuminate\Foundation\Configuration\Exceptions;
     use Illuminate\Foundation\Configuration\Middleware;
+    use Illuminate\Http\Middleware\HandleCors;
     use Illuminate\Http\Request;
     use Mcamara\LaravelLocalization\Middleware\LaravelLocalizationRedirectFilter;
     use Mcamara\LaravelLocalization\Middleware\LaravelLocalizationRoutes;
@@ -28,6 +29,8 @@
             $middleware->web(append: [
                 DetectDevice::class,
             ]);
+
+            $middleware->append(HandleCors::class);
 
             $middleware->alias([
                 'localize' => LaravelLocalizationRoutes::class,
