@@ -29,17 +29,17 @@
          * Bootstrap any application services.
          */
         public function boot(): void {
-            // if (config('app.env') != 'local') {
-            //     $currentHost = request()->getHost();
-            //
-            //     $httpAllowedDomains = [
-            //         'aqms-logger.beraucoal.co.id',
-            //     ];
-            //
-            //     if (!in_array($currentHost, $httpAllowedDomains)) {
-            //         URL::forceScheme('https');
-            //     }
-            // }
+            if (config('app.env') != 'local') {
+                $currentHost = request()->getHost();
+
+                $httpAllowedDomains = [
+                    'aqms-logger.beraucoal.co.id',
+                ];
+
+                if (!in_array($currentHost, $httpAllowedDomains)) {
+                    URL::forceScheme('https');
+                }
+            }
 
             Auth::provider('external-api', function ($app, array $config) {
                 return new ExternalApiUserProvider();
