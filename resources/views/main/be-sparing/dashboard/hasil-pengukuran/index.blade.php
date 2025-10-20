@@ -47,7 +47,7 @@
                             </div>
                         </div>
                         <div class="card-footer">
-                            <a href="/dashboard/hasil-pengukuran">Lihat Detail</a>
+                            <a href="/sparing/dashboard/hasil-pengukuran">Lihat Detail</a>
                         </div>
                     </div>
                 </div>
@@ -65,7 +65,7 @@
                             </div>
                         </div>
                         <div class="card-footer">
-                            <a href="/dashboard/hasil-pengukuran?status_platform=1">Lihat Detail</a>
+                            <a href="/sparing/dashboard/hasil-pengukuran?status_platform=1">Lihat Detail</a>
                         </div>
                     </div>
                 </div>
@@ -83,7 +83,7 @@
                             </div>
                         </div>
                         <div class="card-footer">
-                            <a href="/dashboard/hasil-pengukuran?status_platform=2">Lihat Detail</a>
+                            <a href="/sparing/dashboard/hasil-pengukuran?status_platform=2">Lihat Detail</a>
                         </div>
                     </div>
                 </div>
