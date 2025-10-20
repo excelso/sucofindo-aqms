@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // }).then(null)
 
                     closeModalDialog(modalPencarian, () => {
-                        window.location.href = `/dashboard/hasil-pengukuran?${text_result_url.join('&')}`
+                        window.location.href = `/sparing/dashboard/hasil-pengukuran?${text_result_url.join('&')}`
                         // history.pushState({}, null, `/dashboard/hasil-pengukuran?${text_result_url.join('&')}`)
                     })
                 })
