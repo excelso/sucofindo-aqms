@@ -277,6 +277,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnCreate) {
         btnCreate.addEventListener('click', function () {
             showModalDialog(modalForm, `<i class="fas fa-user-plus mr-2"></i> New User`, function () {
+                handleCheckbox()
+
                 if (btnSave) {
                     btnSave.addEventListener('click', function () {
                         const selectedData = siteMonitorHandler.getAllSelectedData()
@@ -287,6 +289,38 @@ document.addEventListener('DOMContentLoaded', function () {
                                 type_logger: item.type,
                                 is_active: 1
                             })
+                        })
+
+                        const sites = []
+                        checkSites.forEach(siteCheckbox => {
+                            if (siteCheckbox.checked || siteCheckbox.indeterminate) {
+                                const customerId = Number(siteCheckbox.dataset.parent)
+                                const siteId = Number(siteCheckbox.dataset.id)
+
+                                if (isNaN(customerId) || isNaN(siteId)) return
+
+                                const internalLogger = siteMonitorSparing.querySelector<CheckboxElement>(`.typeLoggerIn[data-parent="${customerId}"][data-parent-site="${siteId}"]`)
+                                const reEngineerLogger = siteMonitorSparing.querySelector<CheckboxElement>(`.typeLoggerRe[data-parent="${customerId}"][data-parent-site="${siteId}"]`)
+
+                                const typeLogger: [any, any] = [
+                                    {
+                                        id: internalLogger.getAttribute('data-id') ?? 'x',
+                                        type_logger: 1,
+                                        is_active: internalLogger && internalLogger.checked ? 1 : 0
+                                    },
+                                    {
+                                        id: reEngineerLogger.getAttribute('data-id') ?? 'x',
+                                        type_logger: 2,
+                                        is_active: reEngineerLogger && reEngineerLogger.checked ? 1 : 0
+                                    }
+                                ]
+
+                                sites.push({
+                                    customer_id: customerId,
+                                    site_id: siteId,
+                                    type_logger: typeLogger
+                                })
+                            }
                         })
 
                         confirmAlert({
@@ -313,7 +347,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                         re_password: rePasswordUser.value,
                                         role_id: roleId.value,
                                         status_user: statusUser.value,
-                                        site_permission: sitePermissionDatas
+                                        site_permission: sitePermissionDatas,
+                                        sites: sites
                                     })
                                 })
 
@@ -425,7 +460,6 @@ document.addEventListener('DOMContentLoaded', function () {
                                                 const internalLogger = siteMonitorSparing.querySelector<CheckboxElement>(`.typeLoggerIn[data-parent="${customerId}"][data-parent-site="${siteId}"]`)
                                                 const reEngineerLogger = siteMonitorSparing.querySelector<CheckboxElement>(`.typeLoggerRe[data-parent="${customerId}"][data-parent-site="${siteId}"]`)
 
-                                                console.log(internalLogger)
                                                 const typeLogger: [any, any] = [
                                                     {
                                                         id: internalLogger.getAttribute('data-id') ?? 'x',

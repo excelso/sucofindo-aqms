@@ -7,6 +7,7 @@
     use App\Models\BeAqms\Master\ExternalEmployee;
     use App\Models\BeSparing\Karyawan\UserSite;
     use App\Models\BeSparing\Karyawan\UserSiteTipeLogger;
+    use App\Models\BeSparing\Karyawan\UserSparing;
     use App\Models\BeSparing\Master\Customer;
     use App\Models\BeSparing\Master\Site;
     use App\Models\Users\User;
@@ -94,17 +95,8 @@
 
             try {
 
-                if ($request->input('role_id') != 'super_admin') {
-                    if (count($request->input('site_permission')) == 0) {
-                        return response()->json([
-                            'message' => 'No Monitoring Site configuration selected',
-                            'responseTime' => now()
-                        ], 400);
-                    }
-                }
-
                 DB::transaction(function () use ($request) {
-                    $user = User::create([
+                    $userSparing = UserSparing::create([
                         'tipe_user' => $request->input('tipe_user'),
                         'sid_code' => $request->input('sid_code'),
                         'nama_lengkap' => $request->input('nama_lengkap'),
@@ -114,13 +106,40 @@
                         'status_user' => $request->input('status_user'),
                     ]);
 
-                    if ($request->input('role_id') != 'super_admin') {
-                        foreach ($request->input('site_permission') as $item) {
-                            UserPlatforms::create([
-                                'user_id' => $user->id,
-                                'platform_id' => $item['platform_id'],
-                                'type_logger' => $item['type_logger'],
-                                'is_active' => 1
+                    $user = User::create([
+                        'id_sparing' => $userSparing->id,
+                        'tipe_user' => $request->input('tipe_user'),
+                        'sid_code' => $request->input('sid_code'),
+                        'nama_lengkap' => $request->input('nama_lengkap'),
+                        'email' => $request->input('email'),
+                        'password' => Hash::make($request->input('re_password')),
+                        'user_level' => $request->input('role_id'),
+                        'status_user' => $request->input('status_user'),
+                    ]);
+
+                    foreach ($request->input('site_permission') as $item) {
+                        UserPlatforms::create([
+                            'user_id' => $user->id,
+                            'platform_id' => $item['platform_id'],
+                            'type_logger' => $item['type_logger'],
+                            'is_active' => 1
+                        ]);
+                    }
+
+                    $dataSites = json_decode(json_encode($request->input('sites')), false);
+                    foreach ($dataSites as $item) {
+                        $userSite = (new UserSite)->create([
+                            'user_id' => $userSparing->id,
+                            'customer_id' => $item->customer_id,
+                            'site_id' => $item->site_id,
+                            'status_site' => 1,
+                        ]);
+
+                        foreach ($item->type_logger as $tipeLogger) {
+                            UserSiteTipeLogger::create([
+                                'users_sites_id' => $userSite->id,
+                                'tipe_logger' => $tipeLogger->type_logger,
+                                'is_active' => $tipeLogger->is_active
                             ]);
                         }
                     }
@@ -284,15 +303,6 @@
             }
 
             try {
-
-                // if ($request->input('role_id') != 'super_admin') {
-                //     if (count($request->input('site_permission')) == 0) {
-                //         return response()->json([
-                //             'message' => 'No Monitoring Site configuration selected',
-                //             'responseTime' => now()
-                //         ], 400);
-                //     }
-                // }
 
                 DB::transaction(function () use ($request, $userId) {
                     User::where('id', $userId)->update([
