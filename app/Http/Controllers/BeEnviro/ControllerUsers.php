@@ -373,11 +373,14 @@
                                 ]);
 
                             foreach ($item->type_logger as $tipeLogger) {
-                                UserSiteTipeLogger::where('users_sites_id', $userSites->id)
-                                    ->where('tipe_logger', $tipeLogger->type_logger)
-                                    ->update([
-                                        'is_active' => $tipeLogger->is_active
-                                    ]);
+                                UserSiteTipeLogger::updateOrCreate([
+                                    'users_sites_id' => $userSites->id,
+                                    'tipe_logger' => $tipeLogger->type_logger,
+                                ], [
+                                    'users_sites_id' => $userSites->id,
+                                    'tipe_logger' => $tipeLogger->type_logger,
+                                    'is_active' => $tipeLogger->is_active
+                                ]);
                             }
                         } else {
                             $userSite = (new UserSite)->create([

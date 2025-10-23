@@ -714,7 +714,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (checkedSites.length === 0 && checkedLoggers.length === 0) {
                 customerCheckbox.checked = false
                 customerCheckbox.indeterminate = false
-            } else if (checkedSites.length === relatedSites.length && checkedLoggers.length === relatedLoggers.length) {
+            } else if (checkedLoggers.length === relatedLoggers.length) {
                 customerCheckbox.checked = true
                 customerCheckbox.indeterminate = false
             } else {
