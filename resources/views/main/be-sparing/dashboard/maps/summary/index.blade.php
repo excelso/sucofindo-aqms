@@ -3,7 +3,7 @@
     <div class="content-main">
         <div class="content-header">
             <div class="content-title !items-start">
-                <div class="mr-4">
+                <div class="mr-4 {{ session()->get('use_sparing') <= 1 ? 'hidden' : '' }}">
                     <a href="{{ route('sparing.dashboard.maps') }}" class="mt-2 !text-[24px]">
                         <i class="fas fa-arrow-circle-left"></i>
                     </a>
@@ -32,7 +32,7 @@
                 </div>
             </div>
             <div class="flex flex-row items-center">
-                <div class="ml-2">
+                <div class="ml-2 {{ session()->get('use_sparing') <= 1 ? 'hidden' : '' }}">
                     <input type="hidden" class="userLevel" value="{{ Auth::user()->user_level }}">
                     <div class="form-group">
                         <div class="form-group-control bg-white w-[320px]">

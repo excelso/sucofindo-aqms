@@ -101,7 +101,7 @@
                     Route::post('data-platform-marker', [BeSparingControllerMaps::class, 'handleDataPlatformMarker']);
 
                     Route::prefix('summary')->group(function () {
-                        Route::get('detail/{uid}/{tipeLogger}', [BeSparingControllerSummary::class, 'index']);
+                        Route::get('detail/{uid}/{tipeLogger}', [BeSparingControllerSummary::class, 'index'])->name('sparing.dashboard.maps.summary');
                         Route::post('data-platform', [BeSparingControllerSummary::class, 'handleDataPlatform']);
                         Route::post('data-last-parameter', [BeSparingControllerSummary::class, 'handleDataLastParameter']);
                         Route::post('data-persentase', [BeSparingControllerSummary::class, 'handleDataPersentase']);

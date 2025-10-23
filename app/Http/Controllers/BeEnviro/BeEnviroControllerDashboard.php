@@ -42,13 +42,7 @@
             try {
 
                 if ($request->input('titleType') == 'SPARING') {
-                    $dataUserSite = UserSite::where('user_id', request()->user()->id)->where('status_site', 1)->get();
-                    $site_ids = [];
-                    foreach ($dataUserSite as $item) {
-                        $site_ids[] = $item->site_id;
-                    }
-
-                    $dataLogger = Platform::platformBySearch($request->input('search'), $site_ids)->with([
+                    $dataLogger = Platform::platformBySearch(request()->user()->id_sparing, $request->input('search'))->with([
                         'site:id,nama_site,customer_lokasi_id',
                         'site.customerLokasi:id,customer_id,nama_lokasi',
                         'site.customerLokasi.customer:id,nama_perusahaan'
@@ -87,7 +81,7 @@
         public function handleDataPlatformsMarker(Request $request) {
             try {
 
-                $dataPlatformSparing = Platform::platformMarker()->with([
+                $dataPlatformSparing = Platform::platformMarker(request()->user()->id_sparing)->with([
                     'site:id,nama_site,customer_lokasi_id',
                     'site.customerLokasi:id,customer_id,nama_lokasi',
                     'site.customerLokasi.customer:id,nama_perusahaan'

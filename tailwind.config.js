@@ -19,6 +19,7 @@ export default {
         fontFamily: {
             nunito: ['Nunito', ...defaultTheme.fontFamily.sans],
             materialIcon: ['Material Icons'],
+            fa: ['"Font Awesome 6 Free"'],
         },
         extend: {
             fontFamily: {
@@ -38,6 +39,12 @@ export default {
                 "dark-1": '#282942',
                 "dark-2": '#151623',
                 "purple-1": '#b1b5f1',
+            },
+            content: {
+                'fa-check': '"\\f00c"',
+                'fa-heart': '"\\f004"',
+                'fa-user': '"\\f007"',
+                'fa-bars': '"\\f0c9"',
             },
             keyframes: {
                 fadeOpacity: {

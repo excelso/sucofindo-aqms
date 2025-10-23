@@ -412,14 +412,14 @@
                     }
                 });
 
-                $user = User::where('id', $userId)->first();
-
-                $dataUserSite = UserSite::where('user_id', $user->id_sparing)->where('status_site', 1)->get();
-                $userPlatformIds = UserPlatforms::userPlatforms($user->id)->where('is_active', 1)->get();
-                session([
-                    'use_sparing' => $dataUserSite->count(),
-                    'use_aqms' => $userPlatformIds->count(),
-                ]);
+                // $user = User::where('id', $userId)->first();
+                //
+                // $dataUserSite = UserSite::where('user_id', $user->id_sparing)->where('status_site', 1)->get();
+                // $userPlatformIds = UserPlatforms::userPlatforms($user->id)->where('is_active', 1)->get();
+                // session([
+                //     'use_sparing' => $dataUserSite->count(),
+                //     'use_aqms' => $userPlatformIds->count(),
+                // ]);
 
                 return response()->json([
                     'message' => 'Update User data saved successfully',

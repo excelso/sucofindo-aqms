@@ -42,51 +42,57 @@
                         </li>
                     </ul>
                 </li>
-                <li class="navItem {{Request::segment(2) == 'master' ? 'mm-active' : ''}}">
-                    <a class="navLink {{Request::segment(2) == 'master' ? 'navLinkActive' : ''}}">
-                        <div class="flex items-center justify-start">
-                            <div class="navIcon">
-                                <i class="fas fa-briefcase"></i>
+                @if(in_array(request()->user()->user_level, ['super_admin', 'admin']))
+                    <li class="navItem {{Request::segment(2) == 'master' ? 'mm-active' : ''}}">
+                        <a class="navLink {{Request::segment(2) == 'master' ? 'navLinkActive' : ''}}">
+                            <div class="flex items-center justify-start">
+                                <div class="navIcon">
+                                    <i class="fas fa-briefcase"></i>
+                                </div>
+                                <div class="navText">
+                                    <p>Master</p>
+                                </div>
                             </div>
-                            <div class="navText">
-                                <p>Master</p>
+                            <div class="navArrowDown">
+                                <i class="fa fa-caret-right"></i>
                             </div>
-                        </div>
-                        <div class="navArrowDown">
-                            <i class="fa fa-caret-right"></i>
-                        </div>
-                    </a>
-                    <ul class="navTreeview">
-                        <li class="navItem">
-                            <a class="navLink {{Request::segment(1) == 'aqms' && Request::segment(2) == 'master' && Request::segment(3) == 'sites' ? 'navLinkActive' : ''}}" href="{{ route('master.sites') }}">
-                                <div class="navText">
-                                    <p>Sites</p>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="navItem">
-                            <a class="navLink {{Request::segment(1) == 'aqms' && Request::segment(2) == 'master' && Request::segment(3) == 'sites-location' ? 'navLinkActive' : ''}}" href="{{ route('master.sites-location') }}">
-                                <div class="navText">
-                                    <p>Location</p>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="navItem">
-                            <a class="navLink {{Request::segment(1) == 'aqms' && Request::segment(2) == 'master' && Request::segment(3) == 'platform-loggers' ? 'navLinkActive' : ''}}" href="{{ route('master.platform-loggers') }}">
-                                <div class="navText">
-                                    <p>Platform Loggers</p>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="navItem">
-                            <a class="navLink {{Request::segment(1) == 'aqms' && Request::segment(2) == 'master' && Request::segment(3) == 'users' ? 'navLinkActive' : ''}}" href="{{ route('master.users') }}">
-                                <div class="navText">
-                                    <p>Users</p>
-                                </div>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
+                        </a>
+                        <ul class="navTreeview">
+                            @if(request()->user()->user_level == 'super_admin')
+                                <li class="navItem">
+                                    <a class="navLink {{Request::segment(1) == 'aqms' && Request::segment(2) == 'master' && Request::segment(3) == 'sites' ? 'navLinkActive' : ''}}" href="{{ route('master.sites') }}">
+                                        <div class="navText">
+                                            <p>Sites</p>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li class="navItem">
+                                    <a class="navLink {{Request::segment(1) == 'aqms' && Request::segment(2) == 'master' && Request::segment(3) == 'sites-location' ? 'navLinkActive' : ''}}" href="{{ route('master.sites-location') }}">
+                                        <div class="navText">
+                                            <p>Location</p>
+                                        </div>
+                                    </a>
+                                </li>
+                            @endif
+                            <li class="navItem">
+                                <a class="navLink {{Request::segment(1) == 'aqms' && Request::segment(2) == 'master' && Request::segment(3) == 'platform-loggers' ? 'navLinkActive' : ''}}" href="{{ route('master.platform-loggers') }}">
+                                    <div class="navText">
+                                        <p>Platform Loggers</p>
+                                    </div>
+                                </a>
+                            </li>
+                            @if(request()->user()->user_level == 'super_admin')
+                                <li class="navItem">
+                                    <a class="navLink {{Request::segment(1) == 'aqms' && Request::segment(2) == 'master' && Request::segment(3) == 'users' ? 'navLinkActive' : ''}}" href="{{ route('master.users') }}">
+                                        <div class="navText">
+                                            <p>Users</p>
+                                        </div>
+                                    </a>
+                                </li>
+                            @endif
+                        </ul>
+                    </li>
+                @endif
 
                 <li class="navItem {{Request::segment(2) == 'settings' ? 'mm-active' : ''}}">
                     <a class="navLink {{Request::segment(2) == 'settings' ? 'navLinkActive' : ''}}">

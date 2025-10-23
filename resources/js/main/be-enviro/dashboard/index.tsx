@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnCloseSearch = document.querySelector('.btnCloseSearch')
 
     const platformFromTitle = document.querySelector('.platformFromTitle')
+    const statusButtons = document.querySelectorAll<HTMLElement>('.btn-status');
     const platformItems = document.querySelector('.platformItems')
     //endregion
 
@@ -66,6 +67,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 currentDataType = "AQMS";
                 await handleDataPlatforms("AQMS")
             }
+        })
+    }
+
+    function setActiveStatus(clickedButton: HTMLElement) {
+        statusButtons.forEach(button => {
+            button.classList.remove('active');
+        });
+        clickedButton.classList.add('active');
+    }
+
+    if (statusButtons) {
+        statusButtons.forEach((elm) => {
+            elm.addEventListener('click', e => {
+                setActiveStatus(elm)
+            })
         })
     }
 

@@ -2,6 +2,7 @@
 
     namespace App\Http\Middleware;
 
+    use App\Models\BeSparing\Master\Platform;
     use Closure;
     use Illuminate\Http\RedirectResponse;
     use Illuminate\Http\Request;
@@ -37,7 +38,16 @@
                             if (session()->get('use_aqms') != 0) {
                                 return redirect()->intended(route('aqms.dashboard'));
                             } else {
-                                return redirect()->intended(route('sparing.dashboard.hasil-pengukuran'));
+                                if (!in_array($request->user()->user_level, ['super_admin', 'admin'])) {
+                                    if (session()->get('use_sparing') > 1) {
+                                        return redirect()->intended(route('sparing.dashboard.maps'));
+                                    } else {
+                                        $dataPlatform = Platform::platformMarker($request->user()->id_sparing)->get();
+                                        return redirect()->intended(route('sparing.dashboard.maps.summary', [$dataPlatform[0]->uid, $dataPlatform[0]->tipe_logger]));
+                                    }
+                                } else {
+                                    return redirect()->intended(route('sparing.dashboard.hasil-pengukuran'));
+                                }
                             }
                         }
                     } catch (NotFoundExceptionInterface|ContainerExceptionInterface $e) {

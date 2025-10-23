@@ -9,6 +9,7 @@
     use App\Models\BeSparing\Master\Parameter;
     use App\Models\BeSparing\Master\ParameterLimit;
     use App\Models\BeSparing\Master\Platform;
+    use App\Models\Users\User;
     use Auth;
     use Carbon\Carbon;
     use Carbon\CarbonPeriod;
@@ -44,19 +45,20 @@
         public function handleInfoPlatform(Request $request) {
             try {
 
-                $dataTotalPlatform = Platform::when($request->input('tipe_logger', 1), function ($query, $tipeLogger) {
-                    return $query->where('tipe_logger', $tipeLogger);
-                })->where('status_validasi', '=', 'Active')->get()->count();
+                $dataUser = User::where('id', Auth::user()->id)->first();
 
-                $dataTotalPlatformOnline = Platform::when($request->input('tipe_logger', 1), function ($query, $tipeLogger) {
-                    return $query->where('tipe_logger', $tipeLogger);
-                })->where('status_validasi', '=', 'Active')
-                    ->where('status_platform', '=', 'online')->get()->count();
+                $dataTotalPlatform = Platform::platformByLimit($dataUser->id_sparing)->get()->count();
+                $dataTotalPlatformOnline = Platform::platformByLimit($dataUser->id_sparing, [
+                    'search' => [
+                        'status_platform' => 1
+                    ],
+                ])->get()->count();
 
-                $dataTotalPlatformOffline = Platform::when($request->input('tipe_logger', 1), function ($query, $tipeLogger) {
-                    return $query->where('tipe_logger', $tipeLogger);
-                })->where('status_validasi', '=', 'Active')
-                    ->where('status_platform', '=', 'offline')->get()->count();
+                $dataTotalPlatformOffline = Platform::platformByLimit($dataUser->id_sparing, [
+                    'search' => [
+                        'status_platform' => 0
+                    ],
+                ])->get()->count();
 
                 return response()->json([
                     'data' => [
@@ -80,13 +82,8 @@
         public function handleDataPlatforms(Request $request) {
             try {
 
-                $dataUserSite = UserSite::where('user_id', request()->user()->id)->where('status_site', 1)->get();
-                $site_ids = [];
-                foreach ($dataUserSite as $item) {
-                    $site_ids[] = $item->site_id;
-                }
-
-                $dataLogger = Platform::platformByLimit($site_ids, [
+                $dataUser = User::where('id', Auth::user()->id)->first();
+                $dataLogger = Platform::platformByLimit($dataUser->id_sparing, [
                     'search' => $request->input(),
                 ])->with([
                     'site:id,nama_site,customer_lokasi_id',

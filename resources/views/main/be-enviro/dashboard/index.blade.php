@@ -82,14 +82,13 @@
         <div class="left-panel absolute top-0 bottom-0 left-[5rem] z-10 w-[380px] bg-white shadow-md">
             <div class="mt-24 px-7 pb-5 font-bold platformFromTitle">Enviro</div>
             <div class="mx-7 flex items-center flex-row flex-nowrap overflow-x-auto gap-2 pb-4">
-                <div class="cursor-pointer rounded-md bg-gray-300 px-3 py-1 flex-shrink-0">
-                    <span><i class="fas fa-check"></i></span>
+                <div class="btn-status active btnAll">
                     <span class="font-bold text-[13px]">All</span>
                 </div>
-                <div class="cursor-pointer rounded-md bg-gray-200 px-3 py-1 flex-shrink-0">
+                <div class="btn-status btnOnline">
                     <span class="font-bold text-[13px]">Online</span>
                 </div>
-                <div class="cursor-pointer rounded-md bg-gray-200 px-3 py-1 flex-shrink-0">
+                <div class="btn-status btnOffline">
                     <span class="font-bold text-[13px]">Offline</span>
                 </div>
             </div>

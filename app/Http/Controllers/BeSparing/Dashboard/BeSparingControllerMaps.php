@@ -5,6 +5,8 @@
     use App\Http\Controllers\Controller;
     use App\Models\BeSparing\Karyawan\UserSite;
     use App\Models\BeSparing\Master\Platform;
+    use App\Models\Users\User;
+    use Auth;
     use Exception;
     use Illuminate\Http\JsonResponse;
     use Illuminate\Http\Request;
@@ -28,13 +30,8 @@
         public function handleDataPlatform(Request $request): JsonResponse {
             try {
 
-                $dataUserSite = UserSite::where('user_id', $request->user()->id)->where('status_site', 1)->get();
-                $site_ids = [];
-                foreach ($dataUserSite as $item) {
-                    $site_ids[] = $item->site_id;
-                }
-
-                $dataPlatform = Platform::platformBySearch($request->input('search'), $site_ids)
+                $dataUser = User::where('id', Auth::user()->id)->first();
+                $dataPlatform = Platform::platformBySearch($dataUser->id_sparing, $request->input('search'))
                     ->with('site', 'site.customer')->get();
 
                 return response()->json([
@@ -54,7 +51,8 @@
         public function handleDataPlatformMarker(): JsonResponse {
             try {
 
-                $dataPlatform = Platform::platformMarker()
+                $dataUser = User::where('id', Auth::user()->id)->first();
+                $dataPlatform = Platform::platformMarker($dataUser->id_sparing)
                     ->with('site', 'site.customerLokasi', 'site.customer', 'site.customer.jenisIndustri')
                     ->get();
 

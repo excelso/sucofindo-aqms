@@ -127,7 +127,7 @@
             $builder->where('tipe_logger', $tipeLogger);
         }
 
-        public function scopePlatformBySearch(Builder $builder, $search = '', $sites = []): void {
+        public function scopePlatformBySearch(Builder $builder, $userId, $search = ''): void {
             $builder->distinct();
             $builder->leftJoin(DB::raw('
                 (
@@ -150,7 +150,7 @@
                     $join->on('t_users_sites.id', '=', 't_users_sites_tipe_logger.users_sites_id');
                     $join->on('t_platform.tipe_logger', '=', 't_users_sites_tipe_logger.tipe_logger');
                 });
-                $builder->where('t_users_sites.user_id', '=', Auth::user()->id);
+                $builder->where('t_users_sites.user_id', '=', $userId);
                 $builder->where('t_users_sites.status_site', '=', 1);
             }
 
@@ -167,10 +167,10 @@
             }
 
             $builder->orderBy('last_online', 'DESC');
-            $builder->orderBy('tipe_logger');
+            $builder->orderBy('t_platform.tipe_logger');
         }
 
-        public function scopePlatformByLimit(Builder $builder, $sites = [], $options = []): void {
+        public function scopePlatformByLimit(Builder $builder, $userId, $options = []): void {
             $orderBy = [];
             $search = [];
             if (count($options) != 0) {
@@ -192,11 +192,11 @@
             $builder->where('status_validasi', 'Active');
             if (request()->user()->user_level != 'super_admin') {
                 $builder->join('t_users_sites', 't_platform.site_id', '=', 't_users_sites.site_id');
-                $builder->join('t_users_sites_tipe_logger', function ($join) {
-                    $join->on('t_users_sites.id', '=', 't_users_sites_tipe_logger.users_sites_id');
-                    $join->on('t_platform.tipe_logger', '=', 't_users_sites_tipe_logger.tipe_logger');
-                });
-                $builder->where('t_users_sites.user_id', '=', Auth::user()->id);
+                // $builder->join('t_users_sites_tipe_logger', function ($join) {
+                //     $join->on('t_users_sites.id', '=', 't_users_sites_tipe_logger.users_sites_id');
+                //     $join->on('t_platform.tipe_logger', '=', 't_users_sites_tipe_logger.tipe_logger');
+                // });
+                $builder->where('t_users_sites.user_id', '=', $userId);
                 $builder->where('t_users_sites.status_site', '=', 1);
             }
 
@@ -258,7 +258,7 @@
             $builder->orderBy('status_validasi');
         }
 
-        public function scopePlatformMarker(Builder $builder): void {
+        public function scopePlatformMarker(Builder $builder, $userId): void {
 
             $builder->distinct();
             $builder->select(
@@ -272,7 +272,7 @@
                     $join->on('t_users_sites.id', '=', 't_users_sites_tipe_logger.users_sites_id');
                     $join->on('t_platform.tipe_logger', '=', 't_users_sites_tipe_logger.tipe_logger');
                 });
-                $builder->where('t_users_sites.user_id', '=', Auth::user()->id);
+                $builder->where('t_users_sites.user_id', '=', $userId);
                 $builder->where('t_users_sites.status_site', '=', 1);
             }
 
