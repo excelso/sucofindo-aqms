@@ -29,6 +29,8 @@
                 $platforms = Platforms::dataPlatformByUserPlatform($userPlatformId)
                     ->with('sitesLocation')->get();
 
+                $isPtzSupport = in_array($request->user()->user_level, ['super_admin', 'admin']);
+
                 $platformTemp = [];
                 foreach ($platforms as $platform) {
                     $platformTemp[] = [
@@ -36,9 +38,9 @@
                         'uid_alias' => $platform->uid_alias,
                         'siteName' => $platform->sitesLocation->location_name ?? 'Unknown',
                         'cctvLink1' => $platform->cctv_link_1,
-                        'cctv1IsSupportPTZ' => $platform->cctv_1_support_ptz,
+                        'cctv1IsSupportPTZ' => $isPtzSupport ? $platform->cctv_1_support_ptz : 0,
                         'cctvLink2' => $platform->cctv_link_2,
-                        'cctv2IsSupportPTZ' => $platform->cctv_2_support_ptz,
+                        'cctv2IsSupportPTZ' => $isPtzSupport ? $platform->cctv_2_support_ptz : 0,
                         'timezone' => $platform->timezone,
                         'locale' => 'en-US',
                     ];

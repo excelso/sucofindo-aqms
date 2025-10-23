@@ -383,7 +383,6 @@ document.addEventListener('DOMContentLoaded', function () {
                                 siteMonitorHandler.setPermissions(user_platforms)
 
                                 let checkboxChecked = []
-
                                 user_sites.map((site: any) => {
                                     const {customer_id, site_id, user_sites_tipe_logger} = site
                                     checkboxChecked.push({
@@ -392,7 +391,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                         type_logger: user_sites_tipe_logger.map((item: any) => {
                                             return {
                                                 id: item.id,
-                                                type_logger: item.tipe_logger
+                                                type_logger: item.tipe_logger,
+                                                is_active: item.is_active
                                             }
                                         })
                                     })
@@ -429,11 +429,13 @@ document.addEventListener('DOMContentLoaded', function () {
                                                 const typeLogger: [any, any] = [
                                                     {
                                                         id: internalLogger.getAttribute('data-id') ?? 'x',
-                                                        type_logger: internalLogger && internalLogger.checked ? 1 : 0
+                                                        type_logger: 1,
+                                                        is_active: internalLogger && internalLogger.checked ? 1 : 0
                                                     },
                                                     {
                                                         id: reEngineerLogger.getAttribute('data-id') ?? 'x',
-                                                        type_logger: reEngineerLogger && reEngineerLogger.checked ? 2 : 0
+                                                        type_logger: 2,
+                                                        is_active: reEngineerLogger && reEngineerLogger.checked ? 1 : 0
                                                     }
                                                 ]
 
@@ -555,7 +557,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (internalLogger) {
                     if (item.type_logger.length !== 0) {
-                        internalLogger.checked = item.type_logger[0].type_logger === 1
+                        internalLogger.checked = item.type_logger[0].type_logger === 1 && item.type_logger[0].is_active === 1
                         internalLogger.setAttribute('data-id', item.type_logger[0].id)
                     }
                 }
@@ -563,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (reEngineerLogger) {
                     if (item.type_logger.length !== 0) {
                         if (item.type_logger[1]) {
-                            reEngineerLogger.checked = item.type_logger[1].type_logger === 2
+                            reEngineerLogger.checked = item.type_logger[1].type_logger === 2 && item.type_logger[1].is_active === 1
                             reEngineerLogger.setAttribute('data-id', item.type_logger[1].id)
                         }
                     }
@@ -688,8 +690,23 @@ document.addEventListener('DOMContentLoaded', function () {
             const customerId = customerCheckbox.dataset.id
             if (!customerId) return
 
-            const relatedSites = Array.from(siteMonitorSparing.querySelectorAll<CheckboxElement>(`.checkSite[data-parent="${customerId}"]`)).filter(isCheckbox)
-            const relatedLoggers = Array.from(siteMonitorSparing.querySelectorAll<CheckboxElement>(`[data-parent="${customerId}"][data-type-logger="true"]`)).filter(isCheckbox)
+            const relatedSites = Array.from(
+                    siteMonitorSparing.querySelectorAll<CheckboxElement>(
+                            `.checkSite[data-parent="${customerId}"]:not([data-type-logger="true"])`
+                    )
+            ).filter(isCheckbox)
+
+            const relatedLoggers = Array.from(
+                    siteMonitorSparing.querySelectorAll<CheckboxElement>(
+                            `[data-parent="${customerId}"][data-type-logger="true"]`
+                    )
+            ).filter(isCheckbox)
+
+            relatedSites.forEach(site => {
+                if (site.checked) {
+                    site.checked = false
+                }
+            })
 
             const checkedSites = relatedSites.filter(site => site.checked)
             const checkedLoggers = relatedLoggers.filter(logger => logger.checked)

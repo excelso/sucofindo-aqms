@@ -77,7 +77,7 @@
         }
         //endregion
 
-        //region Handle Data Platforms
+        //region Handle Data Platforms Marker
         public function handleDataPlatformsMarker(Request $request) {
             try {
 

@@ -186,9 +186,8 @@
                 $detailUser = User::dataUserById($userId)
                     ->with([
                         'userPlatforms:user_id,platform_id,type_logger,is_active',
-                        'userSites' => function ($q) {
-                            $q->where('status_site', 1);
-                        }, 'userSites.userSitesTipeLogger'
+                        'userSites',
+                        'userSites.userSitesTipeLogger'
                     ])->first();
 
                 // if ($detailUser && $detailUser->userSites) {
@@ -374,13 +373,11 @@
                                 ]);
 
                             foreach ($item->type_logger as $tipeLogger) {
-                                UserSiteTipeLogger::updateOrCreate([
-                                    'id' => $tipeLogger->id,
-                                    'users_sites_id' => $userSites->id,
-                                ], [
-                                    'users_sites_id' => $userSites->id,
-                                    'tipe_logger' => $tipeLogger->type_logger
-                                ]);
+                                UserSiteTipeLogger::where('users_sites_id', $userSites->id)
+                                    ->where('tipe_logger', $tipeLogger->type_logger)
+                                    ->update([
+                                        'is_active' => $tipeLogger->is_active
+                                    ]);
                             }
                         } else {
                             $userSite = (new UserSite)->create([
@@ -393,7 +390,8 @@
                             foreach ($item->type_logger as $tipeLogger) {
                                 UserSiteTipeLogger::create([
                                     'users_sites_id' => $userSite->id,
-                                    'tipe_logger' => $tipeLogger->type_logger
+                                    'tipe_logger' => $tipeLogger->type_logger,
+                                    'is_active' => $tipeLogger->is_active
                                 ]);
                             }
                         }
@@ -404,22 +402,16 @@
                         if (!in_array($item->site_id, $userSitesExist)) {
                             (new UserSite)->where('id', $item->id)->update([
                                 'user_id' => $sparingUserId->id_sparing,
-                                'customer_id' => $item['customer_id'],
-                                'site_id' => $item['site_id'],
                                 'status_site' => 0,
                             ]);
+
+                            UserSiteTipeLogger::where('users_sites_id', $item->id)
+                                ->update([
+                                    'is_active' => 0
+                                ]);
                         }
                     }
                 });
-
-                // $user = User::where('id', $userId)->first();
-                //
-                // $dataUserSite = UserSite::where('user_id', $user->id_sparing)->where('status_site', 1)->get();
-                // $userPlatformIds = UserPlatforms::userPlatforms($user->id)->where('is_active', 1)->get();
-                // session([
-                //     'use_sparing' => $dataUserSite->count(),
-                //     'use_aqms' => $userPlatformIds->count(),
-                // ]);
 
                 return response()->json([
                     'message' => 'Update User data saved successfully',
