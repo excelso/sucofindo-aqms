@@ -30,18 +30,7 @@
          */
         public function boot(): void {
             if (config('app.env') != 'local') {
-                if ($this->app->runningInConsole()) {
-                    return;
-                }
-
-                $host = request()->getHost();
-                $httpsOnlyDomains = [
-                    'beenviro.beraucoal.co.id',
-                ];
-
-                if (in_array($host, $httpsOnlyDomains, true)) {
-                    URL::forceScheme('https');
-                }
+                URL::forceScheme('https');
             }
 
             Auth::provider('external-api', function ($app, array $config) {
