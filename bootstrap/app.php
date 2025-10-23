@@ -31,6 +31,7 @@
             ]);
 
             // $middleware->append(HandleCors::class);
+            $middleware->trustProxies(at: '*');
 
             $middleware->alias([
                 'localize' => LaravelLocalizationRoutes::class,
