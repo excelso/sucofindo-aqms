@@ -30,7 +30,7 @@
                 DetectDevice::class,
             ]);
 
-            $middleware->append(HandleCors::class);
+            // $middleware->append(HandleCors::class);
 
             $middleware->alias([
                 'localize' => LaravelLocalizationRoutes::class,
