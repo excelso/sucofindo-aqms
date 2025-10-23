@@ -1,7 +1,8 @@
 @section('title', 'Beranda')
 <x-app-layout>
     <div class="content-main !max-w-full !p-0">
-        <div class="absolute top-[1.5rem] right-[2.9rem] z-10">
+        <!--region Main Panel -->
+        <div class="absolute top-[1.5rem] right-[5.9rem] z-10">
             <div id="dropdownProjectButton" data-dropdown-toggle="dropdownProject" data-dropdown-offset-skidding="-60" class="dropdown-button cursor-pointer bg-white px-3 py-2" type="button">
                 <div class="flex items-center capitalize">
                     Platforms <i class="fas fa-angle-down ml-2"></i>
@@ -33,7 +34,7 @@
                         </a>
                     </li>
                     <li>
-                        <a rel="alternate" href="{{ route('sparing.dashboard.hasil-pengukuran') }}">
+                        <a rel="alternate" href="{{ route('sparing.dashboard') }}">
                             <div class="flex items-center">
                                 <div class="ml-2 overflow-hidden">
                                     <div class="truncate">
@@ -46,6 +47,31 @@
                 </ul>
             </div>
         </div>
+
+        <div class="absolute top-[1.3rem] right-[2.3rem] z-10">
+            <div id="dropdownAvatarButton" data-dropdown-toggle="dropdownAvatar" data-dropdown-offset-skidding="-90" class="dropdown-button cursor-pointer !bg-white border" type="button">
+                <span class="sr-only">Open user menu</span>
+                <div class="avatar !bg-white !text-black">
+                    <span>{{ substr(Auth::user()->nama_lengkap, 0, 1)}}</span>
+                </div>
+            </div>
+
+            <div id="dropdownAvatar" class="dropdown-panel w-[250px]">
+                <div class="dropdown-header">
+                    <div class="font-medium truncate">
+                        {{ Auth::user()->nama_lengkap }}
+                    </div>
+                    <div class="truncate">{{Auth::user()->email}}</div>
+                </div>
+                <div class="dropdown-footer">
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <a href="javascript:void(0)" onclick="event.preventDefault(); this.closest('form').submit();">Logout</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- endregion -->
 
         <!--region Fix Left Panel -->
         <div class="absolute top-0 bottom-0 left-0 z-10 w-[80px] bg-gray-100 flex items-center flex-col">

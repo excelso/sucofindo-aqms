@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
 
                     dataPlatforms.push(`
-                        <a href="/dashboard/maps/summary/detail/${uid}/${tipe_logger}" class="right-nav-item">
+                        <a href="/sparing/dashboard/maps/summary/detail/${uid}/${tipe_logger}" class="right-nav-item">
                             <div class="avatar"><span>${Array.from(uid)[0]}</span></div>
                             <div class="min-w-0">
                                 <div class="text-[15px]">${uid}</div>
@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     let footerWindow = `
                         <div class="p-4">
                             <div class="flex items-center justify-between">
-                                <a class="text-blue-500" href="/dashboard/maps/summary/detail/${uid}/${tipe_logger}">Lihat Detail <i class="fas fa-arrow-right ml-2"></i></a>
+                                <a class="text-blue-500" href="/sparing/dashboard/maps/summary/detail/${uid}/${tipe_logger}">Lihat Detail <i class="fas fa-arrow-right ml-2"></i></a>
                                 <div class="ds-badge ds-badge-outline ${badgeStatus} !text-[11px] capitalize ml-10">${statusPlatform}</div>
                             </div>
                         </div>

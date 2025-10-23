@@ -11,6 +11,7 @@
     use App\Http\Controllers\BeEnviro\ControllerUsers;
     use App\Http\Controllers\BeEnviro\Settings\ControllerChangePassword;
     use App\Http\Controllers\BeSparing\BeSparingControllerNotifikasi;
+    use App\Http\Controllers\BeSparing\Dashboard\BeSparingControllerDashboard;
     use App\Http\Controllers\BeSparing\Dashboard\BeSparingControllerHasilPengukuran;
     use App\Http\Controllers\BeSparing\Dashboard\BeSparingControllerMaps;
     use App\Http\Controllers\BeSparing\Dashboard\BeSparingControllerSummary;
@@ -83,7 +84,7 @@
 
         //region Sparing Routing
         Route::prefix('sparing')->group(function () {
-            Route::get('/', [BeSparingControllerMaps::class, 'index'])->name('sparing.dashboard');
+            Route::get('/', [BeSparingControllerDashboard::class, 'index'])->name('sparing.dashboard');
             Route::prefix('dashboard')->group(function () {
                 Route::prefix('hasil-pengukuran')->group(function () {
                     Route::get('/', [BeSparingControllerHasilPengukuran::class, 'index'])->name('sparing.dashboard.hasil-pengukuran');

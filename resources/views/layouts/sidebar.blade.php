@@ -121,39 +121,54 @@
             </ul>
         @elseif(request()->is('sparing*'))
             <ul class="metismenu" id="menu">
-                <li class="navItem {{Request::segment(2) == 'dashboard' ? 'mm-active' : ''}}">
-                    <a class="navLink {{Request::segment(2) == 'dashboard' ? 'navLinkActive' : ''}}">
-                        <div class="flex items-center justify-start">
-                            <div class="navIcon">
-                                <i class="fas fa-house"></i>
+                @if(session()->get('use_sparing') <= 1)
+                    <li class="navItem">
+                        <a href="{{ route('sparing.dashboard') }}" class="navLink {{ Request::segment(1) == 'sparing' && Request::segment(2) == 'dashboard' ? 'navLinkActive' : '' }}">
+                            <div class="flex items-center justify-start">
+                                <div class="navIcon">
+                                    <i class="fas fa-house"></i>
+                                </div>
+                                <div class="navText">
+                                    <p>Beranda</p>
+                                </div>
                             </div>
-                            <div class="navText">
-                                <p>Dashboard</p>
+                        </a>
+                    </li>
+                @else
+                    <li class="navItem {{Request::segment(2) == 'dashboard' ? 'mm-active' : ''}}">
+                        <a class="navLink {{Request::segment(2) == 'dashboard' ? 'navLinkActive' : ''}}">
+                            <div class="flex items-center justify-start">
+                                <div class="navIcon">
+                                    <i class="fas fa-house"></i>
+                                </div>
+                                <div class="navText">
+                                    <p>Dashboard</p>
+                                </div>
                             </div>
-                        </div>
-                        <div class="navArrowDown">
-                            <i class="fa fa-caret-right"></i>
-                        </div>
-                    </a>
-                    <ul class="navTreeview">
-                        @if(in_array(request()->user()->user_level, ['super_admin', 'admin']))
+                            <div class="navArrowDown">
+                                <i class="fa fa-caret-right"></i>
+                            </div>
+                        </a>
+                        <ul class="navTreeview">
+                            @if(in_array(request()->user()->user_level, ['super_admin', 'admin']))
+                                <li class="navItem">
+                                    <a class="navLink {{Request::segment(1) == 'sparing' && Request::segment(2) == 'dashboard' && Request::segment(3) == 'hasil-pengukuran' ? 'navLinkActive' : ''}}" href="{{ route('sparing.dashboard.hasil-pengukuran') }}">
+                                        <div class="navText">
+                                            <p>Hasil Pengukuran</p>
+                                        </div>
+                                    </a>
+                                </li>
+                            @endif
                             <li class="navItem">
-                                <a class="navLink {{Request::segment(1) == 'sparing' && Request::segment(2) == 'dashboard' && Request::segment(3) == 'hasil-pengukuran' ? 'navLinkActive' : ''}}" href="{{ route('sparing.dashboard.hasil-pengukuran') }}">
+                                <a class="navLink {{Request::segment(1) == 'sparing' && Request::segment(2) == 'dashboard' && Request::segment(3) == 'maps' ? 'navLinkActive' : ''}}" href="{{ route('sparing.dashboard.maps') }}">
                                     <div class="navText">
-                                        <p>Hasil Pengukuran</p>
+                                        <p>Peta Sebaran</p>
                                     </div>
                                 </a>
                             </li>
-                        @endif
-                        <li class="navItem">
-                            <a class="navLink {{Request::segment(1) == 'sparing' && Request::segment(2) == 'dashboard' && Request::segment(3) == 'maps' ? 'navLinkActive' : ''}}" href="{{ route('sparing.dashboard.maps') }}">
-                                <div class="navText">
-                                    <p>Peta Sebaran</p>
-                                </div>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
+                        </ul>
+                    </li>
+                @endif
 
                 <li class="navItem {{Request::segment(2) == 'reports' ? 'mm-active' : ''}}">
                     <a class="navLink {{Request::segment(2) == 'reports' ? 'navLinkActive' : ''}}">

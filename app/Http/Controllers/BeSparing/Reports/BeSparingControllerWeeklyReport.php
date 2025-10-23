@@ -23,13 +23,7 @@
 
         public function index(Request $request): View {
 
-            $dataUserSite = UserSite::where('user_id', request()->user()->id)->where('status_site', 1)->get();
-            $site_ids = [];
-            foreach ($dataUserSite as $item) {
-                $site_ids[] = $item->site_id;
-            }
-
-            $dataPlatform = Platform::platformByLimit($site_ids)->with('site')->get();
+            $dataPlatform = Platform::platformByLimit(request()->user()->id_sparing)->with('site')->get();
             $dataPlatformSelected = (new Platform)
                 ->where('uid', $request->input('platformUid') ?? $dataPlatform[0]->uid)
                 ->where('tipe_logger', $request->input('tipeLogger') ?? $dataPlatform[0]->tipe_logger)

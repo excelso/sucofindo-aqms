@@ -30,7 +30,7 @@
 
         public function index(Request $request): View {
 
-            $dataPlatforms = Platform::platformComboByLimit()->with('site')->get();
+            $dataPlatforms = Platform::platformComboByLimit(request()->user()->id_sparing)->with('site')->get();
             $platformUid = $request->input('platformUid') ?? $dataPlatforms[0]->uid;
             $tipeLogger = $request->input('tipeLogger') ?? $dataPlatforms[0]->tipe_logger;
 

@@ -41,7 +41,7 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a rel="alternate" href="{{ route('sparing.dashboard.hasil-pengukuran') }}">
+                                    <a rel="alternate" href="{{ route('sparing.dashboard') }}">
                                         <div class="flex items-center">
                                             <div class="ml-2 overflow-hidden">
                                                 <div class="truncate">
