@@ -3,6 +3,7 @@ import {checkClassList, delay, elapsedDate, getMetaContent, removeElmClass} from
 import {MarkerClusterer} from "@googlemaps/markerclusterer";
 import tzLookup from "tz-lookup"
 import {failureAlert} from "@/js/plugins/sweet-alert";
+import {data} from "jquery";
 
 interface CardData {
     imageUrl: string;
@@ -29,13 +30,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const platformItems = document.querySelector('.platformItems')
     //endregion
 
-    let currentDataType: string | null = null;
+    let currPlatformType: string | null = null;
+    let currHeartbeatStatus: string | null = "1";
 
     if (btnCloseSearch) {
         btnCloseSearch.addEventListener('click', () => {
             leftPanel.classList.remove('is-open')
             btnCloseSearch.classList.remove('opacity-100')
-            currentDataType = null
+            currPlatformType = null
             platformItems.innerHTML = ''
         })
     }
@@ -48,9 +50,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 btnCloseSearch.classList.add('opacity-100')
             }
 
-            if (currentDataType !== "SPARING") {
-                currentDataType = "SPARING";
-                await handleDataPlatforms("SPARING")
+            if (currPlatformType !== "SPARING") {
+                currPlatformType = "SPARING";
+                await handleDataPlatforms("SPARING", currHeartbeatStatus)
             }
         })
     }
@@ -63,9 +65,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 btnCloseSearch.classList.add('opacity-100')
             }
 
-            if (currentDataType !== "AQMS") {
-                currentDataType = "AQMS";
-                await handleDataPlatforms("AQMS")
+            if (currPlatformType !== "AQMS") {
+                currPlatformType = "AQMS";
+                await handleDataPlatforms("AQMS", currHeartbeatStatus)
             }
         })
     }
@@ -79,8 +81,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (statusButtons) {
         statusButtons.forEach((elm) => {
-            elm.addEventListener('click', e => {
+            elm.addEventListener('click', async () => {
+                const dataStatus = elm.getAttribute('data-status')
                 setActiveStatus(elm)
+                currHeartbeatStatus = dataStatus
+                await handleDataPlatforms(currPlatformType, currHeartbeatStatus)
             })
         })
     }
@@ -102,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // }
 
     //region Handle Left Panel Platforms
-    async function handleDataPlatforms(titleType: string, search?: any) {
+    async function handleDataPlatforms(titleType: string, heartbeatStatus: string, search?: any) {
         platformFromTitle.textContent = titleType
 
         const response = await fetch(`${url.pathname}/data-platforms`, {
@@ -113,6 +118,7 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             body: JSON.stringify({
                 titleType: titleType,
+                heartbeatStatus: heartbeatStatus,
                 search
             })
         })
@@ -124,10 +130,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.length !== 0) {
                 data.forEach((item: any) => {
                     if (titleType === 'SPARING') {
-                        const { uid, status_platform, site } = item
-                        const { customer_lokasi } = site
-                        const { nama_lokasi, customer } = customer_lokasi
-                        const { nama_perusahaan } = customer
+                        const {uid, status_platform, site} = item
+                        const {customer_lokasi} = site
+                        const {nama_lokasi, customer} = customer_lokasi
+                        const {nama_perusahaan} = customer
 
                         const cardData: CardData = {
                             imageUrl: 'https://placehold.co/70',
@@ -140,9 +146,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         const card = createPlatformCard(cardData);
                         platformItems.appendChild(card);
                     } else {
-                        const { uid, heartbeat_status, sites } = item
-                        const { site_name, companies } = sites
-                        const { company_name } = companies
+                        const {uid, heartbeat_status, sites} = item
+                        const {site_name, companies} = sites
+                        const {company_name} = companies
 
                         const cardData: CardData = {
                             imageUrl: 'https://placehold.co/70',
@@ -368,7 +374,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         content: `
                             <div class="info-window">
                                 <div>
-                                    <div class="mt-1">
+                                    <div class="flex items-center overflow-hidden w-full h-[100px]">
+                                        <img src="https://placehold.co/270" class="object-cover" alt="x">
+                                    </div>
+                                    <div class="mt-2">
                                         <div class="mb-2">
                                             <div class="font-bold">Location :</div>
                                             <div class="text-[12px]">${location}</div>
@@ -381,6 +390,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         headerContent: headerContent,
                         minWidth: 300,
                         maxWidth: 300,
+                        zIndex: 99
                     })
                     //endregion
 

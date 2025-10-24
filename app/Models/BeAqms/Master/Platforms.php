@@ -100,7 +100,7 @@
             $builder->where('id', $id);
         }
 
-        public function scopeDataPlatformSearchByUserPlatform(Builder $builder, $platformId = null, $search = null): void {
+        public function scopeDataPlatformSearchByUserPlatform(Builder $builder, $platformId = null, $heartbeatStatus = null, $search = null): void {
             if ($platformId) {
                 if (is_array($platformId)) {
                     $builder->whereIn('id', $platformId);
@@ -135,6 +135,15 @@
             '), 'tHelp.uid', '=', 't_platforms.uid');
 
             $builder->where('is_active', '=', 1);
+
+            if ($heartbeatStatus != 1) {
+                if ($heartbeatStatus == 2) {
+                    $builder->where(DB::raw('LOWER(tHelp.heartbeat_status)'), '=', 'online');
+                } else {
+                    $builder->where(DB::raw('LOWER(tHelp.heartbeat_status)'), '=', 'offline');
+                }
+            }
+
             $builder->orderBy('uid', 'ASC');
         }
     }

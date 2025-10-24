@@ -108,13 +108,13 @@
         <div class="left-panel absolute top-0 bottom-0 left-[5rem] z-10 w-[380px] bg-white shadow-md">
             <div class="mt-24 px-7 pb-5 font-bold platformFromTitle">Enviro</div>
             <div class="mx-7 flex items-center flex-row flex-nowrap overflow-x-auto gap-2 pb-4">
-                <div class="btn-status active btnAll">
+                <div class="btn-status active" data-status="1">
                     <span class="font-bold text-[13px]">All</span>
                 </div>
-                <div class="btn-status btnOnline">
+                <div class="btn-status" data-status="2">
                     <span class="font-bold text-[13px]">Online</span>
                 </div>
-                <div class="btn-status btnOffline">
+                <div class="btn-status" data-status="3">
                     <span class="font-bold text-[13px]">Offline</span>
                 </div>
             </div>

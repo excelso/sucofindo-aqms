@@ -127,7 +127,7 @@
             $builder->where('tipe_logger', $tipeLogger);
         }
 
-        public function scopePlatformBySearch(Builder $builder, $userId, $search = ''): void {
+        public function scopePlatformBySearch(Builder $builder, $userId, $heartbeatStatus = null, $search = ''): void {
             $builder->distinct();
             $builder->leftJoin(DB::raw('
                 (
@@ -152,6 +152,14 @@
             });
             $builder->where('t_users_sites.user_id', '=', $userId);
             $builder->where('t_users_sites.status_site', '=', 1);
+
+            if ($heartbeatStatus != 1) {
+                if ($heartbeatStatus == 2) {
+                    $builder->where('t_platform.status_platform', '=', 'online');
+                } else {
+                    $builder->where('t_platform.status_platform', '=', 'offline');
+                }
+            }
 
             if ($search != '') {
                 $builder->where(function ($query) use ($search) {

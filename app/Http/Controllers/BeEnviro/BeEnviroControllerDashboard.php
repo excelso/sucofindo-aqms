@@ -42,7 +42,7 @@
             try {
 
                 if ($request->input('titleType') == 'SPARING') {
-                    $dataLogger = Platform::platformBySearch(request()->user()->id_sparing, $request->input('search'))->with([
+                    $dataLogger = Platform::platformBySearch(request()->user()->id_sparing, $request->input('heartbeatStatus'), $request->input('search'))->with([
                         'site:id,nama_site,customer_lokasi_id',
                         'site.customerLokasi:id,customer_id,nama_lokasi',
                         'site.customerLokasi.customer:id,nama_perusahaan'
@@ -54,7 +54,7 @@
                         $userPlatformId[] = $platformId->platform_id;
                     }
 
-                    $dataLogger = Platforms::dataPlatformSearchByUserPlatform($userPlatformId)
+                    $dataLogger = Platforms::dataPlatformSearchByUserPlatform($userPlatformId, $request->input('heartbeatStatus'))
                         ->with([
                             'sites',
                             'sites.companies',
