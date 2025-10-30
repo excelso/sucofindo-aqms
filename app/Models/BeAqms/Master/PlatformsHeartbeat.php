@@ -43,7 +43,7 @@
             ]);
 
             $builder->where('t_platforms_heartbeat.uid', $platformUid);
-            $builder->where('t_platforms_heartbeat.heartbeat_status', $platformUid);
+            $builder->where('t_platforms_heartbeat.heartbeat_status', '=', 'Online');
             $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_platforms_heartbeat.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
         }
         //endregion
