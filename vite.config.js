@@ -27,6 +27,7 @@ export default defineConfig({
                 'resources/js/main/master/data-sites/index.tsx',
                 'resources/js/main/master/data-sites-location/index.tsx',
                 'resources/js/main/reports/index.tsx',
+                'resources/js/main/be-aqms/reports/data-weekly-report/index.tsx',
 
                 'resources/js/main/be-enviro/dashboard/index.tsx',
                 'resources/js/main/be-enviro/users/index.tsx',
