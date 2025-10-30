@@ -2,6 +2,7 @@
 
     namespace App\Models\BeAqms\Master;
 
+    use DB;
     use Illuminate\Database\Eloquent\Builder;
     use Illuminate\Database\Eloquent\Model;
 
@@ -34,4 +35,16 @@
             }
             $builder->orderBy('date_formated', 'DESC');
         }
+
+        //region Handle Data Persentase Entry Weekly
+        public function scopeDataPercentageConnectWeekly(Builder $builder, $platformUid, $minDate, $maxDate, $timezone, $totalSample): void {
+            $builder->select([
+                DB::raw("(COUNT(*) / $totalSample) * 100 as percentage")
+            ]);
+
+            $builder->where('t_platforms_heartbeat.uid', $platformUid);
+            $builder->where('t_platforms_heartbeat.heartbeat_status', $platformUid);
+            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_platforms_heartbeat.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
+        }
+        //endregion
     }

@@ -271,4 +271,29 @@
 
             }, 'daily_summary');
         }
+
+        public function scopeCalculateAvgData(Builder $builder, $uid, $timezone, $month, $year): void {
+            $builder->select([
+                't_loggers.uid',
+                DB::raw('ROUND(AVG(t_loggers.pm_25), 2) as pm_25'),
+                DB::raw('ROUND(AVG(t_loggers.pm_10), 2) as pm_10'),
+                DB::raw('ROUND(AVG(t_loggers.tsp), 2) as tsp'),
+                DB::raw('ROUND(AVG(t_loggers.noise), 2) as noise'),
+            ]);
+
+            $builder->where('t_loggers.uid', $uid);
+            $builder->whereRaw('MONTH(CONVERT_TZ(FROM_UNIXTIME(t_loggers.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", ?)) = ?', [$timezone, $month]);
+            $builder->whereRaw('YEAR(CONVERT_TZ(FROM_UNIXTIME(t_loggers.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", ?)) = ?', [$timezone, $year]);
+        }
+
+        //region Handle Data Persentase Entry Weekly
+        public function scopeDataPercentageEntryWeekly(Builder $builder, $platformUid, $minDate, $maxDate, $timezone, $totalSample): void {
+            $builder->select([
+                DB::raw("(COUNT(*) / $totalSample) * 100 as percentage")
+            ]);
+
+            $builder->where('t_loggers.uid', $platformUid);
+            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_loggers.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
+        }
+        //endregion
     }

@@ -7,6 +7,7 @@
     use App\Http\Controllers\BeAqms\Master\ControllerSites;
     use App\Http\Controllers\BeAqms\Master\ControllerSitesLocation;
     use App\Http\Controllers\BeAqms\Reports\ControllerReportLogParameter;
+    use App\Http\Controllers\BeAqms\Reports\ControllerReportWeekly;
     use App\Http\Controllers\BeEnviro\BeEnviroControllerDashboard;
     use App\Http\Controllers\BeEnviro\ControllerUsers;
     use App\Http\Controllers\BeEnviro\Settings\ControllerChangePassword;
@@ -224,6 +225,12 @@
                 Route::group(['prefix' => 'logs-parameter'], function () {
                     Route::get('/', [ControllerReportLogParameter::class, 'index'])->name('reports.logs-parameter');
                     Route::get('export-excel', [ControllerReportLogParameter::class, 'exportExcel'])->name('logs-parameter.export-excel');
+                });
+                Route::group(['prefix' => 'weekly-report'], function () {
+                    Route::get('/', [ControllerReportWeekly::class, 'index'])->name('aqms.reports.weekly-report');
+                    Route::get('data-avg', [ControllerReportWeekly::class, 'handleAvgData']);
+                    Route::get('data-entry-charts', [ControllerReportWeekly::class, 'handleDataEntryCharts']);
+                    Route::get('data-connect-charts', [ControllerReportWeekly::class, 'handleDataConnectCharts']);
                 });
             });
 
