@@ -654,8 +654,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 type: 'datetime',
                 minPadding: 0,
                 maxPadding: 0,
-                min: 1735689600000,
-                max: 1735775400000,
+                // min: 1735689600000,
+                // max: 1735775400000,
                 tickInterval: tickInterval,
                 labels: {
                     formatter: function () {
