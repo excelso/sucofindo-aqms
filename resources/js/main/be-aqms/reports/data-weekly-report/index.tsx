@@ -648,7 +648,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 gridLineDashStyle: 'LongDash',
             },
             time: {
-                timezone: 'Asia/Makassar',
+                timezone: 'UTC',
             },
             xAxis: {
                 type: 'datetime',

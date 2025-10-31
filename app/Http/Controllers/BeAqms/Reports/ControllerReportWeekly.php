@@ -188,7 +188,7 @@
                         }
 
                         $data[] = [
-                            'x' => ($item->datetime_unix_interval * 1000),
+                            'x' => Carbon::createFromTimestampUTC($item->datetime_unix_interval)->timezone($dataPlatform->timezone)->getPreciseTimestamp(3),
                             'y' => $param,
                             'format' => $item->datetime_format,
                         ];
