@@ -7,6 +7,7 @@
     use App\Jobs\BeSparingNotificationRead;
     use App\Models\BeSparing\Notifikasi;
     use App\Models\BeSparing\NotifikasiRead;
+    use App\Models\BeSparing\User;
     use App\Models\Users\UserFirebase;
     use Carbon\Carbon;
     use Exception;
@@ -30,7 +31,8 @@
 
         public function getDataNotifikasi(): JsonResponse {
             try {
-                $dataNotifikasi = Notifikasi::dataNotifikasi(request()->user()->user_uniq_id);
+                $dataUserSparing = User::where('id', request()->user()->id_sparing)->first();
+                $dataNotifikasi = Notifikasi::dataNotifikasi($dataUserSparing->user_uniq_id ?? null);
 
                 $totalRows = $dataNotifikasi->count();
                 if (request()->input('loadMore') != null) {
@@ -75,7 +77,8 @@
 
         public function getCountNotifikasi(): JsonResponse {
             try {
-                $dataNotifikasi = Notifikasi::dataCountNotifikasi(request()->user()->user_uniq_id);
+                $dataUserSparing = User::where('id', request()->user()->id_sparing)->first();
+                $dataNotifikasi = Notifikasi::dataCountNotifikasi($dataUserSparing->user_uniq_id ?? null);
                 return response()->json([
                     'message' => 'Notifikasi Ditemukan',
                     'dataResponse' => $dataNotifikasi->count(),

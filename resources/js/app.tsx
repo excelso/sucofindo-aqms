@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 $(dataNotifEmpty).hide()
 
                 dataResponse.map((item: any) => {
-                    const {id, nama_pengirim, title, message, link, kategori, created_at, readed} = item
+                    const {id, nama_pengirim, title, message, detail, link, kategori, created_at, readed} = item
 
                     let notifUnRead = ''
                     if (readed === null) {
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 ${kategori} • ${created_at}
                             </div>
                             <div class="notif-item-title">${title}</div>
-                            <div class="notif-item-detail">${message}</div>
+                            <div class="notif-item-detail">${message ?? detail}</div>
                             <div class="notif-item-footer">
                                 <i class="fa fa-user-circle mt-[1.3px] mr-1"></i>
                                 ${nama_pengirim ?? 'System'}
