@@ -620,6 +620,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const minTime = Date.UTC(2025, 0, 1, 0, 0, 0); // 2025-01-01 00:00:00 UTC
         const maxTime = Date.UTC(2025, 0, 1, 23, 59, 59); // 2025-01-01 23:59:59 UTC
 
+        const xValues = data.map((point) => {
+            return point.data[0] ? point.data[0].x : 0
+        });
+        console.log(xValues)
         console.log(minTime, maxTime)
         const chart = Highcharts.chart({
             chart: {
@@ -650,8 +654,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 type: 'datetime',
                 minPadding: 0,
                 maxPadding: 0,
-                // min: minTime,
-                // max: maxTime,
+                min: 1735689600000,
+                max: 1735775400000,
                 tickInterval: tickInterval,
                 labels: {
                     formatter: function () {
