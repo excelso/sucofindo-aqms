@@ -358,9 +358,6 @@
             ", [$timezone, $timezone, $intervalMinutes]);
 
             // Order by
-            $builder->orderByRaw("
-                HOUR(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', ?)),
-                FLOOR(MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', ?)) / ?)
-            ", [$timezone, $timezone, $intervalMinutes]);
+            $builder->orderBy('datetime_format', 'ASC');
         }
     }

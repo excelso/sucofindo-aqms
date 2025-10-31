@@ -189,7 +189,8 @@
 
                         $data[] = [
                             'x' => ($item->datetime_unix_interval * 1000),
-                            'y' => $param
+                            'y' => $param,
+                            'format' => $item->datetime_format,
                         ];
                     }
 
