@@ -633,12 +633,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 gridLineDashStyle: 'LongDash',
             },
             time: {
-                timezone: 'Asia/Makassar'
+                timezone: 'Asia/Makassar',
             },
             xAxis: {
                 type: 'datetime',
-                min: minTime,
-                max: maxTime,
                 minPadding: 0,
                 maxPadding: 0,
                 tickInterval: tickInterval,
