@@ -4,18 +4,13 @@
 
     use App\Http\Controllers\Controller;
     use App\Http\Controllers\WeekCalculator;
-    use App\Models\BeAqms\Master\AqiCategories;
-    use App\Models\BeAqms\Master\Companies;
     use App\Models\BeAqms\Master\Loggers;
     use App\Models\BeAqms\Master\Platforms;
     use App\Models\BeAqms\Master\PlatformsHeartbeat;
     use App\Models\Users\UserPlatforms;
-    use avadim\FastExcelWriter\Excel;
-    use avadim\FastExcelWriter\Style;
     use Carbon\Carbon;
     use Exception;
     use Illuminate\Http\Request;
-    use Illuminate\Support\Facades\File;
     use Illuminate\View\View;
 
     class ControllerReportWeekly extends Controller {
@@ -25,7 +20,7 @@
             $this->viewPath = 'main/be-aqms/reports/data-weekly-report';
         }
 
-        public function index(Request $request): View {
+        public function index(): View {
             $userPlatformId = null;
             $userPlatformIds = UserPlatforms::userPlatforms(request()->user()->id)->get();
             foreach ($userPlatformIds as $platformId) {
