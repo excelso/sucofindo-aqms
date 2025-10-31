@@ -315,10 +315,18 @@
                 DB::raw('ROUND(AVG(t_loggers.noise), 2) as noise'),
 
                 // Format waktu
-                DB::raw("DATE_FORMAT(
-                    CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', '{$timezone}'),
-                    '%H:%i:00'
-                ) as datetime_format"),
+                DB::raw("TIME(CONCAT(
+                    HOUR(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', 'Asia/Makassar')),
+                    ':',
+                    LPAD(
+                        FLOOR(
+                            MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', 'Asia/Makassar')) / {$intervalMinutes}
+                        ) * {$intervalMinutes},
+                        2,
+                        '0'
+                    ),
+                    ':00'
+                )) as datetime_format"),
 
                 // ✅ Normalize ke tanggal dummy (2025-01-01) - semua week punya tanggal sama
                 DB::raw("UNIX_TIMESTAMP(
