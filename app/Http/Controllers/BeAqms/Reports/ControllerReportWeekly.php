@@ -33,9 +33,12 @@
             }
 
             $dataPlatform = Platforms::dataPlatformByUserPlatform($userPlatformId)->first();
+            $dataAllPlatform = Platforms::dataPlatformByUserPlatform($userPlatformId)
+                ->with('sites')->get();
 
             return view($this->viewPath . '/index', [
                 'platforms' => $dataPlatform,
+                'dataAllPlatform' => $dataAllPlatform,
             ]);
         }
 
@@ -62,6 +65,7 @@
         }
         //endregion
 
+        //region Handle Data Entry Charts
         public function handleDataEntryCharts(Request $request) {
             try {
 
@@ -70,21 +74,25 @@
                 $weekCalculator = new WeekCalculator();
                 $weekGroups = $weekCalculator->getWeekGroupings($request->input('year'), $request->input('month'));
 
-                $dataWeek = [];
                 $dataCategories = [];
                 $data = [];
                 foreach ($weekGroups as $week => $dates) {
                     $dataCategories[] = $week;
-                    $dataWeek[] = $dates;
 
                     $totalSample = $dates['totalDays'] * 1440;
                     $dataEntry = Loggers::dataPercentageEntryWeekly($request->input('uid'), $dates['startDate'], $dates['untilDate'], $dataPlatform->timezone, $totalSample)->first();
-                    $data[] = round($dataEntry->percentage ?? 0, 2);
+                    $data[] = [
+                        'y' => round($dataEntry->percentage ?? 0, 2),
+                        'weekDetail' => [
+                            'startDate' => $dates['startDate'],
+                            'untilDate' => $dates['untilDate'],
+                            'totalDays' => $dates['totalDays']
+                        ]
+                    ];
                 }
 
                 return response()->json([
                     'message' => 'Load Successful!',
-                    'dataWeek' => $dataWeek,
                     'dataCategories' => $dataCategories,
                     'data' => $data,
                     'responseTime' => Carbon::now()
@@ -97,7 +105,9 @@
                 ], 500, [], JSON_PRETTY_PRINT);
             }
         }
+        //endregion
 
+        //region Handle Data Connectivity Charts
         public function handleDataConnectCharts(Request $request) {
             try {
 
@@ -115,7 +125,14 @@
 
                     $totalSample = $dates['totalDays'] * 1440;
                     $dataEntry = PlatformsHeartbeat::dataPercentageConnectWeekly($request->input('uid'), $dates['startDate'], $dates['untilDate'], $dataPlatform->timezone, $totalSample)->first();
-                    $data[] = round($dataEntry->percentage ?? 0, 2);
+                    $data[] = [
+                        'y' => round($dataEntry->percentage ?? 0, 2),
+                        'weekDetail' => [
+                            'startDate' => $dates['startDate'],
+                            'untilDate' => $dates['untilDate'],
+                            'totalDays' => $dates['totalDays']
+                        ]
+                    ];
                 }
 
                 return response()->json([
@@ -133,5 +150,69 @@
                 ], 500, [], JSON_PRETTY_PRINT);
             }
         }
+        //endregion
 
+        public function handleDataSensorCharts(Request $request) {
+            try {
+                $dataPlatform = Platforms::where('uid', $request->input('uid'))->first();
+
+                $weekCalculator = new WeekCalculator();
+                $weekGroups = $weekCalculator->getWeekGroupings($request->input('year'), $request->input('month'));
+
+                $dataX = [];
+                foreach ($weekGroups as $week => $dates) {
+                    $data = [];
+
+                    $dataSensor = Loggers::dataSensorWeekly(
+                        $request->input('uid'),
+                        $dates['startDate'],
+                        $dates['untilDate'],
+                        $dataPlatform->timezone
+                    )->get();
+
+                    foreach ($dataSensor as $item) {
+                        $param = '';
+                        switch ($request->input('parameterId')) {
+                            case 'pm_25':
+                                $param = round($item->pm_25, 2);
+                                break;
+                            case 'pm_10':
+                                $param = round($item->pm_10, 2);
+                                break;
+                            case 'tsp':
+                                $param = round($item->tsp, 2);
+                                break;
+                            case 'noise':
+                                $param = floor($item->noise);
+                                break;
+                        }
+
+                        $data[] = [
+                            'x' => ($item->datetime_unix_interval * 1000),
+                            'y' => $param
+                        ];
+                    }
+
+                    $dataX[] = [
+                        'type' => 'line',
+                        'name' => $week,
+                        'showInLegend' => true,
+                        'data' => $data
+                    ];
+                }
+
+                return response()->json([
+                    'message' => 'Success!',
+                    'data' => $dataX,
+                    'responseTime' => now()
+                ]);
+
+            } catch (Exception $exception) {
+                return response()->json([
+                    'message' => $exception->getMessage() . ' on line ' . $exception->getLine(),
+                    'file' => $exception->getFile(),
+                    'responseTime' => Carbon::now()
+                ], 500, [], JSON_PRETTY_PRINT);
+            }
+        }
     }

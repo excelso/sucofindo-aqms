@@ -231,6 +231,7 @@
                     Route::get('data-avg', [ControllerReportWeekly::class, 'handleAvgData']);
                     Route::get('data-entry-charts', [ControllerReportWeekly::class, 'handleDataEntryCharts']);
                     Route::get('data-connect-charts', [ControllerReportWeekly::class, 'handleDataConnectCharts']);
+                    Route::get('data-sensor-charts', [ControllerReportWeekly::class, 'handleDataSensorCharts']);
                 });
             });
 

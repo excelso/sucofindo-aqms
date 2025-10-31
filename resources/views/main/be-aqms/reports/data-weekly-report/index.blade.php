@@ -32,7 +32,7 @@
         </div>
 
         <div class="content-body">
-            <input type="hidden" class="uidSelected" value="{{ request()->input('uid') ?? $platforms->uid }}">
+            <input type="hidden" class="uidSelected" value="{{ request()->input('platformUid') ?? $platforms->uid }}">
             <input type="hidden" class="bulanSelected" value="{{ request()->input('bulan') ?? \Carbon\Carbon::now()->format('m') }}">
             <input type="hidden" class="tahunSelected" value="{{ request()->input('tahun') ?? \Carbon\Carbon::now()->format('Y') }}">
 
@@ -162,9 +162,116 @@
                     </div>
                 </div>
             </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-1">
+                    <div class="card z-[200]">
+                        <div class="card-header !pb-0 mb-4">
+                            <div class="w-[50%]">
+                                <div class="font-bold text-[18px]">
+                                    PM 2.5
+                                </div>
+                            </div>
+                            @if(request()->user()->user_level != 'viewer')
+                                <div class="flex items-center">
+                                    <a class="btnExportPm25">
+                                        <i class="fas fa-cloud-download mr-2"></i>
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="card-body w-full">
+                            <div class="loaderDataPm25 absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] px-10 py-7 rounded-md text-white bg-[rgba(0,0,0,0.3)] z-[9]">
+                                <i class="fas fa-spinner fa-pulse mr-2"></i> Please Wait...
+                            </div>
+                            <div class="bodyChartPm25 !h-[400px]"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-span-1">
+                    <div class="card z-[200]">
+                        <div class="card-header !pb-0 mb-4">
+                            <div class="w-[50%]">
+                                <div class="font-bold text-[18px]">
+                                    PM 10
+                                </div>
+                            </div>
+                            @if(request()->user()->user_level != 'viewer')
+                                <div class="flex items-center">
+                                    <a class="btnExportPm10">
+                                        <i class="fas fa-cloud-download mr-2"></i>
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="card-body w-full">
+                            <div class="loaderDataPm10 absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] px-10 py-7 rounded-md text-white bg-[rgba(0,0,0,0.3)] z-[9]">
+                                <i class="fas fa-spinner fa-pulse mr-2"></i> Please Wait...
+                            </div>
+                            <div class="bodyChartPm10 !h-[400px]"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-1">
+                    <div class="card z-[200]">
+                        <div class="card-header !pb-0 mb-4">
+                            <div class="w-[50%]">
+                                <div class="font-bold text-[18px]">
+                                    TSP
+                                </div>
+                            </div>
+                            @if(request()->user()->user_level != 'viewer')
+                                <div class="flex items-center">
+                                    <a class="btnExportTsp">
+                                        <i class="fas fa-cloud-download mr-2"></i>
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="card-body w-full">
+                            <div class="loaderDataTsp absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] px-10 py-7 rounded-md text-white bg-[rgba(0,0,0,0.3)] z-[9]">
+                                <i class="fas fa-spinner fa-pulse mr-2"></i> Please Wait...
+                            </div>
+                            <div class="bodyChartTsp !h-[400px]"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-span-1">
+                    <div class="card z-[200]">
+                        <div class="card-header !pb-0 mb-4">
+                            <div class="w-[50%]">
+                                <div class="font-bold text-[18px]">
+                                    Noise
+                                </div>
+                            </div>
+                            @if(request()->user()->user_level != 'viewer')
+                                <div class="flex items-center">
+                                    <a class="btnExportNoise">
+                                        <i class="fas fa-cloud-download mr-2"></i>
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="card-body w-full">
+                            <div class="loaderDataNoise absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] px-10 py-7 rounded-md text-white bg-[rgba(0,0,0,0.3)] z-[9]">
+                                <i class="fas fa-spinner fa-pulse mr-2"></i> Please Wait...
+                            </div>
+                            <div class="bodyChartNoise !h-[400px]"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         {{-- Bagian Include (Modal) --}}
+        @include('main.be-aqms.reports.data-weekly-report.popup.pencarian')
     </div>
 </x-app-layout>
 

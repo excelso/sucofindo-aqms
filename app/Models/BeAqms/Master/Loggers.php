@@ -295,5 +295,64 @@
             $builder->where('t_loggers.uid', $platformUid);
             $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_loggers.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
         }
+
         //endregion
+
+        public function scopeDataSensorWeekly(
+            Builder $builder,
+                    $platformUid,
+                    $minDate,
+                    $maxDate,
+                    $timezone,
+                    $intervalMinutes = 10
+        ): void {
+
+            $builder->select([
+                'uid',
+                DB::raw('ROUND(AVG(t_loggers.pm_25), 2) as pm_25'),
+                DB::raw('ROUND(AVG(t_loggers.pm_10), 2) as pm_10'),
+                DB::raw('ROUND(AVG(t_loggers.tsp), 2) as tsp'),
+                DB::raw('ROUND(AVG(t_loggers.noise), 2) as noise'),
+
+                // Format waktu
+                DB::raw("DATE_FORMAT(
+                    CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', '{$timezone}'),
+                    '%H:%i:00'
+                ) as datetime_format"),
+
+                // ✅ Normalize ke tanggal dummy (2025-01-01) - semua week punya tanggal sama
+                DB::raw("UNIX_TIMESTAMP(
+                    CONCAT(
+                        '2025-01-01 ',
+                        DATE_FORMAT(
+                            CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', '{$timezone}'),
+                            CONCAT(
+                                '%H:',
+                                LPAD(FLOOR(MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', '{$timezone}')) / {$intervalMinutes}) * {$intervalMinutes}, 2, '0'),
+                                ':00'
+                            )
+                        )
+                    )
+                ) as datetime_unix_interval")
+            ]);
+
+            // Filter berdasarkan UID dan rentang tanggal
+            $builder->where('t_loggers.uid', $platformUid)
+                ->whereRaw("
+                    DATE(CONVERT_TZ(FROM_UNIXTIME(t_loggers.datetime_unix), 'Asia/Makassar', ?))
+                    BETWEEN ? AND ?
+                ", [$timezone, $minDate, $maxDate]);
+
+            // Group by
+            $builder->groupByRaw("
+                HOUR(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', ?)),
+                FLOOR(MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', ?)) / ?)
+            ", [$timezone, $timezone, $intervalMinutes]);
+
+            // Order by
+            $builder->orderByRaw("
+                HOUR(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', ?)),
+                FLOOR(MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', ?)) / ?)
+            ", [$timezone, $timezone, $intervalMinutes]);
+        }
     }
