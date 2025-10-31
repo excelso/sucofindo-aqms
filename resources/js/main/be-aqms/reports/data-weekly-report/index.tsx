@@ -113,6 +113,16 @@ document.addEventListener("DOMContentLoaded", () => {
         parameterTitle: 'Noise'
     }).then(null)
 
+    //region Handle Close Modal
+    closeModalForm.forEach((elm: Element) => {
+        elm.addEventListener('click', function () {
+            if (modalPencarian) {
+                closeModalDialog(modalPencarian)
+            }
+        })
+    })
+    //endregion
+
     //region Handle Pencarian
     if (btnSearch !== null) {
         btnSearch.addEventListener('click', function () {
@@ -642,8 +652,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 tickInterval: tickInterval,
                 labels: {
                     formatter: function () {
-                        const date = new Date(this.value);
-                        return `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}`;
+                        const timestampMs = this.value as number;
+                        const timestampSeconds = timestampMs / 1000;
+                        return safeFormatTimestamp(timestampSeconds, 'time', 'Asia/Makassar', 'id-ID');
                     },
                     style: {
                         fontSize: '10px',
