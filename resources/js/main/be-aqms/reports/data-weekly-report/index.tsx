@@ -620,6 +620,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const minTime = Date.UTC(2025, 0, 1, 0, 0, 0); // 2025-01-01 00:00:00 UTC
         const maxTime = Date.UTC(2025, 0, 1, 23, 59, 59); // 2025-01-01 23:59:59 UTC
 
+        console.log(minTime, maxTime)
         const chart = Highcharts.chart({
             chart: {
                 renderTo: elm,
@@ -649,12 +650,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 type: 'datetime',
                 minPadding: 0,
                 maxPadding: 0,
+                min: minTime,
+                max: maxTime,
                 tickInterval: tickInterval,
                 labels: {
                     formatter: function () {
                         const timestampMs = this.value as number;
                         const timestampSeconds = timestampMs / 1000;
-                        return safeFormatTimestamp(timestampSeconds, 'time', 'Asia/Makassar', 'id-ID');
+                        return safeFormatTimestamp(timestampSeconds, 'time', 'UTC', 'id-ID');
                     },
                     style: {
                         fontSize: '10px',
