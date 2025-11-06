@@ -42,6 +42,11 @@
                         <label>Tanggal Awal</label>
                         <label class="form-group-control">
                             <input type="text" class="form-control datetimepickerStart" name="minDate" value="{{ request()->input('minDate') ?? \Carbon\Carbon::now()->format('Y-m-d') . ' 00:00' }}" placeholder="..."/>
+                            <div class="form-control-append btnStartDate">
+                                <span class="form-control-append-icon">
+                                    <i class="fas fa-calendar"></i>
+                                </span>
+                            </div>
                         </label>
                     </div>
                 </div>
@@ -50,6 +55,11 @@
                         <label>Tanggal Akhir</label>
                         <label class="form-group-control">
                             <input type="text" class="form-control datetimepickerUntil" name="maxDate" value="{{ request()->input('maxDate') ?? \Carbon\Carbon::now()->format('Y-m-d') . ' 23:59' }}" placeholder="..."/>
+                            <div class="form-control-append btnUntilDate">
+                                <span class="form-control-append-icon">
+                                    <i class="fas fa-calendar"></i>
+                                </span>
+                            </div>
                         </label>
                     </div>
                 </div>
