@@ -71,6 +71,10 @@
     //     return view('auth.verify-otp');
     // });
 
+    Route::get('privacy-policy', function () {
+        return view('public.privacy-policy');
+    });
+
     Route::middleware(['auth', 'verified', 'otp.verified'])->group(function () {
         // Route::group([
         //     'prefix' => LaravelLocalization::setLocale(),
