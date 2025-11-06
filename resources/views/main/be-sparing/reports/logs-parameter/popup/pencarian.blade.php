@@ -49,19 +49,29 @@
                 <div class="col-span-1">
                     <div class="form-group">
                         <label>Tanggal Awal</label>
-                        <label class="form-group-control">
+                        <div class="form-group-control">
                             <input type="hidden" class="minDateCurr" value="{{ request()->input('minDate') ?? \Carbon\Carbon::now()->format('Y-m-d') . ' 00:00' }}">
                             <input type="text" class="form-control minDate datetimepickerStart" name="minDate" value="{{ request()->input('minDate') ?? \Carbon\Carbon::now()->format('Y-m-d') . ' 00:00' }}" placeholder="..."/>
-                        </label>
+                            <div class="form-control-append btnStartDate">
+                                <span class="form-control-append-icon">
+                                    <i class="fas fa-calendar"></i>
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-span-1">
                     <div class="form-group">
                         <label>Tanggal Akhir</label>
-                        <label class="form-group-control">
+                        <div class="form-group-control">
                             <input type="hidden" class="maxDateCurr" value="{{ request()->input('maxDate') ?? \Carbon\Carbon::now()->format('Y-m-d') . ' 23:59' }}">
                             <input type="text" class="form-control maxDate datetimepickerUntil" name="maxDate" value="{{ request()->input('maxDate') ?? \Carbon\Carbon::now()->format('Y-m-d') . ' 23:59' }}" placeholder="..."/>
-                        </label>
+                            <div class="form-control-append btnUntilDate">
+                                <span class="form-control-append-icon">
+                                    <i class="fas fa-calendar"></i>
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
