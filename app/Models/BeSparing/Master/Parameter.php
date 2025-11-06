@@ -595,7 +595,7 @@
                 $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
             }
 
-            $builder->orderBy('datetime_formatted', 'DESC');
+            $builder->orderBy('t_parameter.datetime_unix', 'DESC');
         }
         //endregion
 
