@@ -62,7 +62,6 @@
             try {
 
                 $weekCalculator = new WeekCalculator();
-                $weekAllYear = $weekCalculator->getAllWeeksInYear(2025);
                 $week = $weekCalculator->getWeekInfoForDate(Carbon::now());
                 $weekInfo = $week['weekInfo'];
                 $weekNumb = $week['weekNumber'];
