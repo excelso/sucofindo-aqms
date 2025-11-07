@@ -24,6 +24,7 @@
     use App\Http\Controllers\BeSparing\Reports\BeSparingControllerLogsParameter;
     use App\Http\Controllers\BeSparing\Reports\BeSparingControllerWaterQuality;
     use App\Http\Controllers\BeSparing\Reports\BeSparingControllerWeeklyReport;
+    use App\Http\Controllers\BeSparing\Reports\BeSparingControllerWeeklySummary;
     use App\Http\Controllers\OnvifPTZController;
     use App\Http\Controllers\Settings\WebRTCProxyController;
     use App\Http\Helper\ExImage;
@@ -141,6 +142,10 @@
                     Route::post('data-entry-charts', [BeSparingControllerWeeklyReport::class, 'handleDataEntryCharts']);
                     Route::post('data-comply-charts', [BeSparingControllerWeeklyReport::class, 'handleDataComplyCharts']);
                     Route::post('data-sensor-charts', [BeSparingControllerWeeklyReport::class, 'handleDataSensorCharts']);
+                });
+
+                Route::prefix('weekly-summary')->group(function () {
+                    Route::get('/', [BeSparingControllerWeeklySummary::class, 'index'])->name('sparing.reports.weekly-summary');
                 });
             });
 

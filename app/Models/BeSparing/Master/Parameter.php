@@ -8,6 +8,7 @@
     use Illuminate\Database\Eloquent\Factories\HasFactory;
     use Illuminate\Database\Eloquent\Model;
     use Illuminate\Support\Facades\DB;
+    use Illuminate\Support\HigherOrderWhenProxy;
 
     class Parameter extends Model {
         use Compoships;
@@ -969,6 +970,125 @@
             $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
         }
 
+        //endregion
+
+        //region Handle Persentase Data Comply Weekly Summary
+        public function scopeWeeklySummary(
+            Builder $query,
+            string $minDate,
+            string $maxDate,
+            string $timezone = 'Asia/Jakarta',
+            ?string $platformUid = null,
+            ?int $tipeLogger = null
+        ): \Illuminate\Database\Query\Builder|HigherOrderWhenProxy {
+
+            $connection = $this->getConnection();
+
+            $subQuery = $connection->table('t_parameter')
+                ->leftJoin('t_parameter_limit', function ($join) {
+                    $join->on('t_parameter.uid', '=', 't_parameter_limit.uid')
+                        ->on('t_parameter.tipe_logger', '=', 't_parameter_limit.tipe_logger');
+                })
+                ->select(
+                    't_parameter.uid',
+                    't_parameter.tipe_logger',
+                    DB::raw('COUNT(*) as total'),
+
+                    // pH counts
+                    DB::raw("SUM(CASE
+                    WHEN (t_parameter.ph <= 0 AND t_parameter_limit.ph_intermit = 1) OR
+                         (t_parameter.ph > t_parameter_limit.ph_warn_min AND t_parameter.ph < t_parameter_limit.ph_warn_max)
+                    THEN 1 ELSE 0
+                END) as ph_normal"),
+
+                    DB::raw("SUM(CASE
+                    WHEN (t_parameter.ph > t_parameter_limit.ph_mutu_min AND t_parameter.ph <= t_parameter_limit.ph_warn_min) OR
+                         (t_parameter.ph >= t_parameter_limit.ph_warn_max AND t_parameter.ph < t_parameter_limit.ph_mutu_max)
+                    THEN 1 ELSE 0
+                END) as ph_warning"),
+
+                    DB::raw("SUM(CASE
+                    WHEN t_parameter.ph >= t_parameter_limit.ph_mutu_max OR
+                         (t_parameter.ph <= t_parameter_limit.ph_mutu_min AND t_parameter_limit.ph_intermit = 0)
+                    THEN 1 ELSE 0
+                END) as ph_danger"),
+
+                    // TSS counts
+                    DB::raw("SUM(CASE
+                    WHEN (t_parameter.tss <= 0 AND t_parameter_limit.tss_intermit = 1) OR
+                         (t_parameter.tss > t_parameter_limit.tss_warn_min AND t_parameter.tss < t_parameter_limit.tss_mutu_min)
+                    THEN 1 ELSE 0
+                END) as tss_normal"),
+
+                    DB::raw("SUM(CASE
+                    WHEN (t_parameter.tss > t_parameter_limit.tss_warn AND t_parameter.tss <= t_parameter_limit.tss_warn_min) OR
+                         (t_parameter.tss >= t_parameter_limit.tss_mutu_min AND t_parameter.tss < t_parameter_limit.tss_mutu)
+                    THEN 1 ELSE 0
+                END) as tss_warning"),
+
+                    DB::raw("SUM(CASE
+                    WHEN t_parameter.tss >= t_parameter_limit.tss_mutu OR
+                         (t_parameter.tss <= t_parameter_limit.tss_warn AND t_parameter_limit.tss_intermit = 0)
+                    THEN 1 ELSE 0
+                END) as tss_danger"),
+
+                    // Debit counts
+                    DB::raw("SUM(CASE
+                    WHEN (t_parameter.debit <= 0 AND t_parameter_limit.debit_intermit = 1) OR
+                         (t_parameter.debit > t_parameter_limit.debit_warn_min AND t_parameter.debit < t_parameter_limit.debit_mutu_min)
+                    THEN 1 ELSE 0
+                END) as debit_normal"),
+
+                    DB::raw("SUM(CASE
+                    WHEN (t_parameter.debit >= t_parameter_limit.debit_warn AND t_parameter.debit <= t_parameter_limit.debit_warn_min) OR
+                         (t_parameter.debit >= t_parameter_limit.debit_mutu_min AND t_parameter.debit < t_parameter_limit.debit_mutu)
+                    THEN 1 ELSE 0
+                END) as debit_warning"),
+
+                    DB::raw("SUM(CASE
+                    WHEN t_parameter.debit >= t_parameter_limit.debit_mutu OR
+                         (t_parameter.debit <= t_parameter_limit.debit_warn AND t_parameter_limit.debit_intermit = 0)
+                    THEN 1 ELSE 0
+                END) as debit_danger")
+                )
+                ->whereRaw(
+                    "CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, '%Y-%m-%d'), 'Asia/Makassar', ?) BETWEEN ? AND ?",
+                    [$timezone, $minDate, $maxDate]
+                )
+                ->groupBy('t_parameter.uid', 't_parameter.tipe_logger');
+
+            // Return query builder dari t_platform dengan join ke subquery
+            return $connection->table('t_platform')
+                ->leftJoinSub($subQuery, 'stats', function ($join) {
+                    $join->on('stats.uid', '=', 't_platform.uid')
+                        ->on('stats.tipe_logger', '=', 't_platform.tipe_logger');
+                })
+                ->select(
+                    't_platform.uid',
+                    't_platform.tipe_logger',
+                    DB::raw('(IFNULL(stats.ph_normal, 0) + IFNULL(stats.ph_warning, 0)) / NULLIF(stats.total, 0) * 100 as percentagePh'),
+                    DB::raw('(IFNULL(stats.tss_normal, 0) + IFNULL(stats.tss_warning, 0)) / NULLIF(stats.total, 0) * 100 as percentageTss'),
+                    DB::raw('(IFNULL(stats.debit_normal, 0) + IFNULL(stats.debit_warning, 0)) / NULLIF(stats.total, 0) * 100 as percentageDebit'),
+                    // Tambahan: return juga detail counts jika dibutuhkan
+                    'stats.total',
+                    DB::raw('ROUND(((stats.total / 5040) * 100), 2) AS persen'),
+                    'stats.ph_normal',
+                    'stats.ph_warning',
+                    'stats.ph_danger',
+                    'stats.tss_normal',
+                    'stats.tss_warning',
+                    'stats.tss_danger',
+                    'stats.debit_normal',
+                    'stats.debit_warning',
+                    'stats.debit_danger'
+                )
+                ->when($platformUid, function ($q) use ($platformUid) {
+                    return $q->where('t_platform.uid', $platformUid);
+                })
+                ->when($tipeLogger !== null, function ($q) use ($tipeLogger) {
+                    return $q->where('t_platform.tipe_logger', $tipeLogger);
+                });
+        }
         //endregion
 
         public function scopeDataAvgParameterWeekly(Builder $builder, $platformUid, $tipeLogger, $month, $year, $timezone): void {
