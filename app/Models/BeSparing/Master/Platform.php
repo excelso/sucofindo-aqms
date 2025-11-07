@@ -127,12 +127,6 @@
                     THEN 1 ELSE 0
                 END) as ph_warning"),
 
-                        DB::raw("SUM(CASE
-                    WHEN t_parameter.ph >= t_parameter_limit.ph_mutu_max OR
-                         (t_parameter.ph <= t_parameter_limit.ph_mutu_min AND t_parameter_limit.ph_intermit = 0)
-                    THEN 1 ELSE 0
-                END) as ph_danger"),
-
                         // TSS counts
                         DB::raw("SUM(CASE
                     WHEN (t_parameter.tss <= 0 AND t_parameter_limit.tss_intermit = 1) OR
@@ -146,12 +140,6 @@
                     THEN 1 ELSE 0
                 END) as tss_warning"),
 
-                        DB::raw("SUM(CASE
-                    WHEN t_parameter.tss >= t_parameter_limit.tss_mutu OR
-                         (t_parameter.tss <= t_parameter_limit.tss_warn AND t_parameter_limit.tss_intermit = 0)
-                    THEN 1 ELSE 0
-                END) as tss_danger"),
-
                         // Debit counts
                         DB::raw("SUM(CASE
                     WHEN (t_parameter.debit <= 0 AND t_parameter_limit.debit_intermit = 1) OR
@@ -164,12 +152,6 @@
                          (t_parameter.debit >= t_parameter_limit.debit_mutu_min AND t_parameter.debit < t_parameter_limit.debit_mutu)
                     THEN 1 ELSE 0
                 END) as debit_warning"),
-
-                        DB::raw("SUM(CASE
-                    WHEN t_parameter.debit >= t_parameter_limit.debit_mutu OR
-                         (t_parameter.debit <= t_parameter_limit.debit_warn AND t_parameter_limit.debit_intermit = 0)
-                    THEN 1 ELSE 0
-                END) as debit_danger")
                     )
                     ->whereBetween('t_parameter.datetime_unix', [$minUnix, $maxUnix])
                     ->groupBy('t_parameter.uid', 't_parameter.tipe_logger');
@@ -206,13 +188,10 @@
                 DB::raw('ROUND(((stats.total / 5040) * 100), 2) AS persen'),
                 'stats.ph_normal',
                 'stats.ph_warning',
-                'stats.ph_danger',
                 'stats.tss_normal',
                 'stats.tss_warning',
-                'stats.tss_danger',
                 'stats.debit_normal',
-                'stats.debit_warning',
-                'stats.debit_danger'
+                'stats.debit_warning'
             );
 
             // Optional filters
