@@ -76,6 +76,10 @@
         return view('public.privacy-policy');
     });
 
+    Route::get('ini', function () {
+        echo phpinfo();
+    });
+
     Route::middleware(['auth', 'verified', 'otp.verified'])->group(function () {
         // Route::group([
         //     'prefix' => LaravelLocalization::setLocale(),
