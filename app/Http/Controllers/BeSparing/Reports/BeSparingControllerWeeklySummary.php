@@ -78,6 +78,10 @@
                 $untilDate = $weekInfo['untilDate'];
                 if ($request->input('date') && $request->input('date') != '') {
                     $weekExplode = explode('_', $request->input('date'));
+                    $week = $weekCalculator->getWeekInfoForDate($weekExplode[0]);
+                    $weekInfo = $week['weekInfo'];
+                    $weekNumb = $week['weekNumber'];
+
                     $startDate = $weekExplode[0];
                     $untilDate = $weekExplode[1];
                 }
