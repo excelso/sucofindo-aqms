@@ -1,6 +1,7 @@
 import {getMetaContent, hiddenElm, showHiddenElmAndText} from "@/js/plugins/functions";
 import moment from "moment";
 import {closeModalDialog, showModalDialog} from "@/js/plugins/modal";
+import DataCustomerLokasiModel from "@/js/main/be-sparing/master/data-customer-lokasi/model/DataCustomerLokasiModel";
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -26,9 +27,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnPencarian !== null) {
         btnPencarian.addEventListener('click', function () {
             showModalDialog(modalPencarian, null, () => {
+                const lookCustomerId: HTMLInputElement = modalPencarian.querySelector('.lookCustomerId')
+                const lookCustomerLokasiId: HTMLSelectElement = modalPencarian.querySelector('.lookCustomerLokasiId')
+                const lookCustomerLokasiIdTemp: HTMLInputElement = modalPencarian.querySelector('.lookCustomerLokasiIdTemp')
                 const btnCari = document.querySelector<HTMLElement>('.btnCari')
                 const btnResetPencarian = document.querySelector<HTMLElement>('.btnResetPencarian')
 
+                lookCustomerLokasiId.setAttribute('data-selected', lookCustomerLokasiIdTemp.value)
+
+                new DataCustomerLokasiModel(lookCustomerId, lookCustomerLokasiId)
                 modalPencarian.addEventListener('keyup', function (ev: KeyboardEvent) {
                     if (ev.key === 'Enter') {
                         $(btnCari).trigger('click');

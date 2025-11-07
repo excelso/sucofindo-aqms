@@ -14,6 +14,33 @@
         </div>
         <div class="modal-body overflow-y-auto !max-h-[400px]">
             <div class="form-group">
+                <label>Nama Perusahaan</label>
+                <div class="form-group-control">
+                    <select name="customer_id" class="form-select select2-custom lookCustomerId" data-selected="{{ request()->input('customer_id') }}" disabled>
+                        <option value="">...</option>
+                        @if(isset($customer))
+                            @if($customer->count() == 1)
+                                <option value="{{ $customer[0]->id }}" selected>{{ $customer[0]->nama_perusahaan }}</option>
+                            @else
+                                @foreach($customer as $item)
+                                    @php($selected = $item->id == request()->input('customer_id') ? 'selected' : '')
+                                    <option value="{{ $item->id }}">{{ $item->nama_perusahaan }}</option>
+                                @endforeach
+                            @endif
+                        @endif
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Nama Site / Lokasi</label>
+                <div class="form-group-control">
+                    <input type="hidden" class="lookCustomerLokasiIdTemp" value="{{ request()->input('customer_lokasi_id') }}">
+                    <select name="customer_lokasi_id" class="form-select select2-custom lookCustomerLokasiId">
+                        <option value="">...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
                 <label>Week</label>
                 <div class="form-group-control">
                     <select class="form-control select2-custom" name="date">

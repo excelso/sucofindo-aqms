@@ -80,7 +80,16 @@
         }
 
         //region Handle Persentase Data Comply Weekly Summary
-        public function scopePlatformWeeklySummary(Builder $builder, string $minDate, string $maxDate, string $timezone = 'Asia/Jakarta', ?int $userId = null, ?string $platformUid = null, ?int $tipeLogger = null): void {
+        public function scopePlatformWeeklySummary(
+            Builder $builder,
+            string $minDate,
+            string $maxDate,
+            string $timezone = 'Asia/Jakarta',
+            ?int $userId = null,
+            ?string $platformUid = null,
+            ?int $siteLokasiId = null,
+            ?int $tipeLogger = null
+        ): void {
             $connection = DB::connection('sparing-mysql');
 
             $minUnix = $connection->selectOne(
@@ -169,6 +178,9 @@
                     ->on('stats.tipe_logger', '=', 't_platform.tipe_logger');
             });
 
+            $builder->leftJoin('t_customer_site', 't_platform.site_id', '=', 't_customer_site.id');
+            $builder->leftJoin('t_customer_lokasi', 't_customer_site.customer_lokasi_id', '=', 't_customer_lokasi.id');
+
             // Join untuk filter user
             if ($userId !== null) {
                 $builder->join('t_users_sites', 't_platform.site_id', '=', 't_users_sites.site_id');
@@ -210,6 +222,10 @@
 
             if ($tipeLogger !== null) {
                 $builder->where('t_platform.tipe_logger', $tipeLogger);
+            }
+
+            if ($siteLokasiId !== null) {
+                $builder->where('t_customer_site.customer_lokasi_id', $siteLokasiId);
             }
         }
         //endregion
