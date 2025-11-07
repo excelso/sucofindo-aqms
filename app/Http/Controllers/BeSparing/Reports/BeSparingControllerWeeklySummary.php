@@ -39,7 +39,8 @@
                 $untilDate = $weekExplode[1];
             }
 
-            $dataParam = Parameter::weeklySummary($startDate, $untilDate, 'Asia/Makassar', request()->user()->id_sparing);
+            $dataParam = Platform::platformWeeklySummary($startDate, $untilDate, 'Asia/Makassar', request()->user()->id_sparing)
+                ->with('site.customerLokasi');
 
             return view($this->viewPath . '.index', [
                 'items' => $dataParam->paginate(20)->onEachSide(1),

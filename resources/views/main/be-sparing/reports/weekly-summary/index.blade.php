@@ -53,7 +53,8 @@
                             <thead>
                                 <tr class="sticky-header">
                                     <th rowspan="2" class="text-center w-[100px] !py-[9px]">No.</th>
-                                    <th rowspan="2" class="text-left w-[180px] !py-[9px]">UID</th>
+                                    <th rowspan="2" class="text-left w-[150px] !py-[9px]">Site</th>
+                                    <th rowspan="2" class="text-left w-[150px] !py-[9px]">UID</th>
                                     <th rowspan="2" class="text-left w-[180px] !py-[9px]">Tipe Logger</th>
                                     <th rowspan="2" class="text-right w-[180px] !py-[9px]">Data Entry</th>
                                     <th colspan="3" class="text-center border-l !py-[9px]">Checkpoint Comply</th>
@@ -75,6 +76,7 @@
 
                                         <tr class="data-tables" data-items="{{json_encode($item)}}">
                                             <td class="text-center">{{ $i++ }}</td>
+                                            <td class="text-left">{{ $item->site->customerLokasi->nama_lokasi ?? '-' }}</td>
                                             <td class="text-left">{{ $item->uid }}</td>
                                             <td class="text-left">{{ $tipeLogger }}</td>
                                             <td class="text-right">{{ round($item->persen, 2) ?? '-' }}%</td>
