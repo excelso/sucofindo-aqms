@@ -56,8 +56,8 @@
                                     <th rowspan="2" class="text-left w-[150px] !py-[9px]">Site</th>
                                     <th rowspan="2" class="text-left w-[150px] !py-[9px]">UID</th>
                                     <th rowspan="2" class="text-left w-[180px] !py-[9px]">Tipe Logger</th>
-                                    <th rowspan="2" class="text-right w-[180px] !py-[9px]">Data Entry</th>
-                                    <th colspan="3" class="text-center border-l !py-[9px]">Checkpoint Comply</th>
+                                    <th rowspan="2" class="text-right w-[180px] !py-[9px]">Data Masuk</th>
+                                    <th colspan="3" class="text-center border-l !py-[9px]">Data Comply</th>
                                 </tr>
                                 <tr class="sticky-header">
                                     <th class="text-right w-[180px] !py-[9px]">pH</th>
