@@ -19,4 +19,14 @@
         protected $guarded = [];
         protected $table = 't_platform_weekly_summary';
 
+        public function platform(): RelationsBelongsTo|BelongsTo {
+            return $this->belongsTo(Platform::class, 'uid', 'uid');
+        }
+
+        public function scopeDataWeekly(Builder $builder, string $minDate, string $maxDate): void {
+            $builder->select('t_platform_weekly_summary.*');
+            $builder->whereDate('t_platform_weekly_summary.week_start', '=', $minDate);
+            $builder->whereDate('t_platform_weekly_summary.week_until', '=', $maxDate);
+        }
+
     }

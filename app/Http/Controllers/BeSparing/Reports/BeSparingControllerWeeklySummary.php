@@ -10,6 +10,7 @@
     use App\Models\BeSparing\Master\Parameter;
     use App\Models\BeSparing\Master\ParameterLimit;
     use App\Models\BeSparing\Master\Platform;
+    use App\Models\BeSparing\Master\PlatformWeeklySummary;
     use avadim\FastExcelWriter\Excel;
     use avadim\FastExcelWriter\Style;
     use Carbon\Carbon;
@@ -45,8 +46,8 @@
                 $untilDate = $weekExplode[1];
             }
 
-            $dataParam = Platform::platformWeeklySummary($startDate, $untilDate, 'Asia/Makassar', request()->user()->id_sparing, $uid, $siteLokasiId, $tipeLogger)
-                ->with('site.customerLokasi');
+            $dataParam = PlatformWeeklySummary::dataWeekly($startDate, $untilDate)
+                ->with('platform.site.customerLokasi');
 
             return view($this->viewPath . '.index', [
                 'customer' => $dataCustomer,

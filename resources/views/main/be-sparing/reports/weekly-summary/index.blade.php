@@ -76,13 +76,13 @@
 
                                         <tr class="data-tables" data-items="{{json_encode($item)}}">
                                             <td class="text-center">{{ $i++ }}</td>
-                                            <td class="text-left">{{ $item->site->customerLokasi->nama_lokasi ?? '-' }}</td>
+                                            <td class="text-left">{{ $item->platform->site->customerLokasi->nama_lokasi ?? '-' }}</td>
                                             <td class="text-left">{{ $item->uid }}</td>
                                             <td class="text-left">{{ $tipeLogger }}</td>
-                                            <td class="text-right">{{ round($item->persen, 2) ?? '-' }}%</td>
-                                            <td class="text-right">{{ round($item->percentagePh, 2) ?? '-' }}%</td>
-                                            <td class="text-right">{{ round($item->percentageTss, 2) ?? '-' }}%</td>
-                                            <td class="text-right">{{ round($item->percentageDebit, 2) ?? '-' }}%</td>
+                                            <td class="text-right">{{ round($item->data_entry, 2) ?? '-' }}%</td>
+                                            <td class="text-right">{{ round($item->ph_comply, 2) ?? '-' }}%</td>
+                                            <td class="text-right">{{ round($item->tss_comply, 2) ?? '-' }}%</td>
+                                            <td class="text-right">{{ round($item->debit_comply, 2) ?? '-' }}%</td>
                                         </tr>
                                     @endforeach
                                 @endif
