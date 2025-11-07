@@ -82,8 +82,8 @@
                     $untilDate = $weekExplode[1];
                 }
 
-                $dataParam = Platform::platformWeeklySummary($startDate, $untilDate, 'Asia/Makassar', request()->user()->id_sparing, $uid, $siteLokasiId, $tipeLogger)
-                    ->with('site.customerLokasi')->get();
+                $dataParam = PlatformWeeklySummary::dataWeekly($startDate, $untilDate, request()->user()->id_sparing, $siteLokasiId, $tipeLogger)
+                    ->with('platform.site.customerLokasi')->get();
 
                 $data_row = [];
                 if (isset($dataParam)) {
@@ -97,13 +97,13 @@
 
                         $data_row[] = [
                             $i,
-                            $item->site->customerLokasi->nama_lokasi ?? '-',
+                            $item->platform->site->customerLokasi->nama_lokasi ?? '-',
                             $item->uid,
                             $tipeLogger,
-                            round($item->persen, 2),
-                            round($item->percentagePh, 2),
-                            round($item->percentageTss, 2),
-                            round($item->percentageDebit, 2)
+                            round($item->data_entry, 2),
+                            round($item->ph_comply, 2),
+                            round($item->tss_comply, 2),
+                            round($item->debit_comply, 2)
                         ];
                     }
                 }
