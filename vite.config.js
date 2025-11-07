@@ -42,6 +42,7 @@ export default defineConfig({
                 'resources/js/main/be-sparing/reports/water-quality/index.tsx',
                 'resources/js/main/be-sparing/reports/logs-parameter/index.tsx',
                 'resources/js/main/be-sparing/reports/weekly-report/index.tsx',
+                'resources/js/main/be-sparing/reports/weekly-summary/index.tsx',
             ],
             refresh: true,
         }),
