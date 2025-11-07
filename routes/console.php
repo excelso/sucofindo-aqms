@@ -15,6 +15,6 @@
         ->withoutOverlapping()
         ->runInBackground();
 
-    Schedule::command('app:sparing-weekly-summary')->everyTwoHours()
+    Schedule::command('app:sparing-weekly-summary')->everyThirtyMinutes()
         ->withoutOverlapping()
         ->runInBackground();
