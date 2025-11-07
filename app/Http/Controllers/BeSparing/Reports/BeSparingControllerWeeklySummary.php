@@ -35,6 +35,7 @@
             $weekNumb = $week['weekNumber'];
 
             $uid = $request->input('platformUid') ?? null;
+            $tipeLogger = $request->input('tipe_logger') ?? 2;
             $siteLokasiId = $request->input('customer_lokasi_id') ?? null;
             $startDate = $weekInfo['startDate'];
             $untilDate = $weekInfo['untilDate'];
@@ -44,7 +45,7 @@
                 $untilDate = $weekExplode[1];
             }
 
-            $dataParam = Platform::platformWeeklySummary($startDate, $untilDate, 'Asia/Makassar', request()->user()->id_sparing, $uid, $siteLokasiId)
+            $dataParam = Platform::platformWeeklySummary($startDate, $untilDate, 'Asia/Makassar', request()->user()->id_sparing, $uid, $siteLokasiId, $tipeLogger)
                 ->with('site.customerLokasi');
 
             return view($this->viewPath . '.index', [
