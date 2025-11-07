@@ -45,8 +45,8 @@
                     <label>Tipe Logger</label>
                     <div class="form-group-control">
                         <select name="tipe_logger" class="form-select select2-custom">
-                            <option value="2" {{ request()->input('tipe_logger') == '2' ? 'selected' : '' }}>KLHK</option>
                             <option value="1" {{ request()->input('tipe_logger') == '1' ? 'selected' : '' }}>Internal</option>
+                            <option value="2" {{ request()->input('tipe_logger') == '2' ? 'selected' : '' }}>KLHK</option>
                         </select>
                     </div>
                 </div>

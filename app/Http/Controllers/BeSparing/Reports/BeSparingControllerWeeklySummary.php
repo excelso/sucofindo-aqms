@@ -36,7 +36,7 @@
             $weekNumb = $week['weekNumber'];
 
             $uid = $request->input('platformUid') ?? null;
-            $tipeLogger = $request->input('tipe_logger') ?? 2;
+            $tipeLogger = $request->input('tipe_logger') ?? 1;
             $siteLokasiId = $request->input('customer_lokasi_id') ?? null;
             $startDate = $weekInfo['startDate'];
             $untilDate = $weekInfo['untilDate'];
@@ -72,7 +72,7 @@
                 $weekNumb = $week['weekNumber'];
 
                 $uid = $request->input('platformUid') ?? null;
-                $tipeLogger = $request->input('tipe_logger') ?? 2;
+                $tipeLogger = $request->input('tipe_logger') ?? 1;
                 $siteLokasiId = $request->input('customer_lokasi_id') ?? null;
                 $startDate = $weekInfo['startDate'];
                 $untilDate = $weekInfo['untilDate'];
