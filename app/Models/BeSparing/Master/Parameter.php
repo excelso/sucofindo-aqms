@@ -985,6 +985,16 @@
 
             $connection = $this->getConnection();
 
+            $minUnix = $connection->selectOne(
+                "SELECT UNIX_TIMESTAMP(CONVERT_TZ(?, ?, 'Asia/Makassar')) as unix",
+                [$minDate . ' 00:00:00', $timezone]
+            )->unix;
+
+            $maxUnix = $connection->selectOne(
+                "SELECT UNIX_TIMESTAMP(CONVERT_TZ(?, ?, 'Asia/Makassar')) as unix",
+                [$maxDate . ' 23:59:59', $timezone]
+            )->unix;
+
             $subQuery = $connection->table('t_parameter')
                 ->leftJoin('t_parameter_limit', function ($join) {
                     $join->on('t_parameter.uid', '=', 't_parameter_limit.uid')
@@ -997,65 +1007,63 @@
 
                     // pH counts
                     DB::raw("SUM(CASE
-                    WHEN (t_parameter.ph <= 0 AND t_parameter_limit.ph_intermit = 1) OR
-                         (t_parameter.ph > t_parameter_limit.ph_warn_min AND t_parameter.ph < t_parameter_limit.ph_warn_max)
-                    THEN 1 ELSE 0
-                END) as ph_normal"),
+                WHEN (t_parameter.ph <= 0 AND t_parameter_limit.ph_intermit = 1) OR
+                     (t_parameter.ph > t_parameter_limit.ph_warn_min AND t_parameter.ph < t_parameter_limit.ph_warn_max)
+                THEN 1 ELSE 0
+            END) as ph_normal"),
 
                     DB::raw("SUM(CASE
-                    WHEN (t_parameter.ph > t_parameter_limit.ph_mutu_min AND t_parameter.ph <= t_parameter_limit.ph_warn_min) OR
-                         (t_parameter.ph >= t_parameter_limit.ph_warn_max AND t_parameter.ph < t_parameter_limit.ph_mutu_max)
-                    THEN 1 ELSE 0
-                END) as ph_warning"),
+                WHEN (t_parameter.ph > t_parameter_limit.ph_mutu_min AND t_parameter.ph <= t_parameter_limit.ph_warn_min) OR
+                     (t_parameter.ph >= t_parameter_limit.ph_warn_max AND t_parameter.ph < t_parameter_limit.ph_mutu_max)
+                THEN 1 ELSE 0
+            END) as ph_warning"),
 
                     DB::raw("SUM(CASE
-                    WHEN t_parameter.ph >= t_parameter_limit.ph_mutu_max OR
-                         (t_parameter.ph <= t_parameter_limit.ph_mutu_min AND t_parameter_limit.ph_intermit = 0)
-                    THEN 1 ELSE 0
-                END) as ph_danger"),
+                WHEN t_parameter.ph >= t_parameter_limit.ph_mutu_max OR
+                     (t_parameter.ph <= t_parameter_limit.ph_mutu_min AND t_parameter_limit.ph_intermit = 0)
+                THEN 1 ELSE 0
+            END) as ph_danger"),
 
                     // TSS counts
                     DB::raw("SUM(CASE
-                    WHEN (t_parameter.tss <= 0 AND t_parameter_limit.tss_intermit = 1) OR
-                         (t_parameter.tss > t_parameter_limit.tss_warn_min AND t_parameter.tss < t_parameter_limit.tss_mutu_min)
-                    THEN 1 ELSE 0
-                END) as tss_normal"),
+                WHEN (t_parameter.tss <= 0 AND t_parameter_limit.tss_intermit = 1) OR
+                     (t_parameter.tss > t_parameter_limit.tss_warn_min AND t_parameter.tss < t_parameter_limit.tss_mutu_min)
+                THEN 1 ELSE 0
+            END) as tss_normal"),
 
                     DB::raw("SUM(CASE
-                    WHEN (t_parameter.tss > t_parameter_limit.tss_warn AND t_parameter.tss <= t_parameter_limit.tss_warn_min) OR
-                         (t_parameter.tss >= t_parameter_limit.tss_mutu_min AND t_parameter.tss < t_parameter_limit.tss_mutu)
-                    THEN 1 ELSE 0
-                END) as tss_warning"),
+                WHEN (t_parameter.tss > t_parameter_limit.tss_warn AND t_parameter.tss <= t_parameter_limit.tss_warn_min) OR
+                     (t_parameter.tss >= t_parameter_limit.tss_mutu_min AND t_parameter.tss < t_parameter_limit.tss_mutu)
+                THEN 1 ELSE 0
+            END) as tss_warning"),
 
                     DB::raw("SUM(CASE
-                    WHEN t_parameter.tss >= t_parameter_limit.tss_mutu OR
-                         (t_parameter.tss <= t_parameter_limit.tss_warn AND t_parameter_limit.tss_intermit = 0)
-                    THEN 1 ELSE 0
-                END) as tss_danger"),
+                WHEN t_parameter.tss >= t_parameter_limit.tss_mutu OR
+                     (t_parameter.tss <= t_parameter_limit.tss_warn AND t_parameter_limit.tss_intermit = 0)
+                THEN 1 ELSE 0
+            END) as tss_danger"),
 
                     // Debit counts
                     DB::raw("SUM(CASE
-                    WHEN (t_parameter.debit <= 0 AND t_parameter_limit.debit_intermit = 1) OR
-                         (t_parameter.debit > t_parameter_limit.debit_warn_min AND t_parameter.debit < t_parameter_limit.debit_mutu_min)
-                    THEN 1 ELSE 0
-                END) as debit_normal"),
+                WHEN (t_parameter.debit <= 0 AND t_parameter_limit.debit_intermit = 1) OR
+                     (t_parameter.debit > t_parameter_limit.debit_warn_min AND t_parameter.debit < t_parameter_limit.debit_mutu_min)
+                THEN 1 ELSE 0
+            END) as debit_normal"),
 
                     DB::raw("SUM(CASE
-                    WHEN (t_parameter.debit >= t_parameter_limit.debit_warn AND t_parameter.debit <= t_parameter_limit.debit_warn_min) OR
-                         (t_parameter.debit >= t_parameter_limit.debit_mutu_min AND t_parameter.debit < t_parameter_limit.debit_mutu)
-                    THEN 1 ELSE 0
-                END) as debit_warning"),
+                WHEN (t_parameter.debit >= t_parameter_limit.debit_warn AND t_parameter.debit <= t_parameter_limit.debit_warn_min) OR
+                     (t_parameter.debit >= t_parameter_limit.debit_mutu_min AND t_parameter.debit < t_parameter_limit.debit_mutu)
+                THEN 1 ELSE 0
+            END) as debit_warning"),
 
                     DB::raw("SUM(CASE
-                    WHEN t_parameter.debit >= t_parameter_limit.debit_mutu OR
-                         (t_parameter.debit <= t_parameter_limit.debit_warn AND t_parameter_limit.debit_intermit = 0)
-                    THEN 1 ELSE 0
-                END) as debit_danger")
+                WHEN t_parameter.debit >= t_parameter_limit.debit_mutu OR
+                     (t_parameter.debit <= t_parameter_limit.debit_warn AND t_parameter_limit.debit_intermit = 0)
+                THEN 1 ELSE 0
+            END) as debit_danger")
                 )
-                ->whereRaw(
-                    "CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, '%Y-%m-%d'), 'Asia/Makassar', ?) BETWEEN ? AND ?",
-                    [$timezone, $minDate, $maxDate]
-                )
+                // CRITICAL: Use direct unix comparison (can use index!)
+                ->whereBetween('t_parameter.datetime_unix', [$minUnix, $maxUnix])
                 ->groupBy('t_parameter.uid', 't_parameter.tipe_logger');
 
             $builder = $connection->table('t_platform')
