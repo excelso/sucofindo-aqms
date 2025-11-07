@@ -56,9 +56,13 @@
                 <div class="form-group-control">
                     <select class="form-control select2-custom" name="date">
                         @foreach($weeks as $week)
-                            @php($selected = $week['isSelected'])
-                            @if($week['startDate'] . '_' . $week['untilDate'] == request()->input('date'))
-                                @php($selected = 'selected')
+                            @php($selected = '')
+                            @if(request()->input('date'))
+                                @if($week['startDate'] . '_' . $week['untilDate'] == request()->input('date'))
+                                    @php($selected = 'selected')
+                                @endif
+                            @else
+                                @php($selected = $week['isSelected'])
                             @endif
                             <option value="{{ $week['startDate'] }}_{{ $week['untilDate'] }}" data-additional="{{ $week['startDateFormatted'] }} - {{ $week['untilDateFormatted'] }}" {{ $selected }}>{{ $week['weekLabel'] }}</option>
                         @endforeach
