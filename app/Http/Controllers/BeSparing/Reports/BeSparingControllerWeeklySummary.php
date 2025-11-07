@@ -42,11 +42,15 @@
             $untilDate = $weekInfo['untilDate'];
             if ($request->input('date') && $request->input('date') != '') {
                 $weekExplode = explode('_', $request->input('date'));
+                $week = $weekCalculator->getWeekInfoForDate($weekExplode[0]);
+                $weekInfo = $week['weekInfo'];
+                $weekNumb = $week['weekNumber'];
+
                 $startDate = $weekExplode[0];
                 $untilDate = $weekExplode[1];
             }
 
-            $dataParam = PlatformWeeklySummary::dataWeekly($startDate, $untilDate)
+            $dataParam = PlatformWeeklySummary::dataWeekly($startDate, $untilDate, request()->user()->id_sparing, $siteLokasiId, $tipeLogger)
                 ->with('platform.site.customerLokasi');
 
             return view($this->viewPath . '.index', [
