@@ -29,7 +29,7 @@
                     </a>
                 </div>
                 <div class="mr-2">
-                    <a class="btn btn-primary ml-2">
+                    <a class="cursor-pointer ml-2" href="{{ route('sparing.reports.weekly-summary.export-excel', [http_build_query(request()->input())]) }}" target="_blank">
                         <i class="fas fa-cloud-download mr-2"></i> Export Excel
                     </a>
                 </div>
@@ -40,7 +40,10 @@
             <div class="card z-[200]">
                 <div class="card-header !pb-0 mb-4">
                     <div>
-                        <div class="font-bold text-[18px]">Data</div>
+                        <div class="font-bold text-[18px]">
+                            <div>{{ $weekNumb }}</div>
+                            <div class="text-[13px] font-normal">{{ $weekInfo['startDateFormatted'] }} - {{ $weekInfo['untilDateFormatted'] }}</div>
+                        </div>
                     </div>
                 </div>
 
@@ -49,13 +52,16 @@
                         <table class="table table-fixed">
                             <thead>
                                 <tr class="sticky-header">
-                                    <th class="text-center w-[100px]">No.</th>
-                                    <th class="text-left w-[180px]">UID</th>
-                                    <th class="text-left w-[180px]">Tipe Logger</th>
-                                    <th class="text-left w-[180px]">Data Entry</th>
-                                    <th class="text-right w-[180px]">pH</th>
-                                    <th class="text-right w-[180px]">TSS</th>
-                                    <th class="text-right w-[180px]">Debit</th>
+                                    <th rowspan="2" class="text-center w-[100px] !py-[9px]">No.</th>
+                                    <th rowspan="2" class="text-left w-[180px] !py-[9px]">UID</th>
+                                    <th rowspan="2" class="text-left w-[180px] !py-[9px]">Tipe Logger</th>
+                                    <th rowspan="2" class="text-right w-[180px] !py-[9px]">Data Entry</th>
+                                    <th colspan="3" class="text-center border-l !py-[9px]">Checkpoint Comply</th>
+                                </tr>
+                                <tr class="sticky-header">
+                                    <th class="text-right w-[180px] !py-[9px]">pH</th>
+                                    <th class="text-right w-[180px] !py-[9px]">TSS</th>
+                                    <th class="text-right w-[180px] !py-[9px]">Debit</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -68,7 +74,7 @@
                                         @endif
 
                                         <tr class="data-tables" data-items="{{json_encode($item)}}">
-                                            <td class="text-center">{{$i++}}</td>
+                                            <td class="text-center">{{ $i++ }}</td>
                                             <td class="text-left">{{ $item->uid }}</td>
                                             <td class="text-left">{{ $tipeLogger }}</td>
                                             <td class="text-right">{{ round($item->persen, 2) ?? '-' }}%</td>
@@ -102,7 +108,8 @@
             </div>
         </div>
 
+        @include('main.be-sparing.reports.weekly-summary.popup.pencarian')
     </div>
 </x-app-layout>
 
-@vite(['resources/js/main/be-sparing/master/data-logger/index.tsx'])
+@vite(['resources/js/main/be-sparing/reports/weekly-summary/index.tsx'])

@@ -978,6 +978,7 @@
             string $minDate,
             string $maxDate,
             string $timezone = 'Asia/Jakarta',
+            ?int $userId = null,
             ?string $platformUid = null,
             ?int $tipeLogger = null
         ): \Illuminate\Database\Query\Builder|HigherOrderWhenProxy {
@@ -1057,13 +1058,25 @@
                 )
                 ->groupBy('t_parameter.uid', 't_parameter.tipe_logger');
 
-            // Return query builder dari t_platform dengan join ke subquery
-            return $connection->table('t_platform')
+            $builder = $connection->table('t_platform')
                 ->leftJoinSub($subQuery, 'stats', function ($join) {
                     $join->on('stats.uid', '=', 't_platform.uid')
                         ->on('stats.tipe_logger', '=', 't_platform.tipe_logger');
-                })
-                ->select(
+                });
+
+            if ($userId !== null) {
+                $builder->join('t_users_sites', 't_platform.site_id', '=', 't_users_sites.site_id');
+                $builder->join('t_users_sites_tipe_logger', function ($join) {
+                    $join->on('t_users_sites.id', '=', 't_users_sites_tipe_logger.users_sites_id');
+                    $join->on('t_platform.tipe_logger', '=', 't_users_sites_tipe_logger.tipe_logger');
+                    $join->where('t_users_sites_tipe_logger.is_active', '=', 1);
+                });
+
+                $builder->where('t_users_sites.user_id', '=', $userId);
+                $builder->where('t_users_sites.status_site', '=', 1);
+            }
+
+            return $builder->select(
                     't_platform.uid',
                     't_platform.tipe_logger',
                     DB::raw('(IFNULL(stats.ph_normal, 0) + IFNULL(stats.ph_warning, 0)) / NULLIF(stats.total, 0) * 100 as percentagePh'),

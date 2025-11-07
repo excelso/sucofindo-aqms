@@ -146,6 +146,7 @@
 
                 Route::prefix('weekly-summary')->group(function () {
                     Route::get('/', [BeSparingControllerWeeklySummary::class, 'index'])->name('sparing.reports.weekly-summary');
+                    Route::get('export-excel', [BeSparingControllerWeeklySummary::class, 'handleExportExcel'])->name('sparing.reports.weekly-summary.export-excel');
                 });
             });
 
