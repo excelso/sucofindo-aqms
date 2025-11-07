@@ -206,6 +206,8 @@
             if ($siteLokasiId !== null) {
                 $builder->where('t_customer_site.customer_lokasi_id', $siteLokasiId);
             }
+
+            $builder->orderBy('t_customer_site.customer_lokasi_id', 'ASC');
         }
         //endregion
 
