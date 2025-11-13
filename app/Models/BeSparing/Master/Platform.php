@@ -286,11 +286,13 @@
             $builder->where('t_users_sites.user_id', '=', $userId);
             $builder->where('t_users_sites.status_site', '=', 1);
 
-            if ($heartbeatStatus != 1) {
-                if ($heartbeatStatus == 2) {
-                    $builder->where('t_platform.status_platform', '=', 'online');
-                } else {
-                    $builder->where('t_platform.status_platform', '=', 'offline');
+            if ($heartbeatStatus) {
+                if ($heartbeatStatus != 1) {
+                    if ($heartbeatStatus == 2) {
+                        $builder->where('t_platform.status_platform', '=', 'online');
+                    } else {
+                        $builder->where('t_platform.status_platform', '=', 'offline');
+                    }
                 }
             }
 

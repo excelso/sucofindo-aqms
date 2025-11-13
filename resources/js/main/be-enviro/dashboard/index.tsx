@@ -28,6 +28,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const platformFromTitle = document.querySelector('.platformFromTitle')
     const statusButtons = document.querySelectorAll<HTMLElement>('.btn-status');
+    const totalOnline = document.querySelector('.totalOnline')
+    const totalOffline = document.querySelector('.totalOffline')
     const platformItems = document.querySelector('.platformItems')
     //endregion
 
@@ -114,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
 
         const {status} = response
-        const {message, data} = await response.json()
+        const {message, onlineCount, offlineCount, data} = await response.json()
         if (status === 200) {
             platformItems.innerHTML = ''
             if (data.length !== 0) {
@@ -124,6 +126,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         const {customer_lokasi} = site
                         const {nama_lokasi, customer} = customer_lokasi
                         const {nama_perusahaan} = customer
+
+                        totalOnline.textContent = `(${onlineCount})`
+                        totalOffline.textContent = `(${offlineCount})`
 
                         const cardData: CardData = {
                             imageUrl: thumbnail_path ? `/storage/${thumbnail_path}/${thumbnail_file}` : 'https://placehold.co/70',
@@ -146,6 +151,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         const {site_name, companies} = sites
                         const {company_name} = companies
 
+                        totalOnline.textContent = `(${onlineCount})`
+                        totalOffline.textContent = `(${offlineCount})`
                         const cardData: CardData = {
                             imageUrl: thumbnail_path ? `/storage/${thumbnail_path}/${thumbnail_file}` : 'https://placehold.co/70',
                             title: uid,

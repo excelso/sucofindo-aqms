@@ -112,10 +112,10 @@
                     <span class="font-bold text-[13px]">All</span>
                 </div>
                 <div class="btn-status" data-status="2">
-                    <span class="font-bold text-[13px]">Online</span>
+                    <span class="font-bold text-[13px]">Online <span class="totalOnline"></span></span>
                 </div>
                 <div class="btn-status" data-status="3">
-                    <span class="font-bold text-[13px]">Offline</span>
+                    <span class="font-bold text-[13px]">Offline <span class="totalOffline"></span></span>
                 </div>
             </div>
             <div class="border-t h-[1px]"></div>
