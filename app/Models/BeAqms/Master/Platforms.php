@@ -22,6 +22,8 @@
             'company_site_location_id',
             'uid',
             'uid_alias',
+            'thumbnail_path',
+            'thumbnail_file',
             'cctv_link_1',
             'cctv_1_support_ptz',
             'cctv_link_2',
@@ -136,11 +138,13 @@
 
             $builder->where('is_active', '=', 1);
 
-            if ($heartbeatStatus != 1) {
-                if ($heartbeatStatus == 2) {
-                    $builder->where(DB::raw('LOWER(tHelp.heartbeat_status)'), '=', 'online');
-                } else {
-                    $builder->where(DB::raw('LOWER(tHelp.heartbeat_status)'), '=', 'offline');
+            if ($heartbeatStatus) {
+                if ($heartbeatStatus != 1) {
+                    if ($heartbeatStatus == 2) {
+                        $builder->where(DB::raw('LOWER(tHelp.heartbeat_status)'), '=', 'online');
+                    } else {
+                        $builder->where(DB::raw('LOWER(tHelp.heartbeat_status)'), '=', 'offline');
+                    }
                 }
             }
 

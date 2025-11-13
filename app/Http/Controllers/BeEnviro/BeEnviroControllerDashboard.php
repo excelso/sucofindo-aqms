@@ -86,6 +86,14 @@
                     'site.customerLokasi:id,customer_id,nama_lokasi',
                     'site.customerLokasi.customer:id,nama_perusahaan'
                 ])->get()->map(function ($item) {
+
+                    $thumbnail = null;
+                    if ($item->thumbnail_path) {
+                        if (file_exists(public_path('/storage/' . $item->thumbnail_path . '/' . $item->thumbnail_file))) {
+                            $thumbnail = '/storage/' . $item->thumbnail_path . '/' . $item->thumbnail_file;
+                        }
+                    }
+
                     return [
                         'platform_type' => 'sparing',
                         'uid' => $item->uid,
@@ -93,23 +101,26 @@
                         'lng' => $item->lng,
                         'company_name' => $item->site->customerLokasi->customer->nama_perusahaan,
                         'location' => $item->site->customerLokasi->nama_lokasi,
+                        'images' => $thumbnail,
                         'status_online' => $item->status_platform ?? 'offline',
                         'tipe_logger' => $item->tipe_logger ?? 1,
                         'total_logger' => $item->total_logger ?? 1,
                     ];
                 });
 
-                $userPlatformId = null;
-                $userPlatformIds = UserPlatforms::userPlatforms(request()->user()->id)->get();
-                foreach ($userPlatformIds as $platformId) {
-                    $userPlatformId[] = $platformId->platform_id;
-                }
+                $userPlatformIds = UserPlatforms::userPlatforms($request->user()->id)
+                    ->pluck('platform_id');
+                $userPlatformId = $userPlatformIds->toArray();
 
-                $dataPlatformAqms = Platforms::dataPlatformSearchByUserPlatform($userPlatformId)->with([
-                        'sites',
-                        'sites.companies',
-                        'sitesLocation'
-                    ])->get()->map(function ($item) {
+                $dataPlatformAqms = Platforms::dataPlatformSearchByUserPlatform($userPlatformId)->get()->map(function ($item) {
+
+                        $thumbnail = null;
+                        if ($item->thumbnail_path) {
+                            if (file_exists(public_path('/storage/' . $item->thumbnail_path . '/' . $item->thumbnail_file))) {
+                                $thumbnail = '/storage/' . $item->thumbnail_path . '/' . $item->thumbnail_file;
+                            }
+                        }
+
                         return [
                             'platform_type' => 'aqms',
                             'uid' => $item->uid,
@@ -117,6 +128,7 @@
                             'lng' => $item->lng,
                             'company_name' => $item->sites->companies->company_name,
                             'location' => $item->sites->site_name,
+                            'images' => $thumbnail,
                             'status_online' => $item->heartbeat_status ?? 'offline',
                             'tipe_logger' => $item->tipe_logger ?? 1,
                             'total_logger' => 1,

@@ -13,11 +13,11 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="text-xl font-bold tracking-tight">Be Enviro</div>
-                    <div class="text-[11px] uppercase tracking-widest text-emerald-600">Sparing • AQMS</div>
+                    <div class="text-xl font-bold tracking-tight !text-white">Be Enviro</div>
+                    <div class="text-[11px] uppercase tracking-widest text-white">Sparing • AQMS</div>
                 </div>
             </div>
-            <nav class="items-center gap-6 text-sm text-slate-600 flex">
+            <nav class="items-center gap-6 text-sm text-white flex">
                 <a class="transition-colors hover:text-emerald-700" href="#features">Features</a>
                 <a class="transition-colors hover:text-emerald-700" href="#access">Access</a>
                 <a class="transition-colors hover:text-emerald-700" href="#support">Support</a>
@@ -28,12 +28,17 @@
             <div class="mx-auto grid w-full max-w-6xl sm:grid-cols-1 grid-cols-2 items-center gap-10 px-6 pb-14 pt-4 md:grid-cols-2 md:gap-12 md:pt-10">
                 <!-- Left: Hero copy -->
                 <section class="animate-fadeInUp sm:hidden">
-                    <h1 class="text-5xl font-extrabold leading-tight tracking-tight md:text-5xl">
-                        Environmental Monitoring
-                        <span class="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 bg-clip-text text-transparent"> Made Easier</span>
+                    <h1 class="text-5xl font-extrabold leading-tight tracking-tight md:text-5xl text-white">
+                        Environmental
+                        <div class="flex items-center">
+                            Monitoring
+                            <div class="bg-white/50 px-2 rounded-xl ml-2">
+                                <span class="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 bg-clip-text text-transparent"> Made Easier</span>
+                            </div>
+                        </div>
                     </h1>
-                    <p class="mt-4 max-w-xl text-base leading-relaxed text-slate-600">
-                        Consolidated access to <strong>SPARING</strong> and <strong>AQMS</strong> in one place. Minimalist design, modern performance, and smooth animations.
+                    <p class="mt-4 max-w-xl text-base leading-relaxed text-white">
+                        Consolidated access to <strong>SPARING</strong> and <strong>AQMS</strong> in one place.
                     </p>
 
                     <div id="features" class="mt-6 flex flex-wrap items-center gap-3 text-xs">
@@ -41,7 +46,7 @@
                         <span class="badge badge-secondary">Role-based</span>
                     </div>
 
-                    <div class="mt-10 text-slate-500 md:block">
+                    <div class="mt-10 text-white md:block">
                         <div class="flex items-center gap-6">
                             <div class="flex items-center gap-2">
                                 <!-- Icon: Wind -->
@@ -96,7 +101,7 @@
                                 @csrf
                                 <div class="form-group">
                                     <label> Username / Email </label>
-                                    <div class="form-group-control">
+                                    <div class="form-group-control !bg-white">
                                         <div class="form-control-prepend">
                                             <div class="form-control-prepend-text">
                                                 <i class="fa fa-envelope"></i>
@@ -113,7 +118,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label> Password </label>
-                                    <div class="form-group-control">
+                                    <div class="form-group-control !bg-white">
                                         <div class="form-control-prepend">
                                             <div class="form-control-prepend-text">
                                                 <i class="fa fa-lock"></i>
@@ -222,8 +227,8 @@
         </main>
 
         <!-- Footer -->
-        <footer class="mt-auto border-t border-emerald-100/60 bg-white/50 backdrop-blur">
-            <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-6 text-xs text-slate-500 md:flex-row">
+        <footer class="mt-auto border-t border-emerald-100/60 bg-white/30 backdrop-blur">
+            <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-6 text-xs text-white md:flex-row">
                 <div>© <span id="year"></span> Be Enviro. All rights reserved.</div>
                 <div class="flex items-center gap-4" id="support">
                     <a class="hover:text-emerald-700" href="#">Kebijakan Privasi</a>

@@ -1,3 +1,37 @@
+/* Background Image */
+body {
+    position: relative;
+    background-image: url('/public/images/banner/06.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+}
+
+/* Overlay untuk readability - gradient dari putih ke transparent */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+            radial-gradient(
+                    circle at 55% 45%,               /* posisi bola kaca kira-kira */
+                    rgba(255, 255, 255, 0.0) 0%,
+                    rgba(255, 255, 255, 0.0) 35%,
+                    rgba(236, 253, 245, 0.5) 70%,
+                    rgba(209, 250, 229, 0.8) 100%
+            ),
+            linear-gradient(
+                    110deg,
+                    rgba(255, 255, 255, 0.95) 0%,
+                    rgba(236, 253, 245, 0.9) 30%,
+                    rgba(209, 250, 229, 0.45) 55%,
+                    rgba(209, 250, 229, 0.0) 75%
+            );
+    backdrop-filter: blur(2.5px);
+    z-index: -1;
+}
+
 /* Animations */
 @keyframes floaty { 0%{ transform: translateY(0); opacity:.3;} 50%{ transform: translateY(-18px); opacity:.5;} 100%{ transform: translateY(0); opacity:.3;} }
 @keyframes fadeInUp { 0%{ opacity:0; transform: translateY(10px);} 100%{ opacity:1; transform: translateY(0);} }
@@ -44,4 +78,22 @@
 /* Footer minor fix for Safari backdrop */
 @supports not ((backdrop-filter: blur(0))) {
     footer { background-color: rgba(255,255,255,.9); }
+}
+
+.hero-title-main {
+    color: #0f172a;           /* hampir hitam, biar kontras di overlay putih */
+}
+
+.hero-title-accent {
+    color: #059669;           /* hijau emerald, senada dengan brand & daun */
+}
+
+.hero-subtitle {
+    color: #475569;           /* abu lembut */
+}
+
+/* opsional: sedikit shadow biar tetap kebaca di area yang lebih terang */
+.hero-title-main,
+.hero-title-accent {
+    text-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
 }

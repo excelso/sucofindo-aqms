@@ -11,6 +11,7 @@ interface CardData {
     subtitle: string;
     status: 'online' | 'offline';
     imageAlt?: string;
+    uid: string; // 👈 Tambahkan uid
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -29,6 +30,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const statusButtons = document.querySelectorAll<HTMLElement>('.btn-status');
     const platformItems = document.querySelector('.platformItems')
     //endregion
+
+    // 👇 Variabel global untuk menyimpan marker dan map
+    let markersMap = new Map();
+    let mapInstance = null;
+    let prevInfoWindow = null;
 
     let currPlatformType: string | null = null;
     let currHeartbeatStatus: string | null = "1";
@@ -90,22 +96,6 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     }
 
-    // if (searchInput) {
-    //     searchInput.addEventListener('focus', async () => {
-    //         leftPanel.classList.add('is-open')
-    //
-    //         if (btnCloseSearch) {
-    //             btnCloseSearch.classList.add('opacity-100')
-    //         }
-    //
-    //         // Load data hanya sekali
-    //         if (!dataLoaded) {
-    //             dataLoaded = true;
-    //             await handleDataPlatforms()
-    //         }
-    //     });
-    // }
-
     //region Handle Left Panel Platforms
     async function handleDataPlatforms(titleType: string, heartbeatStatus: string, search?: any) {
         platformFromTitle.textContent = titleType
@@ -130,36 +120,48 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.length !== 0) {
                 data.forEach((item: any) => {
                     if (titleType === 'SPARING') {
-                        const {uid, status_platform, site} = item
+                        const {uid, status_platform, thumbnail_path, thumbnail_file, site} = item
                         const {customer_lokasi} = site
                         const {nama_lokasi, customer} = customer_lokasi
                         const {nama_perusahaan} = customer
 
                         const cardData: CardData = {
-                            imageUrl: 'https://placehold.co/70',
+                            imageUrl: thumbnail_path ? `/storage/${thumbnail_path}/${thumbnail_file}` : 'https://placehold.co/70',
                             title: uid,
                             subtitle: `${nama_perusahaan} / ${nama_lokasi}`,
                             status: status_platform,
-                            imageAlt: `${uid}`
+                            imageAlt: `${uid}`,
+                            uid: uid // 👈 Tambahkan uid
                         };
 
                         const card = createPlatformCard(cardData);
                         platformItems.appendChild(card);
+
+                        // 👇 Event click untuk SPARING
+                        card.addEventListener('click', () => {
+                            focusToMarker(uid);
+                        });
                     } else {
-                        const {uid, heartbeat_status, sites} = item
+                        const {uid, heartbeat_status, thumbnail_path, thumbnail_file, sites} = item
                         const {site_name, companies} = sites
                         const {company_name} = companies
 
                         const cardData: CardData = {
-                            imageUrl: 'https://placehold.co/70',
+                            imageUrl: thumbnail_path ? `/storage/${thumbnail_path}/${thumbnail_file}` : 'https://placehold.co/70',
                             title: uid,
                             subtitle: `${company_name} / ${site_name}`,
                             status: heartbeat_status !== null ? heartbeat_status : 'offline',
-                            imageAlt: `${uid}`
+                            imageAlt: `${uid}`,
+                            uid: uid // 👈 Tambahkan uid
                         };
 
                         const card = createPlatformCard(cardData);
                         platformItems.appendChild(card);
+
+                        // 👇 Event click untuk AQMS
+                        card.addEventListener('click', () => {
+                            focusToMarker(uid);
+                        });
                     }
                 })
             }
@@ -171,10 +173,43 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // 👇 Function untuk fokus ke marker
+    function focusToMarker(uid: string) {
+        const markerData = markersMap.get(uid);
+
+        if (markerData && mapInstance) {
+            const {marker, infowindow} = markerData;
+
+            // Tutup info window sebelumnya jika ada
+            if (prevInfoWindow) {
+                prevInfoWindow.close();
+            }
+
+            // Fokus ke marker dengan animasi smooth
+            mapInstance.panTo(marker.position);
+
+            // Zoom in untuk melihat marker lebih jelas
+            mapInstance.setZoom(15);
+
+            // Buka info window
+            infowindow.open(mapInstance, marker);
+            prevInfoWindow = infowindow;
+
+            // Optional: Tutup left panel setelah diklik
+            // leftPanel.classList.remove('is-open');
+            // if (btnCloseSearch) {
+            //     btnCloseSearch.classList.remove('opacity-100');
+            // }
+        }
+    }
+
     function createPlatformCard(data: CardData): HTMLDivElement {
         // Container utama
         const container = document.createElement('div');
-        container.className = 'cursor-pointer px-4 py-3 flex items-center gap-2 hover:bg-gray-100 hover:rounded-xl transition-all duration-150 ease-linear';
+        container.className = 'aqms-container cursor-pointer px-4 py-3 flex items-center gap-2 hover:bg-gray-100 hover:rounded-xl transition-all duration-150 ease-linear';
+
+        // 👇 Tambahkan data-uid untuk debugging
+        container.setAttribute('data-uid', data.uid);
 
         // Image container
         const imageContainer = document.createElement('div');
@@ -236,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     Promise.all([
         loader.importLibrary('maps'),
-        loader.importLibrary('marker')  // 👈 Tambahkan ini
+        loader.importLibrary('marker')
     ]).then(([mapsLib, markerLib]) => {
 
         const {Map} = mapsLib
@@ -255,31 +290,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 position: google.maps.ControlPosition.LEFT_BOTTOM
             },
         })
-        //endregion
 
-        //region Handle Map Style
-        let hideLabels = [{
-            featureType: "administrative.province",
-            stylers: [{visibility: "on"}]
-        }, {
-            featureType: "administrative.locality",
-            stylers: [{visibility: "on"}]
-        }, {
-            featureType: "poi",
-            stylers: [{visibility: "on"}]
-        }, {
-            featureType: 'transit',
-            stylers: [{visibility: 'on'}]
-        }, {
-            featureType: 'landscape.natural',
-            stylers: [{visibility: 'on'}]
-        }];
-
-        map.setOptions({styles: hideLabels});
+        mapInstance = map;
         //endregion
 
         handleDataPlatformMarker(map, google).then(null)
-        // 👆 Pass AdvancedMarkerElement ke function kamu
 
     })
     //endregion
@@ -298,11 +313,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const {message, data} = await response.json()
         if (status === 200) {
             if (data.length !== 0) {
+                // 👇 Clear markers sebelum populate ulang
+                markersMap.clear();
+
                 let prev_infowindow = null
                 const markerPointer = []
                 const bounds = new google.maps.LatLngBounds()
                 data.map((item: any) => {
-                    const {platform_type, uid, lat, lng, location, status_online, total_logger} = item
+                    const {platform_type, uid, lat, lng, images, location, status_online, total_logger} = item
 
                     //region Handle Marker Color
                     let markerColor = '#16c901'
@@ -325,6 +343,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     const headerContent = document.createElement('div');
                     headerContent.className = 'font-bold';
                     headerContent.innerHTML = `${platform_type === 'sparing' ? 'SPARING' : 'AQMS'} - ${uid}`
+
+                    let thumbnail = 'https://placehold.co/270'
+                    if (images) {
+                        thumbnail = images
+                    }
 
                     let badgeStatus = 'ds-badge-success'
                     if (status_online === 'offline')
@@ -374,8 +397,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         content: `
                             <div class="info-window">
                                 <div>
-                                    <div class="flex items-center overflow-hidden w-full h-[100px]">
-                                        <img src="https://placehold.co/270" class="object-cover" alt="x">
+                                    <div class="flex items-center overflow-hidden w-full h-[300px]">
+                                        <img src="${thumbnail}" class="object-center" width="300" alt="x">
                                     </div>
                                     <div class="mt-2">
                                         <div class="mb-2">
@@ -458,10 +481,19 @@ document.addEventListener('DOMContentLoaded', function () {
                             prev_infowindow.close()
 
                         prev_infowindow = infowindow
+                        prevInfoWindow = infowindow // 👈 Update global prevInfoWindow
                         infowindow.open(map, marker)
                     })
+
                     bounds.extend(marker.position)
                     markerPointer.push(marker)
+
+                    // 👇 Simpan marker dengan uid sebagai key
+                    markersMap.set(uid, {
+                        marker: marker,
+                        infowindow: infowindow,
+                        position: {lat, lng}
+                    });
                 })
 
                 map.fitBounds(bounds)

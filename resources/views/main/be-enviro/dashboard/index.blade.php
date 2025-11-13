@@ -145,7 +145,7 @@
                     </div>
                 </div>
 
-                <div class="list-site flex items-center gap-2 ml-5">
+                <div class="list-site !hidden flex items-center gap-2 ml-5">
                     <div class="list-item">
                         <div class="flex items-center">
                             <div class="relative inline-flex items-center justify-center w-7 h-7 overflow-hidden bg-gray-500 rounded-full">

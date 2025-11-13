@@ -54,6 +54,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnShowPortalPassword: HTMLElement = modalForm.querySelector('.btnShowPortalPassword')
     const platformTimezone: HTMLInputElement = modalForm.querySelector('.platformTimezone')
     const platformTimezoneError: HTMLElement = modalForm.querySelector('.platformTimezoneError')
+    const fileThumbnail: HTMLInputElement = modalForm.querySelector('.fileThumbnail')
+    const fileThumbnailLabel: HTMLLabelElement = document.querySelector('label[for="fileThumbnail"]#fileName')
+    const fileThumbnailError: HTMLElement = modalForm.querySelector('.fileThumbnailError')
 
     const pm10Min: HTMLInputElement = modalForm.querySelector('.pm10Min')
     const pm10MinError: HTMLElement = modalForm.querySelector('.pm10MinError')
@@ -396,8 +399,54 @@ document.addEventListener('DOMContentLoaded', function () {
         btnCreate.addEventListener('click', function () {
             showModalDialog(modalForm, `<i class="fas fa-plus-circle mr-2"></i> New Platform`, function () {
 
+                let fileThumb = null
+                fileThumbnail.addEventListener('change', (ev) => {
+                    const target = ev.target as HTMLInputElement
+                    const file = target.files?.[0]
+
+                    if (file) {
+                        fileThumbnailLabel.textContent = file.name
+                        fileThumb = file
+                    }
+                })
+
                 if (btnSave) {
                     btnSave.addEventListener('click', function () {
+                        const formData = new FormData();
+
+                        formData.append('company_site_id', companySiteId.value);
+                        formData.append('company_site_location_id', companySiteLocationId.value);
+                        formData.append('uid', uid.value);
+                        formData.append('uid_alias', uidAlias.value);
+                        formData.append('cctv_link_1', cctvLink1.value);
+                        formData.append('cctv_1_support_ptz', cctv1IsSupportPTZ.checked ? '1' : '0');
+                        formData.append('cctv_link_2', cctvLink2.value);
+                        formData.append('cctv_2_support_ptz', cctv2IsSupportPTZ.checked ? '1' : '0');
+                        formData.append('cctv_link_hls', cctvLinkHls.value);
+                        formData.append('timezone', platformTimezone.value);
+                        formData.append('file_thumbnail', fileThumb);
+                        formData.append('lat', alamatLat.value);
+                        formData.append('lng', alamatLng.value);
+                        formData.append('cctv_portal_ip', cctvPortalIP.value);
+                        formData.append('cctv_portal_username', cctvPortalUsername.value);
+                        formData.append('cctv_portal_password', cctvPortalPassword.value);
+                        formData.append('pm10_min', pm10Min.value);
+                        formData.append('pm10_min_buffer', pm10MinBuffer.value);
+                        formData.append('pm10_max_buffer', pm10MaxBuffer.value);
+                        formData.append('pm10_max', pm10Max.value);
+                        formData.append('pm25_min', pm25Min.value);
+                        formData.append('pm25_min_buffer', pm25MinBuffer.value);
+                        formData.append('pm25_max_buffer', pm25MaxBuffer.value);
+                        formData.append('pm25_max', pm25Max.value);
+                        formData.append('tsp_min', tspMin.value);
+                        formData.append('tsp_min_buffer', tspMinBuffer.value);
+                        formData.append('tsp_max_buffer', tspMaxBuffer.value);
+                        formData.append('tsp_max', tspMax.value);
+                        formData.append('noise_min', noiseMin.value);
+                        formData.append('noise_min_buffer', noiseMinBuffer.value);
+                        formData.append('noise_max_buffer', noiseMaxBuffer.value);
+                        formData.append('noise_max', noiseMax.value);
+
                         confirmAlert({
                             title: 'Confirm',
                             html: 'Are you sure want to create new Platform?',
@@ -409,42 +458,11 @@ document.addEventListener('DOMContentLoaded', function () {
                                 const response = await fetch('${url}/store', {
                                     method: 'POST',
                                     headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': csrfToken
+                                        'X-CSRF-TOKEN': csrfToken,
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'Accept': 'application/json'
                                     },
-                                    body: JSON.stringify({
-                                        company_site_id: companySiteId.value,
-                                        company_site_location_id: companySiteLocationId.value,
-                                        uid: uid.value,
-                                        uid_alias: uidAlias.value,
-                                        cctv_link_1: cctvLink1.value,
-                                        cctv_1_support_ptz: cctv1IsSupportPTZ.checked ? 1 : 0,
-                                        cctv_link_2: cctvLink2.value,
-                                        cctv_2_support_ptz: cctv2IsSupportPTZ.checked ? 1 : 0,
-                                        cctv_link_hls: cctvLinkHls.value,
-                                        timezone: platformTimezone.value,
-                                        lat: alamatLat.value,
-                                        lng: alamatLng.value,
-                                        cctv_portal_ip: cctvPortalIP.value,
-                                        cctv_portal_username: cctvPortalUsername.value,
-                                        cctv_portal_password: cctvPortalPassword.value,
-                                        pm10_min: pm10Min.value,
-                                        pm10_min_buffer: pm10MinBuffer.value,
-                                        pm10_max_buffer: pm10MaxBuffer.value,
-                                        pm10_max: pm10Max.value,
-                                        pm25_min: pm25Min.value,
-                                        pm25_min_buffer: pm25MinBuffer.value,
-                                        pm25_max_buffer: pm25MaxBuffer.value,
-                                        pm25_max: pm25Max.value,
-                                        tsp_min: tspMin.value,
-                                        tsp_min_buffer: tspMinBuffer.value,
-                                        tsp_max_buffer: tspMaxBuffer.value,
-                                        tsp_max: tspMax.value,
-                                        noise_min: noiseMin.value,
-                                        noise_min_buffer: noiseMinBuffer.value,
-                                        noise_max_buffer: noiseMaxBuffer.value,
-                                        noise_max: noiseMax.value,
-                                    })
+                                    body: formData
                                 })
 
                                 await handleResponse(response)
@@ -538,6 +556,18 @@ document.addEventListener('DOMContentLoaded', function () {
                                         } = logger_limit || {}
 
                                         showModalDialog(modalForm, `<i class="fas fa-edit mr-2"></i> Update Platform`, () => {
+
+                                            let fileThumb = null
+                                            fileThumbnail.addEventListener('change', (ev) => {
+                                                const target = ev.target as HTMLInputElement
+                                                const file = target.files?.[0]
+
+                                                if (file) {
+                                                    fileThumbnailLabel.textContent = file.name
+                                                    fileThumb = file
+                                                }
+                                            })
+
                                             modelSite.setSelectedValue(company_site_id)
                                             modelSiteLocation.setSelectedValue(company_site_location_id)
                                             uidOld.value = data_uid
@@ -578,6 +608,42 @@ document.addEventListener('DOMContentLoaded', function () {
 
                                             if (btnSave) {
                                                 btnSave.addEventListener('click', function () {
+                                                    const formData = new FormData();
+
+                                                    formData.append('company_site_id', companySiteId.value);
+                                                    formData.append('company_site_location_id', companySiteLocationId.value);
+                                                    formData.append('uid', uid.value);
+                                                    formData.append('uid_alias', uidAlias.value);
+                                                    formData.append('uid_old', uidOld.value);
+                                                    formData.append('cctv_link_1', cctvLink1.value);
+                                                    formData.append('cctv_1_support_ptz', cctv1IsSupportPTZ.checked ? '1' : '0');
+                                                    formData.append('cctv_link_2', cctvLink2.value);
+                                                    formData.append('cctv_2_support_ptz', cctv2IsSupportPTZ.checked ? '1' : '0');
+                                                    formData.append('cctv_link_hls', cctvLinkHls.value);
+                                                    formData.append('timezone', platformTimezone.value);
+                                                    formData.append('file_thumbnail', fileThumb);
+                                                    formData.append('lat', alamatLat.value);
+                                                    formData.append('lng', alamatLng.value);
+                                                    formData.append('cctv_portal_ip', cctvPortalIP.value);
+                                                    formData.append('cctv_portal_username', cctvPortalUsername.value);
+                                                    formData.append('cctv_portal_password', cctvPortalPassword.value);
+                                                    formData.append('pm10_min', pm10Min.value);
+                                                    formData.append('pm10_min_buffer', pm10MinBuffer.value);
+                                                    formData.append('pm10_max_buffer', pm10MaxBuffer.value);
+                                                    formData.append('pm10_max', pm10Max.value);
+                                                    formData.append('pm25_min', pm25Min.value);
+                                                    formData.append('pm25_min_buffer', pm25MinBuffer.value);
+                                                    formData.append('pm25_max_buffer', pm25MaxBuffer.value);
+                                                    formData.append('pm25_max', pm25Max.value);
+                                                    formData.append('tsp_min', tspMin.value);
+                                                    formData.append('tsp_min_buffer', tspMinBuffer.value);
+                                                    formData.append('tsp_max_buffer', tspMaxBuffer.value);
+                                                    formData.append('tsp_max', tspMax.value);
+                                                    formData.append('noise_min', noiseMin.value);
+                                                    formData.append('noise_min_buffer', noiseMinBuffer.value);
+                                                    formData.append('noise_max_buffer', noiseMaxBuffer.value);
+                                                    formData.append('noise_max', noiseMax.value);
+
                                                     confirmAlert({
                                                         title: 'Confirm',
                                                         html: 'Are you sure want to update data Platform?',
@@ -587,45 +653,13 @@ document.addEventListener('DOMContentLoaded', function () {
                                                     }, async () => {
                                                         await waitLoader('Please wait...', 'Process of updating Platform data.', async () => {
                                                             const response = await fetch(`${url}/update/${platformId}`, {
-                                                                method: 'PUT',
+                                                                method: 'POST',
                                                                 headers: {
-                                                                    'Content-Type': 'application/json',
-                                                                    'X-CSRF-TOKEN': csrfToken
+                                                                    'X-CSRF-TOKEN': csrfToken,
+                                                                    'X-Requested-With': 'XMLHttpRequest',
+                                                                    'Accept': 'application/json'
                                                                 },
-                                                                body: JSON.stringify({
-                                                                    company_site_id: companySiteId.value,
-                                                                    company_site_location_id: companySiteLocationId.value,
-                                                                    uid_old: uidOld.value,
-                                                                    uid: uid.value,
-                                                                    uid_alias: uidAlias.value,
-                                                                    cctv_link_1: cctvLink1.value,
-                                                                    cctv_1_support_ptz: cctv1IsSupportPTZ.checked ? 1 : 0,
-                                                                    cctv_link_2: cctvLink2.value,
-                                                                    cctv_2_support_ptz: cctv2IsSupportPTZ.checked ? 1 : 0,
-                                                                    cctv_link_hls: cctvLinkHls.value,
-                                                                    timezone: platformTimezone.value,
-                                                                    lat: alamatLat.value,
-                                                                    lng: alamatLng.value,
-                                                                    cctv_portal_ip: cctvPortalIP.value,
-                                                                    cctv_portal_username: cctvPortalUsername.value,
-                                                                    cctv_portal_password: cctvPortalPassword.value,
-                                                                    pm10_min: pm10Min.value,
-                                                                    pm10_min_buffer: pm10MinBuffer.value,
-                                                                    pm10_max_buffer: pm10MaxBuffer.value,
-                                                                    pm10_max: pm10Max.value,
-                                                                    pm25_min: pm25Min.value,
-                                                                    pm25_min_buffer: pm25MinBuffer.value,
-                                                                    pm25_max_buffer: pm25MaxBuffer.value,
-                                                                    pm25_max: pm25Max.value,
-                                                                    tsp_min: tspMin.value,
-                                                                    tsp_min_buffer: tspMinBuffer.value,
-                                                                    tsp_max_buffer: tspMaxBuffer.value,
-                                                                    tsp_max: tspMax.value,
-                                                                    noise_min: noiseMin.value,
-                                                                    noise_min_buffer: noiseMinBuffer.value,
-                                                                    noise_max_buffer: noiseMaxBuffer.value,
-                                                                    noise_max: noiseMax.value,
-                                                                })
+                                                                body: formData
                                                             })
 
                                                             await handleResponse(response)

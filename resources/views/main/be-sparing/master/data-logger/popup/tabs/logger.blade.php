@@ -60,6 +60,28 @@
                 <ul class="platformUidError"></ul>
             </div>
             <div class="form-group">
+                <label>
+                    Thumbnail
+                    <span class="text-red-500 ml-1">*</span>
+                </label>
+                <div class="rounded-[5px] border-[1px] border-gray-300 mt-1.5 mb-1">
+                    <div class="flex items-center">
+                        <input type="file" id="fileThumbnail" accept="image/*" class="hidden fileThumbnail" />
+                        <label for="fileThumbnail" class="flex items-center justify-center py-[12px] px-[15px] text-sm font-medium text-white bg-gray-800 rounded-l-[5px] cursor-pointer hover:bg-gray-700">
+                            <span>Choose File</span>
+                        </label>
+                        <label for="fileThumbnail" id="fileName" class="flex-1 px-3 text-sm !font-normal cursor-pointer text-gray-500 truncate">
+                            No File Selected
+                        </label>
+                    </div>
+                </div>
+                <div class="info-alert-text">
+                    <div class="mr-1"><i class="fas fa-info-circle"></i></div>
+                    <div>{{ __('Upload Thumbnail file. Max 5 MB.') }}</div>
+                </div>
+                <ul class="fileThumbnailError"></ul>
+            </div>
+            <div class="form-group">
                 <label>Catchment Area</label>
                 <label class="form-group-control">
                     <input class="form-control catchmentArea" placeholder="...">

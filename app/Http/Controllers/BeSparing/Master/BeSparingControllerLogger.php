@@ -580,6 +580,15 @@
                 $splitLokasiPlatform = explode(',', $request->input('lokasi_platform'));
                 $lokasiPlatform = $splitLokasiPlatform;
 
+                $filename = null;
+                $filepath = null;
+                if ($request->hasFile('file_thumbnail')) {
+                    $file = $request->file('file_thumbnail');
+                    $filename = $request->input('uid') . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $filepath = 'platforms/sparing/' . $request->input('uid') . '/images';
+                    $file->storeAs($filepath, $filename, 'public');
+                }
+
                 (new Platform)
                     ->where('uid', $request->input('uid_old'))
                     ->where('tipe_logger', $request->input('tipe_logger'))
@@ -591,6 +600,8 @@
                         'catchment_area' => $request->input('catchment_area'),
                         'badan_air' => $request->input('badan_air'),
                         'serial_number' => $request->input('serial_number'),
+                        'thumbnail_path' => $filepath,
+                        'thumbnail_file' => $filename,
                         'lat' => trim($lokasiPlatform[0]) ?? 0,
                         'lng' => trim($lokasiPlatform[1]) ?? 0,
                         'alamat_platform' => $request->input('alamat_platform'),

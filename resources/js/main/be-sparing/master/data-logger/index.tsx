@@ -194,6 +194,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const fileDokumenSize: HTMLInputElement = modalUpload.querySelector('.fileDokumenSize')
     const fileDokumenUrl: HTMLInputElement = modalUpload.querySelector('.fileDokumenUrl')
     const fileDokumenError = modalUpload.querySelector('.fileDokumenError')
+
+    const fileThumbnail: HTMLInputElement = modalForm.querySelector('.fileThumbnail')
+    const fileThumbnailLabel: HTMLLabelElement = document.querySelector('label[for="fileThumbnail"]#fileName')
+    const fileThumbnailError: HTMLElement = modalForm.querySelector('.fileThumbnailError')
     //endregion
 
     //region Handle Tabs
@@ -809,6 +813,17 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                         //endregion
 
+                        let fileThumb = null
+                        fileThumbnail.addEventListener('change', (ev) => {
+                            const target = ev.target as HTMLInputElement
+                            const file = target.files?.[0]
+
+                            if (file) {
+                                fileThumbnailLabel.textContent = file.name
+                                fileThumb = file
+                            }
+                        })
+
                         if (btnMonitor) {
                             $(btnMonitor).off('click').on('click', function () {
                                 window.open(`/monitor/detail/${monitor_uniq_id}/${tipe_logger}`, '_blank').focus()
@@ -944,6 +959,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 dataForm.append('uid_old', platformUidOld.value)
                                 dataForm.append('uid', platformUid.value)
                                 dataForm.append('catchment_area', catchmentArea.value)
+                                dataForm.append('file_thumbnail', fileThumb)
                                 dataForm.append('badan_air', badanAir.value)
                                 dataForm.append('serial_number', serialNumber.value)
                                 dataForm.append('lokasi_platform', lokasiPlatform.value)
@@ -1039,8 +1055,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                         const response = await fetch(`${url.pathname}/update`, {
                                             method: 'POST',
                                             headers: {
-                                                // 'Content-Type': 'application/json',
-                                                'X-CSRF-TOKEN': csrfToken
+                                                'X-CSRF-TOKEN': csrfToken,
+                                                'X-Requested-With': 'XMLHttpRequest',
+                                                'Accept': 'application/json'
                                             },
                                             body: dataForm,
                                         })

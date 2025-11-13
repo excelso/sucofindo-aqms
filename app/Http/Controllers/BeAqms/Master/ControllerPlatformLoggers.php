@@ -190,6 +190,7 @@
                 'cctv_link_2' => 'nullable|url',
                 'cctv_link_hls' => 'nullable|url',
                 'timezone' => 'required',
+                'file_thumbnail' => 'required|file|mimes:jpeg,jpg,png,pdf|max:5024',
                 'cctv_portal_ip' => [
                     'nullable',
                     'regex:/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}(:[0-9]{1,5})?$/',
@@ -213,6 +214,7 @@
                 'cctv_link' => 'CCTV Link (RTC)',
                 'cctv_link_hls' => 'CCTV Link (HLS)',
                 'timezone' => 'Timezone',
+                'file_thumbnail' => 'Thumbnail',
                 'cctv_portal_ip' => 'CCTV Portal IP',
             ]);
 
@@ -226,11 +228,23 @@
             try {
 
                 DB::transaction(function () use ($platformId, $request) {
+
+                    $filename = null;
+                    $filepath = null;
+                    if ($request->hasFile('file_thumbnail')) {
+                        $file = $request->file('file_thumbnail');
+                        $filename = $request->input('uid') . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                        $filepath = 'platforms/aqms/' . $request->input('uid') . '/images';
+                        $file->storeAs($filepath, $filename, 'public');
+                    }
+
                     Platforms::where('id', $platformId)->update([
                         'company_site_id' => $request->input('company_site_id'),
                         'company_site_location_id' => $request->input('company_site_location_id'),
                         'uid' => $request->input('uid'),
                         'uid_alias' => $request->input('uid_alias'),
+                        'thumbnail_path' => $filepath,
+                        'thumbnail_file' => $filename,
                         'cctv_link_1' => $request->input('cctv_link_1'),
                         'cctv_1_support_ptz' => $request->input('cctv_1_support_ptz'),
                         'cctv_link_2' => $request->input('cctv_link_2'),
@@ -320,6 +334,7 @@
                 'items' => $dataPlatformsCalibration,
             ]);
         }
+
         //endregion
 
         public function calibrationInit($platformId) {

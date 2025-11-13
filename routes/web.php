@@ -272,7 +272,7 @@
                     Route::get('/', [ControllerPlatformLoggers::class, 'index'])->name('master.platform-loggers');
                     Route::post('store', [ControllerPlatformLoggers::class, 'store']);
                     Route::get('detail/{platformId}', [ControllerPlatformLoggers::class, 'handleDetailPlatform']);
-                    Route::put('update/{platformId}', [ControllerPlatformLoggers::class, 'update']);
+                    Route::post('update/{platformId}', [ControllerPlatformLoggers::class, 'update']);
                     Route::delete('delete/{platformId}', [ControllerPlatformLoggers::class, 'delete']);
 
                     Route::group(['prefix' => 'calibration/{platformId}'], function () {
