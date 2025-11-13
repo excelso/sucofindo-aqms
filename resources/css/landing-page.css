@@ -1,5 +1,5 @@
 /* Background Image */
-body {
+.landing-container {
     position: relative;
     background-image: url('/public/images/banner/06.png');
     background-size: cover;
@@ -9,7 +9,7 @@ body {
 }
 
 /* Overlay untuk readability - gradient dari putih ke transparent */
-body::before {
+.landing-container::before {
     content: '';
     position: fixed;
     inset: 0;

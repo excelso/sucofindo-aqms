@@ -1,5 +1,5 @@
 <x-guest-layout>
-    <div id="app" class="relative flex flex-col min-h-screen w-full overflow-hidden">
+    <div id="app" class="landing-container relative flex flex-col min-h-screen w-full overflow-hidden">
         <!-- Ambient particles -->
         <div id="particles" class="particles pointer-events-none absolute inset-0 -z-10"></div>
 
