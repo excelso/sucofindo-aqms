@@ -30,12 +30,11 @@
             $dataCustomer = Customer::with('jenisIndustri')->get();
             $dataPlatforms = Platform::platformComboByLimit(request()->user()->id_sparing)->with('site')->get();
             $weekCalculator = new WeekCalculator();
-            $weekAllYear = $weekCalculator->getAllWeeksInYear(2025);
+            $weekAllYear = $weekCalculator->getAllWeeksInYear(date('Y'));
             $week = $weekCalculator->getWeekInfoForDate(Carbon::now());
             $weekInfo = $week['weekInfo'];
             $weekNumb = $week['weekNumber'];
 
-            $uid = $request->input('platformUid') ?? null;
             $tipeLogger = $request->input('tipe_logger') ?? 1;
             $siteLokasiId = $request->input('customer_lokasi_id') ?? null;
             $startDate = $weekInfo['startDate'];

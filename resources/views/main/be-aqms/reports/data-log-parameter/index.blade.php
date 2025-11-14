@@ -135,9 +135,9 @@
         </div>
 
         {{-- Bagian Include (Modal) --}}
-        @include('main.reports.data-log-parameter.popup.pencarian')
-        @include('main.reports.data-log-parameter.popup.cctv')
+        @include('main.be-aqms.reports.data-log-parameter.popup.pencarian')
+        @include('main.be-aqms.reports.data-log-parameter.popup.cctv')
     </div>
 </x-app-layout>
 
-@vite(['resources/js/main/reports/index.tsx'])
+@vite(['resources/js/main/be-aqms/reports/data-log-parameter/index.tsx'])

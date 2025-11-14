@@ -48,6 +48,15 @@
                                 </div>
                             </a>
                         </li>
+
+
+                        <li class="navItem">
+                            <a class="navLink {{Request::segment(1) == 'aqms' && Request::segment(2) == 'reports' && Request::segment(3) == 'weekly-summary' ? 'navLinkActive' : ''}}" href="{{ route('aqms.reports.weekly-summary') }}">
+                                <div class="navText">
+                                    <p>Weekly Summary</p>
+                                </div>
+                            </a>
+                        </li>
                     </ul>
                 </li>
                 @if(in_array(request()->user()->user_level, ['super_admin', 'admin']))

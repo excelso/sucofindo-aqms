@@ -150,4 +150,41 @@
 
             $builder->orderBy('uid', 'ASC');
         }
+
+        public function scopeDataWeeklySummary(Builder $builder, $minDate, $maxDate, $timezone, $totalSample, $platformUids = null): void {
+            $builder->select([
+                't_platforms.*',
+                DB::raw("ROUND( ((t_logger.total_masuk / $totalSample) * 100), 1 ) as data_entry"),
+                DB::raw("ROUND( ((t_heartbeat.total_masuk / $totalSample) * 100), 1 ) as data_connectivity"),
+            ]);
+
+            $builder->leftJoinSub(function ($query) use ($minDate, $maxDate) {
+                $query->select([
+                    't_loggers.uid',
+                    DB::raw('COUNT( * ) AS total_masuk')
+                ]);
+                $query->from('t_loggers');
+                $query->whereBetween(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_loggers.datetime_unix, "%Y-%m-%d" ), "Asia/Makassar", "Asia/Makassar" )'), [$minDate, $maxDate]);
+                $query->groupBy('t_loggers.uid');
+            }, 't_logger', 't_logger.uid', '=', 't_platforms.uid');
+
+            $builder->leftJoinSub(function ($query) use ($minDate, $maxDate) {
+                $query->select([
+                    't_platforms_heartbeat.uid',
+                    DB::raw('COUNT( * ) AS total_masuk')
+                ]);
+                $query->from('t_platforms_heartbeat');
+                $query->whereBetween(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_platforms_heartbeat.datetime_unix, "%Y-%m-%d" ), "Asia/Makassar", "Asia/Makassar" )'), [$minDate, $maxDate]);
+                $query->where('t_platforms_heartbeat.heartbeat_status', 'online');
+                $query->groupBy('t_platforms_heartbeat.uid');
+            }, 't_heartbeat', 't_heartbeat.uid', '=', 't_platforms.uid');
+
+            if ($platformUids) {
+                if (is_array($platformUids)) {
+                    $builder->whereIn('t_platforms.id', $platformUids);
+                } else {
+                    $builder->where('t_platforms.id', $platformUids);
+                }
+            }
+        }
     }
