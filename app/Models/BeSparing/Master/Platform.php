@@ -82,13 +82,13 @@
         //region Handle Persentase Data Comply Weekly Summary
         public function scopePlatformWeeklySummary(
             Builder $builder,
-            string $minDate,
-            string $maxDate,
-            string $timezone = 'Asia/Jakarta',
-            ?int $userId = null,
+            string  $minDate,
+            string  $maxDate,
+            string  $timezone = 'Asia/Jakarta',
+            ?int    $userId = null,
             ?string $platformUid = null,
-            ?int $siteLokasiId = null,
-            ?int $tipeLogger = null
+            ?int    $siteLokasiId = null,
+            ?int    $tipeLogger = null
         ): void {
             $connection = DB::connection('sparing-mysql');
 
@@ -209,6 +209,7 @@
 
             $builder->orderBy('t_customer_site.customer_lokasi_id', 'ASC');
         }
+
         //endregion
 
         public function scopeDataPlatformInfo(Builder $builder, $platformUid, $tipeLogger): void {
@@ -276,7 +277,6 @@
                 $join->on('tHelp1.tHelp1TipeLogger', '=', 't_platform.tipe_logger');
             });
 
-            // $builder->where('status_validasi', 'Active');
             $builder->join('t_users_sites', 't_platform.site_id', '=', 't_users_sites.site_id');
             $builder->join('t_users_sites_tipe_logger', function ($join) {
                 $join->on('t_users_sites.id', '=', 't_users_sites_tipe_logger.users_sites_id');
@@ -310,6 +310,59 @@
 
             $builder->orderBy('last_online', 'DESC');
             $builder->orderBy('t_platform.tipe_logger');
+        }
+
+        public function scopeEnviroPlatformBySearch(Builder $query, $userId, $heartbeatStatus = null, $search = ''): void {
+            $query->select('t_platform.*', 'tHelp1.last_online');
+
+            $query->leftJoin(DB::raw('
+                (
+                    SELECT
+                        t_parameter.uid as tHelp1Uid,
+                        t_parameter.tipe_logger as tHelp1TipeLogger,
+                        MAX(t_parameter.datetime_unix) as last_online
+                    FROM t_parameter
+                    GROUP BY t_parameter.uid, t_parameter.tipe_logger
+                ) tHelp1
+            '), function ($join) {
+                $join->on('tHelp1.tHelp1Uid', '=', 't_platform.uid');
+                $join->on('tHelp1.tHelp1TipeLogger', '=', 't_platform.tipe_logger');
+            });
+
+            $query->join('t_users_sites', 't_platform.site_id', '=', 't_users_sites.site_id');
+            $query->join('t_users_sites_tipe_logger', function ($join) {
+                $join->on('t_users_sites.id', '=', 't_users_sites_tipe_logger.users_sites_id');
+                $join->on('t_platform.tipe_logger', '=', 't_users_sites_tipe_logger.tipe_logger');
+                $join->where('t_users_sites_tipe_logger.is_active', '=', 1);
+            });
+            $query->where('t_users_sites.user_id', '=', $userId);
+            $query->where('t_users_sites.status_site', '=', 1);
+
+            if ($heartbeatStatus) {
+                if ($heartbeatStatus != 1) {
+                    if ($heartbeatStatus == 2) {
+                        $query->where('t_platform.status_platform', '=', 'online');
+                    } else {
+                        $query->where('t_platform.status_platform', '=', 'offline');
+                    }
+                }
+            }
+
+            if ($search != '') {
+                $query->where(function ($query) use ($search) {
+                    $query->where('uid', 'LIKE', '%' . $search . '%');
+                    $query->orWhereHas('site', function ($qHas) use ($search) {
+                        $qHas->where('nama_site', 'LIKE', '%' . $search . '%');
+                    });
+                    $query->orWhereHas('site.customer', function ($qHas) use ($search) {
+                        $qHas->where('nama_perusahaan', 'LIKE', '%' . $search . '%');
+                    });
+                });
+            }
+
+            $query->orderBy('last_online', 'DESC');
+            $query->orderBy('t_platform.tipe_logger');
+            $query->groupBy('t_platform.uid');
         }
 
         public function scopePlatformByLimit(Builder $builder, $userId, $options = []): void {

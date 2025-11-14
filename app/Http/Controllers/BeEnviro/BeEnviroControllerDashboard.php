@@ -41,26 +41,16 @@
         public function handleDataPlatforms(Request $request) {
             try {
 
-                $onlineCount = 0;
-                $offlineCount = 0;
-                $totalCount = 0;
                 if ($request->input('titleType') == 'SPARING') {
-                    $dataLogger = Platform::platformBySearch(request()->user()->id_sparing, $request->input('heartbeatStatus'), $request->input('search'))->with([
+                    $dataLogger = Platform::enviroPlatformBySearch(request()->user()->id_sparing, $request->input('heartbeatStatus'), $request->input('search'))->with([
                         'site:id,nama_site,customer_lokasi_id',
                         'site.customerLokasi:id,customer_id,nama_lokasi',
                         'site.customerLokasi.customer:id,nama_perusahaan'
                     ])->get();
 
-                    $dataLogger = Platform::platformBySearch(request()->user()->id_sparing, $request->input('heartbeatStatus'), $request->input('search'))->with([
-                        'site:id,nama_site,customer_lokasi_id',
-                        'site.customerLokasi:id,customer_id,nama_lokasi',
-                        'site.customerLokasi.customer:id,nama_perusahaan'
-                    ])->get();
-
-                    $dataLoggerStatus = Platform::platformBySearch(request()->user()->id_sparing)->get();
+                    $dataLoggerStatus = Platform::enviroPlatformBySearch(request()->user()->id_sparing)->get();
                     $onlineCount = $dataLoggerStatus->where('status_platform', 'online')->count();
                     $offlineCount = $dataLoggerStatus->where('status_platform', 'offline')->count();
-                    $totalCount = $dataLoggerStatus->count();
                 } else {
                     $userPlatformId = null;
                     $userPlatformIds = UserPlatforms::userPlatforms(request()->user()->id)->get();
@@ -78,7 +68,6 @@
                     $dataLoggerStatus = Platforms::dataPlatformSearchByUserPlatform($userPlatformId)->get();
                     $onlineCount = $dataLoggerStatus->where('heartbeat_status', 'online')->count();
                     $offlineCount = $dataLoggerStatus->where('heartbeat_status', 'offline')->count();
-                    $totalCount = $dataLoggerStatus->count();
                 }
 
                 return response()->json([
