@@ -24,12 +24,12 @@
             </div>
             <div class="flex flex-row items-center">
                 <div class="mr-3">
-                    <a class="cursor-pointer btnPencarian ml-2">
-                        <i class="fas fa-search mr-2"></i> Pencarian
+                    <a class="cursor-pointer btnSearch ml-2">
+                        <i class="fas fa-search mr-2"></i> Search
                     </a>
                 </div>
                 <div class="mr-2">
-                    <a class="cursor-pointer ml-2" href="{{ route('sparing.reports.weekly-summary.export-excel', [http_build_query(request()->input())]) }}" target="_blank">
+                    <a class="cursor-pointer ml-2" href="{{ route('aqms.reports.weekly-summary.export-excel', [http_build_query(request()->input())]) }}" target="_blank">
                         <i class="fas fa-cloud-download mr-2"></i> Export Excel
                     </a>
                 </div>
@@ -54,10 +54,10 @@
                                 <tr class="sticky-header">
                                     <th class="text-center w-[70px]">No.</th>
                                     <th class="text-center w-[150px]">UID</th>
-                                    <th class="text-left w-[150px]">Location Name</th>
                                     <th class="text-left w-[150px]">Site</th>
-                                    <th class="text-right w-[180px]">Data Entry</th>
-                                    <th class="text-right w-[180px]">Data Connectivity</th>
+                                    <th class="text-left w-[150px]">Location Name</th>
+                                    <th class="text-right w-[180px]">% Data Masuk</th>
+                                    <th class="text-right w-[180px]">% Connectivity</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -67,10 +67,10 @@
                                         <tr class="data-tables" data-items="{{json_encode($item)}}">
                                             <td class="text-center">{{ $i++ }}</td>
                                             <td class="text-center">{{ $item->uid }}</td>
-                                            <td class="text-left">{{ $item->sitesLocation->location_name ?? '-' }}</td>
                                             <td class="text-left">{{ $item->sitesLocation->sites->site_name ?? '-' }}</td>
+                                            <td class="text-left">{{ $item->sitesLocation->location_name ?? '-' }}</td>
                                             <td class="text-right">{{ round($item->data_entry, 2) ?? '-' }}%</td>
-                                            <td class="text-right">{{ round($item->data_entry, 2) ?? '-' }}%</td>
+                                            <td class="text-right">{{ round($item->data_connectivity, 2) ?? '-' }}%</td>
                                         </tr>
                                     @endforeach
                                 @endif
@@ -88,8 +88,8 @@
             </div>
         </div>
 
-        @include('main.be-sparing.reports.weekly-summary.popup.pencarian')
+        @include('main.be-aqms.reports.data-weekly-summary.popup.pencarian')
     </div>
 </x-app-layout>
 
-@vite(['resources/js/main/be-sparing/reports/weekly-summary/index.tsx'])
+@vite(['resources/js/main/be-aqms/reports/data-weekly-summary/index.tsx'])

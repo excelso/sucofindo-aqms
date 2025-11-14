@@ -151,7 +151,7 @@
             $builder->orderBy('uid', 'ASC');
         }
 
-        public function scopeDataWeeklySummary(Builder $builder, $minDate, $maxDate, $timezone, $totalSample, $platformUids = null): void {
+        public function scopeDataWeeklySummary(Builder $builder, $minDate, $maxDate, $timezone, $totalSample, $platformUids = null, $siteId = null): void {
             $builder->select([
                 't_platforms.*',
                 DB::raw("ROUND( ((t_logger.total_masuk / $totalSample) * 100), 1 ) as data_entry"),
@@ -185,6 +185,10 @@
                 } else {
                     $builder->where('t_platforms.id', $platformUids);
                 }
+            }
+
+            if ($siteId) {
+                $builder->where('t_platforms.company_site_id', $siteId);
             }
         }
     }
