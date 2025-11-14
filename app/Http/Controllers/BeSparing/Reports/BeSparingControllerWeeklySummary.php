@@ -136,25 +136,25 @@
                             'width' => 'auto',
                         ]
                     ],
-                    'Data Entry (%)' => [
+                    '% Data Masuk' => [
                         'props' => [
                             'align' => 'right',
                             'width' => 'auto',
                         ]
                     ],
-                    'pH (%)' => [
+                    '% Comply pH' => [
                         'props' => [
                             'align' => 'right',
                             'width' => 'auto',
                         ]
                     ],
-                    'TSS (%)' => [
+                    '% Comply TSS' => [
                         'props' => [
                             'align' => 'right',
                             'width' => 'auto',
                         ]
                     ],
-                    'Debit (%)' => [
+                    '% Comply Debit' => [
                         'props' => [
                             'align' => 'right',
                             'width' => 'auto',
@@ -220,7 +220,7 @@
                     $sheet->writeRow($rowData);
                 }
 
-                $excel->output('WeeklySummary-' . $weekNumb . '.xlsx');
+                $excel->output('Sparing-WeeklySummary-' . $weekNumb . '.xlsx');
 
             } catch (Exception $exception) {
                 abort(500, $exception->getMessage());
