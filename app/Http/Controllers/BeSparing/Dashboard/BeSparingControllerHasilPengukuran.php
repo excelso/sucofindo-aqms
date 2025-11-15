@@ -81,22 +81,103 @@
 
         public function handleDataPlatforms(Request $request) {
             try {
+                $dataUser = User::where('id', request()->user()->id)->first();
+                $perPage = $request->input('per_page', 10);
 
-                $dataUser = User::where('id', Auth::user()->id)->first();
-                $dataLogger = Platform::platformByLimit($dataUser->id_sparing, [
-                    'search' => $request->input(),
-                ])->with([
-                    'site:id,nama_site,customer_lokasi_id',
-                    'site.customerLokasi:id,customer_id,nama_lokasi',
-                    'site.customerLokasi.customer:id,nama_perusahaan'
-                ])->paginate(4);
+                $dataLogger = Platform::enviroPlatformBySearchGrouped($dataUser->id_sparing ?? '')
+                    ->with([
+                        'site:id,nama_site,customer_lokasi_id',
+                        'site.customerLokasi:id,customer_id,nama_lokasi',
+                        'site.customerLokasi.customer:id,nama_perusahaan'
+                    ])
+                    ->distinct()
+                    ->paginate($perPage);
+
+                // Map dan unique berdasarkan UID
+                $platformTemp = $dataLogger->getCollection()
+                    ->unique('uid') // Filter duplikasi berdasarkan UID
+                    ->map(function ($item) {
+                        return [
+                            'uid' => $item->uid,
+                            'uid_alias' => $item->site->nama_site ?? '',
+                            'siteName' => $item->site->nama_site ?? '',
+                            'location' => $item->site->customerLokasi->nama_lokasi ?? '',
+                            'timezone' => 'Asia/Makassar',
+                            'locale' => 'en-US'
+                        ];
+                    })
+                    ->values() // Re-index array setelah unique
+                    ->all(); // Convert ke plain array
 
                 return response()->json([
-                    'userLevel' => Auth::user()->user_level,
-                    'platforms' => $dataLogger->items(),
+                    'data' => $platformTemp,
+                    'pagination' => [
+                        'current_page' => $dataLogger->currentPage(),
+                        'last_page' => $dataLogger->lastPage(),
+                        'per_page' => $dataLogger->perPage(),
+                        'total' => $dataLogger->total(),
+                        'has_more' => $dataLogger->hasMorePages()
+                    ]
+                ]);
+
+            } catch (Exception $exception) {
+                return response()->json([
+                    'message' => $exception->getMessage(),
+                    'code' => $exception->getCode(),
+                    'responseTime' => now()
+                ], 500);
+            }
+        }
+
+        public function handleDataPlatformsData(Request $request, $uid) {
+            try {
+                $dataUser = User::where('id', request()->user()->id)->first();
+                $platform = Platform::enviroPlatformBySearchGrouped($dataUser->id_sparing ?? '', null, null, $uid)
+                    ->with([
+                        'site:id,nama_site,customer_lokasi_id',
+                        'site.customerLokasi:id,customer_id,nama_lokasi',
+                        'site.customerLokasi.customer:id,nama_perusahaan'
+                    ])->first();
+
+                return response()->json([
                     'data' => [
-                        'hasMore' => $dataLogger->hasMorePages(),
-                        'currentPage' => $dataLogger->currentPage()
+                        'uid' => $platform->uid ?? '',
+                        'status' => 'Normal',
+                        'emoji' => '✅',
+                        'colorCode' => 'bg-green-200',
+                        'isOnline' => true,
+                        'metrics' => [
+                            'ph' => [
+                                'value' => 7.2,
+                                'bml_min' => 6,
+                                'bml_min_buffer' => 6.5,
+                                'bml_max_buffer' => 8.5,
+                                'bml_max' => 9
+                            ],
+                            'temperature' => [
+                                'value' => 28.5,
+                                'bml_min' => 20,
+                                'bml_min_buffer' => 22,
+                                'bml_max_buffer' => 35,
+                                'bml_max' => 40
+                            ],
+                            'tss' => [
+                                'value' => 45.3,
+                                'bml_min' => 0,
+                                'bml_min_buffer' => 10,
+                                'bml_max_buffer' => 80,
+                                'bml_max' => 100
+                            ],
+                            'debit' => [
+                                'value' => 2.5,
+                                'bml_min' => 0,
+                                'bml_min_buffer' => 0.5,
+                                'bml_max_buffer' => 5,
+                                'bml_max' => 10
+                            ]
+                        ],
+                        'waterQualityData' => [],
+                        'lastUpdated' => now()->toISOString()
                     ]
                 ]);
 

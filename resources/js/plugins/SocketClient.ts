@@ -15,6 +15,9 @@ export interface LoggerEventData {
     pm_25: number;
     tsp: number;
     noise: number;
+    ph?: number;
+    tss?: number;
+    debit?: number;
     temp?: number;
     datetime_unix: number;
     forecastData?: Array<{ timestamp: number; value: number; link_video_recorded?: string; aqi_from: string }>;

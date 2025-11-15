@@ -89,78 +89,13 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-1 gap-4 platformContents"></div>
-            <div class="loading mt-10">
+            <div class="platformContents"></div>
+            <div class="loading mt-10 !hidden">
                 <div class="flex justify-center items-center">
                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     <span class="ml-2">Loading more data...</span>
                 </div>
             </div>
-            {{-- <div class="grid grid-cols-2 gap-4"> --}}
-            {{--     @foreach($dataLogger as $item) --}}
-            {{--         <div class="col-span-1 platforms" data-uid="{{ $item->uid }}"> --}}
-            {{--             <div class="card !mb-0"> --}}
-            {{--                 <div class="card-header border-b"> --}}
-            {{--                     <div class="w-[50%]"> --}}
-            {{--                         <div class="font-bold text-[18px]">{{ $item->uid }}</div> --}}
-            {{--                     </div> --}}
-            {{--                     <div class="flex items-center !hidden"> --}}
-            {{--                         <div class="flex items-center cursor-pointer mr-2 btnTemperature"> --}}
-            {{--                             <div class="leading-[10px] text-[14px]">Temp: --}}
-            {{--                                 <span class="nilaiTemperature">0</span>°C --}}
-            {{--                             </div> --}}
-            {{--                             <i class="fas fa-temperature-half !text-[20px] iconTemperature ml-2"></i> --}}
-            {{--                         </div> --}}
-            {{--                     </div> --}}
-            {{--                 </div> --}}
-            {{--                 <div class="card-body"> --}}
-            {{--                     <div class="grid grid-cols-3 gap-4 mt-5 mb-10"> --}}
-            {{--                         <div class="col-span-1"> --}}
-            {{--                             <div class="flex items-center justify-center"> --}}
-            {{--                                 <div class="radial-progress primary !w-[75px] !h-[75px] text-[12px] progressDataMasuk"> --}}
-            {{--                                     <div class="skeleton-box w-[75px] !h-[75px] rounded-full"></div> --}}
-            {{--                                 </div> --}}
-            {{--                                 <div class="ml-2"> --}}
-            {{--                                     <div class="text-[12px]">Total Masuk</div> --}}
-            {{--                                     <div class="font-bold text-gray-500 text-[26px] leading-[25px] dataMasuk"> --}}
-            {{--                                         <div class="skeleton-box w-[80px] !h-6 rounded"></div> --}}
-            {{--                                     </div> --}}
-            {{--                                 </div> --}}
-            {{--                             </div> --}}
-            {{--                         </div> --}}
-            {{--                         <div class="col-span-1"> --}}
-            {{--                             <div class="flex items-center justify-center"> --}}
-            {{--                                 <div class="radial-progress success !w-[75px] !h-[75px] text-[12px] progressDataMutu"> --}}
-            {{--                                     <div class="skeleton-box w-[75px] !h-[75px] rounded-full"></div> --}}
-            {{--                                 </div> --}}
-            {{--                                 <div class="ml-2"> --}}
-            {{--                                     <div class="text-[12px]">Data Sesuai</div> --}}
-            {{--                                     <div class="font-bold text-gray-500 text-[26px] leading-[25px] dataMutu"> --}}
-            {{--                                         <div class="skeleton-box w-[80px] !h-6 rounded"></div> --}}
-            {{--                                     </div> --}}
-            {{--                                 </div> --}}
-            {{--                             </div> --}}
-            {{--                         </div> --}}
-            {{--                         <div class="col-span-1"> --}}
-            {{--                             <div class="flex items-center justify-center"> --}}
-            {{--                                 <div class="radial-progress danger !w-[75px] !h-[75px] text-[12px] progressDataTidakMutu"> --}}
-            {{--                                     <div class="skeleton-box w-[75px] !h-[75px] rounded-full"></div> --}}
-            {{--                                 </div> --}}
-            {{--                                 <div class="ml-2"> --}}
-            {{--                                     <div class="text-[12px]">Tidak Sesuai</div> --}}
-            {{--                                     <div class="font-bold text-gray-500 text-[26px] leading-[25px] dataTidakMutu"> --}}
-            {{--                                         <div class="skeleton-box w-[80px] !h-6 rounded"></div> --}}
-            {{--                                     </div> --}}
-            {{--                                 </div> --}}
-            {{--                             </div> --}}
-            {{--                         </div> --}}
-            {{--                     </div> --}}
-            {{--                     <div class="bodyChart !h-[425px]"></div> --}}
-            {{--                 </div> --}}
-            {{--             </div> --}}
-            {{--         </div> --}}
-            {{--     @endforeach --}}
-            {{-- </div> --}}
         </div>
 
         @include('main.be-sparing.dashboard.hasil-pengukuran.popup.pencarian')
