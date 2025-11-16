@@ -65,7 +65,7 @@
                             </div>
                         </div>
                         <div class="card-footer">
-                            <a href="/sparing/dashboard/hasil-pengukuran?status_platform=1">Lihat Detail</a>
+                            <a href="/sparing/dashboard/hasil-pengukuran?status_platform=online">Lihat Detail</a>
                         </div>
                     </div>
                 </div>
@@ -83,14 +83,14 @@
                             </div>
                         </div>
                         <div class="card-footer">
-                            <a href="/sparing/dashboard/hasil-pengukuran?status_platform=2">Lihat Detail</a>
+                            <a href="/sparing/dashboard/hasil-pengukuran?status_platform=offline">Lihat Detail</a>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="platformContents"></div>
-            <div class="loading mt-10 !hidden">
+            <div class="loading mt-10 hidden">
                 <div class="flex justify-center items-center">
                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     <span class="ml-2">Loading more data...</span>

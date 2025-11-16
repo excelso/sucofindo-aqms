@@ -2,13 +2,9 @@ import Highcharts from 'highcharts'
 import "highcharts/highcharts-more";
 import "highcharts/modules/solid-gauge";
 import "highcharts/modules/no-data-to-display";
-import {io, Socket} from 'socket.io-client';
-import {SocketClient, SocketEventCallbacks, SocketOptions} from "@/js/plugins/SocketClient";
-import {createSmoothGradient} from "@/js/main/dashboard/chartHelper";
+import {Socket} from 'socket.io-client';
+import type {DropdownInterface, DropdownOptions, InstanceOptions} from 'flowbite';
 import {Dropdown} from 'flowbite';
-import type {DropdownOptions, DropdownInterface} from 'flowbite';
-import type {InstanceOptions} from 'flowbite';
-import moment from "moment";
 
 interface PaginationInfo {
     current_page: number;
@@ -31,9 +27,8 @@ interface PlatformInfo {
 
 interface FilterOptions {
     date?: string; // Format: YYYY-MM-DD
-    status?: string;
-    siteName?: string;
-    location?: string;
+    status_platform?: string;
+    customer_lokasi_id?: string;
     isOnline?: boolean;
     uid?: string;
 }
@@ -221,6 +216,7 @@ class PlatformSkeletonManager {
             this.showError('Failed to initialize platform manager');
         }
     }
+
     // endregion
 
     // region Render Initial Skeletons
@@ -284,7 +280,7 @@ class PlatformSkeletonManager {
     //endregion
 
     // region Load Platforms
-    private async loadPlatforms(page: number = 1): Promise<void> {
+    private async loadPlatforms(page: number = 1, filterOptions?: FilterOptions): Promise<void> {
         if (!this.options.apiEndpoint) {
             throw new Error('apiEndpoint is required');
         }
@@ -305,6 +301,51 @@ class PlatformSkeletonManager {
             const url = new URL(this.options.apiEndpoint, window.location.origin);
             url.searchParams.set('page', page.toString());
             url.searchParams.set('per_page', (this.options.itemsPerPage || 10).toString());
+
+            // ✅ Jika tidak ada filterOptions, baca dari URL params
+            if (!filterOptions) {
+                const urlParams = new URLSearchParams(window.location.search);
+
+                // Konversi URL params ke FilterOptions
+                filterOptions = {};
+
+                if (urlParams.has('uid')) {
+                    filterOptions.uid = urlParams.get('uid')!;
+                }
+                if (urlParams.has('date')) {
+                    filterOptions.date = urlParams.get('date')!;
+                }
+                if (urlParams.has('status_platform')) {
+                    filterOptions.status_platform = urlParams.get('status_platform')!;
+                }
+                if (urlParams.has('customer_lokasi_id')) {
+                    filterOptions.customer_lokasi_id = urlParams.get('customer_lokasi_id')!;
+                }
+                if (urlParams.has('isOnline')) {
+                    filterOptions.isOnline = urlParams.get('isOnline') === 'true';
+                }
+            }
+
+            // ✅ Tambahkan filter parameters ke URL
+            if (filterOptions) {
+                if (filterOptions.uid) {
+                    url.searchParams.set('uid', filterOptions.uid);
+                }
+                if (filterOptions.date) {
+                    url.searchParams.set('date', filterOptions.date);
+                }
+                if (filterOptions.status_platform) {
+                    url.searchParams.set('status_platform', filterOptions.status_platform);
+                }
+                if (filterOptions.customer_lokasi_id) {
+                    url.searchParams.set('location', filterOptions.customer_lokasi_id);
+                }
+                if (filterOptions.isOnline !== undefined) {
+                    url.searchParams.set('isOnline', filterOptions.isOnline.toString());
+                }
+            }
+
+            console.log(`📡 API URL: ${url.toString()}`);
 
             const response = await fetch(url.toString());
 
@@ -470,6 +511,7 @@ class PlatformSkeletonManager {
             console.error('❌ Error loading more platforms:', error);
         }
     }
+
     // endregion
 
     // region Append New Skeleton Cards
@@ -502,6 +544,7 @@ class PlatformSkeletonManager {
 
         console.log(`✅ Appended ${endIndex - startIndex} new skeleton cards`);
     }
+
     // endregion
 
     // region Add Loading Indicator
@@ -537,7 +580,7 @@ class PlatformSkeletonManager {
     // endregion
 
     // region Load All Platform Data
-    private async loadAllPlatformData(): Promise<void> {
+    private async loadAllPlatformData(filterOptions?: FilterOptions): Promise<void> {
         console.log('🔄 Loading data for all platforms...');
 
         // HANYA load data untuk platforms yang belum loaded
@@ -546,7 +589,7 @@ class PlatformSkeletonManager {
         console.log(`📦 Loading data for ${platformsToLoad.length} platforms`);
 
         const dataPromises = platformsToLoad.map(platform =>
-                this.loadPlatformData(platform.uid)
+                this.loadPlatformData(platform.uid, filterOptions)
         );
 
         try {
@@ -561,6 +604,7 @@ class PlatformSkeletonManager {
             console.error('❌ Error loading platform data:', error);
         }
     }
+
     // endregion
 
     // region Load Platform Data
@@ -666,10 +710,10 @@ class PlatformSkeletonManager {
         const leftSection = this.createElement('div', 'left-section');
         const idTitle = this.createElement('div', 'idle-title', platform.uid_alias);
 
-        if (platform.location) {
-            const locationDiv = this.createElement('div', 'text-[12px] text-gray-500', platform.location);
-            leftSection.appendChild(locationDiv);
-        }
+        // if (platform.location) {
+        //     const locationDiv = this.createElement('div', 'text-[12px] text-gray-500', platform.location);
+        //     leftSection.appendChild(locationDiv);
+        // }
 
         const statusContainer = this.createElement('div', 'status');
 
@@ -683,7 +727,7 @@ class PlatformSkeletonManager {
         const siteContainer = this.createElement('div', 'flex items-center gap-2 text-[14px]');
         const siteIcon = this.createElement('i', 'fas fa-location-dot');
         const siteText = this.createElement('div');
-        siteText.textContent = platform.siteName;
+        siteText.textContent = platform.location;
         siteContainer.appendChild(siteIcon);
         siteContainer.appendChild(siteText);
 
@@ -728,7 +772,7 @@ class PlatformSkeletonManager {
 
         // Skeleton Water Quality section
         const waterQualitySection = this.createElement('div', 'mt-4');
-        const waterQualityTitle = this.createElement('div', 'font-bold text-[14px]', 'Kualitas Air');
+        const waterQualityTitle = this.createElement('div', 'font-bold text-[14px]', 'Water Quality Index');
         const waterQualitySubTitle = this.createElement('div', 'text-[11px] mb-4 flex items-center gap-2');
         const skeletonDropdown = this.createElement('div', 'skeleton-box w-32 h-4 rounded bg-gray-200 animate-pulse');
         waterQualitySubTitle.appendChild(skeletonDropdown);
@@ -903,7 +947,7 @@ class PlatformSkeletonManager {
                 bml_min_buffer: data.metrics?.debit?.bml_min_buffer || 0,
                 bml_max_buffer: data.metrics?.debit?.bml_max_buffer || 100,
                 bml_max: data.metrics?.debit?.bml_max || 100,
-                unit: 'm³/s'
+                unit: 'm³/min'
             }
         ];
 
@@ -925,7 +969,7 @@ class PlatformSkeletonManager {
 
                 // Create gauge chart dengan delay lebih lama
                 setTimeout(() => {
-                    this.createGaugeChart(data.uid, chartDiv, metric.title, metric.type, metric.bml_min, metric.bml_max, metric.value, cardId, metricCard as HTMLElement);
+                    this.createGaugeChart(data.uid, chartDiv, metric.title, metric.type, metric.bml_min, metric.bml_min_buffer, metric.bml_max_buffer, metric.bml_max, metric.value, cardId, metricCard as HTMLElement);
                     console.log(`✅ Metric ${metric.type} chart created`);
                 }, 200 + (index * 50)); // Stagger chart creation
             }
@@ -944,11 +988,11 @@ class PlatformSkeletonManager {
             ddButton.id = `${cardId}-dropdownButton`;
             ddButton.type = 'button';
             ddButton.innerHTML = `
-            <span class="subText">pH & Temperatur</span>
-            <svg class="w-3 h-3" aria-hidden="true" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
-            </svg>
-        `;
+                <span class="subText">All Parameter</span>
+                <svg class="w-3 h-3" aria-hidden="true" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
+                </svg>
+            `;
 
             const ddMenu = this.createElement('div', 'z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700') as HTMLDivElement;
             ddMenu.id = `${cardId}-dropdownMenu`;
@@ -976,10 +1020,10 @@ class PlatformSkeletonManager {
                 return li;
             };
 
-            menuList.appendChild(makeItem('pH & Temperatur', 'ph_temp'));
+            menuList.appendChild(makeItem('All Parameter', 'all'));
+            menuList.appendChild(makeItem('pH & Temp', 'ph_temp'));
             menuList.appendChild(makeItem('TSS', 'tss'));
             menuList.appendChild(makeItem('Debit', 'debit'));
-            menuList.appendChild(makeItem('Semua', 'all'));
             ddMenu.appendChild(menuList);
 
             ddWrap.appendChild(ddButton);
@@ -1015,7 +1059,7 @@ class PlatformSkeletonManager {
             skeletonWQChart.parentNode?.replaceChild(waterQualityChart, skeletonWQChart);
 
             setTimeout(() => {
-                this.currentWQSource.set(cardId, 'ph_temp');
+                this.currentWQSource.set(cardId, 'all');
                 this.createWaterQualityChart(waterQualityChart, data.waterQualityData || [], cardId);
                 console.log('✅ Water quality chart created');
             }, 300);
@@ -1464,6 +1508,7 @@ class PlatformSkeletonManager {
     private getPlatformIndex(uid: string): number {
         return this.platforms.findIndex(platform => platform.uid === uid);
     }
+
     // endregion
 
     // region Create Element
@@ -1523,7 +1568,7 @@ class PlatformSkeletonManager {
     // endregion
 
     // region Chart Creation and Update Methods
-    private createGaugeChart(uid: string, element: HTMLElement, title: string, type: 'ph' | 'temperature' | 'tss' | 'debit', bml_min: number, bml_max: number, initialValue: number, cardId: string, metricCard: HTMLElement): void {
+    private createGaugeChart(uid: string, element: HTMLElement, title: string, type: 'ph' | 'temperature' | 'tss' | 'debit', bml_min: number, bml_min_buffer: number, bml_max_buffer: number, bml_max: number, initialValue: number, cardId: string, metricCard: HTMLElement): void {
         if (!this.options.enableCharts || typeof Highcharts === 'undefined') {
             return;
         }
@@ -1537,11 +1582,14 @@ class PlatformSkeletonManager {
             [1, '#F44336']
         ];
 
+        // ✅ Buat multiple plotBands untuk zona warna
+        const plotBands = this.createColorZonePlotBands(bml_min, bml_min_buffer, bml_max_buffer, bml_max);
+
         const unitMap = {
             ph: 'pH',
             temperature: '°C',
             tss: 'mg/L',
-            debit: 'm³/s'
+            debit: 'm³/min'
         };
 
         const managerRef = this;
@@ -1576,7 +1624,30 @@ class PlatformSkeletonManager {
 
                         const cx = absCenterX + radius * Math.cos(angleRad);
                         const cy = absCenterY + radius * Math.sin(angleRad);
-                        const fillColor = managerRef.getGradientColor(valuePct, stops);
+                        const fillColor = managerRef.getColorByValue(
+                                value,
+                                bml_min,
+                                bml_min_buffer,
+                                bml_max_buffer,
+                                bml_max
+                        );
+
+                        if (!chart.customCircle) {
+                            chart.customCircle = chart.renderer.circle(cx, cy, 5)
+                                    .attr({
+                                        fill: '#fff',
+                                        stroke: fillColor,
+                                        'stroke-width': 3,
+                                        zIndex: 10
+                                    })
+                                    .add();
+                        } else {
+                            chart.customCircle.attr({
+                                cx,
+                                cy,
+                                stroke: fillColor
+                            });
+                        }
 
                         if (!chart.customCircle) {
                             chart.customCircle = chart.renderer.circle(cx, cy, 5)
@@ -1627,17 +1698,7 @@ class PlatformSkeletonManager {
                 tickWidth: 2,
                 minorTickInterval: null,
                 labels: {enabled: false},
-                plotBands: [{
-                    from: bml_min,
-                    to: bml_max,
-                    innerRadius: '80%',
-                    outerRadius: '100%',
-                    color: {
-                        linearGradient: {x1: 0, y1: 0, x2: 1, y2: 0},
-                        stops: stops
-                    },
-                    borderRadius: '50%'
-                }]
+                plotBands: plotBands  // ✅ Gunakan multiple plotBands
             },
             series: [{
                 name: type.toUpperCase(),
@@ -1659,16 +1720,10 @@ class PlatformSkeletonManager {
                 },
                 dataLabels: {
                     formatter: function () {
-                        const decimals = 2;
-                        const format = new Intl.NumberFormat('en-EN', {
-                            style: 'decimal',
-                            minimumFractionDigits: decimals,
-                            maximumFractionDigits: decimals
-                        });
                         return `
-                          <div class="font-bold text-[14px] leading-[2px]">${format.format(this.y)}</div><br>
-                          <div class="font-normal text-[10px] leading-[2px] mb-2">${unitMap[type]}</div>
-                        `;
+                        <div class="font-bold text-[14px] leading-[2px]">${this.y}</div><br>
+                        <div class="font-normal text-[10px] leading-[2px] mb-2">${unitMap[type]}</div>
+                    `;
                     },
                     borderWidth: 0,
                     color: '#333',
@@ -1679,6 +1734,63 @@ class PlatformSkeletonManager {
         });
 
         this.chartInstances.set(`${cardId}-${type}`, chart);
+    }
+
+    private createColorZonePlotBands(
+            bml_min: number,
+            bml_min_buffer: number,
+            bml_max_buffer: number,
+            bml_max: number
+    ): Array<any> {
+        const range = bml_max - bml_min;
+        const zones: Array<any> = [];
+
+        // Zona 1: Merah sampai Kuning (bml_min ke bml_min_buffer)
+        const lowRange = bml_min_buffer - bml_min;
+        const lowSteps = 5;
+        for (let i = 0; i < lowSteps; i++) {
+            const from = bml_min + (lowRange / lowSteps) * i;
+            const to = bml_min + (lowRange / lowSteps) * (i + 1);
+            const ratio = i / (lowSteps - 1);
+            const color = this.interpolateColor('#F44336', '#FFC107', ratio);
+
+            zones.push({
+                from: from,
+                to: to,
+                color: color,
+                innerRadius: '80%',
+                outerRadius: '100%'
+            });
+        }
+
+        // Zona 2: Hijau (bml_min_buffer ke bml_max_buffer)
+        zones.push({
+            from: bml_min_buffer,
+            to: bml_max_buffer,
+            color: '#4CAF50',
+            innerRadius: '80%',
+            outerRadius: '100%'
+        });
+
+        // Zona 3: Kuning sampai Merah (bml_max_buffer ke bml_max)
+        const highRange = bml_max - bml_max_buffer;
+        const highSteps = 5;
+        for (let i = 0; i < highSteps; i++) {
+            const from = bml_max_buffer + (highRange / highSteps) * i;
+            const to = bml_max_buffer + (highRange / highSteps) * (i + 1);
+            const ratio = i / (highSteps - 1);
+            const color = this.interpolateColor('#FFC107', '#F44336', ratio);
+
+            zones.push({
+                from: from,
+                to: to,
+                color: color,
+                innerRadius: '80%',
+                outerRadius: '100%'
+            });
+        }
+
+        return zones;
     }
 
     private getTickIntervalByDuration(startTimestamp: number, endTimestamp: number): number {
@@ -1715,11 +1827,9 @@ class PlatformSkeletonManager {
         const platformTimezone = platform?.timezone || 'Asia/Jakarta';
         const platformLocale = platform?.locale || 'id-ID';
 
-        const currentSource = this.currentWQSource.get(cardId) || 'ph_temp';
+        const currentSource = this.currentWQSource.get(cardId) || 'all';
 
         let series: any[] = [];
-        let yAxisConfig: any[] = [];
-
         if (currentSource === 'ph_temp') {
             // Chart dengan 2 lines: pH dan Temperature
             const phData = data.map(item => ({
@@ -1738,29 +1848,12 @@ class PlatformSkeletonManager {
                     type: 'line',
                     data: phData,
                     color: '#3B82F6',
-                    yAxis: 0
                 },
                 {
                     name: 'Temperature',
                     type: 'line',
                     data: tempData,
                     color: '#EF4444',
-                    yAxis: 1
-                }
-            ];
-
-            yAxisConfig = [
-                {
-                    title: {text: 'pH', style: {color: '#3B82F6'}},
-                    labels: {style: {color: '#3B82F6', fontSize: '10px'}},
-                    gridLineWidth: 1,
-                    gridLineColor: '#eee'
-                },
-                {
-                    title: {text: 'Temperature (°C)', style: {color: '#EF4444'}},
-                    labels: {style: {color: '#EF4444', fontSize: '10px'}},
-                    opposite: true,
-                    gridLineWidth: 0
                 }
             ];
         } else if (currentSource === 'tss') {
@@ -1775,13 +1868,6 @@ class PlatformSkeletonManager {
                 data: tssData,
                 color: '#10B981'
             }];
-
-            yAxisConfig = [{
-                title: {text: 'TSS (mg/L)'},
-                labels: {style: {fontSize: '10px'}},
-                gridLineWidth: 1,
-                gridLineColor: '#eee'
-            }];
         } else if (currentSource === 'debit') {
             const debitData = data.map(item => ({
                 x: item.timestamp * 1000,
@@ -1793,13 +1879,6 @@ class PlatformSkeletonManager {
                 type: 'line',
                 data: debitData,
                 color: '#8B5CF6'
-            }];
-
-            yAxisConfig = [{
-                title: {text: 'Debit (m³/s)'},
-                labels: {style: {fontSize: '10px'}},
-                gridLineWidth: 1,
-                gridLineColor: '#eee'
             }];
         } else if (currentSource === 'all') {
             // Chart dengan 3 lines: pH, TSS, Debit (tanpa Temperature)
@@ -1823,43 +1902,19 @@ class PlatformSkeletonManager {
                     name: 'pH',
                     type: 'line',
                     data: phData,
-                    color: '#3B82F6',
-                    yAxis: 0
+                    color: '#3B82F6'
                 },
                 {
                     name: 'TSS',
                     type: 'line',
                     data: tssData,
-                    color: '#10B981',
-                    yAxis: 1
+                    color: '#10B981'
                 },
                 {
                     name: 'Debit',
                     type: 'line',
                     data: debitData,
-                    color: '#8B5CF6',
-                    yAxis: 2
-                }
-            ];
-
-            yAxisConfig = [
-                {
-                    title: {text: 'pH', style: {color: '#3B82F6'}},
-                    labels: {style: {color: '#3B82F6', fontSize: '10px'}},
-                    gridLineWidth: 1,
-                    gridLineColor: '#eee'
-                },
-                {
-                    title: {text: 'TSS (mg/L)', style: {color: '#10B981'}},
-                    labels: {style: {color: '#10B981', fontSize: '10px'}},
-                    opposite: true,
-                    gridLineWidth: 0
-                },
-                {
-                    title: {text: 'Debit (m³/s)', style: {color: '#8B5CF6'}},
-                    labels: {style: {color: '#8B5CF6', fontSize: '10px'}},
-                    opposite: true,
-                    gridLineWidth: 0
+                    color: '#8B5CF6'
                 }
             ];
         }
@@ -1884,7 +1939,7 @@ class PlatformSkeletonManager {
             },
             title: {text: null},
             lang: {
-                noData: "No water quality data available"
+                noData: "No Water Quality data Available"
             },
             credits: {enabled: false},
             xAxis: {
@@ -1907,7 +1962,11 @@ class PlatformSkeletonManager {
                 gridLineDashStyle: 'Dash',
                 tickInterval: tickInterval,
             },
-            yAxis: yAxisConfig,
+            yAxis: {
+                title: {
+                    text: null
+                }
+            },
             legend: {
                 enabled: true,
                 align: 'center',
@@ -1932,7 +1991,7 @@ class PlatformSkeletonManager {
                     let tooltipHTML = `<b>Time (${timezoneShort}):</b> ${formattedTime}<br>`;
 
                     this.points.forEach(point => {
-                        tooltipHTML += `<span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>${point.y?.toFixed(2)}</b><br>`;
+                        tooltipHTML += `<span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>${point.y}</b><br>`;
                     });
 
                     return tooltipHTML;
@@ -1995,7 +2054,7 @@ class PlatformSkeletonManager {
 
         if (!chart) return;
 
-        const currentSource = this.currentWQSource.get(cardId) || 'ph_temp';
+        const currentSource = this.currentWQSource.get(cardId) || 'all';
 
         if (currentSource === 'ph_temp') {
             const phData = waterQualityData.map(item => ({
@@ -2082,6 +2141,35 @@ class PlatformSkeletonManager {
             }
         }
         return stops[stops.length - 1][1];
+    }
+
+    private getColorByValue(
+            value: number,
+            bml_min: number,
+            bml_min_buffer: number,
+            bml_max_buffer: number,
+            bml_max: number
+    ): string {
+        // Zona 1: Merah ke Kuning (nilai terlalu rendah)
+        if (value < bml_min_buffer) {
+            const ratio = (value - bml_min) / (bml_min_buffer - bml_min);
+            const clampedRatio = Math.max(0, Math.min(1, ratio));
+            return this.interpolateColor('#F44336', '#FFC107', clampedRatio);
+        }
+
+        // Zona 2: Hijau (zona aman)
+        if (value >= bml_min_buffer && value <= bml_max_buffer) {
+            return '#4CAF50';
+        }
+
+        // Zona 3: Kuning ke Merah (nilai terlalu tinggi)
+        if (value > bml_max_buffer) {
+            const ratio = (value - bml_max_buffer) / (bml_max - bml_max_buffer);
+            const clampedRatio = Math.max(0, Math.min(1, ratio));
+            return this.interpolateColor('#FFC107', '#F44336', clampedRatio);
+        }
+
+        return '#4CAF50'; // Default hijau
     }
 
     private interpolateColor(color1: string, color2: string, factor: number): string {
@@ -2190,22 +2278,57 @@ class PlatformSkeletonManager {
 
     // region Public API Methods
     public async filter(options: FilterOptions) {
+        console.log('🔍 Applying filters:', options);
+
         this.stopRealTimeUpdates();
-        this.convertAllCardsToSkeleton();
-        const dataPromises = this.platforms.map(platform =>
-                this.loadPlatformData(platform.uid, options)
-        );
 
         try {
-            await Promise.allSettled(dataPromises);
-            console.log('✅ Finished loading all platform data');
+            // ✅ Jika ada filter UID atau filter lain yang butuh reload platforms
+            const needsReloadPlatforms = options.uid || options.status_platform || options.customer_lokasi_id || options.isOnline !== undefined;
+
+            if (needsReloadPlatforms) {
+                console.log('🔄 Reloading platforms with filters...');
+
+                // Convert semua cards ke skeleton
+                this.convertAllCardsToSkeleton();
+
+                // Clear current platforms
+                this.platforms = [];
+                this.currentPage = 1;
+
+                // Render initial skeletons
+                this.renderInitialSkeletons();
+
+                // Load platforms dengan filter
+                await this.loadPlatforms(1, options);
+
+                // Render skeleton cards untuk platforms yang baru
+                this.renderAllSkeletonCards();
+
+                // Load data untuk platforms yang baru
+                await this.loadAllPlatformData(options);
+
+            } else {
+                // ✅ Jika hanya filter date, cukup reload data saja
+                console.log('🔄 Reloading platform data with filters...');
+
+                this.convertAllCardsToSkeleton();
+
+                const dataPromises = this.platforms.map(platform =>
+                        this.loadPlatformData(platform.uid, options)
+                );
+
+                await Promise.allSettled(dataPromises);
+                console.log('✅ Finished loading all platform data');
+            }
 
             if (this.options.onDataUpdate) {
                 this.options.onDataUpdate(this.platforms);
             }
 
         } catch (error) {
-            console.error('❌ Error loading platform data:', error);
+            console.error('❌ Error applying filters:', error);
+            this.showError('Failed to apply filters');
         } finally {
             this.startRealTimeUpdates();
         }

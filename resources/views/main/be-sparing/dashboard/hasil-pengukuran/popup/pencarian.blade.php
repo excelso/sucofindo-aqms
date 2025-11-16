@@ -40,18 +40,6 @@
                     </select>
                 </div>
             </div>
-            @if(Auth::user()->user_level !== 'viewer')
-                <div class="form-group">
-                    <label>Tipe Logger</label>
-                    <div class="form-group-control">
-                        <select name="tipe_logger" class="form-select select2-custom">
-                            <option value="">...</option>
-                            <option value="1" {{ request()->input('tipe_logger') == '1' ? 'selected' : '' }}>Internal</option>
-                            <option value="2" {{ request()->input('tipe_logger') == '2' ? 'selected' : '' }}>KLHK</option>
-                        </select>
-                    </div>
-                </div>
-            @endif
             <div class="grid grid-cols-2 gap-4">
                 <div class="form-group">
                     <label>Bulan</label>
@@ -71,8 +59,8 @@
                 <div class="form-group-control">
                     <select name="status_platform" class="form-select select2-custom">
                         <option value="">...</option>
-                        <option value="1" {{ request()->input('status_platform') == '1' ? 'selected' : '' }}>Online</option>
-                        <option value="2" {{ request()->input('status_platform') == '2' ? 'selected' : '' }}>Offline</option>
+                        <option value="online" {{ request()->input('status_platform') == 'online' ? 'selected' : '' }}>Online</option>
+                        <option value="offline" {{ request()->input('status_platform') == 'offline' ? 'selected' : '' }}>Offline</option>
                     </select>
                 </div>
             </div>

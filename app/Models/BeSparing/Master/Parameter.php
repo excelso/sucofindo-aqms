@@ -1125,4 +1125,13 @@
             $builder->whereRaw('n.minute_number * 2 < summary.gap_minutes');
             $builder->orderBy('summary.datetime_unix');
         }
+
+        public function scopeDataParameterHasilPengukuran(Builder $builder, string $uid, $minDate, $maxDate, $tipeLogger, $timezone): void {
+            $builder->select([
+                't_parameter.*',
+            ]);
+            $builder->where('t_parameter.uid', $uid);
+            $builder->where('t_parameter.tipe_logger', $tipeLogger);
+            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '")'), [$minDate, $maxDate]);
+        }
     }
