@@ -285,9 +285,9 @@
             $data = [];
             foreach ($parameter as $item) {
 
-                $timestamp = Carbon::createFromTimestampUTC($item->datetime_unix);
+                $timestamp = Carbon::createFromTimestampUTC($item->datetime_unix)->getPreciseTimestamp(0);
                 if (config('app.timezone') == 'Asia/Makassar') {
-                    $timestamp = Carbon::createFromTimestampUTC($item->datetime_unix)->addHours(8);
+                    $timestamp = Carbon::createFromTimestampUTC($item->datetime_unix)->addHours(8)->getPreciseTimestamp(0);
                 }
 
                 $data[] = [
