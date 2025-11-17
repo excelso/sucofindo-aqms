@@ -287,7 +287,7 @@
                 $data[] = [
                     'timestamp' => $item->datetime_unix,
                     'ph' => $item->ph ? round($item->ph, 2) : null,
-                    'temperature' => $item->temp ? round($item->temp, 2) : null,
+                    'temperature' => $item->temp ? round($item->temp) : null,
                     'tss' => $item->tss ? round($item->tss) : null,
                     'debit' => $item->debit ? round($item->debit, 2) : null,
                     'cod' => $item->cod ?? null,
