@@ -838,7 +838,7 @@ class PlatformSkeletonManager {
         const skeletonWQDropdown = this.createElement('div', 'skeleton-box w-32 h-4 rounded bg-gray-200 animate-pulse');
         waterQualitySubTitle.appendChild(skeletonWQDropdown);
 
-        const skeletonWaterQualityChart = this.createElement('div', 'skeleton-box w-full h-32 bg-gray-200 animate-pulse rounded');
+        const skeletonWaterQualityChart = this.createElement('div', 'skeleton-box w-full h-48 bg-gray-200 animate-pulse rounded');
 
         waterQualitySection.appendChild(waterQualityTitle);
         waterQualitySection.appendChild(waterQualitySubTitle);
@@ -1237,9 +1237,9 @@ class PlatformSkeletonManager {
         }
 
         // Update chart
-        const skeletonWQChart = cardElement.querySelector('.skeleton-box.w-full.h-32');
+        const skeletonWQChart = cardElement.querySelector('.skeleton-box.w-full.h-48');
         if (skeletonWQChart) {
-            const waterQualityChart = this.createElement('div', 'chart-one');
+            const waterQualityChart = this.createElement('div', 'chart-one h-[200px]');
             waterQualityChart.id = `${cardId}-waterQuality`;
 
             skeletonWQChart.parentNode?.replaceChild(waterQualityChart, skeletonWQChart);
@@ -1309,7 +1309,7 @@ class PlatformSkeletonManager {
 
         const waterQualityChart = cardElement.querySelector('.chart-one');
         if (waterQualityChart) {
-            const skeletonWQChart = this.createElement('div', 'skeleton-box w-full h-32 bg-gray-200 animate-pulse rounded');
+            const skeletonWQChart = this.createElement('div', 'skeleton-box w-full h-48 bg-gray-200 animate-pulse rounded');
             waterQualityChart.parentNode?.replaceChild(skeletonWQChart, waterQualityChart);
         }
 
@@ -2130,7 +2130,7 @@ class PlatformSkeletonManager {
                 renderTo: element,
                 type: 'line',
                 marginLeft: 45,
-                height: 150,
+                height: 200,
                 style: {
                     fontFamily: 'Arial, sans-serif'
                 }
