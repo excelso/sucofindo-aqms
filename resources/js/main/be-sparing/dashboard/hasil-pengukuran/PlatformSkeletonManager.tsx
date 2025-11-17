@@ -1796,14 +1796,16 @@ class PlatformSkeletonManager {
                 dataLabels: {
                     formatter: function () {
                         let dataValue = `${this.y}`
-                        if (!inArray(['temperature', 'tss'], type)) {
-                            const format = new Intl.NumberFormat('en-EN', {
+                        if (!['temperature', 'tss'].includes(type)) {
+                            const format = new Intl.NumberFormat('en-US', {
                                 style: 'decimal',
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2
                             });
-
-                            dataValue = format.format(this.y)
+                            dataValue = format.format(this.y);
+                        } else {
+                            // Untuk temperature dan tss, tampilkan sebagai integer
+                            dataValue = Math.round(this.y).toString();
                         }
                         return `
                             <div class="font-bold text-[14px] leading-[2px]">${dataValue}</div><br>
