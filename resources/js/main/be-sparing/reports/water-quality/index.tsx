@@ -116,7 +116,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 const parameterId: HTMLSelectElement = document.querySelector('.parameterId')
                 const btnResetPencarian = document.querySelector<HTMLElement>('.btnResetPencarian')
 
-                new DataPlatformsIndustriModel(platformUid, parameterId)
+                new DataPlatformsIndustriModel(platformUid, parameterId, {
+                    useDefaultOption: false
+                })
 
                 modalPencarian.addEventListener('keyup', function (ev: KeyboardEvent) {
                     if (ev.key === 'Enter') {

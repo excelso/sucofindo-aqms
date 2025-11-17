@@ -32,7 +32,6 @@
                 <label>Data Sensor</label>
                 <div class="form-group-control">
                     <select class="form-control select2-custom parameterId" name="parameterId" data-selected="{{ request()->input('parameterId') ?? 'pH' }}">
-                        <option value="">...</option>
                     </select>
                 </div>
             </div>

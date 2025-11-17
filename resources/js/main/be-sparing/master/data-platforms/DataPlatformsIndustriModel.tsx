@@ -13,6 +13,7 @@ export default class DataPlatformsIndustriModel {
     private readonly elmParaIdChoice: ExBox;
     private readonly options: Required<{
         csrfToken: string;
+        useDefaultOption?: boolean;
     }>;
     private selectedValue: string = '';
     private cachedData: Map<string, ExBoxOptionData[]> = new Map();
@@ -29,13 +30,15 @@ export default class DataPlatformsIndustriModel {
             elmParaId?: HTMLSelectElement,
             options?: {
                 csrfToken?: string;
+                useDefaultOption?: boolean;
             }
     ) {
         this.elmPlatId = elmPlatId ?? document.querySelector('.platformId');
         this.elmParaId = elmParaId ?? document.querySelector('.parameterId');
         this.elmParaIdChoice = new ExBox(this.elmParaId);
         this.options = {
-            csrfToken: options?.csrfToken ?? getMetaContent('csrf-token')
+            csrfToken: options?.csrfToken ?? getMetaContent('csrf-token'),
+            useDefaultOption: options?.useDefaultOption ?? true
         };
 
         if (!this.elmPlatId || !this.elmParaId) {
@@ -163,18 +166,29 @@ export default class DataPlatformsIndustriModel {
             additional: '',
             infos: ''
         };
-
         if (!data.length) return [defaultOption];
-
-        return [
-            defaultOption,
-            ...data.map((item) => ({
-                value: item,
-                label: item,
-                additional: '',
-                infos: ''
-            }))
-        ];
+        
+        if (this.options.useDefaultOption) {
+            if (!data.length) return [defaultOption];
+            return [
+                defaultOption,
+                ...data.map((item) => ({
+                    value: item,
+                    label: item,
+                    additional: '',
+                    infos: ''
+                }))
+            ];
+        } else {
+            return [
+                ...data.map((item) => ({
+                    value: item,
+                    label: item,
+                    additional: '',
+                    infos: ''
+                }))
+            ];
+        }
     }
 
     /**
