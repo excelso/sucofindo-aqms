@@ -1795,14 +1795,18 @@ class PlatformSkeletonManager {
                 },
                 dataLabels: {
                     formatter: function () {
-                        const decimals = type === 'temperature' || type === 'tss' ? 1 : 2;
-                        const format = new Intl.NumberFormat('en-EN', {
-                            style: 'decimal',
-                            minimumFractionDigits: decimals,
-                            maximumFractionDigits: decimals
-                        });
+                        let dataValue = `${this.y}`
+                        if (!inArray(['temperature', 'tss'], type)) {
+                            const format = new Intl.NumberFormat('en-EN', {
+                                style: 'decimal',
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+
+                            dataValue = format.format(this.y)
+                        }
                         return `
-                            <div class="font-bold text-[14px] leading-[2px]">${format.format(this.y)}</div><br>
+                            <div class="font-bold text-[14px] leading-[2px]">${dataValue}</div><br>
                             <div class="font-normal text-[10px] leading-[2px] mb-2">${unitMap[type]}</div>
                         `;
                     },
