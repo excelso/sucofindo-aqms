@@ -101,7 +101,6 @@
                     ->unique('uid') // Filter duplikasi berdasarkan UID
                     ->map(function ($item) {
                         return [
-                            'user_level' => request()->user()->user_level,
                             'uid' => $item->uid,
                             'uid_alias' => $item->site->nama_site ?? '',
                             'siteName' => $item->site->nama_site ?? '',

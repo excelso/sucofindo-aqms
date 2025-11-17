@@ -5,6 +5,7 @@ import "highcharts/modules/no-data-to-display";
 import {Socket} from 'socket.io-client';
 import type {DropdownInterface, DropdownOptions, InstanceOptions} from 'flowbite';
 import {Dropdown} from 'flowbite';
+import {getMetaContent, inArray} from "@/js/plugins/functions";
 
 interface PaginationInfo {
     current_page: number;
@@ -162,6 +163,7 @@ class PlatformSkeletonManager {
     private isLoadingMore: boolean = false;
     private observer: IntersectionObserver | null = null;
     private loadingElement: HTMLElement | null = null;
+    private userLevel: string;
     // endregion
 
     // region Constructor
@@ -176,6 +178,7 @@ class PlatformSkeletonManager {
             initialSkeletonCount: 6, // 6 skeleton cards saat pertama load
             ...options
         };
+        this.userLevel = getMetaContent('user-level');
 
         if (options.containerSelector) {
             this.container = document.querySelector(options.containerSelector);
@@ -821,36 +824,49 @@ class PlatformSkeletonManager {
         card.appendChild(cardBody);
 
         const cardFooter = this.createElement('div', 'card-footer !bg-white');
-        if (platform.totalLogger) {
-            if (platform.totalLogger === 2) {
-                const footerPanel = this.createElement('div', 'grid grid-cols-2 gap-2');
+        if (inArray(['super_admin', 'admin'], this.userLevel)) {
+            if (platform.totalLogger) {
+                if (platform.totalLogger === 2) {
+                    const footerPanel = this.createElement('div', 'grid grid-cols-2 gap-2');
 
-                const btnInt = document.createElement('a');
-                btnInt.className = 'py-2 !text-[12px]';
-                btnInt.textContent = 'Internal';
-                btnInt.href = `/sparing/dashboard/maps/summary/detail/${platform.uid}/1`;
-                const btnEks = document.createElement('a');
-                btnEks.className = 'py-2 !text-[12px]';
-                btnEks.textContent = 'KLHK';
-                btnEks.href = `/sparing/dashboard/maps/summary/detail/${platform.uid}/2`;
+                    const btnInt = document.createElement('a');
+                    btnInt.className = 'py-2 !text-[12px]';
+                    btnInt.textContent = 'Internal';
+                    btnInt.href = `/sparing/dashboard/maps/summary/detail/${platform.uid}/1`;
+                    const btnEks = document.createElement('a');
+                    btnEks.className = 'py-2 !text-[12px]';
+                    btnEks.textContent = 'KLHK';
+                    btnEks.href = `/sparing/dashboard/maps/summary/detail/${platform.uid}/2`;
 
-                footerPanel.appendChild(btnInt);
-                footerPanel.appendChild(btnEks);
-                cardFooter.appendChild(footerPanel);
-            } else {
-                const footerPanel = this.createElement('div', 'grid grid-cols-1');
+                    footerPanel.appendChild(btnInt);
+                    footerPanel.appendChild(btnEks);
+                    cardFooter.appendChild(footerPanel);
+                    card.appendChild(cardFooter);
+                } else {
+                    const footerPanel = this.createElement('div', 'grid grid-cols-1');
 
-                const btnInt = document.createElement('a');
-                btnInt.className = 'py-2 !text-[12px]';
-                btnInt.textContent = 'View Details';
-                btnInt.href = `/sparing/dashboard/maps/summary/detail/${platform.uid}/${platform?.tipeLogger}`;
+                    const btnInt = document.createElement('a');
+                    btnInt.className = 'py-2 !text-[12px]';
+                    btnInt.textContent = 'View Details';
+                    btnInt.href = `/sparing/dashboard/maps/summary/detail/${platform.uid}/${platform?.tipeLogger}`;
 
-                footerPanel.appendChild(btnInt);
-                cardFooter.appendChild(footerPanel);
+                    footerPanel.appendChild(btnInt);
+                    cardFooter.appendChild(footerPanel);
+                    card.appendChild(cardFooter);
+                }
             }
-        }
+        } else {
+            const footerPanel = this.createElement('div', 'grid grid-cols-1');
 
-        card.appendChild(cardFooter);
+            const btnInt = document.createElement('a');
+            btnInt.className = 'py-2 !text-[12px]';
+            btnInt.textContent = 'View Details';
+            btnInt.href = `/sparing/dashboard/maps/summary/detail/${platform.uid}/${platform?.tipeLogger}`;
+
+            footerPanel.appendChild(btnInt);
+            cardFooter.appendChild(footerPanel);
+            card.appendChild(cardFooter);
+        }
 
         return card;
     }
