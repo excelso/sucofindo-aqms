@@ -376,8 +376,11 @@
             }
 
             $query->select('*')->fromSub(function ($subQuery) use ($userId, $search) {
-                $subQuery->select('t_platform.*')
-                    ->from('t_platform')
+                $subQuery->select([
+                    't_platform.*',
+                    DB::raw('COUNT(*) as total_logger')
+                ]);
+                $subQuery->from('t_platform')
                     ->leftJoin(DB::raw('
                         (
                             SELECT
@@ -391,14 +394,14 @@
                         $join->on('tHelp1.tHelp1Uid', '=', 't_platform.uid');
                         $join->on('tHelp1.tHelp1TipeLogger', '=', 't_platform.tipe_logger');
                     });
-                    $subQuery->join('t_users_sites', 't_platform.site_id', '=', 't_users_sites.site_id');
-                    $subQuery->join('t_users_sites_tipe_logger', function ($join) {
-                        $join->on('t_users_sites.id', '=', 't_users_sites_tipe_logger.users_sites_id');
-                        $join->on('t_platform.tipe_logger', '=', 't_users_sites_tipe_logger.tipe_logger');
-                        $join->where('t_users_sites_tipe_logger.is_active', '=', 1);
-                    });
-                    $subQuery->where('t_users_sites.user_id', '=', $userId);
-                    $subQuery->where('t_users_sites.status_site', '=', 1);
+                $subQuery->join('t_users_sites', 't_platform.site_id', '=', 't_users_sites.site_id');
+                $subQuery->join('t_users_sites_tipe_logger', function ($join) {
+                    $join->on('t_users_sites.id', '=', 't_users_sites_tipe_logger.users_sites_id');
+                    $join->on('t_platform.tipe_logger', '=', 't_users_sites_tipe_logger.tipe_logger');
+                    $join->where('t_users_sites_tipe_logger.is_active', '=', 1);
+                });
+                $subQuery->where('t_users_sites.user_id', '=', $userId);
+                $subQuery->where('t_users_sites.status_site', '=', 1);
 
                 $subQuery->groupBy('t_platform.uid');
             }, 't_platform');

@@ -101,12 +101,15 @@
                     ->unique('uid') // Filter duplikasi berdasarkan UID
                     ->map(function ($item) {
                         return [
+                            'user_level' => request()->user()->user_level,
                             'uid' => $item->uid,
                             'uid_alias' => $item->site->nama_site ?? '',
                             'siteName' => $item->site->nama_site ?? '',
                             'location' => $item->site->customerLokasi->nama_lokasi ?? '',
                             'timezone' => 'Asia/Makassar',
                             'locale' => 'en-US',
+                            'totalLogger' => $item->total_logger,
+                            'tipeLogger' => $item->tipe_logger ?? 1,
                         ];
                     })
                     ->values() // Re-index array setelah unique

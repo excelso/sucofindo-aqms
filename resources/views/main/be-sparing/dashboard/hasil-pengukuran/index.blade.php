@@ -90,12 +90,12 @@
             </div>
 
             <div class="platformContents"></div>
-            <div class="loading mt-10 hidden">
-                <div class="flex justify-center items-center">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    <span class="ml-2">Loading more data...</span>
-                </div>
-            </div>
+            {{-- <div class="loading mt-10"> --}}
+            {{--     <div class="flex justify-center items-center"> --}}
+            {{--         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div> --}}
+            {{--         <span class="ml-2">Loading more data...</span> --}}
+            {{--     </div> --}}
+            {{-- </div> --}}
         </div>
 
         @include('main.be-sparing.dashboard.hasil-pengukuran.popup.pencarian')

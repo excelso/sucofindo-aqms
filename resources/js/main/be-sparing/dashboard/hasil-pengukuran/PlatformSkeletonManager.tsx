@@ -23,6 +23,8 @@ interface PlatformInfo {
     locale?: string;
     lat?: number;
     lng?: number;
+    totalLogger?: number;
+    tipeLogger?: number;
 }
 
 interface FilterOptions {
@@ -36,6 +38,7 @@ interface FilterOptions {
 interface PlatformData {
     uid: string;
     status: string;
+    tipe_logger: number;
     emoji?: string;
     colorCode?: string;
     isOnline: boolean;
@@ -420,25 +423,41 @@ class PlatformSkeletonManager {
         fragment.appendChild(cardContainer);
         this.container.appendChild(fragment);
 
-        // Add loading indicator untuk pagination
-        if (this.options.enablePagination) {
+        // ✅ Add loading indicator untuk pagination (tapi jangan panggil setupIntersectionObserver di sini)
+        if (this.options.enablePagination && this.paginationInfo?.has_more) {
             this.addLoadingIndicator();
         }
 
         console.log(`🎨 Rendered ${this.platforms.length} skeleton cards`);
     }
-
     // endregion
 
     // region Setup Intersection Observer
     private setupIntersectionObserver(): void {
-        // Buat atau ambil loading element
-        this.loadingElement = document.querySelector('.loading');
+        console.log('🔧 Setting up Intersection Observer...');
+
+        // ✅ Disconnect existing observer first
+        if (this.observer) {
+            console.log('🔌 Disconnecting existing observer');
+            this.observer.disconnect();
+            this.observer = null;
+        }
+
+        // ✅ Pastikan loading element sudah ada
+        this.loadingElement = this.container?.querySelector('.loading') || null;
 
         if (!this.loadingElement) {
-            console.warn('Loading element not found for intersection observer');
+            console.log('📦 Loading element not found, creating new one');
+            this.addLoadingIndicator();
+            this.loadingElement = this.container?.querySelector('.loading') || null;
+        }
+
+        if (!this.loadingElement) {
+            console.error('❌ Failed to create loading element for intersection observer');
             return;
         }
+
+        console.log('✅ Loading element found:', this.loadingElement);
 
         // Setup observer
         const options: IntersectionObserverInit = {
@@ -450,6 +469,7 @@ class PlatformSkeletonManager {
         this.observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
+                    console.log('👁️ Loading element is visible, triggering loadMorePlatforms');
                     this.loadMorePlatforms();
                 }
             });
@@ -457,9 +477,9 @@ class PlatformSkeletonManager {
 
         this.observer.observe(this.loadingElement);
 
-        console.log('👁️ Intersection Observer setup complete');
+        console.log('✅ Intersection Observer setup complete');
+        console.log('📊 Pagination info:', this.paginationInfo);
     }
-
     // endregion
 
     // region Load More Platforms
@@ -549,8 +569,15 @@ class PlatformSkeletonManager {
 
     // region Add Loading Indicator
     private addLoadingIndicator(): void {
-        if (this.loadingElement) return; // Sudah ada
+        // ✅ Cek apakah sudah ada di DOM
+        const existingLoading = this.container?.querySelector('.loading');
+        if (existingLoading) {
+            this.loadingElement = existingLoading as HTMLElement;
+            console.log('📦 Loading element already exists');
+            return;
+        }
 
+        // Buat baru jika belum ada
         this.loadingElement = this.createElement('div', 'loading mt-10');
         this.loadingElement.innerHTML = `
             <div class="flex justify-center items-center">
@@ -560,8 +587,8 @@ class PlatformSkeletonManager {
         `;
 
         this.container?.appendChild(this.loadingElement);
+        console.log('✅ Loading element created');
     }
-
     // endregion
 
     // region Show/Hide Loading Indicator
@@ -740,7 +767,7 @@ class PlatformSkeletonManager {
         // Right side - Table icon instead of CCTV
         const rightSection = this.createElement('div', 'right-section');
         const tableLink = this.createElement('a', 'cursor-pointer') as HTMLAnchorElement;
-        const tableIcon = this.createElement('i', 'fas fa-table text-2xl text-gray-600');
+        const tableIcon = this.createElement('i', 'fas fa-table text-xl text-gray-600');
         tableLink.appendChild(tableIcon);
         rightSection.appendChild(tableLink);
 
@@ -792,6 +819,38 @@ class PlatformSkeletonManager {
         cardBody.appendChild(metricsContainer);
         cardBody.appendChild(waterQualitySection);
         card.appendChild(cardBody);
+
+        const cardFooter = this.createElement('div', 'card-footer !bg-white');
+        if (platform.totalLogger) {
+            if (platform.totalLogger === 2) {
+                const footerPanel = this.createElement('div', 'grid grid-cols-2 gap-2');
+
+                const btnInt = document.createElement('a');
+                btnInt.className = 'py-2 !text-[12px]';
+                btnInt.textContent = 'Internal';
+                btnInt.href = `/sparing/dashboard/maps/summary/detail/${platform.uid}/1`;
+                const btnEks = document.createElement('a');
+                btnEks.className = 'py-2 !text-[12px]';
+                btnEks.textContent = 'KLHK';
+                btnEks.href = `/sparing/dashboard/maps/summary/detail/${platform.uid}/2`;
+
+                footerPanel.appendChild(btnInt);
+                footerPanel.appendChild(btnEks);
+                cardFooter.appendChild(footerPanel);
+            } else {
+                const footerPanel = this.createElement('div', 'grid grid-cols-1');
+
+                const btnInt = document.createElement('a');
+                btnInt.className = 'py-2 !text-[12px]';
+                btnInt.textContent = 'View Details';
+                btnInt.href = `/sparing/dashboard/maps/summary/detail/${platform.uid}/${platform?.tipeLogger}`;
+
+                footerPanel.appendChild(btnInt);
+                cardFooter.appendChild(footerPanel);
+            }
+        }
+
+        card.appendChild(cardFooter);
 
         return card;
     }
@@ -1512,7 +1571,7 @@ class PlatformSkeletonManager {
     // endregion
 
     // region Create Element
-    private createElement(tag: string, className?: string, textContent?: string): HTMLElement {
+    private createElement<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, textContent?: string): HTMLElement {
         const element = document.createElement(tag);
         if (className) element.className = className;
         if (textContent) element.textContent = textContent;
@@ -2289,6 +2348,12 @@ class PlatformSkeletonManager {
             if (needsReloadPlatforms) {
                 console.log('🔄 Reloading platforms with filters...');
 
+                // ✅ Disconnect existing observer
+                if (this.observer) {
+                    this.observer.disconnect();
+                    this.observer = null;
+                }
+
                 // Convert semua cards ke skeleton
                 this.convertAllCardsToSkeleton();
 
@@ -2307,6 +2372,12 @@ class PlatformSkeletonManager {
 
                 // Load data untuk platforms yang baru
                 await this.loadAllPlatformData(options);
+
+                // ✅ Setup Intersection Observer lagi setelah render
+                if (this.options.enablePagination && this.paginationInfo?.has_more) {
+                    console.log('🔄 Re-setting up Intersection Observer after filter');
+                    this.setupIntersectionObserver();
+                }
 
             } else {
                 // ✅ Jika hanya filter date, cukup reload data saja
