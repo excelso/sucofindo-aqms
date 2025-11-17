@@ -164,13 +164,14 @@ class PlatformSkeletonManager {
     private observer: IntersectionObserver | null = null;
     private loadingElement: HTMLElement | null = null;
     private userLevel: string;
+    private currentTipeLogger: Map<string, number> = new Map();
     // endregion
 
     // region Constructor
     constructor(options: PlatformSkeletonManagerOptions = {}) {
         this.options = {
             apiEndpoint: '/sparing/dashboard/hasil-pengukuran/data-platforms',
-            apiEndpointData: '/sparing/dashboard/hasil-pengukuran/data-platforms/{uid}/data',
+            apiEndpointData: '/sparing/dashboard/hasil-pengukuran/data-platforms/{uid}/data/{tipe_logger}',
             enableCharts: true,
             realTimeUpdateInterval: 120000, // 2 Menit
             enablePagination: true,
@@ -638,7 +639,7 @@ class PlatformSkeletonManager {
     // endregion
 
     // region Load Platform Data
-    private async loadPlatformData(uid: string, filterOptions?: FilterOptions): Promise<void> {
+    private async loadPlatformData(uid: string, filterOptions?: FilterOptions, tipeLogger?: number): Promise<void> {
         if (!this.options.apiEndpointData) {
             console.warn('apiEndpointData is not configured');
             return;
@@ -657,7 +658,20 @@ class PlatformSkeletonManager {
                 this.options.onLoadingStateChange(true, uid);
             }
 
-            const endpoint = this.options.apiEndpointData.replace('{uid}', uid);
+            // ✅ Build endpoint dengan tipe_logger jika ada
+            let endpoint = this.options.apiEndpointData.replace('{uid}', uid);
+
+            // Gunakan tipeLogger dari parameter, atau dari currentTipeLogger Map, atau dari platform.data
+            const finalTipeLogger = tipeLogger ?? this.currentTipeLogger.get(uid) ?? platform.data?.tipe_logger ?? platform.tipeLogger ?? 1;
+
+            // Append tipe_logger ke endpoint
+            endpoint = endpoint.replace('{tipe_logger}', finalTipeLogger.toString());
+
+            // Jika endpoint tidak punya placeholder {tipe_logger}, append sebagai path
+            if (!this.options.apiEndpointData.includes('{tipe_logger}')) {
+                endpoint = `${endpoint}/${finalTipeLogger}`;
+            }
+
             const url = new URL(endpoint, window.location.origin);
 
             if (filterOptions) {
@@ -666,10 +680,13 @@ class PlatformSkeletonManager {
                 }
             } else {
                 const searchParams = new URLSearchParams(window.location.search);
-                if (searchParams.size !== 0) {
-                    url.searchParams.set('date', searchParams.get('date'));
+                if (searchParams.size !== 0 && searchParams.get('date')) {
+                    url.searchParams.set('date', searchParams.get('date')!);
                 }
             }
+
+            console.log(`📡 Loading data for ${uid} with tipe_logger: ${finalTipeLogger}`);
+            console.log(`📡 API URL: ${url.toString()}`);
 
             const response = await fetch(url.toString());
 
@@ -684,6 +701,7 @@ class PlatformSkeletonManager {
 
             platform.data = {
                 ...platformData,
+                tipe_logger: finalTipeLogger, // ✅ Simpan tipe_logger
                 lastUpdated: platformData.lastUpdated ? new Date(platformData.lastUpdated) : new Date()
             };
             platform.isDataLoaded = true;
@@ -722,7 +740,6 @@ class PlatformSkeletonManager {
             }
         }
     }
-
     // endregion
 
     // region Create Skeleton Card
@@ -735,44 +752,16 @@ class PlatformSkeletonManager {
 
         const cardBody = this.createElement('div', 'card-body');
 
-        // Header section - skeleton version
-        const headerFlex = this.createElement('div', 'card-dashboard-header');
-        const leftSection = this.createElement('div', 'left-section');
+        // ========================================
+        // Row 1: Title (left) + Table Icon (right)
+        // ========================================
+        const titleRow = this.createElement('div', 'flex items-center justify-between mb-3');
+
         const idTitle = this.createElement('div', 'idle-title', platform.uid_alias);
 
-        // if (platform.location) {
-        //     const locationDiv = this.createElement('div', 'text-[12px] text-gray-500', platform.location);
-        //     leftSection.appendChild(locationDiv);
-        // }
-
-        const statusContainer = this.createElement('div', 'status');
-
-        // Skeleton status badge
-        const skeletonBadge = this.createElement('div', 'skeleton-box w-20 h-6 rounded-full bg-gray-200 animate-pulse');
-
-        // Skeleton online status
-        const skeletonOnline = this.createElement('div', 'skeleton-box skeleton-online w-20 h-6 rounded-full bg-gray-200 animate-pulse');
-
-        // Site info
-        const siteContainer = this.createElement('div', 'flex items-center gap-2 text-[14px]');
-        const siteIcon = this.createElement('i', 'fas fa-location-dot');
-        const siteText = this.createElement('div');
-        siteText.textContent = platform.location;
-        siteContainer.appendChild(siteIcon);
-        siteContainer.appendChild(siteText);
-
-        statusContainer.appendChild(skeletonBadge);
-        statusContainer.appendChild(skeletonOnline);
-        statusContainer.appendChild(siteContainer);
-        leftSection.appendChild(idTitle);
-        leftSection.appendChild(statusContainer);
-
-        // Right side - Table icon instead of CCTV
-        const rightSection = this.createElement('div', 'right-section');
         const tableLink = this.createElement('a', 'cursor-pointer') as HTMLAnchorElement;
         const tableIcon = this.createElement('i', 'fas fa-table text-xl text-gray-600');
         tableLink.appendChild(tableIcon);
-        rightSection.appendChild(tableLink);
 
         if (this.options.onTableClick) {
             tableLink.addEventListener('click', () => {
@@ -780,10 +769,50 @@ class PlatformSkeletonManager {
             });
         }
 
-        headerFlex.appendChild(leftSection);
-        headerFlex.appendChild(rightSection);
+        titleRow.appendChild(idTitle);
+        titleRow.appendChild(tableLink);
 
+        // ========================================
+        // Row 2: Status badges + Location (left) | Dropdown (right)
+        // ========================================
+        const statusRow = this.createElement('div', 'flex items-center justify-between gap-4 mb-4');
+
+        // Left side: badges + location
+        const leftStatusSection = this.createElement('div', 'flex flex-col gap-2 flex-1');
+
+        // Badges container (status badge + online badge)
+        const badgesContainer = this.createElement('div', 'flex items-center gap-3 flex-wrap');
+
+        // Skeleton status badge
+        const skeletonBadge = this.createElement('div', 'skeleton-box w-20 h-6 rounded-full bg-gray-200 animate-pulse');
+
+        // Skeleton online status
+        const skeletonOnline = this.createElement('div', 'skeleton-box skeleton-online w-20 h-6 rounded-full bg-gray-200 animate-pulse');
+
+        badgesContainer.appendChild(skeletonBadge);
+        badgesContainer.appendChild(skeletonOnline);
+
+        // Site info (location)
+        const siteContainer = this.createElement('div', 'flex items-center gap-2 text-[14px]');
+        const siteIcon = this.createElement('i', 'fas fa-location-dot');
+        const siteText = this.createElement('div');
+        siteText.textContent = platform.location;
+        siteContainer.appendChild(siteIcon);
+        siteContainer.appendChild(siteText);
+
+        badgesContainer.appendChild(siteContainer);
+        leftStatusSection.appendChild(badgesContainer);
+
+        // Right side: Skeleton Dropdown
+        const skeletonDropdown = this.createElement('div', 'skeleton-box w-20 h-6 rounded-full bg-gray-200 animate-pulse');
+        skeletonDropdown.classList.add('skeleton-tipe-logger'); // marker untuk update nanti
+
+        statusRow.appendChild(leftStatusSection);
+        statusRow.appendChild(skeletonDropdown);
+
+        // ========================================
         // Skeleton metrics section
+        // ========================================
         const metricsContainer = this.createElement('div', 'mt-4');
         const metricsGrid = this.createElement('div', 'grid grid-cols-4 gap-2');
 
@@ -800,12 +829,14 @@ class PlatformSkeletonManager {
 
         metricsContainer.appendChild(metricsGrid);
 
+        // ========================================
         // Skeleton Water Quality section
+        // ========================================
         const waterQualitySection = this.createElement('div', 'mt-4');
         const waterQualityTitle = this.createElement('div', 'font-bold text-[14px]', 'Water Quality Index');
         const waterQualitySubTitle = this.createElement('div', 'text-[11px] mb-4 flex items-center gap-2');
-        const skeletonDropdown = this.createElement('div', 'skeleton-box w-32 h-4 rounded bg-gray-200 animate-pulse');
-        waterQualitySubTitle.appendChild(skeletonDropdown);
+        const skeletonWQDropdown = this.createElement('div', 'skeleton-box w-32 h-4 rounded bg-gray-200 animate-pulse');
+        waterQualitySubTitle.appendChild(skeletonWQDropdown);
 
         const skeletonWaterQualityChart = this.createElement('div', 'skeleton-box w-full h-32 bg-gray-200 animate-pulse rounded');
 
@@ -817,60 +848,17 @@ class PlatformSkeletonManager {
         const skeletonLastUpdated = this.createElement('div', 'skeleton-box w-48 h-3 bg-gray-200 animate-pulse rounded mt-4');
         waterQualitySection.appendChild(skeletonLastUpdated);
 
+        // ========================================
         // Assemble card
-        cardBody.appendChild(headerFlex);
+        // ========================================
+        cardBody.appendChild(titleRow);
+        cardBody.appendChild(statusRow);
         cardBody.appendChild(metricsContainer);
         cardBody.appendChild(waterQualitySection);
         card.appendChild(cardBody);
 
-        const cardFooter = this.createElement('div', 'card-footer !bg-white');
-        if (inArray(['super_admin', 'admin'], this.userLevel)) {
-            if (platform.totalLogger) {
-                if (platform.totalLogger === 2) {
-                    const footerPanel = this.createElement('div', 'grid grid-cols-2 gap-2');
-
-                    const btnInt = document.createElement('a');
-                    btnInt.className = 'py-2 !text-[12px]';
-                    btnInt.textContent = 'Internal';
-                    btnInt.href = `/sparing/dashboard/maps/summary/detail/${platform.uid}/1`;
-                    const btnEks = document.createElement('a');
-                    btnEks.className = 'py-2 !text-[12px]';
-                    btnEks.textContent = 'KLHK';
-                    btnEks.href = `/sparing/dashboard/maps/summary/detail/${platform.uid}/2`;
-
-                    footerPanel.appendChild(btnInt);
-                    footerPanel.appendChild(btnEks);
-                    cardFooter.appendChild(footerPanel);
-                    card.appendChild(cardFooter);
-                } else {
-                    const footerPanel = this.createElement('div', 'grid grid-cols-1');
-
-                    const btnInt = document.createElement('a');
-                    btnInt.className = 'py-2 !text-[12px]';
-                    btnInt.textContent = 'View Details';
-                    btnInt.href = `/sparing/dashboard/maps/summary/detail/${platform.uid}/${platform?.tipeLogger}`;
-
-                    footerPanel.appendChild(btnInt);
-                    cardFooter.appendChild(footerPanel);
-                    card.appendChild(cardFooter);
-                }
-            }
-        } else {
-            const footerPanel = this.createElement('div', 'grid grid-cols-1');
-
-            const btnInt = document.createElement('a');
-            btnInt.className = 'py-2 !text-[12px]';
-            btnInt.textContent = 'View Details';
-            btnInt.href = `/sparing/dashboard/maps/summary/detail/${platform.uid}/${platform?.tipeLogger}`;
-
-            footerPanel.appendChild(btnInt);
-            cardFooter.appendChild(footerPanel);
-            card.appendChild(cardFooter);
-        }
-
         return card;
     }
-
     // endregion
 
     // region Update Card From Skeleton To Data
@@ -889,6 +877,10 @@ class PlatformSkeletonManager {
         setTimeout(() => {
             this.updateStatusBadgeFromSkeleton(cardElement, platform.data!);
             this.updateOnlineStatusFromSkeleton(cardElement, platform.data!);
+            const hasReportTypeDropdown = cardElement.querySelector('.report-type-dropdown');
+            if (!hasReportTypeDropdown) {
+                this.updateReportTypeDropdownFromSkeleton(cardElement, uid);
+            }
         }, 50);
 
         setTimeout(() => {
@@ -908,7 +900,7 @@ class PlatformSkeletonManager {
 
     // endregion
 
-    // region Update Status Badge From Skeleton - FIXED
+    // region Update Status Badge From Skeleton
     private updateStatusBadgeFromSkeleton(cardElement: HTMLElement, data: PlatformData): void {
         // Cari skeleton badge dengan berbagai cara
         let skeletonBadge = cardElement.querySelector('.skeleton-box.w-20.h-6:not(.skeleton-online)');
@@ -947,7 +939,7 @@ class PlatformSkeletonManager {
 
     // endregion
 
-    // region Update Online Status From Skeleton - FIXED
+    // region Update Online Status From Skeleton
     private updateOnlineStatusFromSkeleton(cardElement: HTMLElement, data: PlatformData): void {
         const skeletonOnline = cardElement.querySelector('.skeleton-online');
 
@@ -971,6 +963,123 @@ class PlatformSkeletonManager {
     }
 
     // endregion
+
+    //region Update Dropdown From Skeleton
+    private updateReportTypeDropdownFromSkeleton(cardElement: HTMLElement, uid: string): void {
+        const skeletonDropdown = cardElement.querySelector('.skeleton-tipe-logger');
+
+        if (!skeletonDropdown) {
+            console.warn('⚠️ Skeleton dropdown not found');
+            return;
+        }
+
+        const platform = this.platforms.find(p => p.uid === uid);
+        if (!platform) {
+            console.warn(`⚠️ Platform ${uid} not found`);
+            return;
+        }
+
+        // ✅ Tentukan tipe_logger awal (default dari platform data atau 1)
+        const initialTipeLogger = platform.data?.tipe_logger ?? platform.tipeLogger ?? 1;
+        const initialText = initialTipeLogger === 1 ? 'Internal' : 'KLHK';
+
+        // ✅ Simpan ke Map
+        this.currentTipeLogger.set(uid, initialTipeLogger);
+
+        // Buat dropdown container
+        const dropdownContainer = this.createElement('div', 'relative report-type-dropdown');
+
+        // Buat dropdown button
+        const dropdownButton = this.createElement('button', 'inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-md bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500') as HTMLButtonElement;
+        dropdownButton.type = 'button';
+        dropdownButton.innerHTML = `
+            <span class="report-type-text">${initialText}</span>
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+        `;
+
+        // Buat dropdown menu
+        const dropdownMenu = this.createElement('div', 'hidden absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10') as HTMLDivElement;
+
+        const menuList = document.createElement('ul');
+        menuList.className = 'py-1';
+
+        // ✅ Handler untuk change tipe logger
+        const changeTipeLogger = async (tipeLogger: number, label: string) => {
+            const textSpan = dropdownButton.querySelector('.report-type-text');
+            if (textSpan) textSpan.textContent = label;
+            dropdownMenu.classList.add('hidden');
+
+            console.log(`📊 Changing report type to ${label} (tipe_logger: ${tipeLogger}) for ${uid}`);
+
+            // ✅ Update state
+            this.currentTipeLogger.set(uid, tipeLogger);
+
+            // ✅ Convert card ke skeleton
+            this.convertCardToSkeleton(uid);
+
+            // ✅ Reload data dengan tipe_logger baru
+            await this.loadPlatformData(uid, undefined, tipeLogger);
+        };
+
+        // Menu items
+        const internalItem = document.createElement('li');
+        const internalLink = document.createElement('a');
+        internalLink.href = '#';
+        internalLink.className = 'block px-4 py-2 text-xs text-gray-700 hover:bg-gray-100';
+        internalLink.textContent = 'Internal';
+        internalLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await changeTipeLogger(1, 'Internal');
+        });
+        internalItem.appendChild(internalLink);
+
+        const klhkItem = document.createElement('li');
+        const klhkLink = document.createElement('a');
+        klhkLink.href = '#';
+        klhkLink.className = 'block px-4 py-2 text-xs text-gray-700 hover:bg-gray-100';
+        klhkLink.textContent = 'KLHK';
+        klhkLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await changeTipeLogger(2, 'KLHK');
+        });
+        klhkItem.appendChild(klhkLink);
+
+        if (platform.totalLogger > 1) {
+            menuList.appendChild(internalItem);
+            menuList.appendChild(klhkItem);
+        } else {
+            if (platform.tipeLogger === 1) {
+                menuList.appendChild(internalItem);
+            } else {
+                menuList.appendChild(klhkItem);
+            }
+        }
+        dropdownMenu.appendChild(menuList);
+
+        // Toggle dropdown
+        dropdownButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdownMenu.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!dropdownContainer.contains(e.target as Node)) {
+                dropdownMenu.classList.add('hidden');
+            }
+        });
+
+        dropdownContainer.appendChild(dropdownButton);
+        dropdownContainer.appendChild(dropdownMenu);
+
+        // Replace skeleton dengan dropdown real
+        skeletonDropdown.parentNode?.replaceChild(dropdownContainer, skeletonDropdown);
+
+        console.log(`✅ Report type dropdown updated (Initial: ${initialText})`);
+    }
+    //endregion
 
     // region Update Metrics From Skeleton - FIXED
     private updateMetricsFromSkeleton(cardElement: HTMLElement, data: PlatformData, cardId: string, platform: CombinedPlatformData): void {
@@ -1202,10 +1311,11 @@ class PlatformSkeletonManager {
             waterQualityChart.parentNode?.replaceChild(skeletonWQChart, waterQualityChart);
         }
 
-        const dropdown = cardElement.querySelector('.relative');
-        if (dropdown) {
+        // ✅ HANYA hapus dropdown water quality, JANGAN hapus dropdown report-type
+        const waterQualityDropdown = cardElement.querySelector('.relative:not(.report-type-dropdown)');
+        if (waterQualityDropdown) {
             const skeletonDropdown = this.createElement('div', 'skeleton-box w-32 h-4 rounded bg-gray-200 animate-pulse');
-            dropdown.parentNode?.replaceChild(skeletonDropdown, dropdown);
+            waterQualityDropdown.parentNode?.replaceChild(skeletonDropdown, waterQualityDropdown);
         }
 
         const lastUpdated = cardElement.querySelector('.last-updated');
@@ -1224,7 +1334,6 @@ class PlatformSkeletonManager {
             this.chartInstances.delete(key);
         });
     }
-
     //endregion
 
     //region Handle Convert All Card to Skeleton

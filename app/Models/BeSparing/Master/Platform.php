@@ -403,6 +403,9 @@
                 $subQuery->where('t_users_sites.user_id', '=', $userId);
                 $subQuery->where('t_users_sites.status_site', '=', 1);
 
+                if (isset($search['tipe_logger'])) {
+                    $subQuery->where('t_platform.tipe_logger', '=', $search['tipe_logger']);
+                }
                 $subQuery->groupBy('t_platform.uid');
             }, 't_platform');
 

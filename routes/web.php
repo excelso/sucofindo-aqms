@@ -101,7 +101,7 @@
                     Route::get('/', [BeSparingControllerHasilPengukuran::class, 'index'])->name('sparing.dashboard.hasil-pengukuran');
                     Route::get('data-info-platform', [BeSparingControllerHasilPengukuran::class, 'handleInfoPlatform']);
                     Route::get('data-platforms', [BeSparingControllerHasilPengukuran::class, 'handleDataPlatforms']);
-                    Route::get('data-platforms/{uid}/data', [BeSparingControllerHasilPengukuran::class, 'handleDataPlatformsData']);
+                    Route::get('data-platforms/{uid}/data/{tipe_logger}', [BeSparingControllerHasilPengukuran::class, 'handleDataPlatformsData']);
                     Route::post('data-charts', [BeSparingControllerHasilPengukuran::class, 'getPeriodicParameterChart']);
                     Route::post('data-charts-last-param', [BeSparingControllerHasilPengukuran::class, 'getLastPeriodicParameterChart']);
                     Route::get('data-detail-platform', [BeSparingControllerHasilPengukuran::class, 'handleDetailPlatform']);

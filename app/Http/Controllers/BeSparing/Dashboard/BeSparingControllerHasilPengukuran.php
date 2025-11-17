@@ -134,12 +134,13 @@
             }
         }
 
-        public function handleDataPlatformsData(Request $request, $uid) {
+        public function handleDataPlatformsData(Request $request, $uid, $tipe_logger) {
             try {
                 $dataUser = User::where('id', request()->user()->id)->first();
                 $platform = Platform::enviroPlatformBySearchGrouped($dataUser->id_sparing ?? '', [
                     'search' => [
                         'uid' => $uid,
+                        'tipe_logger' => $tipe_logger,
                     ]
                 ])->with([
                     'site:id,nama_site,customer_lokasi_id',
@@ -234,7 +235,7 @@
                         'tipe_logger' => $platform->tipe_logger ?? null,
                         'emoji' => $statusNilaiEmo,
                         'colorCode' => $statusNilaiColor,
-                        'isOnline' => $platform->status_platform && $platform->status_platform == 'online',
+                        'isOnline' => isset($platform) && $platform->status_platform == 'online',
                         'metrics' => [
                             'ph' => [
                                 'value' => $dataLastParam ? round($dataLastParam->ph, 2) : 0,
