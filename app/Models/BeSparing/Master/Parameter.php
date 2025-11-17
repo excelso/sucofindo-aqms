@@ -611,17 +611,17 @@
 
             $builder->select(
                 't_parameter.*',
-                DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") as datetime_formatted'),
-                DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%s"), "Asia/Makassar", "' . $timezone . '") as datetime'),
+                DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") as datetime_formatted'),
+                DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%s"), "UTC", "' . $timezone . '") as datetime'),
             );
 
             $builder->where('t_parameter.uid', $platformUid);
             $builder->where('t_parameter.tipe_logger', $tipeLogger);
 
             if ($maxDate != '') {
-                $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
+                $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '")'), [$minDate, $maxDate]);
             } else {
-                $builder->where(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '")'), $minDate);
+                $builder->where(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '")'), $minDate);
             }
             if ($sort != '') {
                 $builder->orderBy('datetime_formatted', $sort);

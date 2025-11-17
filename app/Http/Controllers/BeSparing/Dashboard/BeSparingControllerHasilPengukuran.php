@@ -244,7 +244,7 @@
                                 'bml_max' => $paramLimit->ph_mutu_max ?? 9
                             ],
                             'temperature' => [
-                                'value' => $dataLastParam ? round($dataLastParam->temp, 2) : 0,
+                                'value' => $dataLastParam ? round($dataLastParam->temp) : 0,
                                 'bml_min' => 20,
                                 'bml_min_buffer' => 22,
                                 'bml_max_buffer' => 35,
