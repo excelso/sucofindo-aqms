@@ -1046,17 +1046,19 @@ class PlatformSkeletonManager {
         });
         klhkItem.appendChild(klhkLink);
 
-        if (platform.totalLogger > 1) {
-            menuList.appendChild(internalItem);
-            menuList.appendChild(klhkItem);
-        } else {
-            if (platform.tipeLogger === 1) {
+        if (inArray(['super_admin', 'admin'], this.userLevel)) {
+            if (platform.totalLogger > 1) {
                 menuList.appendChild(internalItem);
-            } else {
                 menuList.appendChild(klhkItem);
+            } else {
+                if (platform.tipeLogger === 1) {
+                    menuList.appendChild(internalItem);
+                } else {
+                    menuList.appendChild(klhkItem);
+                }
             }
+            dropdownMenu.appendChild(menuList);
         }
-        dropdownMenu.appendChild(menuList);
 
         // Toggle dropdown
         dropdownButton.addEventListener('click', (e) => {
