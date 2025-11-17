@@ -1795,7 +1795,7 @@ class PlatformSkeletonManager {
                 },
                 dataLabels: {
                     formatter: function () {
-                        const decimals = type === 'temperature' && type === 'tss' ? 1 : 2;
+                        const decimals = type === 'temperature' || type === 'tss' ? 1 : 2;
                         const format = new Intl.NumberFormat('en-EN', {
                             style: 'decimal',
                             minimumFractionDigits: decimals,
