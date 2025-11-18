@@ -12,6 +12,7 @@
     use App\Http\Controllers\BeEnviro\BeEnviroControllerDashboard;
     use App\Http\Controllers\BeEnviro\ControllerUsers;
     use App\Http\Controllers\BeEnviro\Settings\ControllerChangePassword;
+    use App\Http\Controllers\BeEnviro\Settings\ControllerFileManager;
     use App\Http\Controllers\BeSparing\BeSparingControllerNotifikasi;
     use App\Http\Controllers\BeSparing\Dashboard\BeSparingControllerDashboard;
     use App\Http\Controllers\BeSparing\Dashboard\BeSparingControllerHasilPengukuran;
@@ -301,6 +302,9 @@
                 Route::group(['prefix' => 'change-password'], function () {
                     Route::get('/', [ControllerChangePassword::class, 'index'])->name('settings.change-password');
                     Route::post('update', [ControllerChangePassword::class, 'updatePassword']);
+                });
+                Route::group(['prefix' => 'file-manager'], function () {
+                    Route::get('/', [ControllerFileManager::class, 'index'])->name('settings.file-manager');
                 });
             });
 

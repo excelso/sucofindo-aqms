@@ -220,4 +220,18 @@
                 return $exception->getMessage();
             }
         }
+
+        public static function formatBytes($bytes, $precision = 2): string {
+            $units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+            $i = 0;
+
+            // Loop to find the correct unit by dividing by 1024 until the value is less than 1024
+            while ($bytes > 1024 && $i < count($units) - 1) {
+                $bytes /= 1024;
+                $i++;
+            }
+
+            // Format the number and append the unit
+            return round($bytes, $precision) . ' ' . $units[$i];
+        }
     }

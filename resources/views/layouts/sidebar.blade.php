@@ -49,7 +49,6 @@
                             </a>
                         </li>
 
-
                         <li class="navItem">
                             <a class="navLink {{Request::segment(1) == 'aqms' && Request::segment(2) == 'reports' && Request::segment(3) == 'weekly-summary' ? 'navLinkActive' : ''}}" href="{{ route('aqms.reports.weekly-summary') }}">
                                 <div class="navText">
@@ -126,6 +125,13 @@
                         </div>
                     </a>
                     <ul class="navTreeview">
+                        <li class="navItem">
+                            <a class="navLink {{Request::segment(1) == 'aqms' && Request::segment(2) == 'settings' && Request::segment(3) == 'file-manager' ? 'navLinkActive' : ''}}" href="{{ route('settings.file-manager') }}">
+                                <div class="navText">
+                                    <p>{{ __('File Manager') }}</p>
+                                </div>
+                            </a>
+                        </li>
                         <li class="navItem">
                             <a class="navLink {{Request::segment(1) == 'aqms' && Request::segment(2) == 'settings' && Request::segment(3) == 'change-password' ? 'navLinkActive' : ''}}" href="{{ route('settings.change-password') }}">
                                 <div class="navText">
