@@ -44,7 +44,10 @@
                         <div class="card-body w-full">
                             @foreach($diskInfo as $item)
                                 <div>
-                                    <div class="mb-1 font-medium text-heading">{{ $item->server_name ?? '' }}</div>
+                                    <div class="flex justify-center gap-5 mb-1 font-bold text-[14px]">
+                                        <div class="truncate">{{ $item->server_name ?? '' }}</div>
+                                        <div>{{ $item->server_ip ?? '' }}</div>
+                                    </div>
                                     <div class="w-full bg-gray-200 rounded-full">
                                         <div class="{{ $item->disk_used_percent ? $item->disk_used_percent < 80 ? 'bg-blue-500' : 'bg-red-500' : '' }} text-xs font-medium text-white text-center p-0.5 leading-none rounded-full h-4 flex items-center justify-center" style="width: {{ $item->disk_used_percent ?? 0 }}%">
                                             {{ $item->disk_used_percent ? $item->disk_used_percent . '%' : '' }}
