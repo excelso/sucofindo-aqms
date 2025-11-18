@@ -4,10 +4,13 @@
 
     use Awobaz\Compoships\Compoships;
     use Awobaz\Compoships\Database\Eloquent\Relations\BelongsTo;
+    use Carbon\Carbon;
+    use Exception;
     use Illuminate\Database\Eloquent\Builder;
     use Illuminate\Database\Eloquent\Factories\HasFactory;
     use Illuminate\Database\Eloquent\Model;
     use Illuminate\Support\Facades\DB;
+    use Illuminate\Support\Facades\Log;
     use Illuminate\Support\HigherOrderWhenProxy;
 
     class Parameter extends Model {
@@ -509,26 +512,114 @@
             $timezone = $options['timezone'] ?? 'Asia/Jakarta';
             $sort = $options['sort'] ?? 'ASC';
 
+            // ==========================================
+            // STEP 1: FILTER DULU (PALING PENTING!)
+            // ==========================================
+            $builder->where('t_parameter.uid', $platformUid);
+            $builder->where('t_parameter.tipe_logger', $tipeLogger);
+
+            // ==========================================
+            // STEP 2: DATE FILTER MENGGUNAKAN UNIX TIMESTAMP
+            // ==========================================
+            if ($interval != '') {
+                if ($interval == 1) {
+                    // Daily interval - filter by date
+                    try {
+                        $startUnix = Carbon::parse($tanggal, $timezone)
+                            ->setTimezone('Asia/Makassar')
+                            ->startOfDay()
+                            ->timestamp;
+                        $endUnix = Carbon::parse($tanggal, $timezone)
+                            ->setTimezone('Asia/Makassar')
+                            ->endOfDay()
+                            ->timestamp;
+
+                        $builder->whereBetween('t_parameter.datetime_unix', [$startUnix, $endUnix]);
+                    } catch (Exception $e) {
+                        // Fallback kalau parsing gagal
+                        Log::error('Date parsing error: ' . $e->getMessage());
+                    }
+                } else {
+                    // Monthly interval
+                    try {
+                        $startUnix = Carbon::create($tahun, $bulan, 1, 0, 0, 0, $timezone)
+                            ->setTimezone('Asia/Makassar')
+                            ->startOfMonth()
+                            ->timestamp;
+                        $endUnix = Carbon::create($tahun, $bulan, 1, 0, 0, 0, $timezone)
+                            ->setTimezone('Asia/Makassar')
+                            ->endOfMonth()
+                            ->timestamp;
+
+                        $builder->whereBetween('t_parameter.datetime_unix', [$startUnix, $endUnix]);
+                    } catch (Exception $e) {
+                        Log::error('Date parsing error: ' . $e->getMessage());
+                    }
+                }
+            } else {
+                // Range filter
+                try {
+                    $minUnix = Carbon::parse($minDate, $timezone)
+                        ->setTimezone('Asia/Makassar')
+                        ->timestamp;
+                    $maxUnix = Carbon::parse($maxDate, $timezone)
+                        ->setTimezone('Asia/Makassar')
+                        ->timestamp;
+
+                    $builder->whereBetween('t_parameter.datetime_unix', [$minUnix, $maxUnix]);
+                } catch (Exception $e) {
+                    Log::error('Date parsing error: ' . $e->getMessage());
+                }
+            }
+
+            // ==========================================
+            // STEP 3: SELECT COLUMNS
+            // ==========================================
             if ($interval == '') {
+                // No aggregation - raw data
                 $builder->select(
                     't_parameter.*',
-                    DB::raw('CONVERT_TZ(FROM_UNIXTIME(datetime_unix, "%Y-%m-%d %H:%i:%s"), "Asia/Makassar", "' . $timezone . '") as datetime_formatted'),
-                    DB::raw('CONVERT_TZ(FROM_UNIXTIME(datetime_unix, "%H:%i"), "Asia/Makassar", "' . $timezone . '") as time_formatted'),
+                    't_parameter_limit.ph_warn_min',
+                    't_parameter_limit.ph_warn_max',
+                    't_parameter_limit.ph_mutu_min',
+                    't_parameter_limit.ph_mutu_max',
+                    't_parameter_limit.cod_warn',
+                    't_parameter_limit.cod_mutu',
+                    't_parameter_limit.tss_warn',
+                    't_parameter_limit.tss_warn_min',
+                    't_parameter_limit.tss_mutu_min',
+                    't_parameter_limit.tss_mutu',
+                    't_parameter_limit.nh3n_warn',
+                    't_parameter_limit.nh3n_mutu',
+                    't_parameter_limit.debit_warn',
+                    't_parameter_limit.debit_warn_min',
+                    't_parameter_limit.debit_mutu_min',
+                    't_parameter_limit.debit_mutu',
+                    't_parameter_limit.debit_intermit',
+                    't_jenis_industri.paramPh',
+                    't_jenis_industri.paramCod',
+                    't_jenis_industri.paramTss',
+                    't_jenis_industri.paramNh3n',
+                    't_jenis_industri.paramDebit'
                 );
             } else {
+                // With aggregation
                 $builder->select(
                     't_parameter.uid',
+                    't_parameter.tipe_logger',
                     DB::raw('ROUND(AVG(t_parameter.temp), 2) as temp'),
                     DB::raw('ROUND(AVG(t_parameter.ph), 2) as ph'),
                     DB::raw('ROUND(AVG(t_parameter.cod), 2) as cod'),
                     DB::raw('ROUND(AVG(t_parameter.tss)) as tss'),
                     DB::raw('ROUND(AVG(t_parameter.nh3n), 2) as nh3n'),
                     DB::raw('ROUND(AVG(t_parameter.debit), 2) as debit'),
-                    DB::raw('CONVERT_TZ(FROM_UNIXTIME(datetime_unix, "%Y-%m-%d %H:%i:%s"), "Asia/Makassar", "' . $timezone . '") as datetime_formatted'),
-                    DB::raw('CONVERT_TZ(FROM_UNIXTIME(datetime_unix, "%H:%i"), "Asia/Makassar", "' . $timezone . '") as time_formatted'),
+                    DB::raw('MIN(t_parameter.datetime_unix) as datetime_unix')
                 );
             }
 
+            // ==========================================
+            // STEP 4: JOINS (setelah filter!)
+            // ==========================================
             $builder->leftJoin('t_parameter_limit', function ($join) {
                 $join->on('t_parameter.uid', '=', 't_parameter_limit.uid');
                 $join->on('t_parameter.tipe_logger', '=', 't_parameter_limit.tipe_logger');
@@ -543,59 +634,116 @@
             $builder->leftJoin('t_customer', 't_customer_site.customer_id', '=', 't_customer.id');
             $builder->leftJoin('t_jenis_industri', 't_customer.industri_id', '=', 't_jenis_industri.id');
 
+            // ==========================================
+            // STEP 5: STATUS FILTER
+            // ==========================================
             if ($statusPlatform != '') {
                 if ($statusPlatform == '1') {
-                    // Jika Normal
-                    $builder->where(function ($query) use ($platformUid) {
-                        $query->whereRaw('(IF(t_jenis_industri.paramPh = 1, IF(t_parameter.ph >= 1 AND (t_parameter.ph > ph_warn_min AND ph < ph_warn_max), "normal", IF((t_parameter.ph > ph_mutu_min AND ph <= ph_warn_min) OR (ph >= ph_warn_max AND ph < ph_mutu_max), "warning", "danger")), "normal") = "normal")');
-                        $query->whereRaw('(IF(t_jenis_industri.paramCod = 1, IF(t_parameter.cod >= 1 AND t_parameter.cod < cod_warn, "normal", IF(t_parameter.cod >= cod_warn AND t_parameter.cod <= cod_mutu, "warning", "danger")), "normal") = "normal")');
-                        $query->whereRaw('(IF(t_jenis_industri.paramTss = 1, IF(t_parameter.tss >= 1 AND (t_parameter.tss > tss_warn_min AND t_parameter.tss < tss_mutu_min), "normal", IF((t_parameter.tss > tss_warn AND tss <= tss_warn_min) OR (t_parameter.tss >= tss_mutu_min AND tss < tss_mutu), "warning", "danger")), "normal") = "normal")');
-                        $query->whereRaw('(IF(t_jenis_industri.paramNh3n = 1, IF(t_parameter.nh3n >= 1 AND t_parameter.nh3n < nh3n_warn, "normal", IF(t_parameter.nh3n >= nh3n_warn AND t_parameter.nh3n <= nh3n_mutu, "warning", "danger")), "normal") = "normal")');
-                        $query->whereRaw('(IF(t_jenis_industri.paramDebit = 1, IF((t_parameter.debit > debit_warn_min AND t_parameter.debit < debit_mutu_min OR (t_parameter.debit <= 0 AND t_parameter_limit.debit_intermit = 1)), "normal", IF((t_parameter.debit >= debit_warn AND t_parameter.debit <= debit_warn_min) OR (t_parameter.debit >= debit_mutu_min AND t_parameter.debit < debit_mutu), "warning", "danger")), "normal") = "normal")');
+                    // Status: Normal
+                    $builder->where(function ($query) {
+                        $query->whereRaw('(
+                    COALESCE(t_jenis_industri.paramPh, 0) = 0 OR
+                    (t_parameter.ph >= 1 AND t_parameter.ph > t_parameter_limit.ph_warn_min AND t_parameter.ph < t_parameter_limit.ph_warn_max)
+                )');
+                        $query->whereRaw('(
+                    COALESCE(t_jenis_industri.paramCod, 0) = 0 OR
+                    (t_parameter.cod >= 1 AND t_parameter.cod < t_parameter_limit.cod_warn)
+                )');
+                        $query->whereRaw('(
+                    COALESCE(t_jenis_industri.paramTss, 0) = 0 OR
+                    (t_parameter.tss >= 1 AND t_parameter.tss > t_parameter_limit.tss_warn_min AND t_parameter.tss < t_parameter_limit.tss_mutu_min)
+                )');
+                        $query->whereRaw('(
+                    COALESCE(t_jenis_industri.paramNh3n, 0) = 0 OR
+                    (t_parameter.nh3n >= 1 AND t_parameter.nh3n < t_parameter_limit.nh3n_warn)
+                )');
+                        $query->whereRaw('(
+                    COALESCE(t_jenis_industri.paramDebit, 0) = 0 OR
+                    (t_parameter.debit > t_parameter_limit.debit_warn_min AND t_parameter.debit < t_parameter_limit.debit_mutu_min) OR
+                    (t_parameter.debit <= 0 AND t_parameter_limit.debit_intermit = 1)
+                )');
                     });
                 }
 
                 if ($statusPlatform == '2') {
-                    // Jika Warning
-                    $builder->where(function ($query) use ($platformUid) {
-                        $query->whereRaw('(t_jenis_industri.paramPh = 1 AND ((t_parameter.ph > t_parameter_limit.ph_mutu_min AND t_parameter.ph <= t_parameter_limit.ph_warn_min) OR (t_parameter.ph >= t_parameter_limit.ph_warn_max AND t_parameter.ph < t_parameter_limit.ph_mutu_max)))');
-                        $query->orWhereRaw('(t_jenis_industri.paramCod = 1 AND t_parameter.cod >= t_parameter_limit.cod_warn AND t_parameter.cod <= t_parameter_limit.cod_mutu)');
-                        $query->orWhereRaw('(t_jenis_industri.paramTss = 1 AND (t_parameter.tss > t_parameter_limit.tss_warn AND tss <= t_parameter_limit.tss_warn_min) OR (t_parameter.tss >= t_parameter_limit.tss_mutu_min AND tss < t_parameter_limit.tss_mutu))');
-                        $query->orWhereRaw('(t_jenis_industri.paramNh3n = 1 AND t_parameter.nh3n >= t_parameter_limit.nh3n_warn AND t_parameter.nh3n <= t_parameter_limit.nh3n_mutu)');
-                        $query->orWhereRaw('(t_jenis_industri.paramDebit = 1 AND (t_parameter.debit >= t_parameter_limit.debit_warn AND t_parameter.debit < t_parameter_limit.debit_warn_min) OR (t_parameter.debit >= t_parameter_limit.debit_mutu_min AND t_parameter.debit < t_parameter_limit.debit_mutu))');
+                    // Status: Warning
+                    $builder->where(function ($query) {
+                        $query->whereRaw('(
+                    t_jenis_industri.paramPh = 1 AND
+                    ((t_parameter.ph > t_parameter_limit.ph_mutu_min AND t_parameter.ph <= t_parameter_limit.ph_warn_min) OR
+                     (t_parameter.ph >= t_parameter_limit.ph_warn_max AND t_parameter.ph < t_parameter_limit.ph_mutu_max))
+                )');
+                        $query->orWhereRaw('(
+                    t_jenis_industri.paramCod = 1 AND
+                    t_parameter.cod >= t_parameter_limit.cod_warn AND
+                    t_parameter.cod <= t_parameter_limit.cod_mutu
+                )');
+                        $query->orWhereRaw('(
+                    t_jenis_industri.paramTss = 1 AND
+                    ((t_parameter.tss > t_parameter_limit.tss_warn AND t_parameter.tss <= t_parameter_limit.tss_warn_min) OR
+                     (t_parameter.tss >= t_parameter_limit.tss_mutu_min AND t_parameter.tss < t_parameter_limit.tss_mutu))
+                )');
+                        $query->orWhereRaw('(
+                    t_jenis_industri.paramNh3n = 1 AND
+                    t_parameter.nh3n >= t_parameter_limit.nh3n_warn AND
+                    t_parameter.nh3n <= t_parameter_limit.nh3n_mutu
+                )');
+                        $query->orWhereRaw('(
+                    t_jenis_industri.paramDebit = 1 AND
+                    ((t_parameter.debit >= t_parameter_limit.debit_warn AND t_parameter.debit < t_parameter_limit.debit_warn_min) OR
+                     (t_parameter.debit >= t_parameter_limit.debit_mutu_min AND t_parameter.debit < t_parameter_limit.debit_mutu))
+                )');
                     });
                 }
 
                 if ($statusPlatform == '3') {
-                    // Jika Danger
-                    $builder->where(function ($query) use ($platformUid) {
-                        $query->whereRaw('(t_jenis_industri.paramPh = 1 AND (t_parameter.ph <= t_parameter_limit.ph_mutu_min AND t_parameter_limit.ph_intermit = 0) OR t_parameter.ph >= t_parameter_limit.ph_mutu_max)');
-                        $query->orWhereRaw('(t_jenis_industri.paramCod = 1 AND (t_parameter.cod <= 0 AND t_parameter_limit.cod_intermit = 0) OR t_parameter.cod > t_parameter_limit.cod_mutu)');
-                        $query->orWhereRaw('(t_jenis_industri.paramTss = 1 AND (t_parameter.tss <= t_parameter_limit.tss_warn AND t_parameter_limit.tss_intermit = 0) OR t_parameter.tss >= t_parameter_limit.tss_mutu)');
-                        $query->orWhereRaw('(t_jenis_industri.paramNh3n = 1 AND (t_parameter.nh3n <= 0 AND t_parameter_limit.nh3n_intermit = 0) OR t_parameter.nh3n > t_parameter_limit.nh3n_mutu)');
-                        $query->orWhereRaw('(t_jenis_industri.paramDebit = 1 AND (t_parameter.debit <= t_parameter_limit.debit_warn AND t_parameter_limit.debit_intermit = 0) OR t_parameter.debit >= t_parameter_limit.debit_mutu)');
+                    // Status: Danger
+                    $builder->where(function ($query) {
+                        $query->whereRaw('(
+                    t_jenis_industri.paramPh = 1 AND
+                    ((t_parameter.ph <= t_parameter_limit.ph_mutu_min AND t_parameter_limit.ph_intermit = 0) OR
+                     t_parameter.ph >= t_parameter_limit.ph_mutu_max)
+                )');
+                        $query->orWhereRaw('(
+                    t_jenis_industri.paramCod = 1 AND
+                    ((t_parameter.cod <= 0 AND t_parameter_limit.cod_intermit = 0) OR
+                     t_parameter.cod > t_parameter_limit.cod_mutu)
+                )');
+                        $query->orWhereRaw('(
+                    t_jenis_industri.paramTss = 1 AND
+                    ((t_parameter.tss <= t_parameter_limit.tss_warn AND t_parameter_limit.tss_intermit = 0) OR
+                     t_parameter.tss >= t_parameter_limit.tss_mutu)
+                )');
+                        $query->orWhereRaw('(
+                    t_jenis_industri.paramNh3n = 1 AND
+                    ((t_parameter.nh3n <= 0 AND t_parameter_limit.nh3n_intermit = 0) OR
+                     t_parameter.nh3n > t_parameter_limit.nh3n_mutu)
+                )');
+                        $query->orWhereRaw('(
+                    t_jenis_industri.paramDebit = 1 AND
+                    ((t_parameter.debit <= t_parameter_limit.debit_warn AND t_parameter_limit.debit_intermit = 0) OR
+                     t_parameter.debit >= t_parameter_limit.debit_mutu)
+                )');
                     });
                 }
             }
 
-            $builder->where('t_parameter.uid', $platformUid);
-            $builder->where('t_parameter.tipe_logger', $tipeLogger);
-            // $builder->whereBetween(DB::raw('FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i")'), [$minDate, $maxDate]);
-
+            // ==========================================
+            // STEP 6: GROUP BY (kalau ada interval)
+            // ==========================================
             if ($interval != '') {
                 if ($interval == 1) {
-                    $builder->where(DB::raw('DATE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix, "%Y-%m-%d %H:%i:%s"), "Asia/Makassar", "' . $timezone . '"))'), $tanggal);
-                    $builder->groupBy(DB::raw('DATE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), "Asia/Makassar", "' . $timezone . '"))'));
-                    $builder->groupBy(DB::raw('HOUR(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), "Asia/Makassar", "' . $timezone . '"))'));
+                    // Hourly grouping
+                    $builder->groupBy(DB::raw('FLOOR(t_parameter.datetime_unix / 3600)'));
                 } else {
-                    $builder->where(DB::raw('MONTH(CONVERT_TZ(FROM_UNIXTIME(datetime_unix, "%Y-%m-%d %H:%i:%s"), "Asia/Makassar", "' . $timezone . '"))'), $bulan);
-                    $builder->where(DB::raw('YEAR(CONVERT_TZ(FROM_UNIXTIME(datetime_unix, "%Y-%m-%d %H:%i:%s"), "Asia/Makassar", "' . $timezone . '"))'), $tahun);
-                    $builder->groupBy(DB::raw('DAY(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), "Asia/Makassar", "' . $timezone . '"))'));
+                    // Daily grouping
+                    $builder->groupBy(DB::raw('FLOOR(t_parameter.datetime_unix / 86400)'));
                 }
-            } else {
-                $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
             }
 
+            // ==========================================
+            // STEP 7: ORDERING
+            // ==========================================
             $builder->orderBy('t_parameter.datetime_unix', 'DESC');
         }
         //endregion

@@ -29,7 +29,6 @@
         }
 
         public function index(Request $request): View {
-
             $dataPlatforms = Platform::platformComboByLimit(request()->user()->id_sparing)->with('site')->get();
             $platformUid = $request->input('platformUid') ?? $dataPlatforms[0]->uid;
             $tipeLogger = $request->input('tipeLogger') ?? $dataPlatforms[0]->tipe_logger;
@@ -37,30 +36,45 @@
             $paramLimit = (new ParameterLimit)
                 ->where('uid', $platformUid)
                 ->where('tipe_logger', $tipeLogger)
-                ->get()->first();
+                ->first(); // Langsung first() aja, ga perlu get() dulu
 
-            $dataParamAvailable = Platform::parameterAvailable($platformUid, $tipeLogger)->get()->first();
+            $dataParamAvailable = Platform::parameterAvailable($platformUid, $tipeLogger)->first();
+
             $dataPlatform = (new Platform)
                 ->where('uid', $platformUid)
                 ->where('tipe_logger', $tipeLogger)
-                ->get()->first();
+                ->first();
 
             $timezone = Common::getNearestTimezone($dataPlatform->lat, $dataPlatform->lng, 'ID');
+
+            // Get paginated data
             $dataLogsParameter = Parameter::dataLogsParameter([
                 'platformUid' => $platformUid,
                 'tipeLogger' => $tipeLogger,
                 'interval' => $request->input('interval') ?? '',
-                'tanggal' => $request->input('tanggal') ?? Carbon::now()->format('Y-m-d'),
-                'minDate' => $request->input('minDate') ?? Carbon::now()->format('Y-m-d') . ' 00:00',
-                'maxDate' => $request->input('maxDate') ?? Carbon::now()->format('Y-m-d') . ' 23:59',
+                'tanggal' => $request->input('tanggal') ?? Carbon::now($timezone)->format('Y-m-d'),
+                'minDate' => $request->input('minDate') ?? Carbon::now($timezone)->format('Y-m-d') . ' 00:00',
+                'maxDate' => $request->input('maxDate') ?? Carbon::now($timezone)->format('Y-m-d') . ' 23:59',
                 'bulan' => $request->input('bulan') ?? '',
                 'tahun' => $request->input('tahun') ?? '',
                 'statusPlatform' => $request->input('statusPlatform') ?? '',
                 'timezone' => $timezone
-            ]);
+            ])->paginate(20)->onEachSide(0);
+
+            // Transform timezone untuk setiap item di paginated collection
+            $dataLogsParameter->getCollection()->transform(function ($item) use ($timezone) {
+                if (isset($item->datetime_unix)) {
+                    $dt = Carbon::createFromTimestamp($item->datetime_unix, 'Asia/Makassar')
+                        ->setTimezone($timezone);
+
+                    $item->datetime_formatted = $dt->format('Y-m-d H:i:s');
+                    $item->time_formatted = $dt->format('H:i');
+                }
+                return $item;
+            });
 
             return view($this->viewPath . '.index', [
-                'items' => $dataLogsParameter->paginate(20)->onEachSide(0),
+                'items' => $dataLogsParameter,
                 'dataPlatform' => $dataPlatforms,
                 'paramLimit' => $paramLimit,
                 'timezone' => $timezone,
