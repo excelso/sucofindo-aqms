@@ -643,6 +643,10 @@
                 }
 
                 if (isset($dataCharts)) {
+                    $dt = new \DateTime();
+                    $dt->setTimezone(new \DateTimeZone($timezone));
+                    $dt->setTimestamp($dataCharts->datetime_unix);
+
                     $data = [
                         'marker' => [
                             'enabled' => $paramLimitCond,
@@ -651,7 +655,7 @@
                             'radius' => 5,
                             'lineColor' => $paramLimitCond ? '#ff002b' : '#7bb4ec',
                         ],
-                        'x' => Carbon::createFromFormat('Y-m-d H:i:s', $dataCharts->datetime)->setTimezone($timezone)->getPreciseTimestamp(3),
+                        'x' => $dataCharts->datetime_unix * 1000,
                         'y' => $param
                     ];
                 }

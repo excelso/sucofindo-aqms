@@ -600,7 +600,9 @@
                     't_jenis_industri.paramCod',
                     't_jenis_industri.paramTss',
                     't_jenis_industri.paramNh3n',
-                    't_jenis_industri.paramDebit'
+                    't_jenis_industri.paramDebit',
+                    DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%s"), "Asia/Makassar", "' . $timezone . '") as datetime_formatted'),
+                    DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%H:%i"), "Asia/Makassar", "' . $timezone . '") as time_formatted'),
                 );
             } else {
                 // With aggregation
@@ -613,7 +615,9 @@
                     DB::raw('ROUND(AVG(t_parameter.tss)) as tss'),
                     DB::raw('ROUND(AVG(t_parameter.nh3n), 2) as nh3n'),
                     DB::raw('ROUND(AVG(t_parameter.debit), 2) as debit'),
-                    DB::raw('MIN(t_parameter.datetime_unix) as datetime_unix')
+                    DB::raw('MIN(t_parameter.datetime_unix) as datetime_unix'),
+                    DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%s"), "Asia/Makassar", "' . $timezone . '") as datetime_formatted'),
+                    DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%H:%i"), "Asia/Makassar", "' . $timezone . '") as time_formatted'),
                 );
             }
 
@@ -642,26 +646,26 @@
                     // Status: Normal
                     $builder->where(function ($query) {
                         $query->whereRaw('(
-                    COALESCE(t_jenis_industri.paramPh, 0) = 0 OR
-                    (t_parameter.ph >= 1 AND t_parameter.ph > t_parameter_limit.ph_warn_min AND t_parameter.ph < t_parameter_limit.ph_warn_max)
-                )');
+                            COALESCE(t_jenis_industri.paramPh, 0) = 0 OR
+                            (t_parameter.ph >= 1 AND t_parameter.ph > t_parameter_limit.ph_warn_min AND t_parameter.ph < t_parameter_limit.ph_warn_max)
+                        )');
                         $query->whereRaw('(
-                    COALESCE(t_jenis_industri.paramCod, 0) = 0 OR
-                    (t_parameter.cod >= 1 AND t_parameter.cod < t_parameter_limit.cod_warn)
-                )');
+                            COALESCE(t_jenis_industri.paramCod, 0) = 0 OR
+                            (t_parameter.cod >= 1 AND t_parameter.cod < t_parameter_limit.cod_warn)
+                        )');
                         $query->whereRaw('(
-                    COALESCE(t_jenis_industri.paramTss, 0) = 0 OR
-                    (t_parameter.tss >= 1 AND t_parameter.tss > t_parameter_limit.tss_warn_min AND t_parameter.tss < t_parameter_limit.tss_mutu_min)
-                )');
+                            COALESCE(t_jenis_industri.paramTss, 0) = 0 OR
+                            (t_parameter.tss >= 1 AND t_parameter.tss > t_parameter_limit.tss_warn_min AND t_parameter.tss < t_parameter_limit.tss_mutu_min)
+                        )');
                         $query->whereRaw('(
-                    COALESCE(t_jenis_industri.paramNh3n, 0) = 0 OR
-                    (t_parameter.nh3n >= 1 AND t_parameter.nh3n < t_parameter_limit.nh3n_warn)
-                )');
+                            COALESCE(t_jenis_industri.paramNh3n, 0) = 0 OR
+                            (t_parameter.nh3n >= 1 AND t_parameter.nh3n < t_parameter_limit.nh3n_warn)
+                        )');
                         $query->whereRaw('(
-                    COALESCE(t_jenis_industri.paramDebit, 0) = 0 OR
-                    (t_parameter.debit > t_parameter_limit.debit_warn_min AND t_parameter.debit < t_parameter_limit.debit_mutu_min) OR
-                    (t_parameter.debit <= 0 AND t_parameter_limit.debit_intermit = 1)
-                )');
+                            COALESCE(t_jenis_industri.paramDebit, 0) = 0 OR
+                            (t_parameter.debit > t_parameter_limit.debit_warn_min AND t_parameter.debit < t_parameter_limit.debit_mutu_min) OR
+                            (t_parameter.debit <= 0 AND t_parameter_limit.debit_intermit = 1)
+                        )');
                     });
                 }
 
@@ -669,30 +673,30 @@
                     // Status: Warning
                     $builder->where(function ($query) {
                         $query->whereRaw('(
-                    t_jenis_industri.paramPh = 1 AND
-                    ((t_parameter.ph > t_parameter_limit.ph_mutu_min AND t_parameter.ph <= t_parameter_limit.ph_warn_min) OR
-                     (t_parameter.ph >= t_parameter_limit.ph_warn_max AND t_parameter.ph < t_parameter_limit.ph_mutu_max))
-                )');
+                            t_jenis_industri.paramPh = 1 AND
+                            ((t_parameter.ph > t_parameter_limit.ph_mutu_min AND t_parameter.ph <= t_parameter_limit.ph_warn_min) OR
+                             (t_parameter.ph >= t_parameter_limit.ph_warn_max AND t_parameter.ph < t_parameter_limit.ph_mutu_max))
+                        )');
                         $query->orWhereRaw('(
-                    t_jenis_industri.paramCod = 1 AND
-                    t_parameter.cod >= t_parameter_limit.cod_warn AND
-                    t_parameter.cod <= t_parameter_limit.cod_mutu
-                )');
+                            t_jenis_industri.paramCod = 1 AND
+                            t_parameter.cod >= t_parameter_limit.cod_warn AND
+                            t_parameter.cod <= t_parameter_limit.cod_mutu
+                        )');
                         $query->orWhereRaw('(
-                    t_jenis_industri.paramTss = 1 AND
-                    ((t_parameter.tss > t_parameter_limit.tss_warn AND t_parameter.tss <= t_parameter_limit.tss_warn_min) OR
-                     (t_parameter.tss >= t_parameter_limit.tss_mutu_min AND t_parameter.tss < t_parameter_limit.tss_mutu))
-                )');
+                            t_jenis_industri.paramTss = 1 AND
+                            ((t_parameter.tss > t_parameter_limit.tss_warn AND t_parameter.tss <= t_parameter_limit.tss_warn_min) OR
+                             (t_parameter.tss >= t_parameter_limit.tss_mutu_min AND t_parameter.tss < t_parameter_limit.tss_mutu))
+                        )');
                         $query->orWhereRaw('(
-                    t_jenis_industri.paramNh3n = 1 AND
-                    t_parameter.nh3n >= t_parameter_limit.nh3n_warn AND
-                    t_parameter.nh3n <= t_parameter_limit.nh3n_mutu
-                )');
+                            t_jenis_industri.paramNh3n = 1 AND
+                            t_parameter.nh3n >= t_parameter_limit.nh3n_warn AND
+                            t_parameter.nh3n <= t_parameter_limit.nh3n_mutu
+                        )');
                         $query->orWhereRaw('(
-                    t_jenis_industri.paramDebit = 1 AND
-                    ((t_parameter.debit >= t_parameter_limit.debit_warn AND t_parameter.debit < t_parameter_limit.debit_warn_min) OR
-                     (t_parameter.debit >= t_parameter_limit.debit_mutu_min AND t_parameter.debit < t_parameter_limit.debit_mutu))
-                )');
+                            t_jenis_industri.paramDebit = 1 AND
+                            ((t_parameter.debit >= t_parameter_limit.debit_warn AND t_parameter.debit < t_parameter_limit.debit_warn_min) OR
+                             (t_parameter.debit >= t_parameter_limit.debit_mutu_min AND t_parameter.debit < t_parameter_limit.debit_mutu))
+                        )');
                     });
                 }
 
@@ -700,30 +704,30 @@
                     // Status: Danger
                     $builder->where(function ($query) {
                         $query->whereRaw('(
-                    t_jenis_industri.paramPh = 1 AND
-                    ((t_parameter.ph <= t_parameter_limit.ph_mutu_min AND t_parameter_limit.ph_intermit = 0) OR
-                     t_parameter.ph >= t_parameter_limit.ph_mutu_max)
-                )');
+                            t_jenis_industri.paramPh = 1 AND
+                            ((t_parameter.ph <= t_parameter_limit.ph_mutu_min AND t_parameter_limit.ph_intermit = 0) OR
+                             t_parameter.ph >= t_parameter_limit.ph_mutu_max)
+                        )');
                         $query->orWhereRaw('(
-                    t_jenis_industri.paramCod = 1 AND
-                    ((t_parameter.cod <= 0 AND t_parameter_limit.cod_intermit = 0) OR
-                     t_parameter.cod > t_parameter_limit.cod_mutu)
-                )');
+                            t_jenis_industri.paramCod = 1 AND
+                            ((t_parameter.cod <= 0 AND t_parameter_limit.cod_intermit = 0) OR
+                             t_parameter.cod > t_parameter_limit.cod_mutu)
+                        )');
                         $query->orWhereRaw('(
-                    t_jenis_industri.paramTss = 1 AND
-                    ((t_parameter.tss <= t_parameter_limit.tss_warn AND t_parameter_limit.tss_intermit = 0) OR
-                     t_parameter.tss >= t_parameter_limit.tss_mutu)
-                )');
+                            t_jenis_industri.paramTss = 1 AND
+                            ((t_parameter.tss <= t_parameter_limit.tss_warn AND t_parameter_limit.tss_intermit = 0) OR
+                             t_parameter.tss >= t_parameter_limit.tss_mutu)
+                        )');
                         $query->orWhereRaw('(
-                    t_jenis_industri.paramNh3n = 1 AND
-                    ((t_parameter.nh3n <= 0 AND t_parameter_limit.nh3n_intermit = 0) OR
-                     t_parameter.nh3n > t_parameter_limit.nh3n_mutu)
-                )');
+                            t_jenis_industri.paramNh3n = 1 AND
+                            ((t_parameter.nh3n <= 0 AND t_parameter_limit.nh3n_intermit = 0) OR
+                             t_parameter.nh3n > t_parameter_limit.nh3n_mutu)
+                        )');
                         $query->orWhereRaw('(
-                    t_jenis_industri.paramDebit = 1 AND
-                    ((t_parameter.debit <= t_parameter_limit.debit_warn AND t_parameter_limit.debit_intermit = 0) OR
-                     t_parameter.debit >= t_parameter_limit.debit_mutu)
-                )');
+                            t_jenis_industri.paramDebit = 1 AND
+                            ((t_parameter.debit <= t_parameter_limit.debit_warn AND t_parameter_limit.debit_intermit = 0) OR
+                             t_parameter.debit >= t_parameter_limit.debit_mutu)
+                        )');
                     });
                 }
             }
