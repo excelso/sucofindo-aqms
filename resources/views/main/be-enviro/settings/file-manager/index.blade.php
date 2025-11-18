@@ -50,7 +50,7 @@
                                     </div>
                                     <div class="w-full bg-gray-200 rounded-full">
                                         <div class="{{ $item->disk_used_percent ? $item->disk_used_percent < 80 ? 'bg-blue-500' : 'bg-red-500' : '' }} text-xs font-medium text-white text-center p-0.5 leading-none rounded-full h-4 flex items-center justify-center" style="width: {{ $item->disk_used_percent ?? 0 }}%">
-                                            <span class="px-2">{{ $item->disk_used_percent ? $item->disk_used_percent . '%' : '' }}</span>
+
                                         </div>
                                     </div>
                                     <div class="mt-3 text-[14px]">
@@ -64,7 +64,7 @@
                                         </div>
                                         <div class="flex justify-between mt-2">
                                             <div>Used</div>
-                                            <div>{{ \App\Http\Helper\Common::formatBytes($item->disk_used ?? 0) }}</div>
+                                            <div>{{ $item->disk_used_percent ? $item->disk_used_percent . '%' : '' }} - {{ \App\Http\Helper\Common::formatBytes($item->disk_used ?? 0) }}</div>
                                         </div>
                                     </div>
                                 </div>
