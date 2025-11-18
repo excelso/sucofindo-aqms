@@ -44,7 +44,7 @@
                         <div class="card-body w-full">
                             @foreach($diskInfo as $item)
                                 <div>
-                                    <div class="flex justify-center gap-5 mb-1 font-bold text-[14px]">
+                                    <div class="flex justify-between gap-5 mb-1 font-bold text-[14px]">
                                         <div class="truncate">{{ $item->server_name ?? '' }}</div>
                                         <div>{{ $item->server_ip ?? '' }}</div>
                                     </div>
