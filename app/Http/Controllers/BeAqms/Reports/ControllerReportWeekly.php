@@ -172,7 +172,7 @@
                                 $param = round($item->pm_25, 2);
                                 break;
                             case 'pm_10':
-                                $param = round($item->pm_10, 2);
+                                $param = round($item->tsp * 0.4, 2);
                                 break;
                             case 'tsp':
                                 $param = round($item->tsp, 2);

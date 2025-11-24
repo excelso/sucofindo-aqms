@@ -276,7 +276,7 @@
             $builder->select([
                 't_loggers.uid',
                 DB::raw('ROUND(AVG(t_loggers.pm_25), 2) as pm_25'),
-                DB::raw('ROUND(AVG(t_loggers.pm_10), 2) as pm_10'),
+                DB::raw('ROUND(AVG(t_loggers.tsp * 0.4), 2) as pm_10'),
                 DB::raw('ROUND(AVG(t_loggers.tsp), 2) as tsp'),
                 DB::raw('ROUND(AVG(t_loggers.noise), 2) as noise'),
             ]);
