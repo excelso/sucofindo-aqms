@@ -253,9 +253,15 @@
 
             $data = [];
             foreach ($loggers as $logger) {
+
+                $value = (float)($logger->max_aqi_index ? $logger->max_aqi_index * 0.2 : 0);
+                if ($logger->aqi_from == 'pm_10') {
+                    $value = (float)($logger->max_aqi_index ? $logger->max_aqi_index * 0.4 : 0);
+                }
+
                 $data[] = [
                     'timestamp' => $logger->datetime_unix,
-                    'value' => (float)($logger->max_aqi_index ?? 0),
+                    'value' => $value,
                     'value_tsp' => (float)($logger->max_aqi_index_tsp ?? 0),
                     'pm25' => $logger->max_tsp * 0.2,
                     'pm10' => $logger->max_tsp * 0.4,
