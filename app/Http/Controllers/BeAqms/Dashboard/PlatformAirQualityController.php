@@ -263,7 +263,7 @@
                     'timestamp' => $logger->datetime_unix,
                     'value' => $value,
                     'value_tsp' => (float)($logger->max_aqi_index_tsp ?? 0),
-                    'pm25' => $logger->max_pm_25,
+                    'pm25' => $logger->pm_25,
                     'pm10' => $logger->max_tsp * 0.4,
                     'tsp' => $logger->max_tsp,
                     'aqi_from' => $logger->aqi_from,
