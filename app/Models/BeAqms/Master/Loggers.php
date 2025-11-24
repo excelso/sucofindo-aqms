@@ -53,7 +53,7 @@
                     DB::raw('MAX(CASE WHEN link_video_recorded IS NOT NULL THEN link_video_recorded END) AS link_video_recorded')
                 ]);
                 // Gunakan timezone yang sama dengan parameter
-                $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / 600) * 600), 'Asia/Makassar', ?) AS interval_time", [$timezone]);
+                $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(FLOOR(datetime_unix / 600) * 600), 'UTC', ?) AS interval_time", [$timezone]);
                 $builder->selectRaw('FLOOR(datetime_unix / 600) * 600 AS datetime_unix');
                 $builder->selectRaw('COUNT(*) AS record_count');
                 $builder->selectRaw('ROUND(AVG(pm_10), 0) AS pm_10');
