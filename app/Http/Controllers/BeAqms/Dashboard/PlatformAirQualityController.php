@@ -202,7 +202,7 @@
             $platformLimit = LoggersLimit::where('uid', $uid)->first();
             return [
                 'pm10' => [
-                    'value' => $dataLastLogger->max_tsp ? $dataLastLogger->max_tsp * 0.4 : 0,
+                    'value' => $dataLastLogger->max_pm_10 ?? 0,
                     'bml_min' => $platformLimit->pm10_min ?? 0,
                     'bml_min_buffer' => $platformLimit->pm10_min_buffer ?? 0,
                     'bml_max_buffer' => $platformLimit->pm10_max_buffer ?? 0,
@@ -253,18 +253,12 @@
 
             $data = [];
             foreach ($loggers as $logger) {
-
-                $value = (float)($logger->max_aqi_index ?? 0);
-                if ($logger->aqi_from == 'pm_10') {
-                    $value = (float)($logger->max_aqi_index ? $logger->max_aqi_index * 0.4 : 0);
-                }
-
                 $data[] = [
                     'timestamp' => $logger->datetime_unix,
-                    'value' => $value,
+                    'value' => (float)($logger->max_aqi_index ?? 0),
                     'value_tsp' => (float)($logger->max_aqi_index_tsp ?? 0),
-                    'pm25' => $logger->pm_25,
-                    'pm10' => $logger->max_tsp * 0.4,
+                    'pm25' => $logger->max_pm_25,
+                    'pm10' => $logger->max_pm_10,
                     'tsp' => $logger->max_tsp,
                     'aqi_from' => $logger->aqi_from,
                     'link_video_id' => $logger->link_video_id,
