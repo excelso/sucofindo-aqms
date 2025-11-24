@@ -328,11 +328,11 @@
 
                 // Format waktu
                 DB::raw("TIME(CONCAT(
-                    HOUR(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', 'Asia/Makassar')),
+                    HOUR(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'UTC', 'Asia/Makassar')),
                     ':',
                     LPAD(
                         FLOOR(
-                            MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', 'Asia/Makassar')) / {$intervalMinutes}
+                            MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'UTC', 'Asia/Makassar')) / {$intervalMinutes}
                         ) * {$intervalMinutes},
                         2,
                         '0'
@@ -345,10 +345,10 @@
                     CONCAT(
                         '2025-01-01 ',
                         DATE_FORMAT(
-                            CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', '{$timezone}'),
+                            CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'UTC', '{$timezone}'),
                             CONCAT(
                                 '%H:',
-                                LPAD(FLOOR(MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', '{$timezone}')) / {$intervalMinutes}) * {$intervalMinutes}, 2, '0'),
+                                LPAD(FLOOR(MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'UTC', '{$timezone}')) / {$intervalMinutes}) * {$intervalMinutes}, 2, '0'),
                                 ':00'
                             )
                         )
@@ -359,14 +359,14 @@
             // Filter berdasarkan UID dan rentang tanggal
             $builder->where('t_loggers.uid', $platformUid)
                 ->whereRaw("
-                    DATE(CONVERT_TZ(FROM_UNIXTIME(t_loggers.datetime_unix), 'Asia/Makassar', ?))
+                    DATE(CONVERT_TZ(FROM_UNIXTIME(t_loggers.datetime_unix), 'UTC', ?))
                     BETWEEN ? AND ?
                 ", [$timezone, $minDate, $maxDate]);
 
             // Group by
             $builder->groupByRaw("
-                HOUR(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', ?)),
-                FLOOR(MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', ?)) / ?)
+                HOUR(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'UTC', ?)),
+                FLOOR(MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'UTC', ?)) / ?)
             ", [$timezone, $timezone, $intervalMinutes]);
 
             // Order by
