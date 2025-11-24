@@ -344,10 +344,17 @@
                     ->orderBy('datetime_unix', 'ASC')
                     ->get();
 
-                $dataLoggerTemp = $dataLogger->map(function ($item) use ($metricColumn) {
+                $dataLoggerTemp = $dataLogger->map(function ($item) use ($metricColumn, $request) {
+                    $value = (float)($item->{$metricColumn} ?? 0);
+                    if ($request->input('metric') == 'pm25') {
+                        $value = (float)($item->{$metricColumn} ? $item->{$metricColumn} * 0.2 : 0);
+                    } else if ($request->input('metric') == 'pm10') {
+                        $value = (float)($item->{$metricColumn} ? $item->{$metricColumn} * 0.4 : 0);
+                    }
+
                     return [
                         'timestamp' => $item->datetime_unix,
-                        'value' => (float)($item->{$metricColumn} ?? 0),
+                        'value' => $value,
                     ];
                 });
 
@@ -370,8 +377,8 @@
         // region Get Metric Column
         private function getMetricColumn($metric) {
             $columns = [
-                'pm10' => 'max_pm_10',
-                'pm25' => 'max_pm_25',
+                'pm10' => 'max_tsp',
+                'pm25' => 'max_tsp',
                 'tsp' => 'max_tsp',
                 'noise' => 'noise_leq'
             ];
@@ -421,8 +428,7 @@
         // endregion
 
         // region Handle Detail Platform Report
-        public function calculateAQIFromTSP($tspValue)
-        {
+        public function calculateAQIFromTSP($tspValue) {
             try {
                 // Get AQI category based on TSP value
                 $aqiCategory = DB::table('t_aqi_categories')
