@@ -36,10 +36,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnExportChart: HTMLElement = document.querySelector('.btnExportChart')
     const loaderDataEntry: HTMLElement = document.querySelector('.loaderDataEntry')
     const bodyChart: HTMLElement = document.querySelector('.bodyChart')
+    const dataEntryMonthly: HTMLElement = document.querySelector('.dataEntryMonthly')
 
     const btnExportChartConnect: HTMLElement = document.querySelector('.btnExportChartConnect')
     const loaderDataConnect: HTMLElement = document.querySelector('.loaderDataConnect')
     const bodyChartConnect: HTMLElement = document.querySelector('.bodyChartConnect')
+    const dataConnectMonthly: HTMLElement = document.querySelector('.dataConnectMonthly')
 
     const btnExportPm25: HTMLElement = document.querySelector('.btnExportPm25')
     const loaderDataPm25: HTMLElement = document.querySelector('.loaderDataPm25')
@@ -277,9 +279,11 @@ document.addEventListener("DOMContentLoaded", () => {
         })
 
         const {status} = response
-        const {message, data, dataCategories} = await response.json()
+        const {message, data, dataCategories, dataMonthly} = await response.json()
         if (status === 200) {
             hiddenElm(loaderDataEntry)
+
+            dataEntryMonthly.textContent = `${dataMonthly}%`
 
             const chart = Highcharts.chart({
                 chart: {
@@ -414,9 +418,11 @@ document.addEventListener("DOMContentLoaded", () => {
         })
 
         const {status} = response
-        const {message, data, dataCategories} = await response.json()
+        const {message, data, dataCategories, dataMonthly} = await response.json()
         if (status === 200) {
             hiddenElm(loaderDataConnect)
+
+            dataConnectMonthly.textContent = `${dataMonthly}%`
 
             const chart = Highcharts.chart({
                 chart: {

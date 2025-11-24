@@ -298,6 +298,18 @@
 
         //endregion
 
+        //region Handle Data Persentase Entry Monthly
+        public function scopeDataPercentageEntryMonthly(Builder $builder, $platformUid, $minDate, $maxDate, $timezone, $totalSample): void {
+            $builder->select([
+                DB::raw("(COUNT(*) / $totalSample) * 100 as percentage")
+            ]);
+
+            $builder->where('t_loggers.uid', $platformUid);
+            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_loggers.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
+        }
+
+        //endregion
+
         public function scopeDataSensorWeekly(
             Builder $builder,
                     $platformUid,

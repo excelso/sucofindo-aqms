@@ -47,4 +47,16 @@
             $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_platforms_heartbeat.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
         }
         //endregion
+
+        //region Handle Data Persentase Entry Monthly
+        public function scopeDataPercentageConnectMonthly(Builder $builder, $platformUid, $minDate, $maxDate, $timezone, $totalSample): void {
+            $builder->select([
+                DB::raw("(COUNT(*) / $totalSample) * 100 as percentage")
+            ]);
+
+            $builder->where('t_platforms_heartbeat.uid', $platformUid);
+            $builder->where('t_platforms_heartbeat.heartbeat_status', '=', 'Online');
+            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_platforms_heartbeat.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
+        }
+        //endregion
     }

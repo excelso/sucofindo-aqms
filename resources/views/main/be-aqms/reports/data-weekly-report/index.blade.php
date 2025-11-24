@@ -116,7 +116,7 @@
                         <div class="card-header !pb-0 mb-4">
                             <div class="w-[50%]">
                                 <div class="font-bold text-[18px]">
-                                    Data Entry
+                                    Data Entry <span class="ml-2 dataEntryMonthly">0%</span>
                                 </div>
                             </div>
                             @if(request()->user()->user_level != 'viewer')
@@ -141,7 +141,7 @@
                         <div class="card-header !pb-0 mb-4">
                             <div class="w-[50%]">
                                 <div class="font-bold text-[18px]">
-                                    Connectivity
+                                    Connectivity <span class="ml-2 dataConnectMonthly">0%</span>
                                 </div>
                             </div>
                             @if(request()->user()->user_level != 'viewer')
