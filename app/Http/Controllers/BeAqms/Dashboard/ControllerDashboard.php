@@ -376,7 +376,7 @@
         private function getMetricColumn($metric) {
             $columns = [
                 'pm10' => 'max_tsp',
-                'pm25' => 'max_tsp',
+                'pm25' => 'max_pm_25',
                 'tsp' => 'max_tsp',
                 'noise' => 'noise_leq'
             ];
