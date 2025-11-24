@@ -346,9 +346,7 @@
 
                 $dataLoggerTemp = $dataLogger->map(function ($item) use ($metricColumn, $request) {
                     $value = (float)($item->{$metricColumn} ?? 0);
-                    if ($request->input('metric') == 'pm25') {
-                        $value = (float)($item->{$metricColumn} ? $item->{$metricColumn} * 0.2 : 0);
-                    } else if ($request->input('metric') == 'pm10') {
+                    if ($request->input('metric') == 'pm10') {
                         $value = (float)($item->{$metricColumn} ? $item->{$metricColumn} * 0.4 : 0);
                     }
 

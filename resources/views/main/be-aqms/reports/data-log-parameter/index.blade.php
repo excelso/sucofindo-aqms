@@ -97,7 +97,7 @@
                                             <td class="text-center">{{$i++}}</td>
                                             <td class="text-center">{{ $item->uid ?? '' }}</td>
                                             <td class="text-center">{{ Carbon::parse($item->datetime_unix)->setTimezone($platform->timezone)->format('d M Y H:i:s') ?? '' }}</td>
-                                            <td class="text-right">{{ $item->max_tsp ? $item->max_tsp * 0.2 : $item->tsp }}</td>
+                                            <td class="text-right">{{ $item->max_pm_25 ?? $item->pm_25 }}</td>
                                             <td class="text-right">{{ $item->max_tsp ? $item->max_tsp * 0.4 : $item->tsp }}</td>
                                             <td class="text-right">{{ $item->max_tsp ?? $item->tsp }}</td>
                                             <td class="text-right">{{ $item->noise_leq ?? $item->noise }}</td>
