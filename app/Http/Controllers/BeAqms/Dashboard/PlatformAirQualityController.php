@@ -209,7 +209,7 @@
                     'bml_max' => $platformLimit->pm10_max ?? 0,
                 ],
                 'pm25' => [
-                    'value' => 100,
+                    'value' => $dataLastLogger->max_pm_25 ?? 0,
                     'bml_min' => $platformLimit->pm25_min ?? 0,
                     'bml_min_buffer' => $platformLimit->pm25_min_buffer ?? 0,
                     'bml_max_buffer' => $platformLimit->pm25_max_buffer ?? 0,
