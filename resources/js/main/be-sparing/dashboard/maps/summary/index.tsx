@@ -1123,27 +1123,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (status === 200) {
             $(platformUid).removeAttr('disabled')
 
-            const diffDate = moment.duration(moment(maxDate).diff(moment(minDate)))
-            const diffDateDay = diffDate.asDays()
-            const diffDateHour = diffDate.asHours()
-            let tickInterval = 24 * 3600 * 1000
-            if (diffDateDay >= 1 && diffDateDay < 4) {
-                tickInterval = 3600 * (diffDateDay + 2) * 1000
-            } else {
-                if (diffDateHour < 1) {
-                    // Jika kurang dari 1 Jam
-                    tickInterval = 60 * 5 * 1000 // Interval per 5 menit
-                } else {
-                    if (diffDateHour > 1 && diffDateHour <= 2) {
-                        tickInterval = 60 * 5 * 1000
-                    } else if (diffDateHour > 2 && diffDateHour <= 6) {
-                        tickInterval = 60 * 30 * 1000
-                    } else if (diffDateHour > 6) {
-                        tickInterval = 60 * 180 * 1000
-                    }
-                }
-            }
-
+            let tickInterval = 60 * 180 * 1000
             charts = Highcharts.chart({
                 chart: {
                     renderTo: bodyChart,

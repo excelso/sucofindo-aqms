@@ -655,7 +655,7 @@
                             'radius' => 5,
                             'lineColor' => $paramLimitCond ? '#ff002b' : '#7bb4ec',
                         ],
-                        'x' => $dataCharts->datetime_unix * 1000,
+                        'x' => Carbon::createFromTimestamp($dataCharts->datetime_unix)->getPreciseTimestamp(3),
                         'y' => $param
                     ];
                 }
