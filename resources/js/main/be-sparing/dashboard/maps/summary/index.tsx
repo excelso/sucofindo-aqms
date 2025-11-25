@@ -1179,13 +1179,23 @@ document.addEventListener('DOMContentLoaded', function () {
                         const formattedTime = safeFormatTimestamp(timestampSeconds, 'datetime', 'Asia/Makassar', 'id-ID', true);
                         const timezoneShort = 'Makassar';
 
-                        let tooltipHTML = `<b>Time (${timezoneShort}):</b> ${formattedTime}<br>`;
-
-                        this.points.forEach(point => {
-                            tooltipHTML += `<span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>${point.y}</b><br>`;
-                        });
-
-                        return tooltipHTML;
+                        return `
+                            <div class="flex flex-col">
+                                <div class="text-sm" style="color: ${this.color}">${this.series.name}</div>
+                                <div>
+                                    <table>
+                                        <tr>
+                                            <td class="text-sm p-0">Time</td>
+                                            <td class="p-0"><b class="ml-2">: ${formattedTime} - (${timezoneShort})</b></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-sm p-0">Nilai</td>
+                                            <td class="p-0"><b class="ml-2">: ${Highcharts.numberFormat(this.y, 2)}</b></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        `;
                     },
                     useHTML: true,
                 },
