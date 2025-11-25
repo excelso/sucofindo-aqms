@@ -697,7 +697,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 legend: {
                     itemStyle: {
                         fontSize: '13px',
-                        fontWeight: 'bold',
                     }
                 },
                 exporting: {
