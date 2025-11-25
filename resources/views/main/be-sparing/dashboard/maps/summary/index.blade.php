@@ -39,15 +39,17 @@
                             <select class="form-control select2-custom platformUid">
                                 @foreach($dataPlatform as $item)
                                     @php
-                                        $selected = (
-                                            request()->segment(6) == $item->uid &&
-                                            (int)request()->segment(7) === (int)$item->tipe_logger
-                                        ) ? 'selected' : '';
+                                        $urlUid = request()->segment(6);
+                                        $urlTipeLogger = request()->segment(7);
+                                        $optionValue = $item->uid . '#' . $item->tipe_logger;
+                                        $urlValue = $urlUid . '#' . $urlTipeLogger;
+
+                                        $selected = ($optionValue == $urlValue) ? 'selected' : '';
                                     @endphp
                                     @if(request()->user()->user_level != 'viewer')
-                                        <option value="{{ $item->uid }}" data-status="{{ $item->status_platform }}" data-tipe-logger="{{ $item->tipe_logger }}" data-additional="{{ $item->site->nama_site }} / {{ $item->site->customerLokasi->nama_lokasi }} / {{ $item->tipe_logger == 1 ? 'Internal' : 'KLHK' }}" {{ $selected }}>{{ $item->uid }}</option>
+                                        <option value="{{ $item->uid }}#{{ $item->tipe_logger }}" data-status="{{ $item->status_platform }}" data-tipe-logger="{{ $item->tipe_logger }}" data-additional="{{ $item->site->nama_site }} / {{ $item->site->customerLokasi->nama_lokasi }} / {{ $item->tipe_logger == 1 ? 'Internal' : 'KLHK' }}" {{ $selected }}>{{ $item->uid }}</option>
                                     @else
-                                        <option value="{{ $item->uid }}" data-status="{{ $item->status_platform }}" data-tipe-logger="{{ $item->tipe_logger }}" data-additional="{{ $item->site->nama_site }} / {{ $item->site->customerLokasi->nama_lokasi }}" {{ $selected }}>{{ $item->uid }}</option>
+                                        <option value="{{ $item->uid }}#{{ $item->tipe_logger }}" data-status="{{ $item->status_platform }}" data-tipe-logger="{{ $item->tipe_logger }}" data-additional="{{ $item->site->nama_site }} / {{ $item->site->customerLokasi->nama_lokasi }}" {{ $selected }}>{{ $item->uid }}</option>
                                     @endif
                                 @endforeach
                             </select>

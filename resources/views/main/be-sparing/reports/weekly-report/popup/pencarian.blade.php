@@ -18,11 +18,18 @@
                 <div class="form-group-control">
                     <select class="form-control select2-custom platformUid" name="platformUid">
                         @foreach($dataPlatform as $item)
-                            @php($selected = request()->input('platformUid') == $item->uid && request()->input('tipeLogger') == $item->tipe_logger ? 'selected' : '')
-                            @if(Auth::user()->user_level != 'viewer')
-                                <option value="{{ $item->uid }}" data-tipe-logger="{{ $item->tipe_logger }}" data-additional="{{ $item->site->customer->nama_perusahaan ?? '' }} / {{ $item->site->nama_site ?? '' }} / {{ $item->tipe_logger == 1 ? 'Internal' : 'KLHK' }}" {{ $selected }}>{{ $item->uid }}</option>
+                            @php
+                                $urlUid = request()->input('platformUid');
+                                $urlTipeLogger = request()->input('tipeLogger');
+                                $optionValue = $item->uid . '#' . $item->tipe_logger;
+                                $urlValue = $urlUid . '#' . $urlTipeLogger;
+
+                                $selected = ($optionValue == $urlValue) ? 'selected' : '';
+                            @endphp
+                            @if(request()->user()->user_level != 'viewer')
+                                <option value="{{ $item->uid }}#{{ $item->tipe_logger }}" data-status="{{ $item->status_platform }}" data-tipe-logger="{{ $item->tipe_logger }}" data-additional="{{ $item->site->nama_site }} / {{ $item->site->customerLokasi->nama_lokasi }} / {{ $item->tipe_logger == 1 ? 'Internal' : 'KLHK' }}" {{ $selected }}>{{ $item->uid }}</option>
                             @else
-                                <option value="{{ $item->uid }}" data-tipe-logger="{{ $item->tipe_logger }}" data-additional="{{ $item->site->customer->nama_perusahaan ?? '' }} / {{ $item->site->nama_site ?? '' }}" {{ $selected }}>{{ $item->uid }}</option>
+                                <option value="{{ $item->uid }}#{{ $item->tipe_logger }}" data-status="{{ $item->status_platform }}" data-tipe-logger="{{ $item->tipe_logger }}" data-additional="{{ $item->site->nama_site }} / {{ $item->site->customerLokasi->nama_lokasi }}" {{ $selected }}>{{ $item->uid }}</option>
                             @endif
                         @endforeach
                     </select>

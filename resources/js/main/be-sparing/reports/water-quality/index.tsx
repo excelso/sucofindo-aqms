@@ -137,9 +137,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     elmPencarian.forEach((elm: HTMLInputElement) => {
                         const elmNames = elm.getAttribute('name')
                         if (elmNames === 'platformUid') {
-                            text_result[elmNames] = elm.value
-                            text_result['tipeLogger'] = $(elm).find(':selected').data('tipe-logger')
-                            text_result_url.push(`${elmNames}=${elm.value}&tipeLogger=${$(elm).find(':selected').data('tipe-logger')}`)
+                            const valueParts = elm.value.split('#')
+                            const [uid, tipeLogger] = valueParts;
+
+                            text_result[elmNames] = uid
+                            text_result['tipeLogger'] = tipeLogger
+                            text_result_url.push(`${elmNames}=${uid}&tipeLogger=${tipeLogger}`)
                         } else {
                             if (elm.value !== '') {
                                 text_result[elmNames] = elm.value
@@ -152,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     $(parameterId).attr('data-selected', paramId)
                     handleCharts({
                         platformUid,
-                        tipeLogger: tipeLogger,
+                        tipeLogger,
                         parameterId: paramId,
                         minDate,
                         maxDate

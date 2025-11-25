@@ -92,9 +92,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     elmPencarian.forEach((elm: HTMLInputElement) => {
                         const elmNames = elm.getAttribute('name')
                         if (elmNames === 'platformUid') {
-                            text_result[elmNames] = elm.value
-                            text_result['tipeLogger'] = $(elm).find(':selected').data('tipe-logger')
-                            text_result_url.push(`${elmNames}=${elm.value}&tipeLogger=${$(elm).find(':selected').data('tipe-logger')}`)
+                            const valueParts = elm.value.split('#')
+                            const [uid, tipeLogger] = valueParts;
+
+                            text_result[elmNames] = uid
+                            text_result['tipeLogger'] = tipeLogger
+                            text_result_url.push(`${elmNames}=${uid}&tipeLogger=${tipeLogger}`)
                         } else {
                             if (elm.value !== '') {
                                 text_result[elmNames] = elm.value
@@ -107,28 +110,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     handleDataAvgParameter({
                         platformUid: platformUid,
-                        tipeLogger: tipeLogger,
+                        tipeLogger,
                         month: bulan,
                         year: tahun,
                     }).then(null)
 
                     handleWeeklyDataEntryChart({
                         platformUid: platformUid,
-                        tipeLogger: tipeLogger,
+                        tipeLogger,
                         month: bulan,
                         year: tahun,
                     }).then(null)
 
                     handleWeeklyDataComplyChart({
                         platformUid: platformUid,
-                        tipeLogger: tipeLogger,
+                        tipeLogger,
                         month: bulan,
                         year: tahun,
                     }).then(null)
 
                     handleWeeklySensor(bodyChartPH, btnExportPH, loaderDataPH, {
                         platformUid: platformUid,
-                        tipeLogger: tipeLogger,
+                        tipeLogger,
                         month: bulan,
                         year: tahun,
                         parameterId: 'pH'
@@ -136,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     handleWeeklySensor(bodyChartTSS, btnExportTSS, loaderDataTSS, {
                         platformUid: platformUid,
-                        tipeLogger: tipeLogger,
+                        tipeLogger,
                         month: bulan,
                         year: tahun,
                         parameterId: 'TSS'
@@ -144,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     handleWeeklySensor(bodyChartDebit, btnExportDebit, loaderDataDebit, {
                         platformUid: platformUid,
-                        tipeLogger: tipeLogger,
+                        tipeLogger,
                         month: bulan,
                         year: tahun,
                         parameterId: 'Debit'

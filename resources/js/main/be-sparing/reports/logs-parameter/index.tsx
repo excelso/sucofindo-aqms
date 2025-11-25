@@ -117,7 +117,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     elmPencarian.forEach((elm: HTMLInputElement) => {
                         const elmNames = elm.getAttribute('name')
                         if (elmNames === 'platformUid') {
-                            text_result_url.push(`${elmNames}=${elm.value}&tipeLogger=${$(elm).find(':selected').data('tipe-logger')}`)
+                            const valueParts = elm.value.split('#')
+                            const [uid, tipeLogger] = valueParts;
+                            text_result_url.push(`${elmNames}=${uid}&tipeLogger=${tipeLogger}`)
                         } else {
                             if (elm.value !== '') {
                                 text_result_url.push(`${elmNames}=${elm.value}`)

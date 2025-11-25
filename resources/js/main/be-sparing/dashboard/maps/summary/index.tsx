@@ -121,44 +121,44 @@ document.addEventListener('DOMContentLoaded', function () {
     $(platformUid).attr('disabled', 'disabled')
     platformUid.addEventListener('change', function (ev) {
         const target = ev.target as HTMLSelectElement;
-        const selectedOption = target.options[target.selectedIndex] as HTMLOptionElement;
-        const tipeLogger = selectedOption.getAttribute('data-tipe-logger');
-        const platformValue = target.value; // ✅ Pakai ini, bukan $(this).val()
+        const valueParts = target.value.split('#');
 
-        tipeLoggerSelected.value = tipeLogger;
+        if (valueParts.length === 2) {
+            const [uid, tipeLogger] = valueParts;
 
-        console.log(`/sparing/dashboard/maps/summary/detail/${platformValue}/${tipeLogger}`)
-        window.history.replaceState({}, '', `/sparing/dashboard/maps/summary/detail/${platformValue}/${tipeLogger}`);
+            tipeLoggerSelected.value = tipeLogger;
+            window.history.replaceState({}, '', `/sparing/dashboard/maps/summary/detail/${uid}/${tipeLogger}`);
 
-        target.setAttribute('disabled', 'disabled');
-        handlePlatformInfo({
-            platformUid: selectedOption.value as string,
-            tipeLogger: tipeLogger,
-            timezone: timezone.value
-        }).then(null)
+            target.setAttribute('disabled', 'disabled');
+            handlePlatformInfo({
+                platformUid: uid as string,
+                tipeLogger: tipeLogger,
+                timezone: timezone.value
+            }).then(null)
 
-        handleLastParameterData({
-            platformUid: selectedOption.value as string,
-            tipeLogger: tipeLogger,
-            timezone: timezone.value
-        }).then(null)
+            handleLastParameterData({
+                platformUid: uid as string,
+                tipeLogger: tipeLogger,
+                timezone: timezone.value
+            }).then(null)
 
-        handlePersentaseData({
-            platformUid: selectedOption.value as string,
-            tipeLogger: tipeLogger,
-            parameterId: parameterId.value
-        }).then(null)
+            handlePersentaseData({
+                platformUid: uid as string,
+                tipeLogger: tipeLogger,
+                parameterId: parameterId.value
+            }).then(null)
 
-        handleCharts({
-            platformUid: selectedOption.value as string,
-            tipeLogger: tipeLogger,
-            parameterId: parameterIdSelected.value
-        }).then(null)
+            handleCharts({
+                platformUid: uid as string,
+                tipeLogger: tipeLogger,
+                parameterId: parameterIdSelected.value
+            }).then(null)
 
-        renderDataTable({
-            platformUid: selectedOption.value as string,
-            tipeLogger: tipeLogger,
-        })
+            renderDataTable({
+                platformUid: uid as string,
+                tipeLogger: tipeLogger,
+            })
+        }
     })
 
     handlePlatformInfo({
