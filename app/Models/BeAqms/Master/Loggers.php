@@ -293,7 +293,7 @@
             ]);
 
             $builder->where('t_loggers.uid', $platformUid);
-            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_loggers.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
+            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_loggers.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '")'), [$minDate, $maxDate]);
         }
 
         //endregion
