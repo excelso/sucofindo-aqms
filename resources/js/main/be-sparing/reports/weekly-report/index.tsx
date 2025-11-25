@@ -604,7 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (status === 200) {
             hiddenElm(loader)
 
-            let tickInterval = 60 * 30 * 1000
+            let tickInterval = 60 * 120 * 1000
             const chart = Highcharts.chart({
                 chart: {
                     renderTo: elm,
