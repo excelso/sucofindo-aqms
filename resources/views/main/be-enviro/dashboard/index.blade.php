@@ -119,7 +119,9 @@
                 </div>
             </div>
             <div class="border-t h-[1px]"></div>
-            <div class="px-4 py-3 h-[calc(100vh-12rem)] overflow-y-auto platformItems"></div>
+            <div class="px-4 py-3 h-[calc(100vh-12rem)] overflow-y-auto platformItems">
+
+            </div>
         </div>
 
         <div class="searchBox absolute top-[0.8rem] left-[6rem] z-10">

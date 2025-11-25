@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const statusButtons = document.querySelectorAll<HTMLElement>('.btn-status');
     const totalOnline = document.querySelector('.totalOnline')
     const totalOffline = document.querySelector('.totalOffline')
-    const platformItems = document.querySelector('.platformItems')
+    const platformItems: HTMLElement = document.querySelector('.platformItems')
     //endregion
 
     // 👇 Variabel global untuk menyimpan marker dan map
@@ -98,10 +98,44 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     }
 
+    //region Create Loader
+    function createLoader(parentElement: HTMLElement): () => void {
+        const loaderDiv = document.createElement('div');
+        loaderDiv.className = 'flex items-center justify-center mt-5';
+        loaderDiv.id = 'custom-loader';
+
+        const dotsContainer = document.createElement('div');
+        dotsContainer.className = 'flex space-x-2';
+
+        // Create 3 dots
+        for (let i = 0; i < 3; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'w-3 h-3 bg-blue-500 rounded-full animate-bounce';
+            if (i > 0) {
+                dot.style.animationDelay = `${i * 0.1}s`;
+            }
+            dotsContainer.appendChild(dot);
+        }
+
+        loaderDiv.appendChild(dotsContainer);
+        parentElement.appendChild(loaderDiv);
+
+        // Return function to remove loader
+        return () => {
+            loaderDiv.remove();
+        };
+    }
+    //endregion
+
     //region Handle Left Panel Platforms
     async function handleDataPlatforms(titleType: string, heartbeatStatus: string, search?: any) {
         platformFromTitle.textContent = titleType
 
+        totalOnline.textContent = ''
+        totalOffline.textContent = ''
+
+        platformItems.innerHTML = null
+        createLoader(platformItems)
         const response = await fetch(`${url.pathname}/data-platforms`, {
             method: 'POST',
             headers: {
