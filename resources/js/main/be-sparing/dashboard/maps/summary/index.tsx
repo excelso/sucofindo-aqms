@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const {message, data, timezone: dataTimezone} = await response.json()
         if (status === 200) {
             $(platformUid).removeAttr('disabled')
-            const {uid, status_platform, last_online, has_power, tipe_logger, has_temperature, site, status_validasi} = data
+            const {uid, status_platform, last_online, tipe_logger, site, status_validasi} = data
             const {nama_site, customer} = site
             const {jenis_industri} = customer
             const {parameter} = jenis_industri
@@ -292,29 +292,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 `)
             }
 
-            if (has_power !== null) {
-                $(statusPowerPlatform).html(`
-                    <div class="ds-badge ds-badge-outline ds-badge-success text-[12px]">
-                        <i class="fas fa-bolt mr-1"></i> Power Status
-                    </div>
-                `)
-
-                if (btnPower) {
-                    $(btnPower).off('click').on('click', function () {
-                        handleModalPower()
-                    })
-                }
-
-            } else {
-                $(statusPowerPlatform).html(null)
-            }
-
-            if (has_temperature !== null) {
-                $(btnTemperature).show()
-            } else {
-                $(btnTemperature).hide()
-            }
-
+            $(statusPowerPlatform).html(null)
+            $(btnTemperature).show()
             const dataParameters = JSON.parse(parameter)
             const dataParams = []
             dataParameters.map((item: any) => {

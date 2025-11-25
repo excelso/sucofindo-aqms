@@ -227,31 +227,6 @@
                 $join->on('tHelp1.tHelp1TipeLogger', '=', 't_platform.tipe_logger');
             });
 
-            $builder->leftJoin(DB::raw('
-                (
-                    SELECT
-                        t_parameter.uid as tHelp2Uid,
-                        COUNT(t_parameter.id) as has_power
-                    FROM t_parameter
-                    WHERE t_parameter.solar_volt != 0
-                      AND t_parameter.uid = "' . $platformUid . '"
-                      AND t_parameter.tipe_logger = "' . $tipeLogger . '"
-                    GROUP BY t_parameter.uid, t_parameter.tipe_logger
-                ) tHelp2
-            '), 'tHelp2.tHelp2Uid', '=', 't_platform.uid');
-
-            $builder->leftJoin(DB::raw('
-                (
-                    SELECT
-                        t_parameter.uid as tHelp3Uid,
-                        COUNT(t_parameter.id) as has_temperature
-                    FROM t_parameter
-                    WHERE t_parameter.temp != 0
-                      AND t_parameter.uid = "' . $platformUid . '"
-                      AND t_parameter.tipe_logger = "' . $tipeLogger . '"
-                    GROUP BY t_parameter.uid, t_parameter.tipe_logger
-                ) tHelp3
-            '), 'tHelp3.tHelp3Uid', '=', 't_platform.uid');
             $builder->with('site.customer.jenisIndustri');
             $builder->where('t_platform.uid', $platformUid);
             $builder->where('t_platform.tipe_logger', $tipeLogger);
