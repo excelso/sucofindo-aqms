@@ -325,7 +325,7 @@
                         'max' => $paramLimit->debit_mutu,
                         'min' => 0,
                         'title' => [
-                            'text' => 'Nilai Debit'
+                            'text' => null
                         ],
                         'plotLines' => [
                             [
@@ -356,7 +356,7 @@
                         'allowDecimals' => true,
                         'max' => $paramLimit->cod_mutu,
                         'title' => [
-                            'text' => 'Nilai COD'
+                            'text' => null
                         ],
                         'plotLines' => [
                             [
@@ -378,7 +378,7 @@
                         'allowDecimals' => true,
                         'max' => max($paramTss, $paramLimit->tss_mutu),
                         'title' => [
-                            'text' => 'Nilai TSS'
+                            'text' => null
                         ],
                         'plotLines' => [
                             [
@@ -409,7 +409,7 @@
                         'allowDecimals' => true,
                         'max' => $paramLimit->nh3n_mutu,
                         'title' => [
-                            'text' => 'Nilai NH3N'
+                            'text' => null
                         ],
                         'plotLines' => [
                             [
