@@ -1,5 +1,5 @@
 <div class="modal hidden modalDetail">
-    <div class="modal-main !w-[calc(1440px-35%)]">
+    <div class="modal-main !w-[calc(1440px-35%)] !2xl:w-[calc(1440px-35%)]">
         <div class="modal-head">
             <div class="flex justify-between items-center">
                 <div class="modal-title">
