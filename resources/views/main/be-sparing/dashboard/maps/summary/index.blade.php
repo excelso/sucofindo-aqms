@@ -38,7 +38,12 @@
                         <div class="form-group-control bg-white w-[320px]">
                             <select class="form-control select2-custom platformUid">
                                 @foreach($dataPlatform as $item)
-                                    @php($selected = request()->segment(6) == $item->uid && request()->segment(7) == $item->tipe_logger ? 'selected' : '')
+                                    @php
+                                        $selected = (
+                                            request()->segment(6) == $item->uid &&
+                                            (int)request()->segment(7) === (int)$item->tipe_logger
+                                        ) ? 'selected' : '';
+                                    @endphp
                                     @if(request()->user()->user_level != 'viewer')
                                         <option value="{{ $item->uid }}" data-status="{{ $item->status_platform }}" data-tipe-logger="{{ $item->tipe_logger }}" data-additional="{{ $item->site->nama_site }} / {{ $item->site->customerLokasi->nama_lokasi }} / {{ $item->tipe_logger == 1 ? 'Internal' : 'KLHK' }}" {{ $selected }}>{{ $item->uid }}</option>
                                     @else

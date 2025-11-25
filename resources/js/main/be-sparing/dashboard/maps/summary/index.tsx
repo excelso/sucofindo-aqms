@@ -119,38 +119,44 @@ document.addEventListener('DOMContentLoaded', function () {
     let tipeLogger = '1'
 
     $(platformUid).attr('disabled', 'disabled')
-    $(platformUid).on('change', function () {
-        tipeLogger = $(this).find(':selected').data('tipe-logger')
-        tipeLoggerSelected.value = tipeLogger
-        window.history.replaceState({}, null, `/sparing/dashboard/maps/summary/detail/${$(this).val()}/${tipeLogger}`)
-        $(this).attr('disabled', 'disabled')
+    platformUid.addEventListener('change', function (ev) {
+        const target = ev.target as HTMLSelectElement;
+        const selectedOption = target.options[target.selectedIndex] as HTMLOptionElement;
+        const tipeLogger = selectedOption.getAttribute('data-tipe-logger');
+        const platformValue = target.value; // ✅ Pakai ini, bukan $(this).val()
 
+        tipeLoggerSelected.value = tipeLogger;
+
+        console.log(`/sparing/dashboard/maps/summary/detail/${platformValue}/${tipeLogger}`)
+        window.history.replaceState({}, '', `/sparing/dashboard/maps/summary/detail/${platformValue}/${tipeLogger}`);
+
+        target.setAttribute('disabled', 'disabled');
         handlePlatformInfo({
-            platformUid: $(this).val() as string,
+            platformUid: selectedOption.value as string,
             tipeLogger: tipeLogger,
             timezone: timezone.value
         }).then(null)
 
         handleLastParameterData({
-            platformUid: $(this).val() as string,
+            platformUid: selectedOption.value as string,
             tipeLogger: tipeLogger,
             timezone: timezone.value
         }).then(null)
 
         handlePersentaseData({
-            platformUid: $(this).val() as string,
+            platformUid: selectedOption.value as string,
             tipeLogger: tipeLogger,
             parameterId: parameterId.value
         }).then(null)
 
         handleCharts({
-            platformUid: $(this).val() as string,
+            platformUid: selectedOption.value as string,
             tipeLogger: tipeLogger,
             parameterId: parameterIdSelected.value
         }).then(null)
 
         renderDataTable({
-            platformUid: $(this).val() as string,
+            platformUid: selectedOption.value as string,
             tipeLogger: tipeLogger,
         })
     })
