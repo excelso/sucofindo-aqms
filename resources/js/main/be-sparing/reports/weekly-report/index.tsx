@@ -682,7 +682,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 plotOptions: {
                     series: {
-                        turboThreshold: 0
+                        turboThreshold: 0,
+                        marker: {
+                            enabled: false,
+                            states: {
+                                hover: {
+                                    enabled: true,
+                                    radius: 5
+                                }
+                            }
+                        }
+                    }
+                },
+                legend: {
+                    itemStyle: {
+                        fontSize: '13px',
+                        fontWeight: 'bold',
                     }
                 },
                 exporting: {
