@@ -270,7 +270,7 @@
                                 'radius' => 5,
                                 'lineColor' => $paramLimitCond ? '#ff002b' : '#7bb4ec',
                             ],
-                            'x' => Carbon::createFromTimestamp($item->datetime_unix_interval)->setTimezone($timezone)->getPreciseTimestamp(3),
+                            'x' => Carbon::createFromTimestamp($item->datetime_unix_interval)->getPreciseTimestamp(3),
                             'y' => $param
                         ];
                     }

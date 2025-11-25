@@ -1150,11 +1150,11 @@
                 DB::raw('AVG(nh3n) as nh3n'),
                 DB::raw('AVG(debit) as debit'),
                 DB::raw("TIME(CONCAT(
-                    HOUR(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', 'Asia/Makassar')),
+                    HOUR(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'UTC', 'Asia/Makassar')),
                     ':',
                     LPAD(
                         FLOOR(
-                            MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', 'Asia/Makassar')) / {$intervalMinutes}
+                            MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'UTC', 'Asia/Makassar')) / {$intervalMinutes}
                         ) * {$intervalMinutes},
                         2,
                         '0'
@@ -1166,11 +1166,11 @@
                         CONCAT(
                             '2025-01-01',
                             ' ',
-                            HOUR(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix), 'Asia/Makassar', 'Asia/Makassar')),
+                            HOUR(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix), 'UTC', 'Asia/Makassar')),
                             ':',
                             LPAD(
                                 FLOOR(
-                                    MINUTE(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix), 'Asia/Makassar', 'Asia/Makassar')) / 2
+                                    MINUTE(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix), 'UTC', 'Asia/Makassar')) / 2
                                 ) * 2,
                                 2,
                                 '0'
@@ -1183,10 +1183,10 @@
 
             $builder->where('t_parameter.uid', $platformUid);
             $builder->where('t_parameter.tipe_logger', $tipeLogger);
-            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
+            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '")'), [$minDate, $maxDate]);
             $builder->groupBy(
-                DB::raw("HOUR(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', 'Asia/Makassar'))"),
-                DB::raw("FLOOR(MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', 'Asia/Makassar')) / {$intervalMinutes})")
+                DB::raw("HOUR(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'UTC', 'Asia/Makassar'))"),
+                DB::raw("FLOOR(MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'UTC', 'Asia/Makassar')) / {$intervalMinutes})")
             );
         }
 
