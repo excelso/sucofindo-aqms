@@ -1,4 +1,7 @@
 import Highcharts from 'highcharts'
+import "highcharts/highcharts-more"
+import "highcharts/modules/exporting"
+import "highcharts/modules/offline-exporting"
 import {
     getMetaContent, handleFixedTd, handleFixedTheadTh,
     hiddenElm,
@@ -1199,7 +1202,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 },
                 plotOptions: {
                     series: {
-                        turboThreshold: 0
+                        turboThreshold: 0,
+                        marker: {
+                            enabled: false,
+                            states: {
+                                hover: {
+                                    enabled: true,
+                                    radius: 5
+                                }
+                            }
+                        }
                     }
                 },
                 exporting: {
