@@ -507,6 +507,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
     //endregion
 
+    //region Fungsi Bantuan
+    function isValidTimestamp(timestamp: number | undefined | null): boolean {
+        return timestamp !== undefined &&
+                timestamp !== null &&
+                !isNaN(timestamp) &&
+                isFinite(timestamp) &&
+                timestamp > 0;
+    }
+
+    function isValidDate(date: Date | undefined | null): boolean {
+        return date instanceof Date &&
+                !isNaN(date.getTime()) &&
+                isFinite(date.getTime());
+    }
+
+    function safeFormatTimestamp(timestamp: number | undefined | null, format: 'time' | 'datetime' = 'time', timezone: string = 'Asia/Jakarta', locale: string = 'id-ID', useSecond: boolean = false): string {
+        if (!isValidTimestamp(timestamp)) {
+            return format === 'time' ? '--:--' : 'Invalid Date';
+        }
+
+        try {
+            const date = new Date(timestamp! * 1000);
+
+            if (!isValidDate(date)) {
+                return format === 'time' ? '--:--' : 'Invalid Date';
+            }
+
+            if (format === 'time') {
+                const dateOptions: Intl.DateTimeFormatOptions = {
+                    timeZone: timezone,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                };
+
+                if (useSecond) {
+                    dateOptions.second = '2-digit';
+                }
+
+                return new Intl.DateTimeFormat(locale, dateOptions).format(date);
+            } else {
+                const dateOptions: Intl.DateTimeFormatOptions = {
+                    timeZone: timezone,
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                };
+
+                if (useSecond) {
+                    dateOptions.second = '2-digit';
+                }
+
+                return new Intl.DateTimeFormat(locale, dateOptions).format(date);
+            }
+        } catch (error) {
+            console.warn('Error formatting timestamp:', error);
+            return format === 'time' ? '--:--' : 'Invalid Date';
+        }
+    }
+    //endregion
+
     //region Handle Weekly Data Sensor
     async function handleWeeklySensor(elm: HTMLElement, btnExport: HTMLElement, loader: HTMLElement, options: optionPencarian) {
         showHiddenElmAndText(loader)
@@ -571,13 +634,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: 'datetime',
                     minPadding: 0,
                     maxPadding: 0,
-                    crosshair: true,
                     tickInterval: tickInterval,
                     labels: {
                         formatter: function () {
-                            return moment(new Date(this.value)).format('HH:mm')
+                            const timestampMs = this.value as number;
+                            const timestampSeconds = timestampMs / 1000;
+                            return safeFormatTimestamp(timestampSeconds, 'time', 'UTC', 'id-ID');
                         },
-                    }
+                        style: {
+                            fontSize: '10px',
+                            color: '#999'
+                        }
+                    },
+                    lineWidth: 0,
+                    tickWidth: 0,
+                    gridLineWidth: 1,
+                    gridLineColor: '#eee',
+                    gridLineDashStyle: 'Dash',
                 },
                 tooltip: {
                     formatter: function () {

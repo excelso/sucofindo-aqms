@@ -629,8 +629,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const xValues = data.map((point) => {
             return point.data[0] ? point.data[0].x : 0
         });
-        console.log(xValues)
-        console.log(minTime, maxTime)
+
         const chart = Highcharts.chart({
             chart: {
                 renderTo: elm,
