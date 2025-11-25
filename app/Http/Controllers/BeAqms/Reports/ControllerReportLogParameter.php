@@ -249,7 +249,7 @@
                             $item->uid,
                             Carbon::parse($item->datetime_unix)->setTimezone($dataPlatform->timezone)->format('Y-m-d H:i:s') ?? '',
                             $item->max_pm_25 ?? $item->pm_25,
-                            $item->max_pm_10 ?? $item->pm_10,
+                            $item->max_tsp ? $item->max_tsp * 0.4 : $item->tsp,
                             $item->max_tsp ?? $item->tsp,
                             $item->noise_leq ?? $item->noise,
                             $item->max_aqi_index ?? $item->aqi_index,
