@@ -289,9 +289,6 @@
                         'allowDecimals' => true,
                         'max' => $paramLimit->ph_mutu_max,
                         'min' => 0,
-                        'title' => [
-                            'text' => 'Nilai pH'
-                        ],
                         'plotLines' => [
                             [
                                 'value' => $paramLimit->ph_mutu_min,
