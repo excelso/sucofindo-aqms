@@ -1174,26 +1174,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 },
                 tooltip: {
                     formatter: function () {
-                        const date = new Date(this.x);
-                        const timeStr = `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}`;
+                        const timestampMs = this.x;
+                        const timestampSeconds = timestampMs / 1000;
+                        const formattedTime = safeFormatTimestamp(timestampSeconds, 'datetime', 'Asia/Makassar', 'id-ID', true);
+                        const timezoneShort = 'Makassar';
 
-                        return `
-                            <div class="flex flex-col">
-                                <div class="text-sm" style="color: ${this.color}">${this.series.name}</div>
-                                <div>
-                                    <table>
-                                        <tr>
-                                            <td class="text-sm p-0">Time</td>
-                                            <td class="p-0"><b class="ml-2">: ${timeStr}</b></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm p-0">Nilai</td>
-                                            <td class="p-0"><b class="ml-2">: ${Highcharts.numberFormat(this.y, 2)}</b></td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                        `;
+                        let tooltipHTML = `<b>Time (${timezoneShort}):</b> ${formattedTime}<br>`;
+
+                        this.points.forEach(point => {
+                            tooltipHTML += `<span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>${point.y}</b><br>`;
+                        });
+
+                        return tooltipHTML;
                     },
                     useHTML: true,
                 },
