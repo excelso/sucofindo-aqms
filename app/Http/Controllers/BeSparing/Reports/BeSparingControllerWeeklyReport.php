@@ -125,7 +125,14 @@
 
                     $totalSample = $dates['totalDays'] * 720;
                     $dataEntry = Parameter::dataPercentageEntryWeekly($request->input('platformUid'), $request->input('tipeLogger'), $dates['startDate'], $dates['untilDate'], $timezone, $totalSample)->first();
-                    $data[] = round($dataEntry->percentage ?? 0, 2);
+                    $data[] = [
+                        'y' => round($dataEntry->percentage ?? 0, 2),
+                        'weekDetail' => [
+                            'startDate' => $dates['startDate'],
+                            'untilDate' => $dates['untilDate'],
+                            'totalDays' => $dates['totalDays']
+                        ]
+                    ];
 
                     $dataEntryComply = Parameter::dataPersentaseComplyWeekly($request->input('platformUid'), $request->input('tipeLogger'), $dates['startDate'], $dates['untilDate'], $timezone)->first();
                     $dataComply[] = round($dataEntryComply->percentagePh ?? 0, 2);

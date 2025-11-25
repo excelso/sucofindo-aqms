@@ -311,7 +311,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 },
                 tooltip: {
-                    shared: true
+                    shared: true,
+                    useHTML: true,
+                    formatter: function () {
+                        const point = this.points[0] as any
+                        const weekDetail = point.weekDetail
+
+                        return `
+                            ${this.points[0].key}<br/>
+                            ${this.points[0].series.name}: <b>${this.y}%</b><br/>
+                            Periode: ${moment(weekDetail.startDate).format('DD MMM YYYY')} - ${moment(weekDetail.untilDate).format('DD MMM YYYY')}<br/>
+                        `
+                    }
                 },
                 scrollbar: {
                     enabled: false,
