@@ -213,46 +213,39 @@
         //endregion
 
         public function scopeDataPlatformInfo(Builder $builder, $platformUid, $tipeLogger): void {
-            $builder->leftJoin(DB::raw('
-                (
-                    SELECT
-                        t_parameter.uid as tHelp1Uid,
-                        t_parameter.tipe_logger as tHelp1TipeLogger,
-                        MAX(t_parameter.datetime_unix) as last_online
-                    FROM t_parameter
-                    GROUP BY t_parameter.uid, t_parameter.tipe_logger
-                ) tHelp1
-            '), function ($join) {
-                $join->on('tHelp1.tHelp1Uid', '=', 't_platform.uid');
-                $join->on('tHelp1.tHelp1TipeLogger', '=', 't_platform.tipe_logger');
+            $builder->leftJoin('t_parameter as tp1', function ($join) {
+                $join->on('tp1.uid', '=', 't_platform.uid')
+                    ->on('tp1.tipe_logger', '=', 't_platform.tipe_logger')
+                    ->whereRaw('tp1.datetime_unix = (
+                 SELECT MAX(datetime_unix)
+                 FROM t_parameter
+                 WHERE uid = tp1.uid
+                 AND tipe_logger = tp1.tipe_logger
+             )');
             });
 
-            $builder->leftJoin(DB::raw('
-                (
-                    SELECT
-                        t_parameter.uid as tHelp2Uid,
-                        COUNT(t_parameter.id) as has_power
-                    FROM t_parameter
-                    WHERE t_parameter.solar_volt != 0
-                      AND t_parameter.uid = "' . $platformUid . '"
-                      AND t_parameter.tipe_logger = "' . $tipeLogger . '"
-                ) tHelp2
-            '), 'tHelp2.tHelp2Uid', '=', 't_platform.uid');
+            $builder->selectRaw('
+        t_platform.*,
+        tp1.datetime_unix as last_online,
+        (
+            SELECT COUNT(id)
+            FROM t_parameter
+            WHERE uid = ?
+            AND tipe_logger = ?
+            AND solar_volt != 0
+        ) as has_power,
+        (
+            SELECT COUNT(id)
+            FROM t_parameter
+            WHERE uid = ?
+            AND tipe_logger = ?
+            AND temp != 0
+        ) as has_temperature
+    ', [$platformUid, $tipeLogger, $platformUid, $tipeLogger]);
 
-            $builder->leftJoin(DB::raw('
-                (
-                    SELECT
-                        t_parameter.uid as tHelp3Uid,
-                        COUNT(t_parameter.id) as has_temperature
-                    FROM t_parameter
-                    WHERE t_parameter.temp != 0
-                      AND t_parameter.uid = "' . $platformUid . '"
-                      AND t_parameter.tipe_logger = "' . $tipeLogger . '"
-                ) tHelp3
-            '), 'tHelp3.tHelp3Uid', '=', 't_platform.uid');
-            $builder->with('site.customer.jenisIndustri');
-            $builder->where('t_platform.uid', $platformUid);
-            $builder->where('t_platform.tipe_logger', $tipeLogger);
+            $builder->with('site.customer.jenisIndustri')
+                ->where('t_platform.uid', $platformUid)
+                ->where('t_platform.tipe_logger', $tipeLogger);
         }
 
         public function scopeParameterAvailable(Builder $builder, $platformUid, $tipeLogger): void {
