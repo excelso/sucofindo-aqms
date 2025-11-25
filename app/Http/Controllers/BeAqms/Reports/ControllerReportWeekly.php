@@ -75,7 +75,7 @@
                     $dataCategories[] = $week;
 
                     $totalSample = $dates['totalDays'] * 1440;
-                    $dataEntry = Loggers::dataPercentageEntryWeekly($request->input('uid'), $dates['startDate'], $dates['untilDate'], $dataPlatform->timezone, $totalSample)->first();
+                    $dataEntry = Loggers::dataPercentageEntryWeekly($request->input('uid'), $dates['startDate'] . ' 00:00', $dates['untilDate'] . ' 23:59', $dataPlatform->timezone, $totalSample)->first();
                     $data[] = [
                         'y' => round($dataEntry->percentage ?? 0, 2),
                         'weekDetail' => [
@@ -89,7 +89,7 @@
                 $startOfMonth = Carbon::createFromDate($request->input('year'), $request->input('month'), 1)->startOfMonth();
                 $untilOfMonth = Carbon::createFromDate($request->input('year'), $request->input('month'), 1)->endOfMonth();
                 $totalDays = $startOfMonth->diffInDays($untilOfMonth) + 1;
-                $dataEntry = Loggers::dataPercentageEntryMonthly($request->input('uid'), $startOfMonth->format('Y-m-d'), $untilOfMonth->format('Y-m-d'), $dataPlatform->timezone, ($totalDays * 1440))->first();
+                $dataEntry = Loggers::dataPercentageEntryMonthly($request->input('uid'), $startOfMonth->format('Y-m-d') . ' 00:00', $untilOfMonth->format('Y-m-d') . ' 23:59', $dataPlatform->timezone, ($totalDays * 1440))->first();
 
                 return response()->json([
                     'message' => 'Load Successful!',
@@ -125,7 +125,7 @@
                     $dataWeek[] = $dates;
 
                     $totalSample = $dates['totalDays'] * 1440;
-                    $dataEntry = PlatformsHeartbeat::dataPercentageConnectWeekly($request->input('uid'), $dates['startDate'], $dates['untilDate'], $dataPlatform->timezone, $totalSample)->first();
+                    $dataEntry = PlatformsHeartbeat::dataPercentageConnectWeekly($request->input('uid'), $dates['startDate'] . ' 00:00', $dates['untilDate'] . ' 23:59', $dataPlatform->timezone, $totalSample)->first();
                     $data[] = [
                         'y' => round($dataEntry->percentage ?? 0, 2),
                         'weekDetail' => [
@@ -139,7 +139,7 @@
                 $startOfMonth = Carbon::createFromDate($request->input('year'), $request->input('month'), 1)->startOfMonth();
                 $untilOfMonth = Carbon::createFromDate($request->input('year'), $request->input('month'), 1)->endOfMonth();
                 $totalDays = $startOfMonth->diffInDays($untilOfMonth) + 1;
-                $dataEntry = PlatformsHeartbeat::dataPercentageConnectMonthly($request->input('uid'), $startOfMonth->format('Y-m-d'), $untilOfMonth->format('Y-m-d'), $dataPlatform->timezone, ($totalDays * 1440))->first();
+                $dataEntry = PlatformsHeartbeat::dataPercentageConnectMonthly($request->input('uid'), $startOfMonth->format('Y-m-d') . ' 00:00', $untilOfMonth->format('Y-m-d') . ' 23:59', $dataPlatform->timezone, ($totalDays * 1440))->first();
 
                 return response()->json([
                     'message' => 'Load Successful!',
