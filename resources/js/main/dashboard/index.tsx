@@ -603,7 +603,7 @@ document.addEventListener('DOMContentLoaded', function () {
         showModalDialog(modalHeartbeat, null, async () => {
             const urlParams = new URLSearchParams(url.searchParams)
             renderData({
-                date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
+                date: urlParams.get('date') ?? moment.tz('Asia/Makassar').format('YYYY-MM-DD'),
                 filterStatus: currentFilterStatus // ✅ Gunakan current filter
             })
 
@@ -627,7 +627,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const urlParams = new URLSearchParams(url.searchParams)
             currentFilterStatus = 'Online'
             renderData({
-                date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
+                date: urlParams.get('date') ?? moment.tz('Asia/Makassar').format('YYYY-MM-DD'),
                 filterStatus: 'Online'
             })
         }
@@ -636,14 +636,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const urlParams = new URLSearchParams(url.searchParams)
             currentFilterStatus = 'Offline'
             renderData({
-                date: urlParams.get('date') ?? moment().format('YYYY-MM-DD'),
+                date: urlParams.get('date') ?? moment.tz('Asia/Makassar').format('YYYY-MM-DD'),
                 filterStatus: 'Offline'
             })
         }
 
         async function handleDownloadClick() {
             const urlParams = new URLSearchParams(url.searchParams)
-            const currentDate = urlParams.get('date') ?? moment().format('YYYY-MM-DD')
+            const currentDate = urlParams.get('date') ?? moment.tz('Asia/Makassar').format('YYYY-MM-DD')
             await handleExportHeartbeat(uid, currentDate, currentFilterStatus)
         }
 
