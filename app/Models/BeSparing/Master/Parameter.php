@@ -35,21 +35,21 @@
                 't_parameter.tss',
                 't_parameter.nh3n',
                 't_parameter.datetime_unix',
-                DB::raw('YEAR(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '")) as tahun'),
-                DB::raw('MONTH(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '")) as bulan'),
-                DB::raw('DAY(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '")) as hari'),
-                DB::raw('HOUR(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '")) as jam'),
-                DB::raw('MINUTE(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '")) as menit'),
-                DB::raw('SECOND(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '")) as detik'),
-                DB::raw('DATE_FORMAT(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%s"), "Asia/Makassar", "' . $timezone . '"), "%H:%i") as waktu'),
-                DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") as date_formatted'),
-                DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%s"), "Asia/Makassar", "' . $timezone . '") as datetime'),
+                DB::raw('YEAR(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '")) as tahun'),
+                DB::raw('MONTH(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '")) as bulan'),
+                DB::raw('DAY(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '")) as hari'),
+                DB::raw('HOUR(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '")) as jam'),
+                DB::raw('MINUTE(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '")) as menit'),
+                DB::raw('SECOND(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '")) as detik'),
+                DB::raw('DATE_FORMAT(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%s"), "UTC", "' . $timezone . '"), "%H:%i") as waktu'),
+                DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") as date_formatted'),
+                DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%s"), "UTC", "' . $timezone . '") as datetime'),
             ]);
 
             $builder->where('t_parameter.uid', $platformUid);
             $builder->where('t_parameter.tipe_logger', $tipeLogger);
-            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
-            $builder->groupBy([DB::raw('CONVERT_TZ(FROM_UNIXTIME(datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '")')]);
+            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '")'), [$minDate, $maxDate]);
+            $builder->groupBy([DB::raw('CONVERT_TZ(FROM_UNIXTIME(datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '")')]);
             $builder->orderBy('date_formatted', $sort);
             $builder->orderBy('waktu', $sort);
         }

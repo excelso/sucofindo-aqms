@@ -1036,6 +1036,69 @@ document.addEventListener('DOMContentLoaded', function () {
 
     //endregion
 
+    //region Fungsi Bantuan
+    function isValidTimestamp(timestamp: number | undefined | null): boolean {
+        return timestamp !== undefined &&
+                timestamp !== null &&
+                !isNaN(timestamp) &&
+                isFinite(timestamp) &&
+                timestamp > 0;
+    }
+
+    function isValidDate(date: Date | undefined | null): boolean {
+        return date instanceof Date &&
+                !isNaN(date.getTime()) &&
+                isFinite(date.getTime());
+    }
+
+    function safeFormatTimestamp(timestamp: number | undefined | null, format: 'time' | 'datetime' = 'time', timezone: string = 'Asia/Jakarta', locale: string = 'id-ID', useSecond: boolean = false): string {
+        if (!isValidTimestamp(timestamp)) {
+            return format === 'time' ? '--:--' : 'Invalid Date';
+        }
+
+        try {
+            const date = new Date(timestamp! * 1000);
+
+            if (!isValidDate(date)) {
+                return format === 'time' ? '--:--' : 'Invalid Date';
+            }
+
+            if (format === 'time') {
+                const dateOptions: Intl.DateTimeFormatOptions = {
+                    timeZone: timezone,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                };
+
+                if (useSecond) {
+                    dateOptions.second = '2-digit';
+                }
+
+                return new Intl.DateTimeFormat(locale, dateOptions).format(date);
+            } else {
+                const dateOptions: Intl.DateTimeFormatOptions = {
+                    timeZone: timezone,
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                };
+
+                if (useSecond) {
+                    dateOptions.second = '2-digit';
+                }
+
+                return new Intl.DateTimeFormat(locale, dateOptions).format(date);
+            }
+        } catch (error) {
+            console.warn('Error formatting timestamp:', error);
+            return format === 'time' ? '--:--' : 'Invalid Date';
+        }
+    }
+    //endregion
+
     //region Handle Chart
     async function handleCharts(options: OptionsChart) {
         const {platformUid, tipeLogger, parameterId} = options
@@ -1100,27 +1163,56 @@ document.addEventListener('DOMContentLoaded', function () {
                     gridLineWidth: 1,
                     gridLineDashStyle: 'LongDash',
                 },
+
+                time: {
+                    timezone: "UTC"
+                },
                 xAxis: {
                     type: 'datetime',
                     minPadding: 0,
                     maxPadding: 0,
-                    startOnTick: true,
-                    crosshair: true,
                     tickInterval: tickInterval,
                     labels: {
                         formatter: function () {
-                            // @ts-ignore
-                            return diffDateDay >= 4 ? moment(new Date(this.value)).format('DD-MM-YYYY') : Highcharts.dateFormat('%H:%M', new Date(this.value + (8 * 60 * 60 * 1000)))
+                            const timestampMs = this.value as number;
+                            const timestampSeconds = timestampMs / 1000;
+                            return safeFormatTimestamp(timestampSeconds, 'time', 'UTC', 'id-ID');
                         },
-                        align: 'center'
-                    }
+                        style: {
+                            fontSize: '10px',
+                            color: '#999'
+                        }
+                    },
+                    lineWidth: 0,
+                    tickWidth: 0,
+                    gridLineWidth: 1,
+                    gridLineColor: '#eee',
+                    gridLineDashStyle: 'Dash',
                 },
                 tooltip: {
-                    shared: true,
-                    xDateFormat: '%d %B %Y - %H:%M',
-                },
-                time: {
-                    timezoneOffset: -8 * 60
+                    formatter: function () {
+                        const date = new Date(this.x);
+                        const timeStr = `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}`;
+
+                        return `
+                            <div class="flex flex-col">
+                                <div class="text-sm" style="color: ${this.color}">${this.series.name}</div>
+                                <div>
+                                    <table>
+                                        <tr>
+                                            <td class="text-sm p-0">Time</td>
+                                            <td class="p-0"><b class="ml-2">: ${timeStr}</b></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-sm p-0">Nilai</td>
+                                            <td class="p-0"><b class="ml-2">: ${Highcharts.numberFormat(this.y, 2)}</b></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        `;
+                    },
+                    useHTML: true,
                 },
                 scrollbar: {
                     enabled: true,
