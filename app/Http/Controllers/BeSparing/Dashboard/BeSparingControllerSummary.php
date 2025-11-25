@@ -268,10 +268,6 @@
                             break;
                     }
 
-                    $dt = new \DateTime();
-                    $dt->setTimezone(new \DateTimeZone($timezone));
-                    $dt->setTimestamp($item->datetime_unix);
-
                     $data[] = [
                         'marker' => [
                             'enabled' => $paramLimitCond,
@@ -286,6 +282,7 @@
                 }
 
 
+                //region Handle yAxis
                 $dataXaxis = [];
                 $dataYaxis = [];
                 if ($request->input('parameterId') == 'temperature') {
@@ -573,6 +570,7 @@
                         ]
                     ]);
                 }
+                //endregion
 
                 return response()->json([
                     'message' => 'Success!',

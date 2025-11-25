@@ -50,8 +50,7 @@
             $builder->where('t_parameter.tipe_logger', $tipeLogger);
             $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '")'), [$minDate, $maxDate]);
             $builder->groupBy([DB::raw('CONVERT_TZ(FROM_UNIXTIME(datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '")')]);
-            $builder->orderBy('date_formatted', $sort);
-            $builder->orderBy('waktu', $sort);
+            $builder->orderBy('t_parameter.datetime_unix', $sort);
         }
         //endregion
 
