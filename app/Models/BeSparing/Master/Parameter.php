@@ -92,7 +92,7 @@
                     WHERE
                           t_parameter.uid = "' . $platformUid . '"
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tHelpTotal
             '), 't_parameter.id', '=', 'tHelpTotal.tPId');
             //endregion
@@ -111,7 +111,7 @@
                   AND t_parameter.tipe_logger = ' . $tipeLogger . '
                   AND ((t_parameter.ph < t_parameter_limit.ph_mutu_min AND t_parameter_limit.ph_intermit = 1) OR
                        t_parameter.ph <= t_parameter_limit.ph_mutu_max)
-                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
             ) as tPhMutu
         '), 't_parameter.id', '=', 'tPhMutu.tPId');
             //endregion
@@ -130,7 +130,7 @@
                   AND t_parameter.tipe_logger = ' . $tipeLogger . '
                   AND ((t_parameter.ph <= 0 AND t_parameter_limit.ph_intermit = 1) OR
                        (t_parameter.ph > t_parameter_limit.ph_warn_min AND t_parameter.ph > t_parameter_limit.ph_warn_max))
-                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
             ) as tPhNormal
         '), 't_parameter.id', '=', 'tPhNormal.tPId');
             //endregion
@@ -149,7 +149,7 @@
                   AND t_parameter.tipe_logger = ' . $tipeLogger . '
                   AND ((t_parameter.ph > t_parameter_limit.ph_mutu_min AND t_parameter.ph <= t_parameter_limit.ph_warn_min) OR
                        (t_parameter.ph >= t_parameter_limit.ph_warn_max AND t_parameter.ph < t_parameter_limit.ph_mutu_max))
-                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
             ) as tPhWarning
         '), 't_parameter.id', '=', 'tPhWarning.tPId');
             //endregion
@@ -168,7 +168,7 @@
                   AND t_parameter.tipe_logger = ' . $tipeLogger . '
                   AND (t_parameter.ph >= t_parameter_limit.ph_mutu_max OR
                       (t_parameter.ph <= t_parameter_limit.ph_mutu_min AND t_parameter_limit.ph_intermit = 0))
-                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
             ) as tPhDanger
         '), 't_parameter.id', '=', 'tPhDanger.tPId');
             //endregion
@@ -186,7 +186,7 @@
                       t_parameter.uid = "' . $platformUid . '"
                   AND t_parameter.tipe_logger = ' . $tipeLogger . '
                   AND ((t_parameter.cod < t_parameter_limit.cod_mutu AND t_parameter_limit.cod_intermit = 1) OR t_parameter.cod <= t_parameter_limit.cod_mutu)
-                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
             ) as tCodMutu
         '), 't_parameter.id', '=', 'tCodMutu.tPId');
             //endregion
@@ -204,7 +204,7 @@
                       t_parameter.uid = "' . $platformUid . '"
                   AND t_parameter.tipe_logger = ' . $tipeLogger . '
                   AND ((t_parameter.cod <= 0 AND t_parameter_limit.cod_intermit = 1) OR t_parameter.cod < t_parameter_limit.cod_warn)
-                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
             ) as tCodNormal
         '), 't_parameter.id', '=', 'tCodNormal.tPId');
             //endregion
@@ -222,7 +222,7 @@
                       t_parameter.uid = "' . $platformUid . '"
                   AND t_parameter.tipe_logger = ' . $tipeLogger . '
                   AND (t_parameter.cod BETWEEN t_parameter_limit.cod_warn AND t_parameter_limit.cod_mutu)
-                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
             ) as tCodWarning
         '), 't_parameter.id', '=', 'tCodWarning.tPId');
             //endregion
@@ -240,7 +240,7 @@
                       t_parameter.uid = "' . $platformUid . '"
                   AND t_parameter.tipe_logger = ' . $tipeLogger . '
                   AND (t_parameter.cod > t_parameter_limit.cod_mutu OR (t_parameter.cod <= 0 AND t_parameter_limit.cod_intermit = 0))
-                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
             ) as tCodDanger
         '), 't_parameter.id', '=', 'tCodDanger.tPId');
             //endregion
@@ -258,7 +258,7 @@
                       t_parameter.uid = "' . $platformUid . '"
                   AND t_parameter.tipe_logger = ' . $tipeLogger . '
                   AND ((t_parameter.tss < t_parameter_limit.tss_mutu AND t_parameter_limit.tss_intermit = 1) OR t_parameter.tss <= t_parameter_limit.tss_mutu)
-                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
             ) as tTssMutu
         '), 't_parameter.id', '=', 'tTssMutu.tPId');
             //endregion
@@ -276,7 +276,7 @@
                           t_parameter.uid = "' . $platformUid . '"
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND ((t_parameter.tss <= 0 AND t_parameter_limit.tss_intermit = 1) OR (t_parameter.tss > tss_warn_min AND t_parameter.tss < tss_mutu_min))
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tTssNormal
             '), 't_parameter.id', '=', 'tTssNormal.tPId');
             //endregion
@@ -294,7 +294,7 @@
                       t_parameter.uid = "' . $platformUid . '"
                   AND t_parameter.tipe_logger = ' . $tipeLogger . '
                   AND ((t_parameter.tss > tss_warn AND tss <= tss_warn_min) OR (t_parameter.tss >= tss_mutu_min AND tss < tss_mutu))
-                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
             ) as tTssWarning
         '), 't_parameter.id', '=', 'tTssWarning.tPId');
             //endregion
@@ -312,7 +312,7 @@
                       t_parameter.uid = "' . $platformUid . '"
                   AND t_parameter.tipe_logger = ' . $tipeLogger . '
                   AND (t_parameter.tss >= t_parameter_limit.tss_mutu OR (t_parameter.tss <= tss_warn AND t_parameter_limit.tss_intermit = 0))
-                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
             ) as tTssDanger
         '), 't_parameter.id', '=', 'tTssDanger.tPId');
             //endregion
@@ -330,7 +330,7 @@
                       t_parameter.uid = "' . $platformUid . '"
                   AND t_parameter.tipe_logger = ' . $tipeLogger . '
                   AND ((t_parameter.nh3n < t_parameter_limit.nh3n_mutu AND t_parameter_limit.nh3n_intermit = 1) OR t_parameter.nh3n <= t_parameter_limit.nh3n_mutu)
-                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
             ) as tNh3nMutu
         '), 't_parameter.id', '=', 'tNh3nMutu.tPId');
             //endregion
@@ -348,7 +348,7 @@
                       t_parameter.uid = "' . $platformUid . '"
                   AND t_parameter.tipe_logger = ' . $tipeLogger . '
                   AND ((t_parameter.nh3n <= 0 AND t_parameter_limit.nh3n_intermit = 1) OR t_parameter.nh3n < t_parameter_limit.nh3n_warn)
-                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
             ) as tNh3nNormal
         '), 't_parameter.id', '=', 'tNh3nNormal.tPId');
             //endregion
@@ -366,7 +366,7 @@
                       t_parameter.uid = "' . $platformUid . '"
                   AND t_parameter.tipe_logger = ' . $tipeLogger . '
                   AND (t_parameter.nh3n BETWEEN t_parameter_limit.nh3n_warn AND t_parameter_limit.nh3n_mutu)
-                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
             ) as tNh3nWarning
         '), 't_parameter.id', '=', 'tNh3nWarning.tPId');
             //endregion
@@ -384,7 +384,7 @@
                       t_parameter.uid = "' . $platformUid . '"
                   AND t_parameter.tipe_logger = ' . $tipeLogger . '
                   AND (t_parameter.nh3n > t_parameter_limit.nh3n_mutu OR (t_parameter.nh3n <= 0 AND t_parameter_limit.nh3n_intermit = 0))
-                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
             ) as tNh3nDanger
         '), 't_parameter.id', '=', 'tNh3nDanger.tPId');
             //endregion
@@ -403,7 +403,7 @@
                           t_parameter.uid = "' . $platformUid . '"
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND ((t_parameter.debit < t_parameter_limit.debit_mutu AND t_parameter_limit.debit_intermit = 1) OR t_parameter.debit < t_parameter_limit.debit_mutu)
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tDebitMutu
             '), 't_parameter.id', '=', 'tDebitMutu.tPId');
             } else {
@@ -419,7 +419,7 @@
                           t_parameter.uid = "' . $platformUid . '"
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND ((t_parameter.debit < (t_parameter_limit.debit_mutu/24/60) AND t_parameter_limit.debit_intermit = 1) OR t_parameter.debit <= (t_parameter_limit.debit_mutu/24/60))
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tDebitMutu
             '), 't_parameter.id', '=', 'tDebitMutu.tPId');
             }
@@ -438,7 +438,7 @@
                           t_parameter.uid = "' . $platformUid . '"
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND ((t_parameter.debit <= 0 AND t_parameter_limit.debit_intermit = 1) OR t_parameter.debit > debit_warn_min AND t_parameter.debit < debit_mutu_min)
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tDebitNormal
             '), 't_parameter.id', '=', 'tDebitNormal.tPId');
             //endregion
@@ -456,7 +456,7 @@
                           t_parameter.uid = "' . $platformUid . '"
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND ((t_parameter.debit >= debit_warn AND t_parameter.debit <= debit_warn_min) OR (t_parameter.debit >= debit_mutu_min AND t_parameter.debit < debit_mutu))
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tDebitWarning
             '), 't_parameter.id', '=', 'tDebitWarning.tPId');
             //endregion
@@ -474,14 +474,14 @@
                           t_parameter.uid = "' . $platformUid . '"
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND (t_parameter.debit >= t_parameter_limit.debit_mutu OR (t_parameter.debit <= t_parameter_limit.debit_warn AND t_parameter_limit.debit_intermit = 0))
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tDebitDanger
             '), 't_parameter.id', '=', 'tDebitDanger.tPId');
             //endregion
 
             $builder->where('t_parameter.uid', $platformUid);
             $builder->where('t_parameter.tipe_logger', $tipeLogger);
-            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
+            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '")'), [$minDate, $maxDate]);
         }
         //endregion
 
@@ -489,11 +489,11 @@
         public function scopeDataTable(Builder $builder, $platformUid, $tipeLogger, $minDate, $maxDate, $timezone): void {
             $builder->select(
                 't_parameter.*',
-                DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '") as datetime_formatted')
+                DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '") as datetime_formatted')
             );
             $builder->where('t_parameter.uid', $platformUid);
             $builder->where('t_parameter.tipe_logger', $tipeLogger);
-            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
+            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "' . $timezone . '")'), [$minDate, $maxDate]);
             $builder->orderBy('datetime_formatted', 'DESC');
         }
         //endregion
@@ -601,8 +601,8 @@
                     't_jenis_industri.paramTss',
                     't_jenis_industri.paramNh3n',
                     't_jenis_industri.paramDebit',
-                    DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%s"), "Asia/Makassar", "' . $timezone . '") as datetime_formatted'),
-                    DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%H:%i"), "Asia/Makassar", "' . $timezone . '") as time_formatted'),
+                    DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%s"), "UTC", "' . $timezone . '") as datetime_formatted'),
+                    DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%H:%i"), "UTC", "' . $timezone . '") as time_formatted'),
                 );
             } else {
                 // With aggregation
@@ -616,8 +616,8 @@
                     DB::raw('ROUND(AVG(t_parameter.nh3n), 2) as nh3n'),
                     DB::raw('ROUND(AVG(t_parameter.debit), 2) as debit'),
                     DB::raw('MIN(t_parameter.datetime_unix) as datetime_unix'),
-                    DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%s"), "Asia/Makassar", "' . $timezone . '") as datetime_formatted'),
-                    DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%H:%i"), "Asia/Makassar", "' . $timezone . '") as time_formatted'),
+                    DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%s"), "UTC", "' . $timezone . '") as datetime_formatted'),
+                    DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%H:%i"), "UTC", "' . $timezone . '") as time_formatted'),
                 );
             }
 
@@ -866,7 +866,7 @@
 
             $builder->where('t_parameter.uid', $platformUid);
             $builder->where('t_parameter.tipe_logger', $tipeLogger);
-            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
+            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '")'), [$minDate, $maxDate]);
         }
         //endregion
 
@@ -889,7 +889,7 @@
                     WHERE
                           t_parameter.uid = "' . $platformUid . '"
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tHelpTotal
             '), 't_parameter.id', '=', 'tHelpTotal.tPId');
             //endregion
@@ -909,7 +909,7 @@
                   AND t_parameter.tipe_logger = ' . $tipeLogger . '
                   AND ((t_parameter.ph < t_parameter_limit.ph_mutu_min AND t_parameter_limit.ph_intermit = 1) OR
                        t_parameter.ph <= t_parameter_limit.ph_mutu_max)
-                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                  AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
             ) as tPhMutu
         '), 't_parameter.id', '=', 'tPhMutu.tPId');
             //endregion
@@ -928,7 +928,7 @@
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND ((t_parameter.ph <= 0 AND t_parameter_limit.ph_intermit = 1) OR
                            (t_parameter.ph > t_parameter_limit.ph_warn_min AND t_parameter.ph < t_parameter_limit.ph_warn_max))
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tPhNormal
             '), 't_parameter.id', '=', 'tPhNormal.tPId');
             //endregion
@@ -947,7 +947,7 @@
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND ((t_parameter.ph > t_parameter_limit.ph_mutu_min AND t_parameter.ph <= t_parameter_limit.ph_warn_min) OR
                            (t_parameter.ph >= t_parameter_limit.ph_warn_max AND t_parameter.ph < t_parameter_limit.ph_mutu_max))
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tPhWarning
             '), 't_parameter.id', '=', 'tPhWarning.tPId');
             //endregion
@@ -966,7 +966,7 @@
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND (t_parameter.ph >= t_parameter_limit.ph_mutu_max OR
                           (t_parameter.ph <= t_parameter_limit.ph_mutu_min AND t_parameter_limit.ph_intermit = 0))
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tPhDanger
             '), 't_parameter.id', '=', 'tPhDanger.tPId');
             //endregion
@@ -985,7 +985,7 @@
                           t_parameter.uid = "' . $platformUid . '"
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND ((t_parameter.tss < t_parameter_limit.tss_mutu AND t_parameter_limit.tss_intermit = 1) OR t_parameter.tss <= t_parameter_limit.tss_mutu)
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tTssMutu
             '), 't_parameter.id', '=', 'tTssMutu.tPId');
             //endregion
@@ -1003,7 +1003,7 @@
                           t_parameter.uid = "' . $platformUid . '"
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND ((t_parameter.tss <= 0 AND t_parameter_limit.tss_intermit = 1) OR (t_parameter.tss > tss_warn_min AND t_parameter.tss < tss_mutu_min))
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tTssNormal
             '), 't_parameter.id', '=', 'tTssNormal.tPId');
             //endregion
@@ -1021,7 +1021,7 @@
                           t_parameter.uid = "' . $platformUid . '"
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND ((t_parameter.tss > tss_warn AND tss <= tss_warn_min) OR (t_parameter.tss >= tss_mutu_min AND tss < tss_mutu))
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tTssWarning
             '), 't_parameter.id', '=', 'tTssWarning.tPId');
             //endregion
@@ -1039,7 +1039,7 @@
                           t_parameter.uid = "' . $platformUid . '"
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND (t_parameter.tss >= t_parameter_limit.tss_mutu OR (t_parameter.tss <= tss_warn AND t_parameter_limit.tss_intermit = 0))
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tTssDanger
             '), 't_parameter.id', '=', 'tTssDanger.tPId');
             //endregion
@@ -1058,7 +1058,7 @@
                           t_parameter.uid = "' . $platformUid . '"
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND ((t_parameter.debit < t_parameter_limit.debit_mutu AND t_parameter_limit.debit_intermit = 1) OR t_parameter.debit < t_parameter_limit.debit_mutu)
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tDebitMutu
             '), 't_parameter.id', '=', 'tDebitMutu.tPId');
             //endregion
@@ -1076,7 +1076,7 @@
                           t_parameter.uid = "' . $platformUid . '"
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND ((t_parameter.debit <= 0 AND t_parameter_limit.debit_intermit = 1) OR t_parameter.debit > debit_warn_min AND t_parameter.debit < debit_mutu_min)
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tDebitNormal
             '), 't_parameter.id', '=', 'tDebitNormal.tPId');
             //endregion
@@ -1094,7 +1094,7 @@
                           t_parameter.uid = "' . $platformUid . '"
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND ((t_parameter.debit >= debit_warn AND t_parameter.debit <= debit_warn_min) OR (t_parameter.debit >= debit_mutu_min AND t_parameter.debit < debit_mutu))
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tDebitWarning
             '), 't_parameter.id', '=', 'tDebitWarning.tPId');
             //endregion
@@ -1112,14 +1112,14 @@
                           t_parameter.uid = "' . $platformUid . '"
                       AND t_parameter.tipe_logger = ' . $tipeLogger . '
                       AND (t_parameter.debit >= t_parameter_limit.debit_mutu OR (t_parameter.debit <= t_parameter_limit.debit_warn AND t_parameter_limit.debit_intermit = 0))
-                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
+                      AND CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '") BETWEEN "' . $minDate . '" AND "' . $maxDate . '"
                 ) as tDebitDanger
             '), 't_parameter.id', '=', 'tDebitDanger.tPId');
             //endregion
 
             $builder->where('t_parameter.uid', $platformUid);
             $builder->where('t_parameter.tipe_logger', $tipeLogger);
-            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '")'), [$minDate, $maxDate]);
+            $builder->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '")'), [$minDate, $maxDate]);
         }
 
         //endregion
@@ -1136,8 +1136,8 @@
 
             $builder->where('t_parameter.uid', $platformUid);
             $builder->where('t_parameter.tipe_logger', $tipeLogger);
-            $builder->where(DB::raw('MONTH(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '"))'), '=', $month);
-            $builder->where(DB::raw('YEAR(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "Asia/Makassar", "' . $timezone . '"))'), '=', $year);
+            $builder->where(DB::raw('MONTH(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '"))'), '=', $month);
+            $builder->where(DB::raw('YEAR(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d"), "UTC", "' . $timezone . '"))'), '=', $year);
         }
 
         public function scopeDataSensorWeekly(Builder $builder, $platformUid, $tipeLogger, $minDate, $maxDate, $timezone, $intervalMinutes = 2): void {
@@ -1154,7 +1154,7 @@
                     ':',
                     LPAD(
                         FLOOR(
-                            MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'UTC', 'Asia/Makassar')) / {$intervalMinutes}
+                            MINUTE(CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'UTC', 'UTC')) / {$intervalMinutes}
                         ) * {$intervalMinutes},
                         2,
                         '0'
@@ -1201,7 +1201,7 @@
 
         public function scopeDataAvgParameter(Builder $builder, string $uid, $tipeLogger, $date): void {
             $builder->select([
-                DB::raw('DATE_FORMAT(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%i"), "Asia/Makassar", "Asia/Makassar"), "%Y-%m-%d") AS datetime_format'),
+                DB::raw('DATE_FORMAT(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%i"), "UTC", "Asia/Makassar"), "%Y-%m-%d") AS datetime_format'),
                 DB::raw('AVG(ph) AS nilai_ph'),
                 DB::raw('FLOOR(AVG(tss)) AS nilai_tss'),
                 DB::raw('(AVG(debit) * 1440) AS nilai_debit'),
@@ -1210,14 +1210,14 @@
             ]);
             $builder->where('uid', $uid);
             $builder->where('tipe_logger', $tipeLogger);
-            $builder->where(DB::raw('DATE(DATE_FORMAT(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%i"), "Asia/Makassar", "Asia/Makassar"), "%Y-%m-%d"))'), '=', $date);
+            $builder->where(DB::raw('DATE(DATE_FORMAT(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%i"), "UTC", "Asia/Makassar"), "%Y-%m-%d"))'), '=', $date);
             $builder->groupBy(['datetime_format', 'uid']);
         }
 
         public function scopeDataAvgMonthlyParameter(Builder $builder, string $uid, $tipeLogger, $date): void {
             $builder->select([
-                DB::raw('MONTH(DATE_FORMAT(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%i"), "Asia/Makassar", "Asia/Makassar"), "%Y-%m-%d")) AS month'),
-                DB::raw('YEAR(DATE_FORMAT(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%i"), "Asia/Makassar", "Asia/Makassar"), "%Y-%m-%d")) AS year'),
+                DB::raw('MONTH(DATE_FORMAT(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%i"), "UTC", "Asia/Makassar"), "%Y-%m-%d")) AS month'),
+                DB::raw('YEAR(DATE_FORMAT(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%i"), "UTC", "Asia/Makassar"), "%Y-%m-%d")) AS year'),
                 DB::raw('AVG(ph) AS nilai_ph'),
                 DB::raw('FLOOR(AVG(tss)) AS nilai_tss'),
                 DB::raw('(AVG(debit) * 1440) AS nilai_debit'),
@@ -1226,7 +1226,7 @@
             ]);
             $builder->where('uid', $uid);
             $builder->where('tipe_logger', $tipeLogger);
-            $builder->where(DB::raw('DATE_FORMAT(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%i"), "Asia/Makassar", "Asia/Makassar"), "%Y-%m")'), '=', $date);
+            $builder->where(DB::raw('DATE_FORMAT(CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i:%i"), "UTC", "Asia/Makassar"), "%Y-%m")'), '=', $date);
             $builder->groupBy(['month', 'year', 'uid']);
         }
 
@@ -1249,7 +1249,7 @@
                     CONVERT_TZ(FROM_UNIXTIME(
                         summary.prev_datetime_unix + (n.minute_number * 120),
                         "%Y-%m-%d %H:%i"
-                    ), "Asia/Makassar", "Asia/Makassar") AS datetime_format
+                    ), "UTC", "Asia/Makassar") AS datetime_format
                 ')
             ]);
 
@@ -1268,7 +1268,7 @@
                 $query->fromRaw('t_parameter, (SELECT @prev_time := NULL) vars');
                 $query->where('uid', '=', $uid);
                 $query->where('tipe_logger', '=', $tipeLogger);
-                $query->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "Asia/Makassar", "Asia/Makassar")'), [$startDate, $untilDate]);
+                $query->whereBetween(DB::raw('CONVERT_TZ(FROM_UNIXTIME(t_parameter.datetime_unix, "%Y-%m-%d %H:%i"), "UTC", "Asia/Makassar")'), [$startDate, $untilDate]);
                 $query->orderBy('datetime_unix');
             }, 'summary');
 
