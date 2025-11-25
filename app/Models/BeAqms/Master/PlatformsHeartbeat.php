@@ -24,9 +24,9 @@
                 'uid',
                 'heartbeat_status',
             ]);
-            $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', ?) AS date_formated", [$timezone]);
+            $builder->selectRaw("CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'UTC', ?) AS date_formated", [$timezone]);
 
-            $builder->whereRaw("CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'Asia/Makassar', ?) BETWEEN ? AND ?", [$timezone, $startDate, $untilDate]);
+            $builder->whereRaw("CONVERT_TZ(FROM_UNIXTIME(datetime_unix), 'UTC', ?) BETWEEN ? AND ?", [$timezone, $startDate, $untilDate]);
             $builder->where('uid', $uid);
             if ($filterStatus) {
                 if ($filterStatus != 'All') {
