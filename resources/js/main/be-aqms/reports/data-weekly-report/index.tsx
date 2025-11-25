@@ -620,7 +620,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         hiddenElm(loader)
 
-        let tickInterval = 60 * 60 * 1000; // ✅ 1 jam untuk lebih jelas
+        let tickInterval = 60 * 120 * 1000; // ✅ 2 jam untuk lebih jelas
 
         // ✅ Set range 00:00 - 23:59 (timestamp dalam UTC yang merepresentasikan waktu lokal)
         const minTime = Date.UTC(2025, 0, 1, 0, 0, 0); // 2025-01-01 00:00:00 UTC
