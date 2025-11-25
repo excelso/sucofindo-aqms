@@ -289,6 +289,9 @@
                         'allowDecimals' => true,
                         'max' => $paramLimit->ph_mutu_max,
                         'min' => 0,
+                        'title' => [
+                            'text' => null
+                        ],
                         'plotLines' => [
                             [
                                 'value' => $paramLimit->ph_mutu_min,
