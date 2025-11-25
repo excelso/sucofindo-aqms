@@ -94,13 +94,13 @@
                                         <i class="fas fa-temperature-half !text-[20px] iconTemperature ml-2"></i>
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-group-control w-[100px]">
+                                        <div class="form-group-control w-[100px]">
                                             <select class="form-control select2-custom parameterId">
                                                 @foreach($parseParameter as $item)
                                                     <option value="{{ $item }}">{{ $item }}</option>
                                                 @endforeach
                                             </select>
-                                        </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
