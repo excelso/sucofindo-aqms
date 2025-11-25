@@ -233,7 +233,7 @@
                     $maxDate = Carbon::parse($request->input('startDate'))->format('Y-m-d') . ' 23:59';
                 }
 
-                $dataCharts = Parameter::dataCharts($request->input('platformUid'), $request->input('tipeLogger'), $minDate, $maxDate, $timezone)->get();
+                $dataCharts = Parameter::dataParameterHasilPengukuran($request->input('platformUid'), $minDate, $maxDate, $request->input('tipeLogger'), $timezone)->get();
 
                 $data = [];
                 $paramTss = 0;

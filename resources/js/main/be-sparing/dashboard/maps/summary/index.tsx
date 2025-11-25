@@ -1159,7 +1159,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         formatter: function () {
                             const timestampMs = this.value as number;
                             const timestampSeconds = timestampMs / 1000;
-                            return safeFormatTimestamp(timestampSeconds, 'time', 'UTC', 'id-ID');
+                            return safeFormatTimestamp(timestampSeconds, 'time', 'Asia/Makassar', 'id-ID');
                         },
                         style: {
                             fontSize: '10px',
