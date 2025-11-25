@@ -28,8 +28,8 @@
                 </ul>
             </div>
 
-            <div id="tabLogger" class="overflow-y-auto min-h-[300px] !max-h-[calc(100vh-15rem)]">
-                <div class="hidden rounded-lg" id="summary">
+            <div id="tabLogger">
+                <div class="hidden rounded-lg overflow-y-auto min-h-[300px] !max-h-[calc(100vh-15rem)]" id="summary">
                     <table class="table table-fixed">
                         <thead>
                             <tr>
@@ -60,7 +60,7 @@
                     </div>
                 </div>
 
-                <div class="hidden rounded-lg" id="lost">
+                <div class="hidden rounded-lg overflow-y-auto min-h-[300px] !max-h-[calc(100vh-15rem)]" id="lost">
                     <table class="table table-fixed">
                         <thead>
                             <tr>
