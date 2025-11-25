@@ -573,28 +573,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const {status} = response
             const {message, data, dataYaxis, minDate, maxDate, timezone: tz} = await response.json()
             if (status === 200) {
-                const diffDate = moment.duration(moment(maxDate).diff(moment(minDate)))
-                const diffDateDay = diffDate.asDays()
-                const diffDateHour = diffDate.asHours()
-                let tickInterval = 24 * 3600 * 1000
-                if (diffDateDay >= 1 && diffDateDay < 4) {
-                    tickInterval = 3600 * (diffDateDay + 2) * 1000
-                } else {
-                    if (diffDateHour < 1) {
-                        // Jika kurang dari 1 Jam
-                        tickInterval = 60 * 5 * 1000 // Interval per 5 menit
-                    } else {
-                        if (diffDateHour >= 1 && diffDateHour < 2) {
-                            tickInterval = 60 * 10 * 1000
-                        } else if (diffDateHour >= 2 && diffDateHour < 6) {
-                            tickInterval = 60 * 30 * 1000
-                        } else if (diffDateHour > 6) {
-                            tickInterval = 60 * 180 * 1000
-                        }
-                    }
-                }
 
-                // @ts-ignore
+                let tickInterval = 60 * 180 * 1000
                 Highcharts.chart({
                     chart: {
                         renderTo: bodyTempChart,
@@ -618,24 +598,56 @@ document.addEventListener('DOMContentLoaded', function () {
                         gridLineDashStyle: 'LongDash',
                     },
                     time: {
-                        useUTC: false,
-                        timezone: tz
+                        timezone: "UTC"
                     },
                     xAxis: {
                         type: 'datetime',
                         minPadding: 0,
                         maxPadding: 0,
-                        startOnTick: true,
-                        crosshair: true,
                         tickInterval: tickInterval,
                         labels: {
                             formatter: function () {
-                                return diffDateDay >= 4 ? moment(new Date(this.value)).format('DD-MM-YYYY') : moment(new Date(this.value)).format('HH:mm')
+                                const timestampMs = this.value as number;
+                                const timestampSeconds = timestampMs / 1000;
+                                return safeFormatTimestamp(timestampSeconds, 'time', 'Asia/Makassar', 'id-ID');
                             },
+                            style: {
+                                fontSize: '10px',
+                                color: '#999'
+                            }
                         },
+                        lineWidth: 0,
+                        tickWidth: 0,
+                        gridLineWidth: 1,
+                        gridLineColor: '#eee',
+                        gridLineDashStyle: 'Dash',
                     },
                     tooltip: {
-                        shared: true
+                        formatter: function () {
+                            const timestampMs = this.x;
+                            const timestampSeconds = timestampMs / 1000;
+                            const formattedTime = safeFormatTimestamp(timestampSeconds, 'datetime', 'Asia/Makassar', 'id-ID', true);
+                            const timezoneShort = 'Makassar';
+
+                            return `
+                                <div class="flex flex-col">
+                                    <div class="text-sm" style="color: ${this.color}">${this.series.name}</div>
+                                    <div>
+                                        <table>
+                                            <tr>
+                                                <td class="text-sm p-0">Time</td>
+                                                <td class="p-0"><b class="ml-2">: ${formattedTime} - (${timezoneShort})</b></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm p-0">Nilai</td>
+                                                <td class="p-0"><b class="ml-2">: ${Highcharts.numberFormat(this.y, 2)}</b></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            `;
+                        },
+                        useHTML: true,
                     },
                     scrollbar: {
                         enabled: true,
@@ -1146,7 +1158,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     gridLineWidth: 1,
                     gridLineDashStyle: 'LongDash',
                 },
-
                 time: {
                     timezone: "UTC"
                 },

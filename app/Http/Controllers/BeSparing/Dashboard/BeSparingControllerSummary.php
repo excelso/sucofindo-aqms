@@ -28,17 +28,12 @@
         }
 
         public function index($uid, $tipeLogger): Factory|View|Application {
-            $dataUserSite = UserSite::where('user_id', request()->user()->id)->where('status_site', 1)->get();
-            $site_ids = [];
-            foreach ($dataUserSite as $item) {
-                $site_ids[] = $item->site_id;
-            }
-
-            $dataPlatform = Platform::platformByLimit($site_ids, [
+            $dataPlatform = Platform::platformByLimit(request()->user()->id_sparing, [
                 'orderBy' => [
                     'last_online' => 'DESC'
                 ]
             ])->with('site', 'site.customer')->get();
+
             $dataPlatformSelected = (new Platform)
                 ->where('uid', $uid)
                 ->where('tipe_logger', $tipeLogger)->get()->first();

@@ -33,12 +33,12 @@
             </div>
             <div class="flex flex-row items-center">
                 <div class="ml-2 {{ session()->get('use_sparing') <= 1 ? 'hidden' : '' }}">
-                    <input type="hidden" class="userLevel" value="{{ Auth::user()->user_level }}">
-                    <div class="form-group">
+                    <input type="hidden" class="userLevel" value="{{ request()->user()->user_level }}">
+                    <div class="form-group !mb-0">
                         <div class="form-group-control bg-white w-[320px]">
                             <select class="form-control select2-custom platformUid">
                                 @foreach($dataPlatform as $item)
-                                    @php($selected = request()->segment(6) == $item->uid && request()->segment(6) == $item->tipe_logger ? 'selected' : '')
+                                    @php($selected = request()->segment(6) == $item->uid && request()->segment(7) == $item->tipe_logger ? 'selected' : '')
                                     @if(request()->user()->user_level != 'viewer')
                                         <option value="{{ $item->uid }}" data-status="{{ $item->status_platform }}" data-tipe-logger="{{ $item->tipe_logger }}" data-additional="{{ $item->site->nama_site }} / {{ $item->site->customerLokasi->nama_lokasi }} / {{ $item->tipe_logger == 1 ? 'Internal' : 'KLHK' }}" {{ $selected }}>{{ $item->uid }}</option>
                                     @else
@@ -93,8 +93,8 @@
                                         </div>
                                         <i class="fas fa-temperature-half !text-[20px] iconTemperature ml-2"></i>
                                     </div>
-                                    <div class="form-group">
-                                        <div class="form-group-control w-[100px]">
+                                    <div class="form-group !mb-0">
+                                        <div class="form-group-control !mt-0 w-[100px]">
                                             <select class="form-control select2-custom parameterId">
                                                 @foreach($parseParameter as $item)
                                                     <option value="{{ $item }}">{{ $item }}</option>
@@ -160,15 +160,15 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <div class="form-group">
-                                        <label class="form-group-control w-[150px]">
+                                    <div class="form-group !mb-0">
+                                        <div class="form-group-control w-[150px]">
                                             <select class="form-control select2-custom statusPlatform">
                                                 <option value="">Semua Status</option>
                                                 <option value="1">Normal</option>
                                                 <option value="2">Warning</option>
                                                 <option value="3">Danger</option>
                                             </select>
-                                        </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
