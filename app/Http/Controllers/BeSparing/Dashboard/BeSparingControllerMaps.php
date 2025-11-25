@@ -54,7 +54,27 @@
                 $dataUser = User::where('id', Auth::user()->id)->first();
                 $dataPlatform = Platform::platformMarker($dataUser->id_sparing)
                     ->with('site', 'site.customerLokasi', 'site.customer', 'site.customer.jenisIndustri')
-                    ->get();
+                    ->get()->map(function ($item) {
+                        $thumbnail = null;
+                        if ($item->thumbnail_path) {
+                            if (file_exists(public_path('/storage/' . $item->thumbnail_path . '/' . $item->thumbnail_file))) {
+                                $thumbnail = '/storage/' . $item->thumbnail_path . '/' . $item->thumbnail_file;
+                            }
+                        }
+
+                        return [
+                            'platform_type' => 'sparing',
+                            'uid' => $item->uid,
+                            'lat' => $item->lat,
+                            'lng' => $item->lng,
+                            'company_name' => $item->site->customerLokasi->customer->nama_perusahaan,
+                            'location' => $item->site->customerLokasi->nama_lokasi,
+                            'images' => $thumbnail,
+                            'status_online' => $item->status_platform ?? 'offline',
+                            'tipe_logger' => $item->tipe_logger ?? 1,
+                            'total_logger' => $item->total_logger ?? 1,
+                        ];
+                    });
 
                 return response()->json([
                     'message' => 'Success',
