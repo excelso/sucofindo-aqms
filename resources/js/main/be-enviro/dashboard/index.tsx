@@ -1,5 +1,13 @@
 import {Loader} from "@googlemaps/js-api-loader";
-import {checkClassList, delay, elapsedDate, getMetaContent, removeElmClass} from "@/js/plugins/functions";
+import {
+    checkClassList,
+    delay,
+    elapsedDate,
+    getMetaContent, hiddenElm,
+    removeElmClass,
+    show,
+    showHiddenElm
+} from "@/js/plugins/functions";
 import {MarkerClusterer} from "@googlemaps/markerclusterer";
 import tzLookup from "tz-lookup"
 import {failureAlert} from "@/js/plugins/sweet-alert";
@@ -23,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnListSparing = document.querySelector('.btnListSparing')
     const btnListAqms = document.querySelector('.btnListAqms')
     const leftPanel = document.querySelector('.left-panel')
+    const searchLoader = document.querySelector('.searchLoader')
     const searchInput = document.querySelector('.searchInput')
     const btnCloseSearch = document.querySelector('.btnCloseSearch')
 
@@ -96,6 +105,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 await handleDataPlatforms(currPlatformType, currHeartbeatStatus)
             })
         })
+    }
+
+    if (searchInput) {
+        const ignoredKeys: string[] = ['Control', 'Alt', 'Shift', 'Meta', 'CapsLock', 'Tab', 'Escape', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown', 'Insert', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12'];
+        searchInput.addEventListener('keyup', (evt: KeyboardEvent) => {
+            if (ignoredKeys.includes(evt.key)) {
+                return;
+            }
+
+            showHiddenElm(searchLoader)
+        })
+        searchInput.addEventListener('keyup', delay(() => {
+            hiddenElm(searchLoader)
+        }, 1000))
     }
 
     //region Create Loader

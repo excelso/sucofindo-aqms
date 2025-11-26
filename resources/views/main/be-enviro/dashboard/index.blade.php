@@ -52,16 +52,16 @@
             <div id="dropdownAvatarButton" data-dropdown-toggle="dropdownAvatar" data-dropdown-offset-skidding="-90" class="dropdown-button cursor-pointer !bg-white border" type="button">
                 <span class="sr-only">Open user menu</span>
                 <div class="avatar !bg-white !text-black">
-                    <span>{{ substr(Auth::user()->nama_lengkap, 0, 1)}}</span>
+                    <span>{{ substr(request()->user()->nama_lengkap, 0, 1)}}</span>
                 </div>
             </div>
 
             <div id="dropdownAvatar" class="dropdown-panel w-[250px]">
                 <div class="dropdown-header">
                     <div class="font-medium truncate">
-                        {{ Auth::user()->nama_lengkap }}
+                        {{ request()->user()->nama_lengkap }}
                     </div>
-                    <div class="truncate">{{Auth::user()->email}}</div>
+                    <div class="truncate">{{request()->user()->email}}</div>
                 </div>
                 <div class="dropdown-footer">
                     <form method="POST" action="{{ route('logout') }}">
@@ -133,6 +133,9 @@
                                 <i class="fas fa-search mt-[4px] !text-[20px] text-gray-600"></i>
                             </div>
                             <input type="text" class="searchInput bg-transparent w-full focus:ring-0 border-0 focus:border-0 text-[14px] px-0 py-1" placeholder="Search...">
+                            <div class="cursor-pointer mr-2 searchLoader !hidden">
+                                <i class="fas fa-spinner fa-pulse mt-[4px] !text-[20px] text-gray-600"></i>
+                            </div>
                             <div class="cursor-pointer mr-2 btnCloseSearch opacity-0">
                                 <i class="fas fa-close mt-[4px] !text-[20px] text-gray-600"></i>
                             </div>
@@ -195,7 +198,7 @@
         <div class="right-nav close">
             <div class="flex flex-col">
                 <div class="right-nav-header border-bottom">
-                    <input type="hidden" class="userLevel" value="{{ Auth::user()->user_level }}">
+                    <input type="hidden" class="userLevel" value="{{ request()->user()->user_level }}">
                     <div class="cursor-pointer px-[5px] mt-[1px] loaderSearch">
                         <i class="fas fa-search"></i>
                     </div>

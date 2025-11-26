@@ -143,7 +143,7 @@
                     'expired_at' => Carbon::now()->timezone('Asia/Makassar')->addMinutes()
                 ]);
 
-                Mail::to($request->input('email'))->send(new MailRequestOTP('BeAQMS - Verify Login', [
+                Mail::to($request->input('email'))->send(new MailRequestOTP('BeEnviro - Verify Login', [
                     'otpToken' => $otpToken,
                     'device_platform' => 'Web',
                     'device_brand' => $request->header('User-Agent'),

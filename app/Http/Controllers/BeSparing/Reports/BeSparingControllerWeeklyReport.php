@@ -124,7 +124,7 @@
                     $dataWeek[] = $dates;
 
                     $totalSample = $dates['totalDays'] * 720;
-                    $dataEntry = Parameter::dataPercentageEntryWeekly($request->input('platformUid'), $request->input('tipeLogger'), $dates['startDate'], $dates['untilDate'], $timezone, $totalSample)->first();
+                    $dataEntry = Parameter::dataPercentageEntryWeekly($request->input('platformUid'), $request->input('tipeLogger'), $dates['startDate'] . ' 00:00', $dates['untilDate'] . ' 23:59', $timezone, $totalSample)->first();
                     $data[] = [
                         'y' => round($dataEntry->percentage ?? 0, 2),
                         'weekDetail' => [
@@ -134,7 +134,7 @@
                         ]
                     ];
 
-                    $dataEntryComply = Parameter::dataPersentaseComplyWeekly($request->input('platformUid'), $request->input('tipeLogger'), $dates['startDate'], $dates['untilDate'], $timezone)->first();
+                    $dataEntryComply = Parameter::dataPersentaseComplyWeekly($request->input('platformUid'), $request->input('tipeLogger'), $dates['startDate'] . ' 00:00', $dates['untilDate'] . ' 23:59', $timezone)->first();
                     $dataComply[] = round($dataEntryComply->percentagePh ?? 0, 2);
                 }
 
@@ -178,7 +178,7 @@
                 foreach ($weekGroups as $week => $dates) {
                     $dataCategories[] = $week;
 
-                    $dataEntryComply = Parameter::dataPersentaseComplyWeekly($request->input('platformUid'), $request->input('tipeLogger'), $dates['startDate'], $dates['untilDate'], $timezone)->first();
+                    $dataEntryComply = Parameter::dataPersentaseComplyWeekly($request->input('platformUid'), $request->input('tipeLogger'), $dates['startDate'] . ' 00:00', $dates['untilDate'] . ' 23:59', $timezone)->first();
                     $dataComplyPh[] = round($dataEntryComply->percentagePh ?? 0, 2);
                     $dataComplyTss[] = round($dataEntryComply->percentageTss ?? 0, 2);
                     $dataComplyDebit[] = round($dataEntryComply->percentageDebit ?? 0, 2);
