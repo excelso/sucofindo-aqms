@@ -1794,21 +1794,34 @@ class PlatformSkeletonManager {
         this.chartInstances.set(`${cardId}-${type}`, chart);
     }
 
-    private getTickIntervalByDuration(startTimestamp: number, endTimestamp: number): number {
+    private getTickIntervalByDuration(startTimestamp: number, endTimestamp: number, dataPointCount?: number): number {
         const durationHours = (endTimestamp - startTimestamp) / (1000 * 60 * 60);
+
+        console.log("durationHours", durationHours);
+        console.log("dataPointCount", dataPointCount);
+
+        // Untuk data forecast (biasanya 24 data point untuk 24 jam)
+        // Kita ingin menampilkan sekitar 4-8 label di x-axis
 
         if (durationHours <= 2) {
             return 15 * 60 * 1000; // 15 menit untuk data <= 2 jam
         } else if (durationHours <= 6) {
             return 30 * 60 * 1000; // 30 menit untuk data <= 6 jam
         } else if (durationHours <= 12) {
-            return 60 * 60 * 1000; // 1 jam untuk data <= 12 jam
+            // Untuk forecast 12 jam, interval 3 jam
+            // Akan ada 4 label: 0h, 3h, 6h, 9h, 12h
+            return 3 * 60 * 60 * 1000; // 3 jam
         } else if (durationHours <= 24) {
-            return 3600 * 3000; // 3 jam untuk data <= 24 jam
+            // Untuk data 24 jam, interval 3 jam
+            // Akan ada 8 label: 0h, 3h, 6h, 9h, 12h, 15h, 18h, 21h, 24h
+            return 3 * 60 * 60 * 1000; // 3 jam
         } else if (durationHours <= 48) {
-            return 4 * 60 * 60 * 1000; // 4 jam untuk data <= 48 jam
+            // Untuk data 48 jam, interval 6 jam
+            // Akan ada 8 label
+            return 6 * 60 * 60 * 1000; // 6 jam
         } else {
-            return 6 * 60 * 60 * 1000; // 6 jam untuk data > 48 jam
+            // Untuk data > 48 jam, interval 12 jam
+            return 12 * 60 * 60 * 1000; // 12 jam
         }
     }
 
@@ -2108,6 +2121,18 @@ class PlatformSkeletonManager {
             }, true);
 
             chart.yAxis[0].setExtremes(minY, maxY, true);
+
+            let newTickInterval = 3600 * 1000; // Default 1 jam
+            if (chartData.length > 0) {
+                const timestamps = chartData.map(point => point.x).sort((a, b) => a - b);
+                const startTime = timestamps[0];
+                const endTime = timestamps[timestamps.length - 1];
+                newTickInterval = this.getTickIntervalByDuration(startTime, endTime);
+            }
+
+            chart.xAxis[0].update({
+                tickInterval: newTickInterval
+            }, true);
         }
     }
 
