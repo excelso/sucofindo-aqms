@@ -99,7 +99,7 @@
 <body>
     <div class="email-container">
         <div class="email-header">
-            <img src="https://besparing.beraucoal.co.id/images/logo-color.png" width="200" alt="Logo">
+            <img src="https://beenviro.beraucoal.co.id/images/logo-color.png" width="200" alt="Logo">
         </div>
         <div class="email-title">Verify Login</div>
         <div class="email-body">

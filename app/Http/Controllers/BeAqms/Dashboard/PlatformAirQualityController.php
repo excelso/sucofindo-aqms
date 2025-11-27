@@ -10,6 +10,8 @@
     use App\Models\Users\UserPlatforms;
     use Carbon\Carbon;
     use Exception;
+    use GuzzleHttp\Client;
+    use GuzzleHttp\Exception\GuzzleException;
     use Illuminate\Http\Request;
     use Illuminate\Support\Facades\Log;
 
@@ -137,7 +139,7 @@
 
                 return response()->json([
                     'message' => 'Failed to load platform data',
-                    'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+                    'error' => config('app.debug') ? $e->getMessage() . ' on line ' . $e->getLine() : 'Internal server error'
                 ], 500);
             }
         }
@@ -202,7 +204,7 @@
             $platformLimit = LoggersLimit::where('uid', $uid)->first();
             return [
                 'pm10' => [
-                    'value' => $dataLastLogger->max_tsp ? $dataLastLogger->max_tsp * 0.4 : 0,
+                    'value' => $dataLastLogger ? $dataLastLogger->max_tsp * 0.4 : 0,
                     'bml_min' => $platformLimit->pm10_min ?? 0,
                     'bml_min_buffer' => $platformLimit->pm10_min_buffer ?? 0,
                     'bml_max_buffer' => $platformLimit->pm10_max_buffer ?? 0,
@@ -274,5 +276,175 @@
             }
 
             return $data;
+        }
+
+        /**
+         * Get forecast data from Google Air Quality API
+         * Endpoint: /api/platform/{uid}/forecast
+         */
+        public function getPlatformForecast(Request $request, $uid) {
+            try {
+                // Get platform basic info
+                $platform = Platforms::with(['sites', 'sitesLocation'])
+                    ->where('uid', $uid)
+                    ->first();
+
+                if (!$platform) {
+                    return response()->json([
+                        'message' => 'Platform not found'
+                    ], 404);
+                }
+
+                // Check user access
+                if ($request->user()->user_level != 'super_admin') {
+                    $hasAccess = UserPlatforms::where('user_id', $request->user()->id)
+                        ->where('platform_id', $platform->id)
+                        ->exists();
+
+                    if (!$hasAccess) {
+                        return response()->json([
+                            'message' => 'Access denied'
+                        ], 403);
+                    }
+                }
+
+                // Check if platform has coordinates
+                if (!$platform->lat || !$platform->lng) {
+                    return response()->json([
+                        'message' => 'Platform coordinates not available'
+                    ], 400);
+                }
+
+                // Get forecast data from Google API
+                $forecastData = $this->getGoogleAirQualityForecast($platform->lat, $platform->lng);
+
+                if (!$forecastData) {
+                    return response()->json([
+                        'message' => 'Failed to fetch forecast data'
+                    ], 500);
+                }
+
+                // Format forecast data for frontend
+                $formattedForecast = $this->formatForecastData($forecastData);
+
+                return response()->json([
+                    'uid' => $platform->uid,
+                    'uid_alias' => $platform->uid_alias,
+                    'siteName' => $platform->sitesLocation->location_name ?? 'Unknown',
+                    'timezone' => $platform->timezone,
+                    'locale' => 'en-US',
+                    'lat' => $platform->lat,
+                    'lng' => $platform->lng,
+                    'forecastData' => $formattedForecast,
+                    'source' => 'google_forecast'
+                ]);
+
+            } catch (Exception $e) {
+                Log::error("Error getting forecast data for {$uid}: " . $e->getMessage());
+
+                return response()->json([
+                    'message' => 'Failed to load forecast data',
+                    'error' => config('app.debug') ? $e->getMessage() . ' on line ' . $e->getLine() : 'Internal server error'
+                ], 500);
+            }
+        }
+
+        /**
+         * Get forecast from Google Air Quality API
+         */
+        private function getGoogleAirQualityForecast($lat, $lng) {
+            try {
+                $apiKey = env('GOOGLE_AIR_QUALITY_API_KEY', 'AIzaSyDEleaYlHD-fQ8CzpcWuBj3nbZbYFr7IZs');
+                $url = "https://airquality.googleapis.com/v1/forecast:lookup?key={$apiKey}";
+
+                $timezone = 'Asia/Makassar'; // Adjust based on platform timezone
+                $startTime = Carbon::now($timezone)->addDay()->format('Y-m-d\T00:00:00P');
+                $endTime = Carbon::now($timezone)->addDay()->format('Y-m-d\T23:59:00P');
+
+                $payload = [
+                    'location' => [
+                        'latitude' => (float)$lat,
+                        'longitude' => (float)$lng
+                    ],
+                    'period' => [
+                        'startTime' => $startTime,
+                        'endTime' => $endTime
+                    ],
+                    'extraComputations' => ['LOCAL_AQI'],
+                    'customLocalAqis' => [
+                        [
+                            'regionCode' => 'id',
+                            'aqi' => 'idn_menlhk'
+                        ]
+                    ],
+                    'universalAqi' => false,
+                    'languageCode' => 'id'
+                ];
+
+                $client = new Client();
+                $response = $client->post($url, [
+                    'json' => $payload,
+                    'headers' => [
+                        'Content-Type' => 'application/json'
+                    ]
+                ]);
+
+                return json_decode($response->getBody()->getContents(), true);
+
+            } catch (Exception $e) {
+                Log::error('Error fetching Google Air Quality forecast: ' . $e->getMessage());
+                return null;
+            } catch (GuzzleException $e) {
+                Log::error('Error fetching Google Air Quality forecast: ' . $e->getMessage());
+                return null;
+            }
+        }
+
+        /**
+         * Format forecast data for frontend
+         */
+        private function formatForecastData($googleData) {
+            if (!isset($googleData['hourlyForecasts'])) {
+                return [];
+            }
+
+            $formattedData = [];
+
+            foreach ($googleData['hourlyForecasts'] as $forecast) {
+                if (!isset($forecast['indexes'][0])) {
+                    continue;
+                }
+
+                $index = $forecast['indexes'][0];
+                $timestamp = strtotime($forecast['dateTime']);
+
+                $dominantPollutant = $index['dominantPollutant'] ?? 'pm25';
+                $pollutantMap = [
+                    'pm25' => 'PM2.5',
+                    'pm10' => 'PM10',
+                    'o3' => 'O3 (Ozone)',
+                    'no2' => 'NO2',
+                    'so2' => 'SO2',
+                    'co' => 'CO'
+                ];
+
+                $pollutantName = $pollutantMap[$dominantPollutant] ?? strtoupper($dominantPollutant);
+
+                $formattedData[] = [
+                    'timestamp' => $timestamp,
+                    'value' => (float)$index['aqi'],
+                    'value_tsp' => (float)$index['aqi'], // Google uses same AQI for both
+                    'pm25' => 0, // Not provided by Google forecast
+                    'pm10' => 0, // Not provided by Google forecast
+                    'tsp' => 0, // Not provided by Google forecast
+                    'aqi_from' => 'Forecast - ' . ($pollutantName),
+                    'category' => $index['category'] ?? 'Unknown',
+                    'link_video_id' => null,
+                    'link_video_status' => null,
+                    'link_video_recorded' => null,
+                ];
+            }
+
+            return $formattedData;
         }
     }

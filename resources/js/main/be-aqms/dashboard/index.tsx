@@ -1,6 +1,5 @@
-import Hls from "hls.js";
 import {closeModalDialog, showModalDialog} from "@/js/plugins/modal";
-import {AirQualityCardManager, CameraData, MetricsData} from "@/js/main/dashboard/airQualityCardManager";
+import {CameraData, MetricsData} from "@/js/main/be-aqms/dashboard/airQualityCardManager";
 import Highcharts from "highcharts";
 import {
     convertWebRTCToWhepUrl,
@@ -12,18 +11,13 @@ import {
     triggerTableTooltip
 } from "@/js/plugins/functions";
 import {failureAlert, waitLoader} from "@/js/plugins/sweet-alert";
-import {SocketClient} from "@/js/plugins/SocketClient";
 import Swal from "sweetalert2";
 import moment from "moment-timezone";
 import MapsHelper from "@/js/plugins/mapsHelper";
-import VideoStreamHandler from "@/js/plugins/videoStreamHandler";
-import HikvisionPTZController from "@/js/plugins/hikvisionPTZController";
-import videojs from "video.js";
-import {MediaMtxWhepPlayer} from "@/js/plugins/MediaMtxWhepPlayer";
 import {CamerasConfig, EnhancedVideoStreamHandler} from "@/js/plugins/EnhancedVideoStreamHandler";
 import OnvifPTZController from "@/js/plugins/OnvifPTZController";
 import {ExPicker} from "@/js/experiment/ex-picker";
-import {PlatformSkeletonManager} from "@/js/main/dashboard/platformSkeletonManager";
+import {PlatformSkeletonManager} from "@/js/main/be-aqms/dashboard/platformSkeletonManager";
 
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = getMetaContent('csrf-token')

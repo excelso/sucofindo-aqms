@@ -229,6 +229,7 @@
             Route::group(['prefix' => 'dashboard'], function () {
                 Route::get('platforms', [PlatformAirQualityController::class, 'getPlatformsList']);
                 Route::get('platform/{uid}/data', [PlatformAirQualityController::class, 'getPlatformData']);
+                Route::get('platform/{uid}/forecast', [PlatformAirQualityController::class, 'getPlatformForecast']);
 
                 // Route::get('platforms', [ControllerDashboard::class, 'getDataPlatforms']);
                 Route::get('detail-metric/{uid}', [ControllerDashboard::class, 'detailMetric']);

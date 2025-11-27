@@ -20,8 +20,8 @@ export default defineConfig({
                 'resources/js/login/index.tsx',
                 'resources/js/login/index.tsx',
                 'resources/js/login/verify-otp.tsx',
-                'resources/js/main/dashboard/index.tsx',
 
+                'resources/js/main/be-aqms/dashboard/index.tsx',
                 'resources/js/main/be-aqms/master/data-platform-loggers/index.tsx',
                 'resources/js/main/be-aqms/master/data-platform-loggers/index-calibration.tsx',
                 'resources/js/main/master/data-sites/index.tsx',

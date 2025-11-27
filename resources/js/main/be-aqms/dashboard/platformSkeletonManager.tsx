@@ -4,12 +4,13 @@ import "highcharts/modules/solid-gauge";
 import "highcharts/modules/no-data-to-display";
 import {io, Socket} from 'socket.io-client';
 import {SocketClient, SocketEventCallbacks, SocketOptions} from "@/js/plugins/SocketClient";
-import {createSmoothGradient} from "@/js/main/dashboard/chartHelper";
+import {createSmoothGradient} from "@/js/main/be-aqms/dashboard/chartHelper";
 import {Dropdown} from 'flowbite';
 import type {DropdownOptions, DropdownInterface} from 'flowbite';
 import type {InstanceOptions} from 'flowbite';
 import moment from "moment";
 
+//region Handle Interface
 interface PlatformInfo {
     uid: string;
     uid_alias: string;
@@ -135,6 +136,8 @@ interface PlatformSkeletonManagerOptions {
     containerSelector?: string;
     apiEndpoint?: string; // '/dashboard/platforms'
     apiEndpointData?: string; // '/dashboard/platform/{uid}/data'
+    apiEndpointForecast?: string; // '/dashboard/platform/{uid}/forecast'
+    enableForecast?: boolean;
     enableCharts?: boolean;
     realTimeUpdateInterval?: number;
     enableSocketIO?: boolean;
@@ -162,6 +165,19 @@ interface PlatformSkeletonManagerOptions {
     onLoadingStateChange?: (isLoading: boolean, uid?: string) => void;
 }
 
+interface ForecastData {
+    timestamp: number;
+    value: number;
+    value_tsp: number;
+    pm25: number;
+    pm10: number;
+    tsp: number;
+    aqi_from: string;
+    category?: string;
+}
+
+//endregion
+
 class PlatformSkeletonManager {
 
     // region Properties
@@ -178,6 +194,9 @@ class PlatformSkeletonManager {
     private socketClient: SocketClient;
     private currentAQISource: Map<string, 'pm25_pm10' | 'tsp'> = new Map();
     private loadingStates: Map<string, boolean> = new Map();
+
+    private currentDataMode: Map<string, 'realtime' | 'forecast'> = new Map();
+    private forecastCache: Map<string, ForecastData[]> = new Map();
     // endregion
 
     // region Constructor
@@ -196,6 +215,8 @@ class PlatformSkeletonManager {
                 reconnectionAttempts: 5,
                 timeout: 20000,
             },
+            apiEndpointForecast: '/aqms/dashboard/platform/{uid}/forecast',
+            enableForecast: true,
             ...options
         };
 
@@ -208,6 +229,7 @@ class PlatformSkeletonManager {
         // Autoload platforms and start the process
         this.initialize();
     }
+
     // endregion
 
     // region Initialize
@@ -237,6 +259,7 @@ class PlatformSkeletonManager {
             this.showError('Failed to initialize platform manager');
         }
     }
+
     // endregion
 
     //region Handle Setup URL Change Listener
@@ -251,7 +274,7 @@ class PlatformSkeletonManager {
         const originalPushState = history.pushState;
         const originalReplaceState = history.replaceState;
 
-        history.pushState = function(...args) {
+        history.pushState = function (...args) {
             originalPushState.apply(history, args);
             setTimeout(() => {
                 console.log('🔄 URL changed via pushState');
@@ -259,7 +282,7 @@ class PlatformSkeletonManager {
             }, 100);
         };
 
-        history.replaceState = function(...args) {
+        history.replaceState = function (...args) {
             originalReplaceState.apply(history, args);
             setTimeout(() => {
                 console.log('🔄 URL changed via replaceState');
@@ -267,6 +290,7 @@ class PlatformSkeletonManager {
             }, 100);
         };
     }
+
     //endregion
 
     // region Load Platforms
@@ -302,6 +326,7 @@ class PlatformSkeletonManager {
             throw error;
         }
     }
+
     // endregion
 
     // region Render All Skeleton Cards
@@ -331,6 +356,7 @@ class PlatformSkeletonManager {
 
         console.log(`🎨 Rendered ${this.platforms.length} skeleton cards`);
     }
+
     // endregion
 
     // region Load All Platform Data
@@ -354,6 +380,7 @@ class PlatformSkeletonManager {
             console.error('❌ Error loading platform data:', error);
         }
     }
+
     // endregion
 
     // region Load Platform Data
@@ -448,7 +475,37 @@ class PlatformSkeletonManager {
             }
         }
     }
+
     // endregion
+
+    //region Handle Load Platform Forecast
+    private async loadPlatformForecast(uid: string): Promise<void> {
+        if (!this.options.apiEndpointForecast) {
+            console.warn('apiEndpointForecast is not configured');
+            return;
+        }
+
+        try {
+            const endpoint = this.options.apiEndpointForecast.replace('{uid}', uid);
+            const response = await fetch(endpoint);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            const forecastData: ForecastData[] = result.forecastData || [];
+
+            // Cache the forecast data
+            this.forecastCache.set(uid, forecastData);
+
+            console.log(`✅ Loaded forecast data for ${uid}`);
+
+        } catch (error) {
+            console.error(`❌ Error loading forecast for ${uid}:`, error);
+        }
+    }
+    //endregion
 
     // region Create Skeleton Card
     private createSkeletonCard(platform: CombinedPlatformData, index: number): HTMLElement {
@@ -550,15 +607,18 @@ class PlatformSkeletonManager {
 
         // Skeleton AirIndex section
         const airIndexSection = this.createElement('div', 'mt-4');
-        const airIndexTitle = this.createElement('div', 'font-bold text-[14px]', 'Air Quality Index');
-        const airIndexSubTitle = this.createElement('div', 'text-[11px] mb-4 flex items-center gap-2');
+
+        // Title and dropdown area skeleton
+        const titleDropdownArea = this.createElement('div', 'flex justify-between items-center mb-4');
+        const skeletonTitle = this.createElement('div', 'skeleton-box w-40 h-6 rounded bg-gray-200 animate-pulse');
         const skeletonDropdown = this.createElement('div', 'skeleton-box w-32 h-4 rounded bg-gray-200 animate-pulse');
-        airIndexSubTitle.appendChild(skeletonDropdown);
+
+        titleDropdownArea.appendChild(skeletonTitle);
+        titleDropdownArea.appendChild(skeletonDropdown);
 
         const skeletonAirIndexChart = this.createElement('div', 'skeleton-box w-full h-32 bg-gray-200 animate-pulse rounded');
 
-        airIndexSection.appendChild(airIndexTitle);
-        airIndexSection.appendChild(airIndexSubTitle);
+        airIndexSection.appendChild(titleDropdownArea);
         airIndexSection.appendChild(skeletonAirIndexChart);
 
         // Skeleton last updated
@@ -573,6 +633,7 @@ class PlatformSkeletonManager {
 
         return card;
     }
+
     // endregion
 
     // region Update Card From Skeleton To Data
@@ -599,6 +660,7 @@ class PlatformSkeletonManager {
 
         console.log(`🎨 Updated card ${uid} from skeleton to data`);
     }
+
     // endregion
 
     // region Update Status Badge From Skeleton
@@ -619,6 +681,7 @@ class PlatformSkeletonManager {
 
         skeletonBadge.parentNode?.replaceChild(badge, skeletonBadge);
     }
+
     // endregion
 
     // region Update Online Status From Skeleton
@@ -638,6 +701,7 @@ class PlatformSkeletonManager {
 
         skeletonOnline.parentNode?.replaceChild(onlineContainer, skeletonOnline);
     }
+
     // endregion
 
     // region Update Metrics From Skeleton
@@ -709,74 +773,30 @@ class PlatformSkeletonManager {
             }
         });
     }
+
     // endregion
 
     // region Update Air Index From Skeleton
     private updateAirIndexFromSkeleton(cardElement: HTMLElement, data: PlatformData, cardId: string): void {
-        // Update dropdown
+        // Update title and dropdown area
         const skeletonDropdown = cardElement.querySelector('.skeleton-box.w-32.h-4');
         if (skeletonDropdown) {
-            const ddWrap = this.createElement('div', 'relative');
-            const ddButton = this.createElement('button', 'inline-flex items-center gap-1 text-xs hover:bg-gray-50 dark:hover:bg-gray-800') as HTMLButtonElement;
-            ddButton.id = `${cardId}-dropdownButton`;
-            ddButton.type = 'button';
-            ddButton.innerHTML = `
-                <span class="subText">Based on TSP</span>
-                <svg class="w-3 h-3" aria-hidden="true" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
-                </svg>
-            `;
+            const titleAndDropdownWrap = this.createElement('div', 'flex justify-between items-center mb-4');
 
-            const ddMenu = this.createElement('div', 'z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700') as HTMLDivElement;
-            ddMenu.id = `${cardId}-dropdownMenu`;
-            ddMenu.setAttribute('aria-labelledby', ddButton.id);
+            // Left side - Title dropdown (Air Quality Index / Air Forecast Index)
+            const titleDropdown = this.createTitleDropdown(cardId);
 
-            const menuList = document.createElement('ul');
-            menuList.className = 'py-2 text-sm text-gray-700 dark:text-gray-200';
-            menuList.setAttribute('role', 'menu');
+            // Right side - Source dropdown (Based on TSP / Based on PM2.5/PM10)
+            const sourceDropdown = this.createSourceDropdown(cardId);
 
-            const makeItem = (label: string, value: 'pm25_pm10' | 'tsp') => {
-                const li = document.createElement('li');
-                const a = document.createElement('a');
-                a.href = '#';
-                a.className = 'block px-4 py-2 text-[12px] hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white';
-                a.textContent = label;
-                a.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const subText = ddButton.querySelector('.subText');
-                    if (value === 'pm25_pm10') subText!.textContent = 'Based on PM 2.5 / PM 10';
-                    if (value === 'tsp') subText!.textContent = 'Based on TSP';
+            titleAndDropdownWrap.appendChild(titleDropdown);
+            titleAndDropdownWrap.appendChild(sourceDropdown);
 
-                    this.filterAirIndexSource(cardId, value);
-                    dropdown.hide();
-                });
-                li.appendChild(a);
-                return li;
-            };
-
-            menuList.appendChild(makeItem('PM 2.5 / PM 10', 'pm25_pm10'));
-            menuList.appendChild(makeItem('TSP', 'tsp'));
-            ddMenu.appendChild(menuList);
-
-            ddWrap.appendChild(ddButton);
-            ddWrap.appendChild(ddMenu);
-
-            const ddOptions: DropdownOptions = {
-                placement: 'bottom-end',
-                triggerType: 'click',
-                offsetSkidding: 100,
-                offsetDistance: 8,
-                delay: 150,
-            };
-
-            const instanceOptions: InstanceOptions = {
-                id: ddMenu.id,
-                override: true
-            };
-
-            const dropdown: DropdownInterface = new Dropdown(ddMenu, ddButton, ddOptions, instanceOptions);
-
-            skeletonDropdown.parentNode?.replaceChild(ddWrap, skeletonDropdown);
+            // Replace the skeleton subtitle with the new structure
+            const airIndexSubTitle = skeletonDropdown.parentElement;
+            if (airIndexSubTitle) {
+                airIndexSubTitle.parentNode?.replaceChild(titleAndDropdownWrap, airIndexSubTitle);
+            }
         }
 
         // Update chart
@@ -790,9 +810,240 @@ class PlatformSkeletonManager {
             // Create air index chart
             setTimeout(() => {
                 this.currentAQISource.set(cardId, 'tsp');
+                this.currentDataMode.set(cardId, 'realtime');
                 this.createAirIndexChart(airIndexChart, data.airIndexData || [], cardId);
-                this.updateAirIndexChart(cardId, data.airIndexData || [])
+                this.updateAirIndexChart(cardId, data.airIndexData || []);
             }, 200);
+        }
+    }
+
+    // endregion
+
+    // region Create Title Dropdown (Air Quality Index / Air Forecast Index)
+    private createTitleDropdown(cardId: string): HTMLElement {
+        const ddWrap = this.createElement('div', 'relative');
+        const ddButton = this.createElement('button', 'inline-flex items-center gap-1 font-bold text-[14px] hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1 rounded') as HTMLButtonElement;
+        ddButton.id = `${cardId}-titleDropdownButton`;
+        ddButton.type = 'button';
+        ddButton.innerHTML = `
+            <span class="titleText">Air Quality Index</span>
+            <svg class="w-3 h-3" aria-hidden="true" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
+            </svg>
+        `;
+
+        const ddMenu = this.createElement('div', 'z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-52 dark:bg-gray-700') as HTMLDivElement;
+        ddMenu.id = `${cardId}-titleDropdownMenu`;
+
+        const menuList = document.createElement('ul');
+        menuList.className = 'py-2 text-sm text-gray-700 dark:text-gray-200';
+
+        // Initialize Flowbite dropdown first
+        const dropdownOptions: DropdownOptions = {
+            placement: 'bottom-start',
+            triggerType: 'click',
+            offsetDistance: 8,
+        };
+
+        const instanceOptions: InstanceOptions = {
+            id: ddMenu.id,
+            override: true
+        };
+
+        const dropdown: DropdownInterface = new Dropdown(ddMenu, ddButton, dropdownOptions, instanceOptions);
+
+        const makeItem = (label: string, value: 'realtime' | 'forecast') => {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = '#';
+            a.className = 'block px-4 py-2 text-[12px] hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white';
+            a.textContent = label;
+            a.addEventListener('click', async (e) => {
+                e.preventDefault();
+
+                // Update text
+                const titleText = ddButton.querySelector('.titleText');
+                if (titleText) {
+                    titleText.textContent = label;
+                }
+
+                // Close dropdown immediately
+                dropdown.hide();
+
+                // Switch mode
+                await this.switchDataMode(cardId, value);
+            });
+            li.appendChild(a);
+            return li;
+        };
+
+        menuList.appendChild(makeItem('Air Quality Index', 'realtime'));
+
+        if (this.options.enableForecast) {
+            menuList.appendChild(makeItem('Air Forecast Index', 'forecast'));
+        }
+
+        ddMenu.appendChild(menuList);
+        ddWrap.appendChild(ddButton);
+        ddWrap.appendChild(ddMenu);
+
+        return ddWrap;
+    }
+    // endregion
+
+    // region Create Source Dropdown (Based on TSP / Based on PM2.5/PM10)
+    private createSourceDropdown(cardId: string): HTMLElement {
+        const ddWrap = this.createElement('div', 'relative source-dropdown-wrap');
+        const ddButton = this.createElement('button', 'inline-flex items-center gap-1 text-xs hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1 rounded border') as HTMLButtonElement;
+        ddButton.id = `${cardId}-sourceDropdownButton`;
+        ddButton.type = 'button';
+        ddButton.innerHTML = `
+            <span class="sourceText">Based on TSP</span>
+            <svg class="w-3 h-3" aria-hidden="true" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
+            </svg>
+        `;
+
+        const ddMenu = this.createElement('div', 'z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700') as HTMLDivElement;
+        ddMenu.id = `${cardId}-sourceDropdownMenu`;
+
+        const menuList = document.createElement('ul');
+        menuList.className = 'py-2 text-sm text-gray-700 dark:text-gray-200';
+
+        // Initialize Flowbite dropdown first
+        const dropdownOptions: DropdownOptions = {
+            placement: 'bottom-end',
+            triggerType: 'click',
+            offsetDistance: 8,
+        };
+
+        const instanceOptions: InstanceOptions = {
+            id: ddMenu.id,
+            override: true
+        };
+
+        const dropdown: DropdownInterface = new Dropdown(ddMenu, ddButton, dropdownOptions, instanceOptions);
+
+        const makeItem = (label: string, value: 'pm25_pm10' | 'tsp') => {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = '#';
+            a.className = 'block px-4 py-2 text-[12px] hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white';
+            a.textContent = label;
+            a.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                // Update text
+                const subText = ddButton.querySelector('.sourceText');
+                if (subText) {
+                    subText.textContent = value === 'pm25_pm10' ? 'Based on PM 2.5 / PM 10' : 'Based on TSP';
+                }
+
+                // Close dropdown immediately
+                dropdown.hide();
+
+                // Filter source
+                this.filterAirIndexSource(cardId, value);
+            });
+            li.appendChild(a);
+            return li;
+        };
+
+        menuList.appendChild(makeItem('PM 2.5 / PM 10', 'pm25_pm10'));
+        menuList.appendChild(makeItem('TSP', 'tsp'));
+        ddMenu.appendChild(menuList);
+
+        ddWrap.appendChild(ddButton);
+        ddWrap.appendChild(ddMenu);
+
+        return ddWrap;
+    }
+    // endregion
+
+    // region Switch Data Mode (Realtime vs Forecast)
+    private async switchDataMode(cardId: string, mode: 'realtime' | 'forecast'): Promise<void> {
+        this.currentDataMode.set(cardId, mode);
+
+        const platform = this.platforms.find(p => `card-${p.uid}-${this.getPlatformIndex(p.uid)}` === cardId);
+        if (!platform) return;
+
+        // Get elements
+        const cardElement = document.getElementById(cardId);
+        const sourceDropdownWrap = cardElement?.querySelector('.source-dropdown-wrap') as HTMLElement;
+        const chartElement = cardElement?.querySelector(`#${cardId}-airIndex`) as HTMLElement;
+
+        // Show skeleton on chart
+        if (chartElement) {
+            this.showChartSkeleton(cardElement, cardId);
+        }
+
+        if (mode === 'forecast') {
+            // Hide source dropdown when forecast mode
+            if (sourceDropdownWrap) {
+                sourceDropdownWrap.style.display = 'none';
+            }
+
+            // Load forecast if not cached
+            if (!this.forecastCache.has(platform.uid)) {
+                await this.loadPlatformForecast(platform.uid);
+            }
+
+            const forecastData = this.forecastCache.get(platform.uid) || [];
+
+            // Remove skeleton and update chart
+            setTimeout(() => {
+                this.removeChartSkeleton(cardElement, cardId);
+                this.updateAirIndexChart(cardId, forecastData);
+            }, 500); // Small delay to show loading effect
+
+            console.log(`🔮 Switched ${cardId} to forecast mode`);
+        } else {
+            // Show source dropdown when realtime mode
+            if (sourceDropdownWrap) {
+                sourceDropdownWrap.style.display = 'block';
+            }
+
+            // Use realtime data
+            const realtimeData = platform.data?.airIndexData || [];
+
+            // Remove skeleton and update chart
+            setTimeout(() => {
+                this.removeChartSkeleton(cardElement, cardId);
+                this.updateAirIndexChart(cardId, realtimeData);
+            }, 500);
+
+            console.log(`📊 Switched ${cardId} to realtime mode`);
+        }
+    }
+    // endregion
+
+    // region Show Chart Skeleton
+    private showChartSkeleton(cardElement: HTMLElement, cardId: string): void {
+        const chartElement = cardElement?.querySelector(`#${cardId}-airIndex`) as HTMLElement;
+        if (!chartElement) return;
+
+        // Hide chart
+        chartElement.style.display = 'none';
+
+        // Create skeleton
+        const skeleton = this.createElement('div', 'skeleton-box w-full h-32 bg-gray-200 animate-pulse rounded chart-skeleton');
+
+        // Insert skeleton after chart
+        chartElement.parentNode?.insertBefore(skeleton, chartElement.nextSibling);
+    }
+    // endregion
+
+    // region Remove Chart Skeleton
+    private removeChartSkeleton(cardElement: HTMLElement, cardId: string): void {
+        const skeleton = cardElement?.querySelector('.chart-skeleton');
+        const chartElement = cardElement?.querySelector(`#${cardId}-airIndex`) as HTMLElement;
+
+        if (skeleton) {
+            skeleton.remove();
+        }
+
+        if (chartElement) {
+            chartElement.style.display = 'block';
         }
     }
     // endregion
@@ -813,6 +1064,7 @@ class PlatformSkeletonManager {
             skeletonLastUpdated.parentNode?.replaceChild(lastUpdatedDiv, skeletonLastUpdated);
         }
     }
+
     // endregion
 
     //region Handle Convert Card to Skeleton
@@ -875,6 +1127,7 @@ class PlatformSkeletonManager {
             this.chartInstances.delete(key);
         });
     }
+
     //endregion
 
     //region Handle Convert All Card to Skeleton
@@ -887,6 +1140,7 @@ class PlatformSkeletonManager {
             }
         });
     }
+
     //endregion
 
     // region Update Card To Error State
@@ -903,6 +1157,7 @@ class PlatformSkeletonManager {
 
         console.log(`❌ Updated card ${uid} to error state: ${errorMessage}`);
     }
+
     // endregion
 
     //region Kondisi apakah Realtime Update harus di Enable?
@@ -930,6 +1185,7 @@ class PlatformSkeletonManager {
 
         return isToday;
     }
+
     //endregion
 
     // region Start Real Time Updates
@@ -975,6 +1231,7 @@ class PlatformSkeletonManager {
         this.isRealTimeActive = true;
         this.realTimeInterval = window.setInterval(updateData, this.options.realTimeUpdateInterval);
     }
+
     // endregion
 
     // region Stop Real Time Updates
@@ -986,6 +1243,7 @@ class PlatformSkeletonManager {
             console.log('⏹️ Real-time updates stopped');
         }
     }
+
     // endregion
 
     //region Handle URL Change
@@ -998,6 +1256,7 @@ class PlatformSkeletonManager {
             this.startRealTimeUpdates();
         }, 500);
     }
+
     //endregion
 
     // region Initialize Socket IO
@@ -1068,6 +1327,7 @@ class PlatformSkeletonManager {
             this.updateConnectionStatus('error');
         }
     }
+
     // endregion
 
     // region Handle Logger Data Update
@@ -1123,6 +1383,7 @@ class PlatformSkeletonManager {
 
         console.log(`📊 Updated platform ${loggerData.uid} with real-time logger data`);
     }
+
     // endregion
 
     // region Handle Bulk Data Update
@@ -1147,6 +1408,7 @@ class PlatformSkeletonManager {
 
         console.log(`📊 Bulk updated ${bulkData.length} platforms`);
     }
+
     // endregion
 
     // region Update Station Status
@@ -1161,6 +1423,7 @@ class PlatformSkeletonManager {
             this.updateCardUI(uid, oldData, platform.data);
         }
     }
+
     // endregion
 
     // region Update Card UI
@@ -1171,7 +1434,7 @@ class PlatformSkeletonManager {
             return;
         }
 
-        console.log(`🎨 Updating card UI for ${uid}`, { oldData, newData });
+        console.log(`🎨 Updating card UI for ${uid}`, {oldData, newData});
 
         // Update status if changed
         if (oldData.status !== newData.status) {
@@ -1260,6 +1523,7 @@ class PlatformSkeletonManager {
             }
         }
     }
+
     // endregion
 
     // region Update Status Badge
@@ -1276,6 +1540,7 @@ class PlatformSkeletonManager {
         // Update color classes
         badge.className = badge.className.replace(/bg-\w+-\d+/g, data.colorCode || 'bg-green-200');
     }
+
     // endregion
 
     // region Update Online Status
@@ -1291,6 +1556,7 @@ class PlatformSkeletonManager {
             text.textContent = isOnline ? 'Online' : 'Offline';
         }
     }
+
     // endregion
 
     // region Update Connection Status
@@ -1303,12 +1569,14 @@ class PlatformSkeletonManager {
 
         console.log(`🔗 Connection status: ${status}`);
     }
+
     // endregion
 
     // region Get Platform Index
     private getPlatformIndex(uid: string): number {
         return this.platforms.findIndex(platform => platform.uid === uid);
     }
+
     // endregion
 
     // region Create Element
@@ -1318,6 +1586,7 @@ class PlatformSkeletonManager {
         if (textContent) element.textContent = textContent;
         return element;
     }
+
     // endregion
 
     // region Show No Data
@@ -1336,6 +1605,7 @@ class PlatformSkeletonManager {
         this.container.innerHTML = '';
         this.container.appendChild(noDataElement);
     }
+
     // endregion
 
     // region Show Error
@@ -1362,6 +1632,7 @@ class PlatformSkeletonManager {
         this.container.innerHTML = '';
         this.container.appendChild(errorElement);
     }
+
     // endregion
 
     // region Chart Creation and Update Methods (Same as original AirQualityCardManager)
@@ -1743,6 +2014,7 @@ class PlatformSkeletonManager {
 
         if (chart && chart.series && chart.series[0]) {
             const currentSource = this.currentAQISource.get(cardId) || 'tsp';
+            const currentMode = this.currentDataMode.get(cardId) || 'realtime';
 
             const chartData = airIndexData.map((item, index) => {
                 const markerColor = this.getAQIColor(item.value);
@@ -1751,7 +2023,14 @@ class PlatformSkeletonManager {
                 const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.timestamp * 1000);
                 const aqiFrom = currentSource === 'tsp' ? `TSP: ${item.tsp} µg/m³` : item.aqi_from;
 
-                console.log('xxxx', currentSource)
+                let aqiFromText = '';
+                if (currentMode === 'forecast') {
+                    // For forecast mode, use dominant pollutant info
+                    aqiFromText = item.aqi_from || 'PM2.5';
+                } else {
+                    // For realtime mode, use existing logic
+                    aqiFromText = currentSource === 'tsp' ? `TSP: ${item.tsp} µg/m³` : item.aqi_from;
+                }
 
                 if (linkVideoPoint.linkVideoRecorded) {
                     if (currentSource === 'tsp') {
@@ -1759,7 +2038,7 @@ class PlatformSkeletonManager {
                             x: item.timestamp * 1000,
                             y: item.value_tsp,
                             timestamp: item.timestamp,
-                            aqi_from: aqiFrom,
+                            aqi_from: aqiFromText,
                             marker: (isHighValue && linkVideoPoint.linkVideoRecorded) ? {
                                 enabled: true,
                                 radius: 6,
@@ -1795,7 +2074,7 @@ class PlatformSkeletonManager {
                             x: item.timestamp * 1000,
                             y: currentSource === 'pm25_pm10' ? item.value : item.value_tsp,
                             timestamp: item.timestamp,
-                            aqi_from: aqiFrom,
+                            aqi_from: aqiFromText,
                             marker: {
                                 enabled: false,
                                 radius: 0
@@ -1807,7 +2086,7 @@ class PlatformSkeletonManager {
                         x: item.timestamp * 1000,
                         y: currentSource === 'pm25_pm10' ? item.value : item.value_tsp,
                         timestamp: item.timestamp,
-                        aqi_from: aqiFrom,
+                        aqi_from: aqiFromText,
                         marker: {
                             enabled: false,
                             radius: 0
@@ -1848,6 +2127,7 @@ class PlatformSkeletonManager {
             linkVideoRecorded: cardDataPoint?.link_video_recorded
         };
     }
+
     // endregion
 
     private filterAirIndexSource(cardId: string, sourceType: 'pm25_pm10' | 'tsp'): void {
@@ -1987,6 +2267,7 @@ class PlatformSkeletonManager {
             return 'Invalid Date';
         }
     }
+
     // endregion
 
     // region Public API Methods
@@ -2149,6 +2430,7 @@ class PlatformSkeletonManager {
 
         console.log('✅ Platform Skeleton Manager destroyed');
     }
+
     // endregion
 }
 

@@ -5,7 +5,7 @@
             <div class="relative !h-[calc(100vh/2)] overflow-hidden">
                 <div class="absolute inset-0 bg-sky-200/60 z-10"></div>
                 <img src="{{ asset('images/bg-dashboard.png') }}" alt="bg"
-                    class="absolute h-[95%] w-auto right-0 bottom-0 object-contain">
+                        class="absolute h-[95%] w-auto right-0 bottom-0 object-contain">
             </div>
         </div>
 
@@ -37,14 +37,14 @@
             </div>
         </div>
 
-        @include('main.dashboard.popup.cctv')
-        @include('main.dashboard.popup.cctv-record')
-        @include('main.dashboard.popup.detail-parameter')
-        @include('main.dashboard.popup.heartbeat-status')
-        @include('main.dashboard.popup.platform-report')
-        @include('main.dashboard.popup.maps')
-        @include('main.dashboard.popup.pencarian')
+        @include('main.be-aqms.dashboard.popup.cctv')
+        @include('main.be-aqms.dashboard.popup.cctv-record')
+        @include('main.be-aqms.dashboard.popup.detail-parameter')
+        @include('main.be-aqms.dashboard.popup.heartbeat-status')
+        @include('main.be-aqms.dashboard.popup.platform-report')
+        @include('main.be-aqms.dashboard.popup.maps')
+        @include('main.be-aqms.dashboard.popup.pencarian')
     </div>
 </x-app-layout>
 
-@vite(['resources/js/main/dashboard/index.tsx'])
+@vite(['resources/js/main/be-aqms/dashboard/index.tsx'])

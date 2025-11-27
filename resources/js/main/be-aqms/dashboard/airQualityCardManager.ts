@@ -4,7 +4,7 @@ import "highcharts/modules/solid-gauge";
 import "highcharts/modules/no-data-to-display";
 import {io, Socket} from 'socket.io-client';
 import {SocketClient, SocketEventCallbacks, SocketOptions} from "@/js/plugins/SocketClient";
-import {createSmoothGradient} from "@/js/main/dashboard/chartHelper";
+import {createSmoothGradient} from "@/js/main/be-aqms/dashboard/chartHelper";
 import {Dropdown} from 'flowbite';
 import type {DropdownOptions, DropdownInterface} from 'flowbite';
 import type {InstanceOptions} from 'flowbite';

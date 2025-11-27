@@ -22,7 +22,7 @@
         protected string $viewPath;
 
         public function __construct() {
-            $this->viewPath = 'main.dashboard';
+            $this->viewPath = 'main.be-aqms.dashboard';
         }
 
         // region Index
