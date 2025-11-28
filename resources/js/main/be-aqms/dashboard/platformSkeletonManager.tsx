@@ -505,6 +505,7 @@ class PlatformSkeletonManager {
             console.error(`❌ Error loading forecast for ${uid}:`, error);
         }
     }
+
     //endregion
 
     // region Create Skeleton Card
@@ -889,6 +890,7 @@ class PlatformSkeletonManager {
 
         return ddWrap;
     }
+
     // endregion
 
     // region Create Source Dropdown (Based on TSP / Based on PM2.5/PM10)
@@ -958,6 +960,7 @@ class PlatformSkeletonManager {
 
         return ddWrap;
     }
+
     // endregion
 
     // region Switch Data Mode (Realtime vs Forecast)
@@ -1015,6 +1018,7 @@ class PlatformSkeletonManager {
             console.log(`📊 Switched ${cardId} to realtime mode`);
         }
     }
+
     // endregion
 
     // region Show Chart Skeleton
@@ -1031,6 +1035,7 @@ class PlatformSkeletonManager {
         // Insert skeleton after chart
         chartElement.parentNode?.insertBefore(skeleton, chartElement.nextSibling);
     }
+
     // endregion
 
     // region Remove Chart Skeleton
@@ -1046,6 +1051,7 @@ class PlatformSkeletonManager {
             chartElement.style.display = 'block';
         }
     }
+
     // endregion
 
     // region Update Last Updated From Skeleton
@@ -1386,6 +1392,7 @@ class PlatformSkeletonManager {
 
         console.log(`📊 Updated platform ${loggerData.uid} with real-time logger data (mode: ${currentMode})`);
     }
+
     // endregion
 
     // region Handle Bulk Data Update
@@ -1426,6 +1433,7 @@ class PlatformSkeletonManager {
 
         console.log(`📊 Bulk updated ${bulkData.length} platforms`);
     }
+
     // endregion
 
     // region Update Station Status
@@ -1454,7 +1462,7 @@ class PlatformSkeletonManager {
         const cardId = `card-${uid}-${this.getPlatformIndex(uid)}`;
         const currentMode = this.currentDataMode.get(cardId) || 'realtime';
 
-        console.log(`🎨 Updating card UI for ${uid}`, { oldData, newData, currentMode });
+        console.log(`🎨 Updating card UI for ${uid}`, {oldData, newData, currentMode});
 
         // Update status if changed
         if (oldData.status !== newData.status) {
@@ -1855,6 +1863,7 @@ class PlatformSkeletonManager {
         pm10: number;
         tsp: number;
         aqi_from: string;
+        category?: string;
     }>, cardId: string): void {
         if (!this.options.enableCharts || typeof Highcharts === 'undefined') {
             return;
@@ -1867,6 +1876,7 @@ class PlatformSkeletonManager {
 
         // Default Metric Data TSP
         const currentSource = this.currentAQISource.get(cardId) || 'tsp';
+        const currentMode = this.currentDataMode.get(cardId) || 'realtime';
 
         const processedData = data.map(item => {
             const aqiValue = currentSource === 'pm25_pm10' ? item.value : item.value_tsp;
@@ -1882,6 +1892,7 @@ class PlatformSkeletonManager {
                     symbol: 'circle'
                 },
                 aqi_from: currentSource === 'tsp' ? `TSP: ${item.tsp} µg/m³` : item.aqi_from,
+                category: item.category ?? 'Unknown'
             };
         });
 
@@ -1971,12 +1982,17 @@ class PlatformSkeletonManager {
                 shadow: true,
                 style: {fontSize: '12px'},
                 formatter: function () {
-                    const {aqi_from} = this as any;
+                    const {aqi_from, options} = this as any;
                     const timestampMs = this.x;
                     const timestampSeconds = timestampMs / 1000;
                     const formattedTime = managerInstance.safeFormatTimestamp(timestampSeconds, 'datetime', platformTimezone, platformLocale, true);
                     const timezoneShort = platformTimezone.split('/')[1] || platformTimezone;
-                    return `<b>Time (${timezoneShort}):</b> ${formattedTime}<br><b>AQI:</b> ${this.y} (${aqi_from})`;
+
+                    if (currentMode === 'realtime') {
+                        return `<b>Time (${timezoneShort}):</b> ${formattedTime}<br><b>AQI:</b> ${this.y} (${aqi_from})`;
+                    } else {
+                        return `<b>Time (${timezoneShort}):</b> ${formattedTime}<br><b>AQI:</b> ${this.y} (${aqi_from})<br>${options.category}`;
+                    }
                 }
             },
             plotOptions: {
@@ -2043,6 +2059,7 @@ class PlatformSkeletonManager {
         tsp: number;
         aqi_from: string;
         link_video_recorded?: string;
+        category?: string;
     }>): void {
         const chartKey = `${cardId}-airIndex`;
         const chart = this.chartInstances.get(chartKey);
@@ -2051,12 +2068,17 @@ class PlatformSkeletonManager {
             const currentSource = this.currentAQISource.get(cardId) || 'tsp';
             const currentMode = this.currentDataMode.get(cardId) || 'realtime';
 
+            // ✅ Simpan reference untuk digunakan di formatter
+            const managerInstance = this;
+            const platform = this.platforms.find(p => `card-${p.uid}-${this.getPlatformIndex(p.uid)}` === cardId);
+            const platformTimezone = platform?.timezone || 'Asia/Jakarta';
+            const platformLocale = platform?.locale || 'id-ID';
+
             const chartData = airIndexData.map((item, index) => {
                 const markerColor = this.getAQIColor(item.value);
                 const isLastPoint = index === airIndexData.length - 1;
                 const isHighValue = item.value > 50;
                 const linkVideoPoint = this.getVideoLinkForPoint(cardId, item.timestamp * 1000);
-                const aqiFrom = currentSource === 'tsp' ? `TSP: ${item.tsp} µg/m³` : item.aqi_from;
 
                 let aqiFromText = '';
                 if (currentMode === 'forecast') {
@@ -2074,6 +2096,7 @@ class PlatformSkeletonManager {
                             y: item.value_tsp,
                             timestamp: item.timestamp,
                             aqi_from: aqiFromText,
+                            category: item.category ?? 'Unknown',
                             marker: (isHighValue && linkVideoPoint.linkVideoRecorded) ? {
                                 enabled: true,
                                 radius: 6,
@@ -2110,6 +2133,7 @@ class PlatformSkeletonManager {
                             y: currentSource === 'pm25_pm10' ? item.value : item.value_tsp,
                             timestamp: item.timestamp,
                             aqi_from: aqiFromText,
+                            category: item.category ?? 'Unknown',
                             marker: {
                                 enabled: false,
                                 radius: 0
@@ -2122,6 +2146,7 @@ class PlatformSkeletonManager {
                         y: currentSource === 'pm25_pm10' ? item.value : item.value_tsp,
                         timestamp: item.timestamp,
                         aqi_from: aqiFromText,
+                        category: item.category ?? 'Unknown',
                         marker: {
                             enabled: false,
                             radius: 0
@@ -2135,15 +2160,7 @@ class PlatformSkeletonManager {
             const maxY = Math.max(100, Math.max(...yValues));
             const newGradient = createSmoothGradient(minY, maxY);
 
-            const series = chart.series[0];
-            series.update({
-                name: currentSource === 'pm25_pm10' ? 'AQI (PM2.5/PM10)' : 'AQI (TSP)',
-                data: chartData,
-                fillColor: newGradient
-            }, true);
-
-            chart.yAxis[0].setExtremes(minY, maxY, true);
-
+            // ✅ Update tickInterval
             let newTickInterval = 3600 * 1000; // Default 1 jam
             if (chartData.length > 0) {
                 const timestamps = chartData.map(point => point.x).sort((a, b) => a - b);
@@ -2152,9 +2169,65 @@ class PlatformSkeletonManager {
                 newTickInterval = this.getTickIntervalByDuration(startTime, endTime);
             }
 
-            chart.xAxis[0].update({
-                tickInterval: newTickInterval
-            }, true);
+            const seriesName = currentMode === 'forecast'
+                    ? 'AQI Forecast'
+                    : (currentSource === 'pm25_pm10' ? 'AQI (PM2.5/PM10)' : 'AQI (TSP)');
+
+            // ✅ Update chart dengan satu kali redraw
+            chart.update({
+                tooltip: {
+                    backgroundColor: 'white',
+                    borderWidth: 0,
+                    borderRadius: 8,
+                    shadow: true,
+                    style: { fontSize: '12px' },
+                    formatter: function () {
+                        const point = this as any;
+                        const timestampMs = this.x;
+                        const timestampSeconds = timestampMs / 1000;
+                        const formattedTime = managerInstance.safeFormatTimestamp(
+                                timestampSeconds,
+                                'datetime',
+                                platformTimezone,
+                                platformLocale,
+                                true
+                        );
+                        const timezoneShort = platformTimezone.split('/')[1] || platformTimezone;
+
+                        // Build tooltip content
+                        let tooltipContent = `<b>Time (${timezoneShort}):</b> ${formattedTime}<br>`;
+                        tooltipContent += `<b>AQI:</b> ${this.y}`;
+
+                        // Add pollutant info
+                        if (point.aqi_from) {
+                            tooltipContent += ` (${point.aqi_from})`;
+                        }
+
+                        // Add category if in forecast mode
+                        if (currentMode === 'forecast' && point.options) {
+                            tooltipContent += `<br><b>Category:</b> ${point.options.category}`;
+                        }
+
+                        return tooltipContent;
+                    }
+                },
+                xAxis: {
+                    tickInterval: newTickInterval
+                }
+            }, false); // false = jangan redraw dulu
+
+            // Update series
+            const series = chart.series[0];
+            series.update({
+                name: seriesName,
+                data: chartData,
+                fillColor: newGradient
+            }, false); // false = jangan redraw dulu
+
+            // Update yAxis
+            chart.yAxis[0].setExtremes(minY, maxY, false); // false = jangan redraw dulu
+
+            chart.redraw();
         }
     }
 
