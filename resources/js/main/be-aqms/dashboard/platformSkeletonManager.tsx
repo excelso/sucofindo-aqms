@@ -826,7 +826,7 @@ class PlatformSkeletonManager {
         ddButton.id = `${cardId}-titleDropdownButton`;
         ddButton.type = 'button';
         ddButton.innerHTML = `
-            <span class="titleText">Air Quality Index</span>
+            <span class="titleText">AQI Realtime</span>
             <svg class="w-3 h-3" aria-hidden="true" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
             </svg>
@@ -877,10 +877,10 @@ class PlatformSkeletonManager {
             return li;
         };
 
-        menuList.appendChild(makeItem('Air Quality Index', 'realtime'));
+        menuList.appendChild(makeItem('AQI Realtime', 'realtime'));
 
         if (this.options.enableForecast) {
-            menuList.appendChild(makeItem('Air Forecast Index', 'forecast'));
+            menuList.appendChild(makeItem('AQI Forecast', 'forecast'));
         }
 
         ddMenu.appendChild(menuList);
@@ -1338,6 +1338,9 @@ class PlatformSkeletonManager {
             return;
         }
 
+        const cardId = `card-${loggerData.uid}-${this.getPlatformIndex(loggerData.uid)}`;
+        const currentMode = this.currentDataMode.get(cardId) || 'realtime';
+
         const oldData = {...platform.data};
 
         // Update metrics
@@ -1363,8 +1366,8 @@ class PlatformSkeletonManager {
             };
         }
 
-        // Update air index data if provided
-        if (loggerData.airIndexData) {
+        // Update air index data if provided (only for realtime mode)
+        if (loggerData.airIndexData && currentMode === 'realtime') {
             platform.data.airIndexData = loggerData.airIndexData;
         }
 
@@ -1381,9 +1384,8 @@ class PlatformSkeletonManager {
             this.options.onDataUpdate(this.platforms);
         }
 
-        console.log(`📊 Updated platform ${loggerData.uid} with real-time logger data`);
+        console.log(`📊 Updated platform ${loggerData.uid} with real-time logger data (mode: ${currentMode})`);
     }
-
     // endregion
 
     // region Handle Bulk Data Update
@@ -1391,11 +1393,27 @@ class PlatformSkeletonManager {
         bulkData.forEach(newData => {
             const platform = this.platforms.find(p => p.uid === newData.uid);
             if (platform && platform.data) {
+                const cardId = `card-${newData.uid}-${this.getPlatformIndex(newData.uid)}`;
+                const currentMode = this.currentDataMode.get(cardId) || 'realtime';
+
                 const oldData = {...platform.data};
-                platform.data = {
-                    ...newData,
-                    lastUpdated: newData.lastUpdated ? new Date(newData.lastUpdated) : new Date()
-                };
+
+                // ✅ TAMBAHAN: Preserve airIndexData jika dalam forecast mode
+                if (currentMode === 'forecast') {
+                    // Simpan data forecast yang sedang ditampilkan
+                    const preservedAirIndexData = platform.data.airIndexData;
+
+                    platform.data = {
+                        ...newData,
+                        airIndexData: preservedAirIndexData, // Keep forecast data
+                        lastUpdated: newData.lastUpdated ? new Date(newData.lastUpdated) : new Date()
+                    };
+                } else {
+                    platform.data = {
+                        ...newData,
+                        lastUpdated: newData.lastUpdated ? new Date(newData.lastUpdated) : new Date()
+                    };
+                }
 
                 this.dataCache.set(newData.uid, platform.data);
                 this.updateCardUI(newData.uid, oldData, platform.data);
@@ -1408,7 +1426,6 @@ class PlatformSkeletonManager {
 
         console.log(`📊 Bulk updated ${bulkData.length} platforms`);
     }
-
     // endregion
 
     // region Update Station Status
@@ -1434,7 +1451,10 @@ class PlatformSkeletonManager {
             return;
         }
 
-        console.log(`🎨 Updating card UI for ${uid}`, {oldData, newData});
+        const cardId = `card-${uid}-${this.getPlatformIndex(uid)}`;
+        const currentMode = this.currentDataMode.get(cardId) || 'realtime';
+
+        console.log(`🎨 Updating card UI for ${uid}`, { oldData, newData, currentMode });
 
         // Update status if changed
         if (oldData.status !== newData.status) {
@@ -1448,8 +1468,6 @@ class PlatformSkeletonManager {
 
         // Update metrics if changed - check each metric individually
         if (newData.metrics) {
-            const cardId = `card-${uid}-${this.getPlatformIndex(uid)}`;
-
             // Update PM2.5
             const oldPm25 = oldData.metrics?.pm25?.value;
             const newPm25 = newData.metrics?.pm25?.value;
@@ -1479,10 +1497,14 @@ class PlatformSkeletonManager {
             }
         }
 
-        // Update air index chart if data has changed
-        if (this.hasAirIndexDataChanged(oldData.airIndexData, newData.airIndexData)) {
-            const cardId = `card-${uid}-${this.getPlatformIndex(uid)}`;
-            this.updateAirIndexChart(cardId, newData.airIndexData || []);
+        // ✅ TAMBAHAN: Hanya update air index chart jika dalam mode realtime
+        if (currentMode === 'realtime') {
+            // Update air index chart if data has changed
+            if (this.hasAirIndexDataChanged(oldData.airIndexData, newData.airIndexData)) {
+                this.updateAirIndexChart(cardId, newData.airIndexData || []);
+            }
+        } else {
+            console.log(`⏸️ Skipping air index chart update for ${uid} - currently in forecast mode`);
         }
 
         // Update last updated time
