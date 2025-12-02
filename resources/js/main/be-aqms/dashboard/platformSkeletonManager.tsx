@@ -197,6 +197,7 @@ class PlatformSkeletonManager {
 
     private currentDataMode: Map<string, 'realtime' | 'forecast'> = new Map();
     private forecastCache: Map<string, ForecastData[]> = new Map();
+    private currentForecastDays: Map<string, number> = new Map();
     // endregion
 
     // region Constructor
@@ -479,7 +480,7 @@ class PlatformSkeletonManager {
     // endregion
 
     //region Handle Load Platform Forecast
-    private async loadPlatformForecast(uid: string): Promise<void> {
+    private async loadPlatformForecast(uid: string, days: number = 3): Promise<void> {
         if (!this.options.apiEndpointForecast) {
             console.warn('apiEndpointForecast is not configured');
             return;
@@ -487,7 +488,9 @@ class PlatformSkeletonManager {
 
         try {
             const endpoint = this.options.apiEndpointForecast.replace('{uid}', uid);
-            const response = await fetch(endpoint);
+            const url = `${endpoint}?days=${days}`;
+
+            const response = await fetch(url);
 
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -499,13 +502,12 @@ class PlatformSkeletonManager {
             // Cache the forecast data
             this.forecastCache.set(uid, forecastData);
 
-            console.log(`✅ Loaded forecast data for ${uid}`);
+            console.log(`✅ Loaded ${days}-day forecast data for ${uid} (${forecastData.length} data points)`);
 
         } catch (error) {
             console.error(`❌ Error loading forecast for ${uid}:`, error);
         }
     }
-
     //endregion
 
     // region Create Skeleton Card
@@ -787,11 +789,20 @@ class PlatformSkeletonManager {
             // Left side - Title dropdown (Air Quality Index / Air Forecast Index)
             const titleDropdown = this.createTitleDropdown(cardId);
 
-            // Right side - Source dropdown (Based on TSP / Based on PM2.5/PM10)
+            // Right side container - untuk source dropdown dan forecast period dropdown
+            const rightContainer = this.createElement('div', 'flex items-center gap-2');
+
+            // Source dropdown (Based on TSP / Based on PM2.5/PM10)
             const sourceDropdown = this.createSourceDropdown(cardId);
 
+            // Forecast period dropdown (3 Day, 2 Day, 1 Day) - hidden by default
+            const forecastPeriodDropdown = this.createForecastPeriodDropdown(cardId);
+
+            rightContainer.appendChild(sourceDropdown);
+            rightContainer.appendChild(forecastPeriodDropdown);
+
             titleAndDropdownWrap.appendChild(titleDropdown);
-            titleAndDropdownWrap.appendChild(sourceDropdown);
+            titleAndDropdownWrap.appendChild(rightContainer);
 
             // Replace the skeleton subtitle with the new structure
             const airIndexSubTitle = skeletonDropdown.parentElement;
@@ -812,12 +823,12 @@ class PlatformSkeletonManager {
             setTimeout(() => {
                 this.currentAQISource.set(cardId, 'tsp');
                 this.currentDataMode.set(cardId, 'realtime');
+                this.currentForecastDays.set(cardId, 3); // ✅ Default 3 hari
                 this.createAirIndexChart(airIndexChart, data.airIndexData || [], cardId);
                 this.updateAirIndexChart(cardId, data.airIndexData || []);
             }, 200);
         }
     }
-
     // endregion
 
     // region Create Title Dropdown (Air Quality Index / Air Forecast Index)
@@ -963,6 +974,110 @@ class PlatformSkeletonManager {
 
     // endregion
 
+    // region Create Forecast Period Dropdown (3 Day, 2 Day, 1 Day)
+    private createForecastPeriodDropdown(cardId: string): HTMLElement {
+        const ddWrap = this.createElement('div', 'relative forecast-period-dropdown-wrap');
+        ddWrap.style.display = 'none'; // Hidden by default (shown in forecast mode)
+
+        const ddButton = this.createElement('button', 'inline-flex items-center gap-1 text-xs hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1 rounded border') as HTMLButtonElement;
+        ddButton.id = `${cardId}-forecastPeriodDropdownButton`;
+        ddButton.type = 'button';
+        ddButton.innerHTML = `
+            <span class="periodText">3 Day</span>
+            <svg class="w-3 h-3" aria-hidden="true" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
+            </svg>
+        `;
+
+        const ddMenu = this.createElement('div', 'z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-32 dark:bg-gray-700') as HTMLDivElement;
+        ddMenu.id = `${cardId}-forecastPeriodDropdownMenu`;
+
+        const menuList = document.createElement('ul');
+        menuList.className = 'py-2 text-sm text-gray-700 dark:text-gray-200';
+
+        // Initialize Flowbite dropdown
+        const dropdownOptions: DropdownOptions = {
+            placement: 'bottom-end',
+            triggerType: 'click',
+            offsetDistance: 8,
+        };
+
+        const instanceOptions: InstanceOptions = {
+            id: ddMenu.id,
+            override: true
+        };
+
+        const dropdown: DropdownInterface = new Dropdown(ddMenu, ddButton, dropdownOptions, instanceOptions);
+
+        const makeItem = (label: string, days: number) => {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = '#';
+            a.className = 'block px-4 py-2 text-[12px] hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white';
+            a.textContent = label;
+            a.addEventListener('click', async (e) => {
+                e.preventDefault();
+
+                // Update text
+                const periodText = ddButton.querySelector('.periodText');
+                if (periodText) {
+                    periodText.textContent = label;
+                }
+
+                // Close dropdown immediately
+                dropdown.hide();
+
+                // Update forecast dengan days baru
+                await this.changeForecastPeriod(cardId, days);
+            });
+            li.appendChild(a);
+            return li;
+        };
+
+        menuList.appendChild(makeItem('3 Day', 3));
+        menuList.appendChild(makeItem('2 Day', 2));
+        menuList.appendChild(makeItem('1 Day', 1));
+
+        ddMenu.appendChild(menuList);
+        ddWrap.appendChild(ddButton);
+        ddWrap.appendChild(ddMenu);
+
+        return ddWrap;
+    }
+    // endregion
+
+    // region Change Forecast Period
+    private async changeForecastPeriod(cardId: string, days: number): Promise<void> {
+        this.currentForecastDays.set(cardId, days);
+
+        const platform = this.platforms.find(p => `card-${p.uid}-${this.getPlatformIndex(p.uid)}` === cardId);
+        if (!platform) return;
+
+        const cardElement = document.getElementById(cardId);
+
+        // Show skeleton
+        if (cardElement) {
+            this.showChartSkeleton(cardElement, cardId);
+        }
+
+        // Clear cached forecast untuk platform ini
+        this.forecastCache.delete(platform.uid);
+
+        // Load forecast dengan days baru
+        await this.loadPlatformForecast(platform.uid, days);
+
+        const forecastData = this.forecastCache.get(platform.uid) || [];
+
+        // Remove skeleton and update chart
+        setTimeout(() => {
+            this.removeChartSkeleton(cardElement, cardId);
+            this.updateAirIndexChart(cardId, forecastData);
+        }, 500);
+
+        console.log(`📅 Changed forecast period for ${cardId} to ${days} days`);
+    }
+    // endregion
+
     // region Switch Data Mode (Realtime vs Forecast)
     private async switchDataMode(cardId: string, mode: 'realtime' | 'forecast'): Promise<void> {
         this.currentDataMode.set(cardId, mode);
@@ -973,6 +1088,7 @@ class PlatformSkeletonManager {
         // Get elements
         const cardElement = document.getElementById(cardId);
         const sourceDropdownWrap = cardElement?.querySelector('.source-dropdown-wrap') as HTMLElement;
+        const forecastPeriodDropdownWrap = cardElement?.querySelector('.forecast-period-dropdown-wrap') as HTMLElement;
         const chartElement = cardElement?.querySelector(`#${cardId}-airIndex`) as HTMLElement;
 
         // Show skeleton on chart
@@ -981,14 +1097,21 @@ class PlatformSkeletonManager {
         }
 
         if (mode === 'forecast') {
-            // Hide source dropdown when forecast mode
+            // Hide source dropdown, show forecast period dropdown
             if (sourceDropdownWrap) {
                 sourceDropdownWrap.style.display = 'none';
             }
+            if (forecastPeriodDropdownWrap) {
+                forecastPeriodDropdownWrap.style.display = 'block';
+            }
+
+            // Get current selected days (default 3)
+            const days = this.currentForecastDays.get(cardId) || 3;
 
             // Load forecast if not cached
+            const cacheKey = `${platform.uid}-${days}`;
             if (!this.forecastCache.has(platform.uid)) {
-                await this.loadPlatformForecast(platform.uid);
+                await this.loadPlatformForecast(platform.uid, days);
             }
 
             const forecastData = this.forecastCache.get(platform.uid) || [];
@@ -997,13 +1120,16 @@ class PlatformSkeletonManager {
             setTimeout(() => {
                 this.removeChartSkeleton(cardElement, cardId);
                 this.updateAirIndexChart(cardId, forecastData);
-            }, 500); // Small delay to show loading effect
+            }, 500);
 
-            console.log(`🔮 Switched ${cardId} to forecast mode`);
+            console.log(`🔮 Switched ${cardId} to forecast mode (${days} days)`);
         } else {
-            // Show source dropdown when realtime mode
+            // Show source dropdown, hide forecast period dropdown
             if (sourceDropdownWrap) {
                 sourceDropdownWrap.style.display = 'block';
+            }
+            if (forecastPeriodDropdownWrap) {
+                forecastPeriodDropdownWrap.style.display = 'none';
             }
 
             // Use realtime data
@@ -1018,7 +1144,6 @@ class PlatformSkeletonManager {
             console.log(`📊 Switched ${cardId} to realtime mode`);
         }
     }
-
     // endregion
 
     // region Show Chart Skeleton

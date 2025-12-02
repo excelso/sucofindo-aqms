@@ -315,8 +315,16 @@
                     ], 400);
                 }
 
-                // Get forecast data from Google API
-                $forecastData = $this->getGoogleAirQualityForecast($platform->lat, $platform->lng);
+                // Get days parameter (default 1, max 3)
+                $days = min((int)$request->input('days', 3), 3);
+
+                // Get forecast data from Google API with pagination
+                $forecastData = $this->getGoogleAirQualityForecast(
+                    $platform->lat,
+                    $platform->lng,
+                    $days,
+                    $platform->timezone
+                );
 
                 if (!$forecastData) {
                     return response()->json([
@@ -335,8 +343,10 @@
                     'locale' => 'en-US',
                     'lat' => $platform->lat,
                     'lng' => $platform->lng,
+                    'days' => $days,
                     'forecastData' => $formattedForecast,
-                    'source' => 'google_forecast'
+                    'source' => 'google_forecast',
+                    'totalDataPoints' => count($formattedForecast)
                 ]);
 
             } catch (Exception $e) {
@@ -352,14 +362,14 @@
         /**
          * Get forecast from Google Air Quality API
          */
-        private function getGoogleAirQualityForecast($lat, $lng) {
+        private function getGoogleAirQualityForecast($lat, $lng, $days = 1, $timezone = 'Asia/Makassar') {
             try {
                 $apiKey = env('GOOGLE_AIR_QUALITY_API_KEY', 'AIzaSyDEleaYlHD-fQ8CzpcWuBj3nbZbYFr7IZs');
                 $url = "https://airquality.googleapis.com/v1/forecast:lookup?key={$apiKey}";
 
-                $timezone = 'Asia/Makassar'; // Adjust based on platform timezone
+                // Calculate start and end time based on days parameter
                 $startTime = Carbon::now($timezone)->addDay()->format('Y-m-d\T00:00:00P');
-                $endTime = Carbon::now($timezone)->addDay()->format('Y-m-d\T23:59:00P');
+                $endTime = Carbon::now($timezone)->addDays($days)->format('Y-m-d\T23:59:00P');
 
                 $payload = [
                     'location' => [
@@ -382,20 +392,68 @@
                 ];
 
                 $client = new Client();
-                $response = $client->post($url, [
-                    'json' => $payload,
-                    'headers' => [
-                        'Content-Type' => 'application/json'
-                    ]
+                $allForecasts = [];
+                $pageToken = null;
+                $maxPages = 10; // Safety limit to prevent infinite loops
+                $currentPage = 0;
+
+                // Loop through all pages
+                do {
+                    $currentPage++;
+
+                    // Add pageToken to payload if exists
+                    if ($pageToken) {
+                        $payload['pageToken'] = $pageToken;
+                    }
+
+                    Log::info("Fetching Google Air Quality forecast page {$currentPage}", [
+                        'lat' => $lat,
+                        'lng' => $lng,
+                        'days' => $days,
+                        'hasPageToken' => !is_null($pageToken)
+                    ]);
+
+                    $response = $client->post($url, [
+                        'json' => $payload,
+                        'headers' => [
+                            'Content-Type' => 'application/json'
+                        ]
+                    ]);
+
+                    $data = json_decode($response->getBody()->getContents(), true);
+
+                    // Merge hourly forecasts
+                    if (isset($data['hourlyForecasts'])) {
+                        $allForecasts = array_merge($allForecasts, $data['hourlyForecasts']);
+                    }
+
+                    // Get next page token
+                    $pageToken = $data['nextPageToken'] ?? null;
+
+                    // Safety check
+                    if ($currentPage >= $maxPages) {
+                        Log::warning("Reached maximum page limit for Google Air Quality forecast");
+                        break;
+                    }
+
+                } while ($pageToken !== null);
+
+                Log::info("Google Air Quality forecast fetch completed", [
+                    'totalPages' => $currentPage,
+                    'totalForecasts' => count($allForecasts)
                 ]);
 
-                return json_decode($response->getBody()->getContents(), true);
+                // Return data with all forecasts
+                return [
+                    'hourlyForecasts' => $allForecasts,
+                    'regionCode' => $data['regionCode'] ?? 'id'
+                ];
 
             } catch (Exception $e) {
                 Log::error('Error fetching Google Air Quality forecast: ' . $e->getMessage());
                 return null;
             } catch (GuzzleException $e) {
-                Log::error('Error fetching Google Air Quality forecast: ' . $e->getMessage());
+                Log::error('GuzzleException fetching Google Air Quality forecast: ' . $e->getMessage());
                 return null;
             }
         }
