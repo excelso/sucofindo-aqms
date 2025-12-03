@@ -71,7 +71,9 @@
 
                 $dataCategories = [];
                 $data = [];
-                $totalDaysInWeeks = 0; // Tambahkan ini
+                $totalDaysInWeeks = 0;
+                $totalPersen = 0;
+                $totalWeek = 0;
 
                 foreach ($weekGroups as $week => $dates) {
                     $dataCategories[] = $week;
@@ -79,14 +81,15 @@
                     $totalSample = $dates['totalDays'] * 1440;
                     $dataEntry = Loggers::dataPercentageEntryWeekly($request->input('uid'), $dates['startDate'] . ' 00:00', $dates['untilDate'] . ' 23:59', $dataPlatform->timezone, $totalSample)->first();
                     $data[] = [
-                        'y' => round($dataEntry->percentage ?? 0, 2),
+                        'y' => round($dataEntry->percentage ?? 0),
                         'weekDetail' => [
                             'startDate' => $dates['startDate'],
                             'untilDate' => $dates['untilDate'],
                             'totalDays' => $dates['totalDays']
                         ]
                     ];
-
+                    $totalPersen += $dataEntry->percentage ?? 0;
+                    $totalWeek++;
                     $totalDaysInWeeks += $dates['daysInMonth'];
                 }
 
@@ -112,7 +115,7 @@
                     'x' => $startDateWeeks,
                     'y' => $untilDateWeeks,
                     'z' => $totalDaysInWeeks,
-                    'dataMonthly' => round($dataEntry->percentage ?? 0, 1),
+                    'dataMonthly' => round($totalPersen/$totalWeek ?? 0),
                     'responseTime' => Carbon::now()
                 ], 200, [], JSON_PRETTY_PRINT);
             } catch (Exception $exception) {
