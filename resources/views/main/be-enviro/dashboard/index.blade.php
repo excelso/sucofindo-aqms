@@ -119,9 +119,7 @@
                 </div>
             </div>
             <div class="border-t h-[1px]"></div>
-            <div class="px-4 py-3 h-[calc(100vh-12rem)] overflow-y-auto platformItems">
-
-            </div>
+            <div class="px-4 py-3 h-[calc(100vh-12rem)] overflow-y-auto platformItems"></div>
         </div>
 
         <div class="searchBox absolute top-[0.8rem] left-[6rem] z-10">
@@ -130,7 +128,7 @@
                     <div class="bg-white rounded-2xl border border-gray-200 ps-3 pe-2 py-2.5">
                         <div class="flex items-center gap-2 ">
                             <div class="ml-2">
-                                <i class="fas fa-search mt-[4px] !text-[20px] text-gray-600"></i>
+                                <i class="fas fa-search mt-[4px] !text-[18px] text-gray-600"></i>
                             </div>
                             <input type="text" class="searchInput bg-transparent w-full focus:ring-0 border-0 focus:border-0 text-[14px] px-0 py-1" placeholder="Search...">
                             <div class="cursor-pointer mr-2 searchLoader !hidden">
@@ -141,10 +139,19 @@
                             </div>
                         </div>
 
-                        <div class="absolute hidden left-0 right-0 mt-2 bg-white rounded-b-2xl border border-gray-200 gm-card overflow-hidden">
+                        <div class="absolute hidden left-0 right-0 mt-5 bg-white rounded-2xl border border-gray-200 gm-card overflow-hidden">
                             <!-- list -->
-                            <div id="resultsList" class="max-h-80 overflow-auto py-2">
-                                x
+                            <div id="resultsList" class="max-h-80 overflow-auto py-3 px-3">
+                                <div class="mb-2">
+                                    <div class="w-[40px] h-[40px] rounded-md">
+                                        <img class="w-[40px] h-[40px] object-cover rounded-md" src="https://placehold.co/40" alt="xx">
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="w-[40px] h-[40px] rounded-md">
+                                        <img class="w-[40px] h-[40px] object-cover rounded-md" src="https://placehold.co/40" alt="xx">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -212,9 +219,7 @@
                     </div>
                 </div>
                 <div class="h-[calc(100vh-11.8rem)]">
-                    <div class="right-nav-items h-[calc(100vh-11.8rem)] overflow-y-auto bodyPlatforms">
-
-                    </div>
+                    <div class="right-nav-items h-[calc(100vh-11.8rem)] overflow-y-auto bodyPlatforms"></div>
                 </div>
             </div>
         </div>
