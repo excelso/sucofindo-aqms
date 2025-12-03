@@ -71,7 +71,6 @@
 
                 $dataCategories = [];
                 $data = [];
-                $totalDaysInWeeks = 0;
                 $totalPersen = 0;
                 $totalWeek = 0;
 
@@ -90,31 +89,12 @@
                     ];
                     $totalPersen += $dataEntry->percentage ?? 0;
                     $totalWeek++;
-                    $totalDaysInWeeks += $dates['daysInMonth'];
                 }
-
-                // Ambil tanggal dari week pertama dan terakhir
-                $firstWeek = reset($weekGroups); // Ambil week pertama
-                $lastWeek = end($weekGroups);     // Ambil week terakhir
-
-                $startDateWeeks = $firstWeek['startDate'] . ' 00:00';
-                $untilDateWeeks = $lastWeek['untilDate'] . ' 23:59';
-
-                $dataEntry = Loggers::dataPercentageEntryMonthly(
-                    $request->input('uid'),
-                    $startDateWeeks,
-                    $untilDateWeeks,
-                    $dataPlatform->timezone,
-                    ($totalDaysInWeeks * 1440)
-                )->first();
 
                 return response()->json([
                     'message' => 'Load Successful!',
                     'dataCategories' => $dataCategories,
                     'data' => $data,
-                    'x' => $startDateWeeks,
-                    'y' => $untilDateWeeks,
-                    'z' => $totalDaysInWeeks,
                     'dataMonthly' => round($totalPersen/$totalWeek ?? 0),
                     'responseTime' => Carbon::now()
                 ], 200, [], JSON_PRETTY_PRINT);
@@ -140,6 +120,9 @@
                 $dataWeek = [];
                 $dataCategories = [];
                 $data = [];
+                $totalPersen = 0;
+                $totalWeek = 0;
+
                 foreach ($weekGroups as $week => $dates) {
                     $dataCategories[] = $week;
                     $dataWeek[] = $dates;
@@ -154,6 +137,9 @@
                             'totalDays' => $dates['totalDays']
                         ]
                     ];
+
+                    $totalPersen += $dataEntry->percentage ?? 0;
+                    $totalWeek++;
                 }
 
                 $startOfMonth = Carbon::createFromDate($request->input('year'), $request->input('month'), 1)->startOfMonth();
@@ -166,7 +152,7 @@
                     'dataWeek' => $dataWeek,
                     'dataCategories' => $dataCategories,
                     'data' => $data,
-                    'dataMonthly' => round($dataEntry->percentage ?? 0, 1),
+                    'dataMonthly' => round($totalPersen/$totalWeek ?? 0),
                     'responseTime' => Carbon::now()
                 ], 200, [], JSON_PRETTY_PRINT);
             } catch (Exception $exception) {
