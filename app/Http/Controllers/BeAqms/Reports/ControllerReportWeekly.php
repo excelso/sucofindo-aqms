@@ -109,6 +109,8 @@
                     'message' => 'Load Successful!',
                     'dataCategories' => $dataCategories,
                     'data' => $data,
+                    'x' => $startDateWeeks,
+                    'y' => $untilDateWeeks,
                     'dataMonthly' => round($dataEntry->percentage ?? 0, 1),
                     'responseTime' => Carbon::now()
                 ], 200, [], JSON_PRETTY_PRINT);
