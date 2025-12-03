@@ -71,6 +71,8 @@
 
                 $dataCategories = [];
                 $data = [];
+                $totalDaysInWeeks = 0; // Tambahkan ini
+
                 foreach ($weekGroups as $week => $dates) {
                     $dataCategories[] = $week;
 
@@ -84,12 +86,24 @@
                             'totalDays' => $dates['totalDays']
                         ]
                     ];
+
+                    $totalDaysInWeeks += $dates['daysInMonth'];
                 }
 
-                $startOfMonth = Carbon::createFromDate($request->input('year'), $request->input('month'), 1)->startOfMonth();
-                $untilOfMonth = Carbon::createFromDate($request->input('year'), $request->input('month'), 1)->endOfMonth();
-                $totalDays = $startOfMonth->diffInDays($untilOfMonth) + 1;
-                $dataEntry = Loggers::dataPercentageEntryMonthly($request->input('uid'), $startOfMonth->format('Y-m-d') . ' 00:00', $untilOfMonth->format('Y-m-d') . ' 23:59', $dataPlatform->timezone, ($totalDays * 1440))->first();
+                // Ambil tanggal dari week pertama dan terakhir
+                $firstWeek = reset($weekGroups); // Ambil week pertama
+                $lastWeek = end($weekGroups);     // Ambil week terakhir
+
+                $startDateWeeks = $firstWeek['startDate'] . ' 00:00';
+                $untilDateWeeks = $lastWeek['untilDate'] . ' 23:59';
+
+                $dataEntry = Loggers::dataPercentageEntryMonthly(
+                    $request->input('uid'),
+                    $startDateWeeks,
+                    $untilDateWeeks,
+                    $dataPlatform->timezone,
+                    ($totalDaysInWeeks * 1440) // Gunakan total days dari weeks
+                )->first();
 
                 return response()->json([
                     'message' => 'Load Successful!',
