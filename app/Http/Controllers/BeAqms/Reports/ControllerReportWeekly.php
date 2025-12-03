@@ -102,7 +102,7 @@
                     $startDateWeeks,
                     $untilDateWeeks,
                     $dataPlatform->timezone,
-                    ($totalDaysInWeeks * 1440) // Gunakan total days dari weeks
+                    ($totalDaysInWeeks * 1440)
                 )->first();
 
                 return response()->json([
@@ -111,6 +111,7 @@
                     'data' => $data,
                     'x' => $startDateWeeks,
                     'y' => $untilDateWeeks,
+                    'z' => $totalDaysInWeeks,
                     'dataMonthly' => round($dataEntry->percentage ?? 0, 1),
                     'responseTime' => Carbon::now()
                 ], 200, [], JSON_PRETTY_PRINT);
