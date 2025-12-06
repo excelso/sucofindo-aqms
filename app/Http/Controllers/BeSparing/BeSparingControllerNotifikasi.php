@@ -181,23 +181,17 @@
             DB::beginTransaction();
             try {
 
-                $existToken = UserFirebase::where('fcm_token', $request->input('firebaseReqToken'))->where('user_id', request()->user()->id)->count();
-                if ($existToken == 0) {
-                    (new UserFirebase)->create([
-                        'user_id' => request()->user()->id,
-                        'fcm_token' => $request->input('firebaseReqToken'),
-                        'device_platform' => 'web',
-                        'device_brand' => $request->header('User-Agent'),
-                        'app_version' => env('APP_VER', '2.0.0'),
-                        'user_status' => 'login',
-                    ]);
-                } else {
-                    (new UserFirebase)->where('user_id', $request->user()->id)
-                        ->where('fcm_token', $request->input('firebaseReqToken'))
-                        ->update([
-                            'user_status' => 'login'
-                        ]);
-                }
+                UserFirebase::updateOrCreate([
+                    'user_id' => request()->user()->id_sparing,
+                    'fcm_token' => $request->input('firebaseReqToken'),
+                ],[
+                    'user_id' => request()->user()->id_sparing,
+                    'fcm_token' => $request->input('firebaseReqToken'),
+                    'device_platform' => 'web',
+                    'device_brand' => $request->header('User-Agent'),
+                    'app_version' => env('APP_VER', '2.0.0'),
+                    'user_status' => 'login',
+                ]);
 
                 DB::commit();
                 return response()->json([

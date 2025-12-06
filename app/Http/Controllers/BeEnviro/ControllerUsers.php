@@ -318,6 +318,16 @@
                         (new User)->where('id', $userId)->update([
                             'password' => Hash::make($request->input('re_password')),
                         ]);
+
+                        $dataUserEnviro = User::where('id', $userId)->first();
+
+                        \App\Models\BeSparing\User::where('id', $dataUserEnviro->id_sparing ?? '')->update([
+                            'password' => Hash::make($request->input('re_password'))
+                        ]);
+
+                        \App\Models\BeAqms\User::where('id', $userId)->update([
+                           'password' => Hash::make($request->input('re_password'))
+                        ]);
                     }
 
                     $newPermissions = $request->input('site_permission', []);

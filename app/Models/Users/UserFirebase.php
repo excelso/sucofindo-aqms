@@ -8,6 +8,7 @@
 
     class UserFirebase extends Model {
 
+        protected $connection = 'sparing-mysql';
         protected $guarded = [];
         protected $table = 't_users_fcm';
 

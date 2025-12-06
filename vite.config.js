@@ -20,6 +20,7 @@ export default defineConfig({
                 'resources/js/login/index.tsx',
                 'resources/js/login/index.tsx',
                 'resources/js/login/verify-otp.tsx',
+                'resources/js/firebase-permission.tsx',
 
                 'resources/js/main/be-aqms/dashboard/index.tsx',
                 'resources/js/main/be-aqms/master/data-platform-loggers/index.tsx',

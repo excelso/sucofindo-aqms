@@ -22,7 +22,8 @@
         'resources/css/sweetalert-custom.css',
         'resources/css/tagify-custom.css',
         'resources/css/experiment-exmenu.scss',
-        'resources/js/app.tsx'
+        'resources/js/app.tsx',
+        'resources/js/firebase-permission.tsx'
     ])
 
     <link rel="stylesheet" href="{{ asset('js/plugins/select2/select2.css') }}">
