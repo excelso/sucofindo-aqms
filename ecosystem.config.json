@@ -13,6 +13,34 @@
             "env": {
                 "APP_ENV": "production"
             }
+        },
+        {
+            "name": "sparing-queue",
+            "script": "php",
+            "args": "artisan queue:work sparing_queue",
+            "instances": 1,
+            "autorestart": true,
+            "watch": false,
+            "max_memory_restart": "200M",
+            "error_file": "storage/logs/queue/err.log",
+            "out_file": "storage/logs/queue/out.log",
+            "env": {
+                "APP_ENV": "production"
+            }
+        },
+        {
+            "name": "aqms-queue",
+            "script": "php",
+            "args": "artisan queue:work aqms_queue",
+            "instances": 1,
+            "autorestart": true,
+            "watch": false,
+            "max_memory_restart": "200M",
+            "error_file": "storage/logs/queue/err.log",
+            "out_file": "storage/logs/queue/out.log",
+            "env": {
+                "APP_ENV": "production"
+            }
         }
     ]
 }
