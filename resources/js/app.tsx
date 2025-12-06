@@ -265,7 +265,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const readNotifikasi = (notifikasi_id: string) => {
         return new Promise(async (resolve) => {
-            const response = await fetch('/notifikasi/read-notif', {
+            const url = new URL(window.location.href)
+            let urlNotifikasi = '/aqms/notifikasi/read-notif';
+            if (url.pathname.includes('sparing')) {
+                urlNotifikasi = '/sparing/notifikasi/read-notif'
+            }
+
+            const response = await fetch(`${urlNotifikasi}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -288,7 +294,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const markAllReadNotifikasi = async () => {
-        const response = await fetch('/notifikasi/mark-all-read', {
+        const url = new URL(window.location.href)
+        let urlNotifikasi = '/aqms/notifikasi/mark-all-read';
+        if (url.pathname.includes('sparing')) {
+            urlNotifikasi = '/sparing/notifikasi/mark-all-read'
+        }
+
+        const response = await fetch(`${urlNotifikasi}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

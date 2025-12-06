@@ -19,7 +19,7 @@
                 $table->unsignedInteger('created_at');
             });
 
-            Schema::create('t_job_batches', function (Blueprint $table) {
+            Schema::create('t_jobs_batches', function (Blueprint $table) {
                 $table->string('id')->primary();
                 $table->string('name');
                 $table->integer('total_jobs');
@@ -32,7 +32,7 @@
                 $table->integer('finished_at')->nullable();
             });
 
-            Schema::create('t_failed_jobs', function (Blueprint $table) {
+            Schema::create('t_jobs_failed', function (Blueprint $table) {
                 $table->id();
                 $table->string('uuid')->unique();
                 $table->text('connection');
@@ -48,7 +48,7 @@
          */
         public function down(): void {
             Schema::dropIfExists('t_jobs');
-            Schema::dropIfExists('t_job_batches');
-            Schema::dropIfExists('t_failed_jobs');
+            Schema::dropIfExists('t_jobs_batches');
+            Schema::dropIfExists('t_jobs_failed');
         }
     };

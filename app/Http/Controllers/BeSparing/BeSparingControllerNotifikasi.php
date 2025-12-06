@@ -5,6 +5,7 @@
     use App\Http\Controllers\Controller;
     use App\Jobs\BeSparingFirebaseSendMessage;
     use App\Jobs\BeSparingNotificationRead;
+    use App\Models\BeSparing\JobsMonitor;
     use App\Models\BeSparing\Notifikasi;
     use App\Models\BeSparing\NotifikasiRead;
     use App\Models\BeSparing\User;
@@ -18,6 +19,8 @@
     use Illuminate\Support\Facades\Crypt;
     use Illuminate\Support\Facades\DB;
     use Illuminate\Support\Facades\Http;
+    use Illuminate\Support\Facades\Log;
+    use Illuminate\Support\Str;
 
     class BeSparingControllerNotifikasi extends Controller {
 
@@ -95,29 +98,45 @@
         public function markAllReadNotifikasi(): JsonResponse {
             try {
 
-                //region Sementara tidak dipakai
-                // $dataNotifikasiUnread = Notifikasi::dataCountNotifikasi(request()->user()->user_uniq_id)->get();
-                // if ($dataNotifikasiUnread->count() != 0) {
-                //     foreach ($dataNotifikasiUnread as $item) {
-                //         NotifikasiRead::create([
-                //             'notifikasi_id' => $item->id,
-                //             'user_uniq_id' => request()->user()->user_uniq_id,
-                //             'readed' => 1
-                //         ]);
-                //     }
-                // } else {
-                //     return response()->json([
-                //         'message' => 'Semua Notifikasi sudah dibaca',
-                //         'responseTime' => now()
-                //     ]);
-                // }
-                //endregion
+                $jobKey = Str::uuid()->toString();
 
-                $this->dispatch(new BeSparingNotificationRead(request()->user()->user_uniq_id));
-                return response()->json([
-                    'message' => 'Baca semua Notifikasi berhasil',
-                    'responseTime' => now()
+                Log::info('Creating Notification Read All Job', ['job_key' => $jobKey]);
+
+                $periodY = date('Y');
+                $periodM = date('m');
+
+                $startDate = Carbon::create($periodY, $periodM, 1)->startOfMonth();
+                $untilDate = Carbon::create($periodY, $periodM, 1)->endOfMonth();
+
+                $jobsMonitor = JobsMonitor::create([
+                    'job_key' => $jobKey,
+                    'job_type' => 'external',
+                    'start_date' => $startDate,
+                    'end_date' => $untilDate,
+                    'status' => 'pending',
+                    'total_rows' => 0,
+                    'processed_rows' => 0,
+                    'progress_percent' => 0,
+                    'batch_size' => 1000,
+                    'message' => 'Job dibuat, menunggu diproses...',
                 ]);
+
+                Log::info('Notification Read All Job Created', ['id' => $jobsMonitor->id, 'job_key' => $jobsMonitor->job_key]);
+
+                $user = User::where('id', request()->user()->id_sparing)->first();
+                BeSparingNotificationRead::dispatch($jobKey, $user->user_uniq_id ?? '')->onConnection('sparing_queue');
+
+                Log::info('Job dispatched to queue', ['job_key' => $jobKey]);
+
+                return response()->json([
+                    'success' => true,
+                    'job_id' => $jobKey,
+                    'message' => 'Proses validasi dimulai',
+                    'debug' => [
+                        'job_key' => $jobKey,
+                        'db_id' => $jobsMonitor->id
+                    ]
+                ], 200, [], JSON_PRETTY_PRINT);
             } catch (Exception $exception) {
                 return response()->json([
                     'message' => $exception->getMessage(),
