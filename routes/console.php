@@ -11,6 +11,9 @@
 
     Schedule::job(new CloseExpiredJobs())->hourly();
 
-    Schedule::command('server:heartbeat')->everyMinute();
+    Schedule::command('server:heartbeat')
+        ->everyMinute()
+        ->withoutOverlapping(0)  // 0 = disable mutex/lock checking
+        ->runInBackground();      // Run async supaya tidak block
 
     Schedule::command('app:sparing-weekly-summary')->everyThirtyMinutes();
