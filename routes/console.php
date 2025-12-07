@@ -13,6 +13,4 @@
 
     Schedule::command('server:heartbeat')->everyMinute();
 
-    Schedule::command('app:sparing-weekly-summary')->everyThirtyMinutes()
-        ->withoutOverlapping()
-        ->runInBackground();
+    Schedule::command('app:sparing-weekly-summary')->everyThirtyMinutes();
