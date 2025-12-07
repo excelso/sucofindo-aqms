@@ -11,9 +11,7 @@
 
     Schedule::job(new CloseExpiredJobs())->hourly();
 
-    Schedule::command('server:heartbeat')->everyMinute()
-        ->withoutOverlapping()
-        ->runInBackground();
+    Schedule::command('server:heartbeat')->everyMinute();
 
     Schedule::command('app:sparing-weekly-summary')->everyThirtyMinutes()
         ->withoutOverlapping()
