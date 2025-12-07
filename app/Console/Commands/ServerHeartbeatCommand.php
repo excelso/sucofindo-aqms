@@ -15,7 +15,7 @@
 
         public function handle(): void {
             // Tunggu sampai detik 00 jika belum
-            // $this->waitForExactSecond();
+            $this->waitForExactSecond();
 
             // Ambil timestamp yang akan digunakan untuk semua record
             $timestamp = Carbon::now()->startOfMinute();
