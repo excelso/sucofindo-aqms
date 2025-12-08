@@ -51,7 +51,7 @@
                 return response()->json($platformTemp);
 
             } catch (Exception $e) {
-                Log::error('Error getting platforms list: ' . $e->getMessage());
+                // Log::error('Error getting platforms list: ' . $e->getMessage());
 
                 return response()->json([
                     'message' => 'Failed to load platforms list',
@@ -135,7 +135,7 @@
                 ]);
 
             } catch (Exception $e) {
-                Log::error("Error getting platform data for {$uid}: " . $e->getMessage());
+                // Log::error("Error getting platform data for {$uid}: " . $e->getMessage());
 
                 return response()->json([
                     'message' => 'Failed to load platform data',
@@ -350,8 +350,6 @@
                 ]);
 
             } catch (Exception $e) {
-                Log::error("Error getting forecast data for {$uid}: " . $e->getMessage());
-
                 return response()->json([
                     'message' => 'Failed to load forecast data',
                     'error' => config('app.debug') ? $e->getMessage() . ' on line ' . $e->getLine() : 'Internal server error'
@@ -406,12 +404,12 @@
                         $payload['pageToken'] = $pageToken;
                     }
 
-                    Log::info("Fetching Google Air Quality forecast page {$currentPage}", [
-                        'lat' => $lat,
-                        'lng' => $lng,
-                        'days' => $days,
-                        'hasPageToken' => !is_null($pageToken)
-                    ]);
+                    // Log::info("Fetching Google Air Quality forecast page {$currentPage}", [
+                    //     'lat' => $lat,
+                    //     'lng' => $lng,
+                    //     'days' => $days,
+                    //     'hasPageToken' => !is_null($pageToken)
+                    // ]);
 
                     $response = $client->post($url, [
                         'json' => $payload,
@@ -432,16 +430,16 @@
 
                     // Safety check
                     if ($currentPage >= $maxPages) {
-                        Log::warning("Reached maximum page limit for Google Air Quality forecast");
+                        // Log::warning("Reached maximum page limit for Google Air Quality forecast");
                         break;
                     }
 
                 } while ($pageToken !== null);
 
-                Log::info("Google Air Quality forecast fetch completed", [
-                    'totalPages' => $currentPage,
-                    'totalForecasts' => count($allForecasts)
-                ]);
+                // Log::info("Google Air Quality forecast fetch completed", [
+                //     'totalPages' => $currentPage,
+                //     'totalForecasts' => count($allForecasts)
+                // ]);
 
                 // Return data with all forecasts
                 return [
@@ -449,11 +447,7 @@
                     'regionCode' => $data['regionCode'] ?? 'id'
                 ];
 
-            } catch (Exception $e) {
-                Log::error('Error fetching Google Air Quality forecast: ' . $e->getMessage());
-                return null;
-            } catch (GuzzleException $e) {
-                Log::error('GuzzleException fetching Google Air Quality forecast: ' . $e->getMessage());
+            } catch (Exception|GuzzleException $e) {
                 return null;
             }
         }
