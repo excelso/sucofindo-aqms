@@ -211,7 +211,8 @@
                     'bml_max' => $platformLimit->pm10_max ?? 0,
                 ],
                 'pm25' => [
-                    'value' => $dataLastLogger->max_pm_25 ?? 0,
+                    'value' => $dataLastLogger ? $dataLastLogger->max_tsp * 0.1 : 0,
+                    // 'value' => $dataLastLogger->max_pm_25 ?? 0,
                     'bml_min' => $platformLimit->pm25_min ?? 0,
                     'bml_min_buffer' => $platformLimit->pm25_min_buffer ?? 0,
                     'bml_max_buffer' => $platformLimit->pm25_max_buffer ?? 0,
@@ -259,13 +260,16 @@
                 $value = (float)($logger->max_aqi_index ?? 0);
                 if ($logger->aqi_from == 'pm_10') {
                     $value = (float)($logger->max_aqi_index ? $logger->max_aqi_index * 0.4 : 0);
+                } else if ($logger->aqi_from == 'pm_25') {
+                    $value = (float)($logger->max_aqi_index ? $logger->max_aqi_index * 0.1 : 0);
                 }
 
                 $data[] = [
                     'timestamp' => $logger->datetime_unix,
                     'value' => $value,
                     'value_tsp' => (float)($logger->max_aqi_index_tsp ?? 0),
-                    'pm25' => $logger->pm_25,
+                    'pm25' => $logger->max_tsp * 0.1,
+                    // 'pm25' => $logger->pm_25,
                     'pm10' => $logger->max_tsp * 0.4,
                     'tsp' => $logger->max_tsp,
                     'aqi_from' => $logger->aqi_from,
