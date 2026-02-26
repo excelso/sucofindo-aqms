@@ -1,4 +1,4 @@
-@section('title', 'Weekly Report')
+@section('title', 'Monthly Report')
 <x-app-layout>
     <div class="content-main">
         <div class="content-header">
