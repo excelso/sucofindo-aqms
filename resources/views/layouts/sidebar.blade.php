@@ -238,6 +238,13 @@
                                 </div>
                             </a>
                         </li>
+                        <li class="navItem">
+                            <a class="navLink {{Request::segment(1) == 'sparing' && Request::segment(2) == 'reports' && Request::segment(3) == 'monthly-report' ? 'navLinkActive' : ''}}" href="{{ route('sparing.reports.monthly-report') }}">
+                                <div class="navText">
+                                    <p>Monthly Report</p>
+                                </div>
+                            </a>
+                        </li>
                     </ul>
                 </li>
 

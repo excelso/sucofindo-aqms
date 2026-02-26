@@ -24,6 +24,7 @@
     use App\Http\Controllers\BeSparing\Master\BeSparingControllerPlatform;
     use App\Http\Controllers\BeSparing\Master\BeSparingControllerSite;
     use App\Http\Controllers\BeSparing\Reports\BeSparingControllerLogsParameter;
+    use App\Http\Controllers\BeSparing\Reports\BeSparingControllerMonthlyReport;
     use App\Http\Controllers\BeSparing\Reports\BeSparingControllerWaterQuality;
     use App\Http\Controllers\BeSparing\Reports\BeSparingControllerWeeklyReport;
     use App\Http\Controllers\BeSparing\Reports\BeSparingControllerWeeklySummary;
@@ -154,6 +155,14 @@
                 Route::prefix('weekly-summary')->group(function () {
                     Route::get('/', [BeSparingControllerWeeklySummary::class, 'index'])->name('sparing.reports.weekly-summary');
                     Route::get('export-excel', [BeSparingControllerWeeklySummary::class, 'handleExportExcel'])->name('sparing.reports.weekly-summary.export-excel');
+                });
+
+                Route::prefix('monthly-report')->group(function () {
+                    Route::get('/', [BeSparingControllerMonthlyReport::class, 'index'])->name('sparing.reports.monthly-report');
+                    Route::post('data-avg-parameter', [BeSparingControllerMonthlyReport::class, 'handleDataAvgParameterWeekly']);
+                    Route::post('data-entry-charts', [BeSparingControllerMonthlyReport::class, 'handleDataEntryCharts']);
+                    Route::post('data-comply-charts', [BeSparingControllerMonthlyReport::class, 'handleDataComplyCharts']);
+                    Route::post('data-sensor-charts', [BeSparingControllerMonthlyReport::class, 'handleDataSensorCharts']);
                 });
             });
 
