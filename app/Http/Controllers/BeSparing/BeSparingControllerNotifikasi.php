@@ -124,7 +124,7 @@
                 Log::info('Notification Read All Job Created', ['id' => $jobsMonitor->id, 'job_key' => $jobsMonitor->job_key]);
 
                 $user = User::where('id', request()->user()->id_sparing)->first();
-                BeSparingNotificationRead::dispatch($jobKey, $user->user_uniq_id ?? '')->onConnection('sparing_queue');
+                BeSparingNotificationRead::dispatch($jobKey, $user->id ?? '')->onConnection('sparing_queue');
 
                 Log::info('Job dispatched to queue', ['job_key' => $jobKey]);
 

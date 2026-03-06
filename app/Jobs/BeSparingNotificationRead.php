@@ -13,6 +13,7 @@
     use Illuminate\Foundation\Bus\Dispatchable;
     use Illuminate\Queue\InteractsWithQueue;
     use Illuminate\Queue\SerializesModels;
+    use Illuminate\Support\Facades\DB;
     use Illuminate\Support\Facades\Log;
     use Throwable;
 
@@ -23,16 +24,16 @@
         public int $timeout = 7200;
 
         protected string $jobKey;
-        protected string $userUniqId;
+        protected string $userId;
 
         /**
          * Create a new job instance.
          *
          * @return void
          */
-        public function __construct($jobKey, $userUniqId) {
+        public function __construct($jobKey, $userId) {
             $this->jobKey = $jobKey;
-            $this->userUniqId = $userUniqId;
+            $this->userId = $userId;
         }
 
         /**
@@ -45,10 +46,24 @@
             }
 
             try {
+                $user = User::where('id', $this->userId)->first();
+                $userUniqId = $user->user_uniq_id;
 
-                $user = User::where('user_uniq_id', $this->userUniqId)->first();
-                $notifikasiToRead = Notifikasi::dataCountNotifikasi($this->userUniqId)->get();
-                $total = $notifikasiToRead->count();
+                // ── Hitung total unread tanpa memuat data ke PHP ─────────────────
+                $total = (int) DB::connection('sparing-mysql')
+                    ->table('t_notifikasi')
+                    ->leftJoin(
+                        DB::raw('(SELECT notifikasi_id, user_uniq_id FROM t_notifikasi_read WHERE user_uniq_id = ?) as nr'),
+                        'nr.notifikasi_id', '=', 't_notifikasi.id'
+                    )
+                    ->whereNull('nr.user_uniq_id')
+                    ->where('t_notifikasi.status_kirim', 'terkirim')
+                    ->where(function ($q) use ($userUniqId) {
+                        $q->where('t_notifikasi.user_uniq_id', $userUniqId)
+                            ->orWhereNull('t_notifikasi.user_uniq_id');
+                    })
+                    ->addBinding($userUniqId, 'join')
+                    ->count();
 
                 $jobsMonitor->update([
                     'total_rows' => $total,
@@ -69,46 +84,40 @@
                     return;
                 }
 
-                $processed = 0;
-                foreach ($notifikasiToRead as $item) {
-                    $jobsMonitor->refresh();
-                    if ($jobsMonitor->cancel_requested == 1) {
-                        $jobsMonitor->update([
-                            'status' => 'cancelled',
-                            'finished_at' => now(),
-                            'message' => 'Proses dibatalkan oleh user',
-                        ]);
-                        return;
-                    }
+                // ── INSERT ... SELECT langsung di DB — zero PHP memory ────────────
+                // Semua pemrosesan terjadi di sisi database, tidak ada data yang
+                // dimuat ke PHP. PK auto-increment, tidak perlu UUID().
+                DB::connection('sparing-mysql')->statement("
+                    INSERT INTO t_notifikasi_read
+                        (notifikasi_id, user_uniq_id, readed, created_at, updated_at)
+                    SELECT
+                        t_notifikasi.id,
+                        ?,
+                        1,
+                        NOW(),
+                        NOW()
+                    FROM t_notifikasi
+                    LEFT JOIN t_notifikasi_read AS nr
+                        ON  nr.notifikasi_id  = t_notifikasi.id
+                        AND nr.user_uniq_id   = ?
+                    WHERE nr.notifikasi_id IS NULL
+                      AND t_notifikasi.status_kirim = 'terkirim'
+                      AND (
+                            t_notifikasi.user_uniq_id = ?
+                            OR t_notifikasi.user_uniq_id IS NULL
+                          )
+                ", [$userUniqId, $userUniqId, $userUniqId]);
 
-                    $processed++;
+                $processed = $total;
 
-                    if ($processed % 10 === 0 || $processed === $total) {
-                        $progress = round(($processed / $total) * 100, 2);
-
-                        $jobsMonitor->update([
-                            'processed_rows' => $processed,
-                            'progress_percent' => $progress,
-                            'message' => "Memproses data Notifikasi {$processed} dari {$total} - Notif ID: {$item->id}",
-                            'last_heartbeat_at' => now(),
-                        ]);
-                    }
-
-                    NotifikasiRead::updateOrCreate([
-                        'notifikasi_id' => $item->id,
-                        'user_uniq_id' => $this->userUniqId,
-                    ],[
-                        'readed' => 1
-                    ]);
-
-                    $jobsMonitor->update([
-                        'status' => 'done',
-                        'finished_at' => now(),
-                        'message' => "Selesai! Total {$total} data Notifikasi telah dibaca",
-                        'progress_percent' => 100,
-                        'last_heartbeat_at' => now(),
-                    ]);
-                }
+                $jobsMonitor->update([
+                    'status' => 'done',
+                    'finished_at' => now(),
+                    'message' => "Selesai! Total {$processed} data Notifikasi telah dibaca",
+                    'processed_rows' => $processed,
+                    'progress_percent' => 100,
+                    'last_heartbeat_at' => now(),
+                ]);
 
             } catch (Exception $e) {
                 $jobsMonitor->update([
