@@ -455,7 +455,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             denyButtonText: 'Cancel'
                         }, async () => {
                             await waitLoader('Please wait...', 'Process of storing new Platform data.', async () => {
-                                const response = await fetch('${url}/store', {
+                                const response = await fetch(`${url.pathname}/store`, {
                                     method: 'POST',
                                     headers: {
                                         'X-CSRF-TOKEN': csrfToken,

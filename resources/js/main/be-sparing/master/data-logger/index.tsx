@@ -610,7 +610,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             denyButtonText: 'Tidak'
                         }, async () => {
                             await waitLoader('Mohon Tunggu...', 'Menyimpan data Logger baru', async () => {
-                                const response = await fetch('/master/logger/store', {
+                                const response = await fetch(`${url.pathname}/store`, {
                                     method: 'POST',
                                     headers: {
                                         // 'Content-Type': 'application/json',
