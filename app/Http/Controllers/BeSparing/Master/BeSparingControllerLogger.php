@@ -26,6 +26,7 @@
     use Illuminate\Support\Str;
     use Illuminate\Validation\Rule;
     use Illuminate\Validation\Rules\Password;
+    use Illuminate\Validation\Rules\Unique;
 
     class BeSparingControllerLogger extends Controller {
         protected string $viewPath;
@@ -77,9 +78,10 @@
                     'tipe_logger' => 'required',
                     'uid' => [
                         'required',
-                        Rule::unique('t_platform')->where('uid', $request->input('uid'))
+                        (new Unique('t_platform', 'uid'))
                             ->where('tipe_logger', $request->input('tipe_logger'))
                             ->whereNull('deleted_at')
+                            ->using(fn ($query) => $query->setConnection('sparing-mysql')),
                     ],
                     'lokasi_platform' => 'required',
                 ];
@@ -454,9 +456,10 @@
                     $rules = array_merge($rules, [
                         'uid' => [
                             'required',
-                            Rule::unique('t_platform')->where('uid', $request->input('uid'))
+                            (new Unique('t_platform', 'uid'))
                                 ->where('tipe_logger', $request->input('tipe_logger'))
                                 ->whereNull('deleted_at')
+                                ->using(fn ($query) => $query->setConnection('sparing-mysql')),
                         ],
                     ]);
                 }
