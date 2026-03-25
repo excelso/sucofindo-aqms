@@ -78,10 +78,18 @@
                     'tipe_logger' => 'required',
                     'uid' => [
                         'required',
-                        (new Unique('t_platform', 'uid'))
-                            ->where('tipe_logger', $request->input('tipe_logger'))
-                            ->whereNull('deleted_at')
-                            ->using(fn ($query) => $query->setConnection('sparing-mysql')),
+                        function ($attribute, $value, $fail) use ($request) {
+                            $exists = DB::connection('sparing-mysql')
+                                ->table('t_platform')
+                                ->where('uid', $value)
+                                ->where('tipe_logger', $request->input('tipe_logger'))
+                                ->whereNull('deleted_at')
+                                ->exists();
+
+                            if ($exists) {
+                                $fail('The uid has already been taken.');
+                            }
+                        },
                     ],
                     'lokasi_platform' => 'required',
                 ];
@@ -456,10 +464,18 @@
                     $rules = array_merge($rules, [
                         'uid' => [
                             'required',
-                            (new Unique('t_platform', 'uid'))
-                                ->where('tipe_logger', $request->input('tipe_logger'))
-                                ->whereNull('deleted_at')
-                                ->using(fn ($query) => $query->setConnection('sparing-mysql')),
+                            function ($attribute, $value, $fail) use ($request) {
+                                $exists = DB::connection('sparing-mysql')
+                                    ->table('t_platform')
+                                    ->where('uid', $value)
+                                    ->where('tipe_logger', $request->input('tipe_logger'))
+                                    ->whereNull('deleted_at')
+                                    ->exists();
+
+                                if ($exists) {
+                                    $fail('The uid has already been taken.');
+                                }
+                            },
                         ],
                     ]);
                 }
