@@ -36,6 +36,10 @@
 
         //region Handle Store
         public function store(Request $request) {
+            if ($request->input('file_thumbnail') === 'null' || $request->input('file_thumbnail') === '') {
+                $request->request->remove('file_thumbnail');
+            }
+
             $validator = Validator::make($request->all(), [
                 'company_site_id' => 'required',
                 'company_site_location_id' => 'required',
@@ -52,6 +56,7 @@
                 'cctv_link_1' => 'nullable|url',
                 'cctv_link_2' => 'nullable|url',
                 'cctv_link_hls' => 'nullable|url',
+                'file_thumbnail' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5024',
                 'timezone' => 'required',
                 'cctv_portal_ip' => [
                     'nullable',
@@ -88,11 +93,22 @@
 
             try {
                 DB::transaction(function () use ($request) {
+                    $filename = null;
+                    $filepath = null;
+                    if ($request->hasFile('file_thumbnail')) {
+                        $file = $request->file('file_thumbnail');
+                        $filename = $request->input('uid') . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                        $filepath = 'platforms/aqms/' . $request->input('uid') . '/images';
+                        $file->storeAs($filepath, $filename, 'public');
+                    }
+
                     Platforms::create([
                         'company_site_id' => $request->input('company_site_id'),
                         'company_site_location_id' => $request->input('company_site_location_id'),
                         'uid' => $request->input('uid'),
                         'uid_alias' => $request->input('uid_alias'),
+                        'thumbnail_path' => $filepath,
+                        'thumbnail_file' => $filename,
                         'cctv_link_1' => $request->input('cctv_link_1'),
                         'cctv_1_support_ptz' => $request->input('cctv_1_support_ptz'),
                         'cctv_link_2' => $request->input('cctv_link_2'),
@@ -171,6 +187,10 @@
 
         //region Handle Update
         public function update(Request $request, $platformId) {
+            if ($request->input('file_thumbnail') === 'null' || $request->input('file_thumbnail') === '') {
+                $request->request->remove('file_thumbnail');
+            }
+
             $validator = Validator::make($request->all(), [
                 'company_site_id' => 'required',
                 'company_site_location_id' => 'required',
@@ -190,7 +210,7 @@
                 'cctv_link_2' => 'nullable|url',
                 'cctv_link_hls' => 'nullable|url',
                 'timezone' => 'required',
-                'file_thumbnail' => 'required|file|mimes:jpeg,jpg,png,pdf|max:5024',
+                'file_thumbnail' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5024',
                 'cctv_portal_ip' => [
                     'nullable',
                     'regex:/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}(:[0-9]{1,5})?$/',

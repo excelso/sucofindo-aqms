@@ -69,10 +69,7 @@
             <ul class="uidAliasError"></ul>
         </div>
         <div class="form-group">
-            <label>
-                Thumbnail
-                <span class="text-red-500 ml-1">*</span>
-            </label>
+            <label>Thumbnail</label>
             <div class="rounded-[5px] border-[1px] border-gray-300 mt-1.5 mb-1">
                 <div class="flex items-center">
                     <input type="file" id="fileThumbnail" accept="image/*" class="hidden fileThumbnail" />

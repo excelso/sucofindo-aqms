@@ -1,6 +1,5 @@
 import {ExBox} from "@/js/experiment/ex-box";
 import {ExBoxOptionData} from "@/js/experiment/ex-box/interfaces";
-import {getMetaContent} from "@/js/plugins/functions";
 
 // Types and interfaces
 interface SiteLocationData {
@@ -8,40 +7,40 @@ interface SiteLocationData {
     location_name: string;
 }
 
+interface SiteLocationOptions {
+    csrfToken?: string | null;
+}
+
+/**
+ * DataSitesLocationModel Class
+ * Manages site location data selection and display within a site context
+ */
 export default class DataSitesLocationModel {
     private readonly elmSiteId: HTMLSelectElement | HTMLInputElement;
     private readonly elmLocation: HTMLSelectElement;
     private readonly elmLocationChoice: ExBox;
-    private readonly options: Required<{
-        csrfToken: string;
-    }>;
+    private readonly options: Required<SiteLocationOptions>;
     private selectedValue: string = '';
     private cachedData: Map<string, ExBoxOptionData[]> = new Map();
     private isLoading: boolean = false;
 
     /**
-     * Creates an instance of Site
-     * @param elmSiteId - Company select/input element
-     * @param elmLocation - Site select element
+     * Creates an instance of DataSitesLocationModel
+     * @param elmSiteId - Site select/input element
+     * @param elmLocation - Location select element
      * @param options - Configuration options
      */
     constructor(
-            elmSiteId?: HTMLSelectElement | HTMLInputElement,
-            elmLocation?: HTMLSelectElement,
-            options?: {
-                csrfToken?: string;
-            }
+            elmSiteId: HTMLSelectElement | HTMLInputElement,
+            elmLocation: HTMLSelectElement,
+            options: SiteLocationOptions
     ) {
-        this.elmSiteId = elmSiteId ?? document.querySelector('.siteId');
-        this.elmLocation = elmLocation ?? document.querySelector('.siteLocationId');
+        this.elmSiteId = elmSiteId;
+        this.elmLocation = elmLocation;
         this.elmLocationChoice = new ExBox(this.elmLocation);
         this.options = {
-            csrfToken: options?.csrfToken ?? getMetaContent('csrf-token')
+            csrfToken: options.csrfToken ?? null
         };
-
-        if (!this.elmSiteId || !this.elmLocation) {
-            throw new Error('Required elements not found');
-        }
 
         this.initialize();
         this.setupEventListeners();
@@ -52,13 +51,13 @@ export default class DataSitesLocationModel {
      */
     private async initialize(): Promise<void> {
         try {
-            const unitSelected = this.getCompanySelected();
-            if (unitSelected) {
-                await this.loadAndDisplaySite(unitSelected);
+            const siteSelected = this.getSiteSelected();
+            if (siteSelected) {
+                await this.loadAndDisplayLocations(siteSelected);
 
-                const siteSelected = this.elmLocation.getAttribute('data-selected');
-                if (siteSelected) {
-                    this.setSelectedValue(siteSelected);
+                const locationSelected = this.elmLocation.getAttribute('data-selected');
+                if (locationSelected) {
+                    this.setSelectedValue(locationSelected);
                 }
             }
         } catch (error) {
@@ -70,99 +69,94 @@ export default class DataSitesLocationModel {
      * Sets up event listeners for the component
      */
     private setupEventListeners(): void {
-        this.elmSiteId.addEventListener('change', this.handleCompanyChange.bind(this));
+        this.elmSiteId.addEventListener('change', this.handleSiteChange.bind(this));
     }
 
     /**
-     * Handles unit selection changes
+     * Handles site selection changes
      */
-    private async handleCompanyChange(event: Event): Promise<void> {
+    private async handleSiteChange(event: Event): Promise<void> {
         try {
             const target = event.target as HTMLSelectElement | HTMLInputElement;
-            const unitId = target.value;
+            const siteId = target.value;
 
-            this.resetSiteSelection();
+            this.resetLocationSelection();
 
-            if (unitId) {
-                await this.loadAndDisplaySite(unitId);
+            if (siteId) {
+                await this.loadAndDisplayLocations(siteId);
                 if (this.selectedValue) {
                     this.setSelectedValue(this.selectedValue);
                 }
             }
         } catch (error) {
-            this.handleError('Failed to handle unit change', error);
+            this.handleError('Failed to handle site change', error);
         }
     }
 
     /**
-     * Loads and displays site data for a given unit
+     * Loads and displays location data for a given site
      */
-    private async loadAndDisplaySite(unitId: string): Promise<void> {
+    private async loadAndDisplayLocations(siteId: string): Promise<void> {
         if (this.isLoading) return;
 
         try {
             this.isLoading = true;
-            const data = await this.getSiteLocationData(unitId);
-            this.displaySiteLocationData(data);
-
-            // Ensure selected value is set after data is displayed
+            const data = await this.getSiteLocationData(siteId);
+            this.displayLocationData(data);
+            // Pastikan selected value di-set setelah data di-display
             if (this.selectedValue) {
                 this.elmLocationChoice.setSelected(this.selectedValue);
             }
         } catch (error) {
-            this.handleError('Failed to load site data', error);
+            this.handleError('Failed to load location data', error);
         } finally {
             this.isLoading = false;
         }
     }
 
     /**
-     * Fetches site data from the server or cache
+     * Fetches location data from the server or cache
      */
-    private async getSiteLocationData(unitId: string): Promise<ExBoxOptionData[]> {
-        const cachedData = this.cachedData.get(unitId);
+    private async getSiteLocationData(siteId: string): Promise<ExBoxOptionData[]> {
+        const cachedData = this.cachedData.get(siteId);
         if (cachedData) return cachedData;
 
-        const data = await this.fetchSiteLocationData(unitId);
-        this.cachedData.set(unitId, data);
+        const data = await this.fetchSiteLocationData(siteId);
+        this.cachedData.set(siteId, data);
         return data;
     }
 
     /**
-     * Fetches site data from the server
+     * Fetches location data from the server
      */
     private async fetchSiteLocationData(siteId: string): Promise<ExBoxOptionData[]> {
-        const response = await fetch(`/aqms/master/sites-location/data-location?site_id=${siteId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': this.options.csrfToken,
-            },
-        });
+        const response = await fetch(
+                `/aqms/master/sites-location/data-location?site_id=${siteId}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRF-TOKEN': this.options.csrfToken || '',
+                        'Content-Type': 'application/json',
+                    },
+                }
+        );
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to fetch location data');
         }
 
-        const {status} = response
-        const {message, data} = await response.json();
-
-        if (status !== 200) {
-            throw new Error(message || 'Failed to fetch site data');
-        }
-
+        const {data} = await response.json();
         return this.transformSiteLocationData(data);
     }
 
     /**
-     * Transforms raw site data into ExBox option format
+     * Transforms raw location data into ExBox option format
      */
     private transformSiteLocationData(data: SiteLocationData[]): ExBoxOptionData[] {
         const defaultOption: ExBoxOptionData = {
             value: '',
             label: '...',
-            additional: '',
-            infos: ''
         };
 
         if (!data.length) return [defaultOption];
@@ -172,23 +166,21 @@ export default class DataSitesLocationModel {
             ...data.map(({id, location_name}) => ({
                 value: id,
                 label: location_name,
-                additional: '',
-                infos: ''
             }))
         ];
     }
 
     /**
-     * Displays site data in the select element
+     * Displays location data in the select element
      */
-    private displaySiteLocationData(data: ExBoxOptionData[]): void {
+    private displayLocationData(data: ExBoxOptionData[]): void {
         this.elmLocationChoice.createOptionDataElement(data);
     }
 
     /**
-     * Gets the selected unit value
+     * Gets the selected site value
      */
-    private getCompanySelected(): string | null {
+    private getSiteSelected(): string | null {
         if (this.elmSiteId instanceof HTMLSelectElement) {
             return this.elmSiteId.value || this.elmSiteId.getAttribute('data-selected');
         }
@@ -196,9 +188,9 @@ export default class DataSitesLocationModel {
     }
 
     /**
-     * Resets the site selection
+     * Resets the location selection
      */
-    private resetSiteSelection(): void {
+    private resetLocationSelection(): void {
         this.elmLocationChoice.clearData();
         this.selectedValue = '';
     }
@@ -208,20 +200,22 @@ export default class DataSitesLocationModel {
      */
     private handleError(context: string, error: unknown): void {
         console.error(`${context}:`, error);
+        // You can implement custom error handling here
+        // For example, showing a toast notification or alert
     }
 
     // Public methods
 
     /**
-     * Sets the selected site value and updates the display
+     * Sets the selected location value and updates the display
      */
     public async setSelectedAndUpdate(value: string): Promise<void> {
         try {
             this.selectedValue = value;
-            const unitId = this.getCompanySelected();
-            if (!unitId) return;
+            const siteId = this.getSiteSelected();
+            if (!siteId) return;
 
-            await this.loadAndDisplaySite(unitId);
+            await this.loadAndDisplayLocations(siteId);
         } catch (error) {
             this.handleError('Failed to set selected value', error);
         }
@@ -239,7 +233,7 @@ export default class DataSitesLocationModel {
      * Clears all data and selections
      */
     public clearAll(): void {
-        this.resetSiteSelection();
+        this.resetLocationSelection();
         this.cachedData.clear();
     }
 
@@ -251,12 +245,12 @@ export default class DataSitesLocationModel {
     }
 
     /**
+     * @deprecated Use setSelectedValue instead
      * Legacy method for backward compatibility
-     * @deprecated Use setSelectedAndUpdate instead
      */
-    public selectedData(unitId: string, siteId: string): void {
-        this.loadAndDisplaySite(unitId).then(() => {
-            this.setSelectedValue(siteId);
+    public selectedData(siteId: string, locationId: string): void {
+        this.loadAndDisplayLocations(siteId).then(() => {
+            this.setSelectedValue(locationId);
         });
     }
 }
