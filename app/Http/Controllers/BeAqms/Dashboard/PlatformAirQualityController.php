@@ -211,7 +211,7 @@
                     'bml_max' => $platformLimit->pm10_max ?? 0,
                 ],
                 'pm25' => [
-                    'value' => $dataLastLogger ? $dataLastLogger->max_tsp * 0.15 : 0,
+                    'value' => $dataLastLogger ? $dataLastLogger->max_tsp : 0,
                     // 'value' => $dataLastLogger->max_pm_25 ?? 0,
                     'bml_min' => $platformLimit->pm25_min ?? 0,
                     'bml_min_buffer' => $platformLimit->pm25_min_buffer ?? 0,
@@ -224,6 +224,20 @@
                     'bml_min_buffer' => $platformLimit->tsp_min_buffer ?? 0,
                     'bml_max_buffer' => $platformLimit->tsp_max_buffer ?? 0,
                     'bml_max' => $platformLimit->tsp_max ?? 0,
+                ],
+                'temp' => [
+                    'value' => $dataLastLogger->temp ?? 0,
+                    'bml_min' => 0,
+                    'bml_min_buffer' => 0,
+                    'bml_max_buffer' => 40,
+                    'bml_max' => 50,
+                ],
+                'mmhg' => [
+                    'value' => $dataLastLogger->mmhg ?? 0,
+                    'bml_min' => 0,
+                    'bml_min_buffer' => 0,
+                    'bml_max_buffer' => 800,
+                    'bml_max' => 1000,
                 ],
                 'noise' => [
                     'value' => $dataLastLogger->noise_leq ?? 0,
@@ -258,19 +272,18 @@
             foreach ($loggers as $logger) {
 
                 $value = (float)($logger->max_aqi_index ?? 0);
-                if ($logger->aqi_from == 'pm_10') {
-                    $value = (float)($logger->max_aqi_index ? $logger->max_aqi_index * 0.4 : 0);
-                } else if ($logger->aqi_from == 'pm_25') {
-                    $value = (float)($logger->max_aqi_index ? $logger->max_aqi_index * 0.15 : 0);
-                }
+                // if ($logger->aqi_from == 'pm_10') {
+                //     $value = (float)($logger->max_aqi_index ? $logger->max_aqi_index : 0);
+                // } else if ($logger->aqi_from == 'pm_25') {
+                //     $value = (float)($logger->max_aqi_index ? $logger->max_aqi_index : 0);
+                // }
 
                 $data[] = [
                     'timestamp' => $logger->datetime_unix,
                     'value' => $value,
                     'value_tsp' => (float)($logger->max_aqi_index_tsp ?? 0),
-                    'pm25' => $logger->max_tsp * 0.15,
-                    // 'pm25' => $logger->pm_25,
-                    'pm10' => $logger->max_tsp * 0.4,
+                    'pm25' => $logger->max_pm_25,
+                    'pm10' => $logger->max_pm_25,
                     'tsp' => $logger->max_tsp,
                     'aqi_from' => $logger->aqi_from,
                     'link_video_id' => $logger->link_video_id,

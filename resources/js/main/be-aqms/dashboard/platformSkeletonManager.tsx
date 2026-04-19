@@ -71,6 +71,20 @@ interface PlatformData {
             bml_max_buffer?: number,
             bml_max?: number
         };
+        temp?: {
+            value?: number,
+            bml_min?: number,
+            bml_min_buffer?: number,
+            bml_max_buffer?: number,
+            bml_max?: number
+        };
+        mmhg?: {
+            value?: number,
+            bml_min?: number,
+            bml_min_buffer?: number,
+            bml_max_buffer?: number,
+            bml_max?: number
+        };
     };
     airIndexData?: Array<{
         timestamp: number;
@@ -593,13 +607,13 @@ class PlatformSkeletonManager {
 
         // Skeleton metrics section
         const metricsContainer = this.createElement('div', 'mt-4');
-        const metricsGrid = this.createElement('div', 'grid grid-cols-4 gap-2');
+        const metricsGrid = this.createElement('div', 'grid grid-cols-3 gap-2');
 
-        const metricTypes = ['PM2.5', 'PM10', 'TSP', 'Noise'];
+        const metricTypes = ['PM2.5', 'PM10', 'TSP', 'Noise', 'Temp', 'Pressure'];
         metricTypes.forEach(metricTitle => {
             const metricCard = this.createElement('div', 'border rounded-md');
             const titleDiv = this.createElement('div', 'font-bold text-[12px] m-2 mb-2', metricTitle);
-            const skeletonChart = this.createElement('div', 'skeleton-box skeleton-metric w-[78px] h-16 bg-gray-200 animate-pulse rounded mx-2 mb-2');
+            const skeletonChart = this.createElement('div', 'skeleton-box skeleton-metric w-[85px] h-16 bg-gray-200 animate-pulse rounded mx-2 mb-2');
 
             metricCard.appendChild(titleDiv);
             metricCard.appendChild(skeletonChart);
@@ -750,7 +764,27 @@ class PlatformSkeletonManager {
                 bml_min_buffer: data.metrics?.noise?.bml_min_buffer || 0,
                 bml_max_buffer: data.metrics?.noise?.bml_max_buffer || 100,
                 bml_max: data.metrics?.noise?.bml_max || 100,
-                unit: 'dbA'
+                unit: 'dBA'
+            },
+            {
+                title: 'Temp',
+                type: 'temp' as const,
+                value: data.metrics?.temp?.value || 0,
+                bml_min: data.metrics?.temp?.bml_min || 0,
+                bml_min_buffer: data.metrics?.temp?.bml_min_buffer || 0,
+                bml_max_buffer: data.metrics?.temp?.bml_max_buffer || 40,
+                bml_max: data.metrics?.temp?.bml_max || 50,
+                unit: '°C'
+            },
+            {
+                title: 'Pressure',
+                type: 'mmhg' as const,
+                value: data.metrics?.mmhg?.value || 0,
+                bml_min: data.metrics?.mmhg?.bml_min || 0,
+                bml_min_buffer: data.metrics?.mmhg?.bml_min_buffer || 0,
+                bml_max_buffer: data.metrics?.mmhg?.bml_max_buffer || 800,
+                bml_max: data.metrics?.mmhg?.bml_max || 1000,
+                unit: 'mmHg'
             }
         ];
 
@@ -1220,7 +1254,7 @@ class PlatformSkeletonManager {
         }
 
         // Convert metrics charts to skeleton
-        const metricCharts = cardElement.querySelectorAll('.chart-pm25, .chart-pm10, .chart-tsp, .chart-noise');
+        const metricCharts = cardElement.querySelectorAll('.chart-pm25, .chart-pm10, .chart-tsp, .chart-noise, .chart-temp, .chart-mmhg');
         metricCharts.forEach(chart => {
             const skeletonChart = this.createElement('div', 'skeleton-box skeleton-metric w-[78px] h-16 bg-gray-200 animate-pulse rounded mx-2 mb-2');
             chart.parentNode?.replaceChild(skeletonChart, chart);
@@ -1249,7 +1283,7 @@ class PlatformSkeletonManager {
 
         // Clear chart instances for this card
         const cardId = `card-${uid}-${this.getPlatformIndex(uid)}`;
-        const chartKeys = [`${cardId}-pm25`, `${cardId}-pm10`, `${cardId}-tsp`, `${cardId}-noise`, `${cardId}-airIndex`];
+        const chartKeys = [`${cardId}-pm25`, `${cardId}-pm10`, `${cardId}-tsp`, `${cardId}-noise`, `${cardId}-temp`, `${cardId}-mmhg`, `${cardId}-airIndex`];
         chartKeys.forEach(key => {
             const chart = this.chartInstances.get(key);
             if (chart && chart.destroy) {
@@ -1493,6 +1527,14 @@ class PlatformSkeletonManager {
                 noise: {
                     ...platform.data.metrics.noise,
                     value: loggerData.noise
+                },
+                temp: {
+                    ...platform.data.metrics.temp,
+                    value: loggerData.temp ?? 0
+                },
+                mmhg: {
+                    ...platform.data.metrics.mmhg,
+                    value: 0
                 }
             };
         }
@@ -1627,6 +1669,20 @@ class PlatformSkeletonManager {
             const newNoise = newData.metrics?.noise?.value;
             if (oldNoise !== newNoise && newNoise !== undefined) {
                 this.updateChartValue(cardId, 'noise', newNoise);
+            }
+
+            // Update Temp
+            const oldTemp = oldData.metrics?.temp?.value;
+            const newTemp = newData.metrics?.temp?.value;
+            if (oldTemp !== newTemp && newTemp !== undefined) {
+                this.updateChartValue(cardId, 'temp', newTemp);
+            }
+
+            // Update Pressure (mmhg)
+            const oldMmgh = oldData.metrics?.mmhg?.value;
+            const newMmgh = newData.metrics?.mmhg?.value;
+            if (oldMmgh !== newMmgh && newMmgh !== undefined) {
+                this.updateChartValue(cardId, 'mmhg', newMmgh);
             }
         }
 
@@ -1791,7 +1847,7 @@ class PlatformSkeletonManager {
     // endregion
 
     // region Chart Creation and Update Methods (Same as original AirQualityCardManager)
-    private createGaugeChart(uid: string, element: HTMLElement, title: string, type: 'pm10' | 'pm25' | 'tsp' | 'noise', bml_min: number, bml_max: number, initialValue: number, cardId: string, metricCard: HTMLElement): void {
+    private createGaugeChart(uid: string, element: HTMLElement, title: string, type: 'pm10' | 'pm25' | 'tsp' | 'noise' | 'temp' | 'mmhg', bml_min: number, bml_max: number, initialValue: number, cardId: string, metricCard: HTMLElement): void {
         if (!this.options.enableCharts || typeof Highcharts === 'undefined') {
             return;
         }
@@ -1809,7 +1865,9 @@ class PlatformSkeletonManager {
             pm10: 'µg/m³',
             pm25: 'µg/m³',
             tsp: 'µg/m³',
-            noise: 'dBA'
+            noise: 'dBA',
+            temp: '°C',
+            mmhg: 'mmHg'
         };
 
         const managerRef = this;
@@ -2152,7 +2210,7 @@ class PlatformSkeletonManager {
         this.chartInstances.set(`${cardId}-airIndex`, chart);
     }
 
-    private updateChartValue(cardId: string, chartType: 'pm10' | 'pm25' | 'tsp' | 'noise', newValue: number): void {
+    private updateChartValue(cardId: string, chartType: 'pm10' | 'pm25' | 'tsp' | 'noise' | 'temp' | 'mmhg', newValue: number): void {
         const chartKey = `${cardId}-${chartType}`;
         const chart = this.chartInstances.get(chartKey);
 
