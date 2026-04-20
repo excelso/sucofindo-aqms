@@ -236,7 +236,7 @@
                     'bml_min' => 0,
                     'bml_min_buffer' => 0,
                     'bml_max_buffer' => 800,
-                    'bml_max' => 1000,
+                    'bml_max' => 2000,
                 ],
                 'noise' => [
                     'value' => $dataLastLogger->noise_leq ?? 0,
@@ -244,6 +244,34 @@
                     'bml_min_buffer' => $platformLimit->noise_min_buffer ?? 0,
                     'bml_max_buffer' => $platformLimit->noise_max_buffer ?? 0,
                     'bml_max' => $platformLimit->noise_max ?? 0,
+                ],
+                'humidity' => [
+                    'value' => $dataLastLogger->humidity ?? 0,
+                    'bml_min' => 0,
+                    'bml_min_buffer' => 0,
+                    'bml_max_buffer' => 80,
+                    'bml_max' => 100,
+                ],
+                'pm25_raw' => [
+                    'value' => $dataLastLogger->max_pm_25_raw ?? 0,
+                    'bml_min' => $platformLimit->pm25_min ?? 0,
+                    'bml_min_buffer' => $platformLimit->pm25_min_buffer ?? 0,
+                    'bml_max_buffer' => $platformLimit->pm25_max_buffer ?? 0,
+                    'bml_max' => $platformLimit->pm25_max ?? 0,
+                ],
+                'pm10_raw' => [
+                    'value' => $dataLastLogger->max_pm_10_raw ?? 0,
+                    'bml_min' => $platformLimit->pm10_min ?? 0,
+                    'bml_min_buffer' => $platformLimit->pm10_min_buffer ?? 0,
+                    'bml_max_buffer' => $platformLimit->pm10_max_buffer ?? 0,
+                    'bml_max' => $platformLimit->pm10_max ?? 0,
+                ],
+                'tsp_raw' => [
+                    'value' => $dataLastLogger->max_tsp_raw ?? 0,
+                    'bml_min' => $platformLimit->tsp_min ?? 0,
+                    'bml_min_buffer' => $platformLimit->tsp_min_buffer ?? 0,
+                    'bml_max_buffer' => $platformLimit->tsp_max_buffer ?? 0,
+                    'bml_max' => $platformLimit->tsp_max ?? 0,
                 ]
             ];
         }

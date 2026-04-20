@@ -85,6 +85,34 @@ interface PlatformData {
             bml_max_buffer?: number,
             bml_max?: number
         };
+        humidity?: {
+            value?: number,
+            bml_min?: number,
+            bml_min_buffer?: number,
+            bml_max_buffer?: number,
+            bml_max?: number
+        };
+        pm25_raw?: {
+            value?: number,
+            bml_min?: number,
+            bml_min_buffer?: number,
+            bml_max_buffer?: number,
+            bml_max?: number
+        };
+        pm10_raw?: {
+            value?: number,
+            bml_min?: number,
+            bml_min_buffer?: number,
+            bml_max_buffer?: number,
+            bml_max?: number
+        };
+        tsp_raw?: {
+            value?: number,
+            bml_min?: number,
+            bml_min_buffer?: number,
+            bml_max_buffer?: number,
+            bml_max?: number
+        };
     };
     airIndexData?: Array<{
         timestamp: number;
@@ -129,6 +157,10 @@ interface LoggerEventData {
     pm_10: number;
     pm_25: number;
     tsp: number;
+    pm_10_raw?: number;
+    pm_25_raw?: number;
+    tsp_raw?: number;
+    humidity?: number;
     noise: number;
     temp?: number;
     datetime_unix: number;
@@ -605,22 +637,52 @@ class PlatformSkeletonManager {
         headerFlex.appendChild(leftSection);
         headerFlex.appendChild(rightSection);
 
-        // Skeleton metrics section
-        const metricsContainer = this.createElement('div', 'mt-4');
-        const metricsGrid = this.createElement('div', 'grid grid-cols-3 gap-2');
+        // Skeleton metrics section - carousel (4 per page)
+        const METRICS_PER_PAGE = 4;
+        const metricTypes = ['PM2.5', 'PM10', 'TSP', 'Noise', 'Temp', 'Pressure', 'Humidity', 'PM2.5 (Real)', 'PM10 (Real)', 'TSP (Real)'];
+        const totalMetricPages = Math.ceil(metricTypes.length / METRICS_PER_PAGE);
 
-        const metricTypes = ['PM2.5', 'PM10', 'TSP', 'Noise', 'Temp', 'Pressure'];
-        metricTypes.forEach(metricTitle => {
-            const metricCard = this.createElement('div', 'border rounded-md');
-            const titleDiv = this.createElement('div', 'font-bold text-[12px] m-2 mb-2', metricTitle);
-            const skeletonChart = this.createElement('div', 'skeleton-box skeleton-metric w-[85px] h-16 bg-gray-200 animate-pulse rounded mx-2 mb-2');
+        const metricsContainer = this.createElement('div', 'metrics-carousel mt-4');
 
-            metricCard.appendChild(titleDiv);
-            metricCard.appendChild(skeletonChart);
-            metricsGrid.appendChild(metricCard);
-        });
+        const prevBtn = this.createElement('button', 'carousel-prev bg-white border rounded-full w-6 h-6 flex items-center justify-center shadow text-gray-500 text-sm leading-none transition-opacity duration-200 disabled:opacity-30') as HTMLButtonElement;
+        prevBtn.textContent = '‹';
+        prevBtn.disabled = true;
 
-        metricsContainer.appendChild(metricsGrid);
+        const nextBtn = this.createElement('button', 'carousel-next bg-white border rounded-full w-6 h-6 flex items-center justify-center shadow text-gray-500 text-sm leading-none transition-opacity duration-200 disabled:opacity-30') as HTMLButtonElement;
+        nextBtn.textContent = '›';
+        if (totalMetricPages <= 1) nextBtn.disabled = true;
+
+        const viewport = this.createElement('div', 'overflow-hidden');
+        const track = this.createElement('div', 'carousel-track flex transition-transform duration-300') as HTMLElement;
+        track.style.transform = 'translateX(0%)';
+
+        for (let p = 0; p < totalMetricPages; p++) {
+            const pageDiv = this.createElement('div', 'min-w-full grid grid-cols-4 gap-2');
+            const pageItems = metricTypes.slice(p * METRICS_PER_PAGE, (p + 1) * METRICS_PER_PAGE);
+            pageItems.forEach(metricTitle => {
+                const metricCard = this.createElement('div', 'border rounded-md');
+                const titleDiv = this.createElement('div', 'font-bold text-[12px] m-2 mb-2', metricTitle);
+                const skeletonChart = this.createElement('div', 'skeleton-box skeleton-metric w-[85px] h-16 bg-gray-200 animate-pulse rounded mx-2 mb-2');
+                metricCard.appendChild(titleDiv);
+                metricCard.appendChild(skeletonChart);
+                pageDiv.appendChild(metricCard);
+            });
+            track.appendChild(pageDiv);
+        }
+
+        const dotsContainer = this.createElement('div', 'flex justify-center items-center mt-2 gap-2');
+        dotsContainer.appendChild(prevBtn);
+        for (let i = 0; i < totalMetricPages; i++) {
+            const dot = this.createElement('div', `carousel-dot w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-gray-600' : 'bg-gray-300'}`);
+            dotsContainer.appendChild(dot);
+        }
+        dotsContainer.appendChild(nextBtn);
+
+        viewport.appendChild(track);
+        metricsContainer.appendChild(viewport);
+        metricsContainer.appendChild(dotsContainer);
+
+        this.initCarouselNavigation(metricsContainer as HTMLElement, totalMetricPages);
 
         // Skeleton AirIndex section
         const airIndexSection = this.createElement('div', 'mt-4');
@@ -785,6 +847,46 @@ class PlatformSkeletonManager {
                 bml_max_buffer: data.metrics?.mmhg?.bml_max_buffer || 800,
                 bml_max: data.metrics?.mmhg?.bml_max || 1000,
                 unit: 'mmHg'
+            },
+            {
+                title: 'Humidity',
+                type: 'humidity' as const,
+                value: data.metrics?.humidity?.value || 0,
+                bml_min: data.metrics?.humidity?.bml_min || 0,
+                bml_min_buffer: data.metrics?.humidity?.bml_min_buffer || 0,
+                bml_max_buffer: data.metrics?.humidity?.bml_max_buffer || 80,
+                bml_max: data.metrics?.humidity?.bml_max || 100,
+                unit: '%'
+            },
+            {
+                title: 'PM2.5 (Real)',
+                type: 'pm25_raw' as const,
+                value: data.metrics?.pm25_raw?.value || 0,
+                bml_min: data.metrics?.pm25_raw?.bml_min || 0,
+                bml_min_buffer: data.metrics?.pm25_raw?.bml_min_buffer || 0,
+                bml_max_buffer: data.metrics?.pm25_raw?.bml_max_buffer || 100,
+                bml_max: data.metrics?.pm25_raw?.bml_max || 100,
+                unit: 'µg/m³'
+            },
+            {
+                title: 'PM10 (Real)',
+                type: 'pm10_raw' as const,
+                value: data.metrics?.pm10_raw?.value || 0,
+                bml_min: data.metrics?.pm10_raw?.bml_min || 0,
+                bml_min_buffer: data.metrics?.pm10_raw?.bml_min_buffer || 0,
+                bml_max_buffer: data.metrics?.pm10_raw?.bml_max_buffer || 100,
+                bml_max: data.metrics?.pm10_raw?.bml_max || 100,
+                unit: 'µg/m³'
+            },
+            {
+                title: 'TSP (Real)',
+                type: 'tsp_raw' as const,
+                value: data.metrics?.tsp_raw?.value || 0,
+                bml_min: data.metrics?.tsp_raw?.bml_min || 0,
+                bml_min_buffer: data.metrics?.tsp_raw?.bml_min_buffer || 0,
+                bml_max_buffer: data.metrics?.tsp_raw?.bml_max_buffer || 100,
+                bml_max: data.metrics?.tsp_raw?.bml_max || 100,
+                unit: 'µg/m³'
             }
         ];
 
@@ -805,8 +907,99 @@ class PlatformSkeletonManager {
 
                 // Create gauge chart
                 setTimeout(() => {
-                    this.createGaugeChart(data.uid, chartDiv, metric.title, metric.type, metric.bml_min, metric.bml_max, metric.value, cardId, metricCard as HTMLElement);
+                    this.createGaugeChart(data.uid, chartDiv, metric.title, metric.type, metric.bml_min, metric.bml_min_buffer, metric.bml_max_buffer, metric.bml_max, metric.value, cardId, metricCard as HTMLElement);
                 }, 100);
+            }
+        });
+
+        // Re-init carousel navigation after skeleton → data transition
+        const carouselContainer = cardElement.querySelector('.metrics-carousel') as HTMLElement;
+        if (carouselContainer) {
+            this.initCarouselNavigation(carouselContainer, Math.ceil(metrics.length / 4));
+        }
+    }
+
+    // endregion
+
+    // region Carousel Navigation
+    private initCarouselNavigation(container: HTMLElement, totalPages: number): void {
+        const track = container.querySelector('.carousel-track') as HTMLElement;
+        const prevBtn = container.querySelector('.carousel-prev') as HTMLButtonElement;
+        const nextBtn = container.querySelector('.carousel-next') as HTMLButtonElement;
+        const dots = container.querySelectorAll('.carousel-dot');
+        if (!track || !prevBtn || !nextBtn) return;
+
+        let currentPage = 0;
+
+        const goToPage = (page: number) => {
+            currentPage = page;
+            track.style.transition = 'transform 300ms ease';
+            track.style.transform = `translateX(-${page * 100}%)`;
+            prevBtn.disabled = page === 0;
+            nextBtn.disabled = page === totalPages - 1;
+            dots.forEach((dot, i) => {
+                dot.className = `carousel-dot w-1.5 h-1.5 rounded-full ${i === currentPage ? 'bg-gray-600' : 'bg-gray-300'}`;
+            });
+        };
+
+        prevBtn.onclick = () => { if (currentPage > 0) goToPage(currentPage - 1); };
+        nextBtn.onclick = () => { if (currentPage < totalPages - 1) goToPage(currentPage + 1); };
+
+        // Mouse drag support
+        let isDragging = false;
+        let dragStartX = 0;
+
+        track.style.cursor = 'grab';
+
+        track.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            dragStartX = e.clientX;
+            track.style.cursor = 'grabbing';
+            track.style.transition = 'none';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const diff = e.clientX - dragStartX;
+            track.style.transform = `translateX(calc(-${currentPage * 100}% + ${diff}px))`;
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            track.style.cursor = 'grab';
+            const diff = e.clientX - dragStartX;
+            if (diff < -50 && currentPage < totalPages - 1) {
+                goToPage(currentPage + 1);
+            } else if (diff > 50 && currentPage > 0) {
+                goToPage(currentPage - 1);
+            } else {
+                goToPage(currentPage);
+            }
+        });
+
+        // Touch swipe support
+        let touchStartX = 0;
+
+        track.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            track.style.transition = 'none';
+        }, { passive: true });
+
+        track.addEventListener('touchmove', (e) => {
+            const diff = e.touches[0].clientX - touchStartX;
+            track.style.transform = `translateX(calc(-${currentPage * 100}% + ${diff}px))`;
+        }, { passive: true });
+
+        track.addEventListener('touchend', (e) => {
+            const diff = e.changedTouches[0].clientX - touchStartX;
+            if (diff < -50 && currentPage < totalPages - 1) {
+                goToPage(currentPage + 1);
+            } else if (diff > 50 && currentPage > 0) {
+                goToPage(currentPage - 1);
+            } else {
+                goToPage(currentPage);
             }
         });
     }
@@ -1254,7 +1447,7 @@ class PlatformSkeletonManager {
         }
 
         // Convert metrics charts to skeleton
-        const metricCharts = cardElement.querySelectorAll('.chart-pm25, .chart-pm10, .chart-tsp, .chart-noise, .chart-temp, .chart-mmhg');
+        const metricCharts = cardElement.querySelectorAll('.chart-pm25, .chart-pm10, .chart-tsp, .chart-noise, .chart-temp, .chart-mmhg, .chart-humidity, .chart-pm25_raw, .chart-pm10_raw, .chart-tsp_raw');
         metricCharts.forEach(chart => {
             const skeletonChart = this.createElement('div', 'skeleton-box skeleton-metric w-[78px] h-16 bg-gray-200 animate-pulse rounded mx-2 mb-2');
             chart.parentNode?.replaceChild(skeletonChart, chart);
@@ -1283,7 +1476,7 @@ class PlatformSkeletonManager {
 
         // Clear chart instances for this card
         const cardId = `card-${uid}-${this.getPlatformIndex(uid)}`;
-        const chartKeys = [`${cardId}-pm25`, `${cardId}-pm10`, `${cardId}-tsp`, `${cardId}-noise`, `${cardId}-temp`, `${cardId}-mmhg`, `${cardId}-airIndex`];
+        const chartKeys = [`${cardId}-pm25`, `${cardId}-pm10`, `${cardId}-tsp`, `${cardId}-noise`, `${cardId}-temp`, `${cardId}-mmhg`, `${cardId}-humidity`, `${cardId}-pm25_raw`, `${cardId}-pm10_raw`, `${cardId}-tsp_raw`, `${cardId}-airIndex`];
         chartKeys.forEach(key => {
             const chart = this.chartInstances.get(key);
             if (chart && chart.destroy) {
@@ -1535,6 +1728,22 @@ class PlatformSkeletonManager {
                 mmhg: {
                     ...platform.data.metrics.mmhg,
                     value: 0
+                },
+                humidity: {
+                    ...platform.data.metrics.humidity,
+                    value: loggerData.humidity ?? 0
+                },
+                pm25_raw: {
+                    ...platform.data.metrics.pm25_raw,
+                    value: loggerData.pm_25_raw ?? platform.data.metrics.pm25_raw?.value ?? 0
+                },
+                pm10_raw: {
+                    ...platform.data.metrics.pm10_raw,
+                    value: loggerData.pm_10_raw ?? platform.data.metrics.pm10_raw?.value ?? 0
+                },
+                tsp_raw: {
+                    ...platform.data.metrics.tsp_raw,
+                    value: loggerData.tsp_raw ?? platform.data.metrics.tsp_raw?.value ?? 0
                 }
             };
         }
@@ -1683,6 +1892,34 @@ class PlatformSkeletonManager {
             const newMmgh = newData.metrics?.mmhg?.value;
             if (oldMmgh !== newMmgh && newMmgh !== undefined) {
                 this.updateChartValue(cardId, 'mmhg', newMmgh);
+            }
+
+            // Update Humidity
+            const oldHumidity = oldData.metrics?.humidity?.value;
+            const newHumidity = newData.metrics?.humidity?.value;
+            if (oldHumidity !== newHumidity && newHumidity !== undefined) {
+                this.updateChartValue(cardId, 'humidity', newHumidity);
+            }
+
+            // Update PM2.5 (Real)
+            const oldPm25Raw = oldData.metrics?.pm25_raw?.value;
+            const newPm25Raw = newData.metrics?.pm25_raw?.value;
+            if (oldPm25Raw !== newPm25Raw && newPm25Raw !== undefined) {
+                this.updateChartValue(cardId, 'pm25_raw', newPm25Raw);
+            }
+
+            // Update PM10 Raw
+            const oldPm10Raw = oldData.metrics?.pm10_raw?.value;
+            const newPm10Raw = newData.metrics?.pm10_raw?.value;
+            if (oldPm10Raw !== newPm10Raw && newPm10Raw !== undefined) {
+                this.updateChartValue(cardId, 'pm10_raw', newPm10Raw);
+            }
+
+            // Update TSP Raw
+            const oldTspRaw = oldData.metrics?.tsp_raw?.value;
+            const newTspRaw = newData.metrics?.tsp_raw?.value;
+            if (oldTspRaw !== newTspRaw && newTspRaw !== undefined) {
+                this.updateChartValue(cardId, 'tsp_raw', newTspRaw);
             }
         }
 
@@ -1847,19 +2084,44 @@ class PlatformSkeletonManager {
     // endregion
 
     // region Chart Creation and Update Methods (Same as original AirQualityCardManager)
-    private createGaugeChart(uid: string, element: HTMLElement, title: string, type: 'pm10' | 'pm25' | 'tsp' | 'noise' | 'temp' | 'mmhg', bml_min: number, bml_max: number, initialValue: number, cardId: string, metricCard: HTMLElement): void {
+    private createGaugeChart(uid: string, element: HTMLElement, title: string, type: 'pm10' | 'pm25' | 'tsp' | 'noise' | 'temp' | 'mmhg' | 'humidity' | 'pm25_raw' | 'pm10_raw' | 'tsp_raw', bml_min: number, bml_min_buffer: number, bml_max_buffer: number, bml_max: number, initialValue: number, cardId: string, metricCard: HTMLElement): void {
         if (!this.options.enableCharts || typeof Highcharts === 'undefined') {
             return;
         }
 
-        const stops: [number, string][] = [
-            [0, '#4CAF50'],
-            [0.2, '#8BC34A'],
-            [0.4, '#FFC107'],
-            [0.6, '#FF9800'],
-            [0.8, '#FF5722'],
-            [1, '#F44336']
-        ];
+        const axisMin = bml_min ?? 0;
+        // Extend axis to 1.5× bml_max so red zone is always visible on the arc
+        const axisMax = bml_max > 0 ? bml_max * 1.5 : 100;
+        const range = axisMax - axisMin;
+
+        let stops: [number, string][];
+        if (bml_max > 0 && range > 0) {
+            const bufferStop = bml_max_buffer > 0
+                ? Math.min(0.88, Math.max(0.1, (bml_max_buffer - axisMin) / range))
+                : Math.min(0.55, (bml_max - axisMin) / range * 0.6);
+            const limitStop = Math.min(0.95, (bml_max - axisMin) / range);
+
+            // Spread intermediate colors evenly across 0 → bufferStop so they're always visible
+            stops = [
+                [0,                          '#4CAF50'],  // green at start
+                [bufferStop * 0.35,          '#66BB6A'],  // medium green
+                [bufferStop * 0.65,          '#CDDC39'],  // yellow-green
+                [bufferStop,                 '#FFC107'],  // yellow at buffer threshold
+                [bufferStop + (limitStop - bufferStop) * 0.45, '#FF9800'],  // orange
+                [limitStop,                  '#F44336'],  // red at bml_max
+                [1,                          '#B71C1C']   // dark red beyond limit
+            ];
+        } else {
+            stops = [
+                [0,    '#4CAF50'],
+                [0.25, '#66BB6A'],
+                [0.45, '#CDDC39'],
+                [0.60, '#FFC107'],
+                [0.75, '#FF9800'],
+                [0.88, '#F44336'],
+                [1,    '#B71C1C']
+            ];
+        }
 
         const unitMap = {
             pm10: 'µg/m³',
@@ -1867,7 +2129,11 @@ class PlatformSkeletonManager {
             tsp: 'µg/m³',
             noise: 'dBA',
             temp: '°C',
-            mmhg: 'mmHg'
+            mmhg: 'mmHg',
+            humidity: '%',
+            pm25_raw: 'µg/m³',
+            pm10_raw: 'µg/m³',
+            tsp_raw: 'µg/m³'
         };
 
         const managerRef = this;
@@ -1945,8 +2211,8 @@ class PlatformSkeletonManager {
                 }]
             },
             yAxis: {
-                min: 0,
-                max: 100,
+                min: axisMin,
+                max: axisMax,
                 lineWidth: 0,
                 tickPosition: 'inside',
                 tickColor: '#FFFFFF',
@@ -1954,8 +2220,8 @@ class PlatformSkeletonManager {
                 minorTickInterval: null,
                 labels: {enabled: false},
                 plotBands: [{
-                    from: 0,
-                    to: 100,
+                    from: axisMin,
+                    to: axisMax,
                     innerRadius: '80%',
                     outerRadius: '100%',
                     color: {
@@ -2210,7 +2476,7 @@ class PlatformSkeletonManager {
         this.chartInstances.set(`${cardId}-airIndex`, chart);
     }
 
-    private updateChartValue(cardId: string, chartType: 'pm10' | 'pm25' | 'tsp' | 'noise' | 'temp' | 'mmhg', newValue: number): void {
+    private updateChartValue(cardId: string, chartType: 'pm10' | 'pm25' | 'tsp' | 'noise' | 'temp' | 'mmhg' | 'humidity' | 'pm25_raw' | 'pm10_raw' | 'tsp_raw', newValue: number): void {
         const chartKey = `${cardId}-${chartType}`;
         const chart = this.chartInstances.get(chartKey);
 

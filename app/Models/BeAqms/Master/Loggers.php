@@ -18,10 +18,15 @@
         protected $fillable = [
             'uid',
             'pm_25',
+            'pm_25_correction',
             'pm_10',
+            'pm_10_correction',
             'tsp',
+            'tsp_correction',
             'noise',
             'temp',
+            'mmhg',
+            'humidity',
             'aqi_index_pm25',
             'aqi_index_pm10',
             'aqi_index',
@@ -62,11 +67,18 @@
                 $builder->selectRaw('MAX( pm_25_correction ) AS max_pm_25');
                 $builder->selectRaw('ROUND(AVG(tsp_correction), 0) AS tsp');
                 $builder->selectRaw('MAX( tsp_correction ) AS max_tsp');
+                $builder->selectRaw('ROUND(AVG(pm_25), 0) AS pm_25_raw');
+                $builder->selectRaw('MAX( pm_25 ) AS max_pm_25_raw');
+                $builder->selectRaw('ROUND(AVG(pm_10), 0) AS pm_10_raw');
+                $builder->selectRaw('MAX( pm_10 ) AS max_pm_10_raw');
+                $builder->selectRaw('ROUND(AVG(tsp), 0) AS tsp_raw');
+                $builder->selectRaw('MAX( tsp ) AS max_tsp_raw');
                 $builder->selectRaw('ROUND(AVG(noise), 2) AS noise');
                 $builder->selectRaw('MAX( noise ) AS max_noise');
                 $builder->selectRaw('ROUND((10 * LOG10((1/count(*) * SUM(POWER(10, noise / 10))))), 2) AS noise_leq');
                 $builder->selectRaw('ROUND(AVG(temp), 2) AS temp');
                 $builder->selectRaw('ROUND(AVG(mmhg), 2) AS mmhg');
+                $builder->selectRaw('ROUND(AVG(humidity), 2) AS humidity');
                 $builder->selectRaw('ROUND(AVG(aqi_index)) AS aqi_index');
                 $builder->selectRaw('MAX( aqi_index ) AS max_aqi_index');
                 $builder->selectRaw('ROUND(AVG(aqi_index_tsp)) AS aqi_index_tsp');
@@ -192,11 +204,11 @@
             }
 
             if (!empty($search['startDate']) && !empty($search['untilDate'])) {
-                $builder->whereBetween(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_loggers.datetime_unix, "%Y-%m-%d %H:%i" ), "Asia/Makassar", "' . $timezone . '" )'), [$search['startDate'], $search['untilDate']]);
+                $builder->whereBetween(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_loggers.datetime_unix, "%Y-%m-%d %H:%i" ), "UTC", "' . $timezone . '" )'), [$search['startDate'], $search['untilDate']]);
             } elseif (!empty($search['startDate'])) {
-                $builder->where(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_loggers.datetime_unix, "%Y-%m-%d %H:%i" ), "Asia/Makassar", "' . $timezone . '" )'), '=', $search['startDate']);
+                $builder->where(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_loggers.datetime_unix, "%Y-%m-%d %H:%i" ), "UTC", "' . $timezone . '" )'), '=', $search['startDate']);
             } else {
-                $builder->whereBetween(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_loggers.datetime_unix, "%Y-%m-%d %H:%i" ), "Asia/Makassar", "' . $timezone . '" )'), [$startDate, $untilDate]);
+                $builder->whereBetween(DB::raw('CONVERT_TZ( FROM_UNIXTIME( t_loggers.datetime_unix, "%Y-%m-%d %H:%i" ), "UTC", "' . $timezone . '" )'), [$startDate, $untilDate]);
             }
 
             if (isset($search['statusAqi']) && $search['statusAqi'] != '') {
