@@ -660,8 +660,9 @@ class PlatformSkeletonManager {
             const pageDiv = this.createElement('div', 'min-w-full grid grid-cols-4 gap-2');
             const pageItems = metricTypes.slice(p * METRICS_PER_PAGE, (p + 1) * METRICS_PER_PAGE);
             pageItems.forEach(metricTitle => {
-                const metricCard = this.createElement('div', 'border rounded-md');
-                const titleDiv = this.createElement('div', 'font-bold text-[12px] m-2 mb-2', metricTitle);
+                const metricCard = this.createElement('div', 'border rounded-md overflow-hidden');
+                const titleDiv = this.createElement('div', 'font-bold text-[12px] m-2 mb-2 truncate', metricTitle);
+                titleDiv.title = metricTitle;
                 const skeletonChart = this.createElement('div', 'skeleton-box skeleton-metric w-[85px] h-16 bg-gray-200 animate-pulse rounded mx-2 mb-2');
                 metricCard.appendChild(titleDiv);
                 metricCard.appendChild(skeletonChart);
