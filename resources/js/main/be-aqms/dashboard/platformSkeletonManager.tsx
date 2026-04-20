@@ -667,7 +667,7 @@ class PlatformSkeletonManager {
             const metricCard = this.createElement('div', 'carousel-item border rounded-md overflow-hidden flex-shrink-0');
             const titleDiv = this.createElement('div', 'font-bold text-[12px] m-2 mb-2 truncate', metricTitle);
             titleDiv.title = metricTitle;
-            const skeletonChart = this.createElement('div', 'skeleton-box skeleton-metric w-full h-16 bg-gray-200 animate-pulse rounded mx-2 mb-2');
+            const skeletonChart = this.createElement('div', 'skeleton-box skeleton-metric w-16 h-16 bg-gray-200 animate-pulse rounded mx-2 mb-2');
             metricCard.appendChild(titleDiv);
             metricCard.appendChild(skeletonChart);
             track.appendChild(metricCard);
