@@ -637,10 +637,16 @@ class PlatformSkeletonManager {
         headerFlex.appendChild(leftSection);
         headerFlex.appendChild(rightSection);
 
-        // Skeleton metrics section - carousel (4 per page)
-        const METRICS_PER_PAGE = 4;
-        const metricTypes = ['PM2.5', 'PM10', 'TSP', 'Noise', 'Temp', 'Pressure', 'Humidity', 'PM2.5 (Real)', 'PM10 (Real)', 'TSP (Real)'];
-        const totalMetricPages = Math.ceil(metricTypes.length / METRICS_PER_PAGE);
+        // Skeleton metrics — flat carousel, 4 visible per stop
+        // All items in one row; stops: [0, 4, 6] → each stop shows exactly 4 items
+        const VISIBLE_PER_VIEW = 4;
+        const allMetricTypes = [
+            'PM2.5', 'PM10', 'TSP', 'Noise',
+            'Temp', 'Pressure',
+            'Humidity', 'PM2.5 (Real)', 'PM10 (Real)', 'TSP (Real)',
+        ];
+        const metricStopIndices = this.buildCarouselStops(allMetricTypes.length, VISIBLE_PER_VIEW);
+        const totalMetricPages = metricStopIndices.length;
 
         const metricsContainer = this.createElement('div', 'metrics-carousel mt-4');
 
@@ -653,23 +659,19 @@ class PlatformSkeletonManager {
         if (totalMetricPages <= 1) nextBtn.disabled = true;
 
         const viewport = this.createElement('div', 'overflow-hidden');
-        const track = this.createElement('div', 'carousel-track flex transition-transform duration-300') as HTMLElement;
-        track.style.transform = 'translateX(0%)';
+        const track = this.createElement('div', 'carousel-track flex') as HTMLElement;
+        track.style.transform = 'translateX(0px)';
+        track.style.transition = 'transform 300ms ease';
 
-        for (let p = 0; p < totalMetricPages; p++) {
-            const pageDiv = this.createElement('div', 'min-w-full grid grid-cols-4 gap-2');
-            const pageItems = metricTypes.slice(p * METRICS_PER_PAGE, (p + 1) * METRICS_PER_PAGE);
-            pageItems.forEach(metricTitle => {
-                const metricCard = this.createElement('div', 'border rounded-md overflow-hidden');
-                const titleDiv = this.createElement('div', 'font-bold text-[12px] m-2 mb-2 truncate', metricTitle);
-                titleDiv.title = metricTitle;
-                const skeletonChart = this.createElement('div', 'skeleton-box skeleton-metric w-[85px] h-16 bg-gray-200 animate-pulse rounded mx-2 mb-2');
-                metricCard.appendChild(titleDiv);
-                metricCard.appendChild(skeletonChart);
-                pageDiv.appendChild(metricCard);
-            });
-            track.appendChild(pageDiv);
-        }
+        allMetricTypes.forEach(metricTitle => {
+            const metricCard = this.createElement('div', 'carousel-item border rounded-md overflow-hidden flex-shrink-0');
+            const titleDiv = this.createElement('div', 'font-bold text-[12px] m-2 mb-2 truncate', metricTitle);
+            titleDiv.title = metricTitle;
+            const skeletonChart = this.createElement('div', 'skeleton-box skeleton-metric w-full h-16 bg-gray-200 animate-pulse rounded mx-2 mb-2');
+            metricCard.appendChild(titleDiv);
+            metricCard.appendChild(skeletonChart);
+            track.appendChild(metricCard);
+        });
 
         const dotsContainer = this.createElement('div', 'flex justify-center items-center mt-2 gap-2');
         dotsContainer.appendChild(prevBtn);
@@ -683,7 +685,7 @@ class PlatformSkeletonManager {
         metricsContainer.appendChild(viewport);
         metricsContainer.appendChild(dotsContainer);
 
-        this.initCarouselNavigation(metricsContainer as HTMLElement, totalMetricPages);
+        this.initCarouselNavigation(metricsContainer as HTMLElement, metricStopIndices);
 
         // Skeleton AirIndex section
         const airIndexSection = this.createElement('div', 'mt-4');
@@ -916,40 +918,75 @@ class PlatformSkeletonManager {
         // Re-init carousel navigation after skeleton → data transition
         const carouselContainer = cardElement.querySelector('.metrics-carousel') as HTMLElement;
         if (carouselContainer) {
-            this.initCarouselNavigation(carouselContainer, Math.ceil(metrics.length / 4));
+            const stops = this.buildCarouselStops(metrics.length, 4);
+            this.initCarouselNavigation(carouselContainer, stops);
         }
     }
 
     // endregion
 
     // region Carousel Navigation
-    private initCarouselNavigation(container: HTMLElement, totalPages: number): void {
+
+    private buildCarouselStops(totalItems: number, visiblePerView: number): number[] {
+        const stops: number[] = [];
+        for (let i = 0; i < totalItems; i += visiblePerView) {
+            stops.push(i);
+        }
+        const maxStart = Math.max(0, totalItems - visiblePerView);
+        if (stops[stops.length - 1] !== maxStart) {
+            stops[stops.length - 1] = maxStart;
+            if (stops.length > 1 && stops[stops.length - 1] === stops[stops.length - 2]) {
+                stops.pop();
+            }
+        }
+        return stops; // e.g. [0, 4, 6] for 10 items with 4 visible
+    }
+
+    private initCarouselNavigation(container: HTMLElement, stopIndices: number[]): void {
         const track = container.querySelector('.carousel-track') as HTMLElement;
         const prevBtn = container.querySelector('.carousel-prev') as HTMLButtonElement;
         const nextBtn = container.querySelector('.carousel-next') as HTMLButtonElement;
+        const viewport = container.querySelector('.overflow-hidden') as HTMLElement;
         const dots = container.querySelectorAll('.carousel-dot');
-        if (!track || !prevBtn || !nextBtn) return;
+        if (!track || !prevBtn || !nextBtn || !viewport) return;
 
-        let currentPage = 0;
+        const GAP = 8; // px gap between items
+        const VISIBLE = 4;
+        track.style.gap = `${GAP}px`;
 
-        const goToPage = (page: number) => {
-            currentPage = page;
+        const totalStops = stopIndices.length;
+        let currentStop = 0;
+
+        // step = width one item occupies including its right-gap
+        const getStep  = () => (viewport.offsetWidth + GAP) / VISIBLE;
+        const getItemW = () => getStep() - GAP;
+
+        const setItemWidths = () => {
+            const w = getItemW();
+            track.querySelectorAll('.carousel-item').forEach(el => {
+                (el as HTMLElement).style.minWidth = `${w}px`;
+                (el as HTMLElement).style.width    = `${w}px`;
+            });
+        };
+        setItemWidths();
+
+        const goToStop = (idx: number) => {
+            currentStop = idx;
             track.style.transition = 'transform 300ms ease';
-            track.style.transform = `translateX(-${page * 100}%)`;
-            prevBtn.disabled = page === 0;
-            nextBtn.disabled = page === totalPages - 1;
+            track.style.transform  = `translateX(${-(stopIndices[idx] * getStep())}px)`;
+            prevBtn.disabled = idx === 0;
+            nextBtn.disabled = idx === totalStops - 1;
             dots.forEach((dot, i) => {
-                dot.className = `carousel-dot w-1.5 h-1.5 rounded-full ${i === currentPage ? 'bg-gray-600' : 'bg-gray-300'}`;
+                dot.className = `carousel-dot w-1.5 h-1.5 rounded-full ${i === currentStop ? 'bg-gray-600' : 'bg-gray-300'}`;
             });
         };
 
-        prevBtn.onclick = () => { if (currentPage > 0) goToPage(currentPage - 1); };
-        nextBtn.onclick = () => { if (currentPage < totalPages - 1) goToPage(currentPage + 1); };
+        prevBtn.onclick = () => { if (currentStop > 0) goToStop(currentStop - 1); };
+        nextBtn.onclick = () => { if (currentStop < totalStops - 1) goToStop(currentStop + 1); };
 
-        // Mouse drag support
+        // Mouse drag
         let isDragging = false;
         let dragStartX = 0;
-
         track.style.cursor = 'grab';
 
         track.addEventListener('mousedown', (e) => {
@@ -959,49 +996,36 @@ class PlatformSkeletonManager {
             track.style.transition = 'none';
             e.preventDefault();
         });
-
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
-            const diff = e.clientX - dragStartX;
-            track.style.transform = `translateX(calc(-${currentPage * 100}% + ${diff}px))`;
+            const base = -(stopIndices[currentStop] * getStep());
+            track.style.transform = `translateX(${base + (e.clientX - dragStartX)}px)`;
         });
-
         document.addEventListener('mouseup', (e) => {
             if (!isDragging) return;
             isDragging = false;
             track.style.cursor = 'grab';
             const diff = e.clientX - dragStartX;
-            if (diff < -50 && currentPage < totalPages - 1) {
-                goToPage(currentPage + 1);
-            } else if (diff > 50 && currentPage > 0) {
-                goToPage(currentPage - 1);
-            } else {
-                goToPage(currentPage);
-            }
+            if (diff < -50 && currentStop < totalStops - 1) goToStop(currentStop + 1);
+            else if (diff > 50 && currentStop > 0) goToStop(currentStop - 1);
+            else goToStop(currentStop);
         });
 
-        // Touch swipe support
+        // Touch swipe
         let touchStartX = 0;
-
         track.addEventListener('touchstart', (e) => {
             touchStartX = e.touches[0].clientX;
             track.style.transition = 'none';
         }, { passive: true });
-
         track.addEventListener('touchmove', (e) => {
-            const diff = e.touches[0].clientX - touchStartX;
-            track.style.transform = `translateX(calc(-${currentPage * 100}% + ${diff}px))`;
+            const base = -(stopIndices[currentStop] * getStep());
+            track.style.transform = `translateX(${base + (e.touches[0].clientX - touchStartX)}px)`;
         }, { passive: true });
-
         track.addEventListener('touchend', (e) => {
             const diff = e.changedTouches[0].clientX - touchStartX;
-            if (diff < -50 && currentPage < totalPages - 1) {
-                goToPage(currentPage + 1);
-            } else if (diff > 50 && currentPage > 0) {
-                goToPage(currentPage - 1);
-            } else {
-                goToPage(currentPage);
-            }
+            if (diff < -50 && currentStop < totalStops - 1) goToStop(currentStop + 1);
+            else if (diff > 50 && currentStop > 0) goToStop(currentStop - 1);
+            else goToStop(currentStop);
         });
     }
 
