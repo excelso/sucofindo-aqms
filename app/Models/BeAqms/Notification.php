@@ -38,9 +38,9 @@ class Notification extends Model {
     public function scopeDataCountNotification(Builder $builder, $userId): void {
         $builder->select('t_notification.*');
 
-        $builder->leftJoin('t_notifikasi_read', function ($join) use ($userId) {
-            $join->on('t_notifikasi_read.notifikasi_id', '=', 't_notifikasi.id')
-                ->where('t_notifikasi_read.user_id', '=', $userId);
+        $builder->leftJoin('t_notification_readed', function ($join) use ($userId) {
+            $join->on('t_notification_readed.notifikasi_id', '=', 't_notification.id')
+                ->where('t_notification_readed.user_id', '=', $userId);
         });
 
         $builder->where(function ($query) use ($userId) {
@@ -62,9 +62,9 @@ class Notification extends Model {
             't_notification_readed.readed',
         ]);
 
-        $builder->leftJoin('t_notifikasi_read', function ($join) use ($userId) {
-            $join->on('t_notifikasi_read.notifikasi_id', '=', 't_notifikasi.id')
-                ->where('t_notifikasi_read.user_id', '=', $userId);
+        $builder->leftJoin('t_notification_readed', function ($join) use ($userId) {
+            $join->on('t_notification_readed.notifikasi_id', '=', 't_notification.id')
+                ->where('t_notification_readed.user_id', '=', $userId);
         });
 
         if (isset($search['categories']) && $search['categories'] != '') {
