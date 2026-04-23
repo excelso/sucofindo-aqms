@@ -39,7 +39,7 @@ class Notification extends Model {
         $builder->select('t_notification.*');
 
         $builder->leftJoin('t_notification_readed', function ($join) use ($userId) {
-            $join->on('t_notification_readed.notifikasi_id', '=', 't_notification.id')
+            $join->on('t_notification_readed.notification_id', '=', 't_notification.id')
                 ->where('t_notification_readed.user_id', '=', $userId);
         });
 
@@ -63,7 +63,7 @@ class Notification extends Model {
         ]);
 
         $builder->leftJoin('t_notification_readed', function ($join) use ($userId) {
-            $join->on('t_notification_readed.notifikasi_id', '=', 't_notification.id')
+            $join->on('t_notification_readed.notification_id', '=', 't_notification.id')
                 ->where('t_notification_readed.user_id', '=', $userId);
         });
 
