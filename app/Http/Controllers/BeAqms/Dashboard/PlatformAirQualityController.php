@@ -253,14 +253,14 @@
                     'bml_max' => 100,
                 ],
                 'pm25_raw' => [
-                    'value' => $dataLastLogger->max_pm_25_raw ?? 0,
+                    'value' => $dataLastLogger->max_tsp_raw ? $dataLastLogger->max_tsp_raw * 0.15 : 0,
                     'bml_min' => $platformLimit->pm25_min ?? 0,
                     'bml_min_buffer' => $platformLimit->pm25_min_buffer ?? 0,
                     'bml_max_buffer' => $platformLimit->pm25_max_buffer ?? 0,
                     'bml_max' => $platformLimit->pm25_max ?? 0,
                 ],
                 'pm10_raw' => [
-                    'value' => $dataLastLogger->max_pm_10_raw ?? 0,
+                    'value' => $dataLastLogger->max_tsp_raw ? $dataLastLogger->max_tsp_raw * 0.4 : 0,
                     'bml_min' => $platformLimit->pm10_min ?? 0,
                     'bml_min_buffer' => $platformLimit->pm10_min_buffer ?? 0,
                     'bml_max_buffer' => $platformLimit->pm10_max_buffer ?? 0,
