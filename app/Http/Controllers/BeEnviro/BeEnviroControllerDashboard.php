@@ -207,7 +207,7 @@
          * FIX: file_exists() dihapus — tidak ada disk I/O per record.
          * FIX: getUserPlatformIds() di-cache agar tidak double query.
          */
-        private function getAqmsMarkers(int $userId) {
+        private function getAqmsMarkers(mixed $userId) {
             $userPlatformId = $this->getUserPlatformIds($userId);
 
             return Platforms::dataPlatformSearchByUserPlatform($userPlatformId)
