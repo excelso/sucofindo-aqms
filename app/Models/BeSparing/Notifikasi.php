@@ -24,21 +24,18 @@ class Notifikasi extends Model {
 
     public function scopeDataCountNotifikasi(Builder $builder, $userUniqId): void {
         $builder->select('t_notifikasi.*');
-        $builder->leftJoin(DB::raw('
-                (
-                    SELECT
-                        t_notifikasi_read.*
-                    FROM
-                        t_notifikasi_read
-                        WHERE t_notifikasi_read.user_uniq_id = "' . $userUniqId . '"
-                ) as notifikasi_read
-            '), 'notifikasi_read.notifikasi_id', '=', 't_notifikasi.id');
+
+        $builder->leftJoin('t_notifikasi_read', function ($join) use ($userUniqId) {
+            $join->on('t_notifikasi_read.notifikasi_id', '=', 't_notifikasi.id')
+                ->where('t_notifikasi_read.user_uniq_id', '=', $userUniqId);
+        });
 
         $builder->where(function ($query) use ($userUniqId) {
-            $query->where('t_notifikasi.user_uniq_id', $userUniqId);
-            $query->orWhereNull('t_notifikasi.user_uniq_id');
+            $query->where('t_notifikasi.user_uniq_id', $userUniqId)
+                ->orWhereNull('t_notifikasi.user_uniq_id');
         });
-        $builder->whereNull('notifikasi_read.user_uniq_id');
+
+        $builder->whereNull('t_notifikasi_read.user_uniq_id');
         $builder->where('t_notifikasi.status_kirim', '=', 'terkirim');
     }
 
@@ -53,15 +50,10 @@ class Notifikasi extends Model {
             'notifikasi_read.readed',
         );
 
-        $builder->leftJoin(DB::raw('
-            (
-                SELECT
-                    t_notifikasi_read.*
-                FROM
-                    t_notifikasi_read
-                    WHERE t_notifikasi_read.user_uniq_id = "' . $userUniqId . '"
-            ) as notifikasi_read
-        '), 'notifikasi_read.notifikasi_id', '=', 't_notifikasi.id');
+        $builder->leftJoin('t_notifikasi_read', function ($join) use ($userUniqId) {
+            $join->on('t_notifikasi_read.notifikasi_id', '=', 't_notifikasi.id')
+                ->where('t_notifikasi_read.user_uniq_id', '=', $userUniqId);
+        });
 
         if (isset($search['kategori']) && $search['kategori'] != '') {
             if ($search['kategori'] != 'all') {
