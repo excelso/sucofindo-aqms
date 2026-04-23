@@ -37,15 +37,11 @@ class Notification extends Model {
 
     public function scopeDataCountNotification(Builder $builder, $userId): void {
         $builder->select('t_notification.*');
-        $builder->leftJoin(DB::raw('
-                (
-                    SELECT
-                        t_notification_readed.*
-                    FROM
-                        t_notification_readed
-                        WHERE t_notification_readed.user_id = "' . $userId . '"
-                ) as notifikasi_read
-            '), 'notifikasi_read.notification_id', '=', 't_notification.id');
+
+        $builder->leftJoin('t_notifikasi_read', function ($join) use ($userId) {
+            $join->on('t_notifikasi_read.notifikasi_id', '=', 't_notifikasi.id')
+                ->where('t_notifikasi_read.user_id', '=', $userId);
+        });
 
         $builder->where(function ($query) use ($userId) {
             $query->where('t_notification.receiver_id', $userId);
@@ -61,20 +57,15 @@ class Notification extends Model {
             $search = $options['search'];
         }
 
-        $builder->select(
+        $builder->select([
             't_notification.*',
-            'notifikasi_read.readed',
-        );
+            't_notification_readed.readed',
+        ]);
 
-        $builder->leftJoin(DB::raw('
-            (
-                SELECT
-                    t_notification_readed.*
-                FROM
-                    t_notification_readed
-                    WHERE t_notification_readed.user_id = "' . $userId . '"
-            ) as notifikasi_read
-        '), 'notifikasi_read.notification_id', '=', 't_notification.id');
+        $builder->leftJoin('t_notifikasi_read', function ($join) use ($userId) {
+            $join->on('t_notifikasi_read.notifikasi_id', '=', 't_notifikasi.id')
+                ->where('t_notifikasi_read.user_id', '=', $userId);
+        });
 
         if (isset($search['categories']) && $search['categories'] != '') {
             if ($search['categories'] != 'all') {
