@@ -47,7 +47,7 @@ class Notification extends Model {
             $query->where('t_notification.receiver_id', $userId);
             $query->orWhereNull('t_notification.receiver_id');
         });
-        $builder->whereNull('notifikasi_read.user_id');
+        $builder->whereNull('t_notification_readed.user_id');
         $builder->where('t_notification.sent_status', '=', 'sent');
     }
 
