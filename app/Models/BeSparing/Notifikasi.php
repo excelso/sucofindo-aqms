@@ -1,72 +1,72 @@
 <?php
 
-namespace App\Models\BeSparing;
+    namespace App\Models\BeSparing;
 
-use App\Models\Users\User;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
+    use App\Models\Users\User;
+    use Illuminate\Database\Eloquent\Builder;
+    use Illuminate\Database\Eloquent\Factories\HasFactory;
+    use Illuminate\Database\Eloquent\Model;
+    use Illuminate\Database\Eloquent\Relations\HasMany;
+    use Illuminate\Database\Eloquent\SoftDeletes;
+    use Illuminate\Database\Eloquent\Relations\BelongsTo;
+    use Illuminate\Support\Collection;
+    use Illuminate\Support\Facades\DB;
 
-class Notifikasi extends Model {
+    class Notifikasi extends Model {
 
-    protected $connection = 'sparing-mysql';
-    protected $guarded = [];
-    protected $table = 't_notifikasi';
+        protected $connection = 'sparing-mysql';
+        protected $guarded = [];
+        protected $table = 't_notifikasi';
 
-    public function senderId(): BelongsTo {
-        return $this->belongsTo(User::class, 'sender_id', 'id');
-    }
-
-    public function scopeDataCountNotifikasi(Builder $builder, $userUniqId): void {
-        $builder->select('t_notifikasi.*');
-
-        $builder->leftJoin('t_notifikasi_read', function ($join) use ($userUniqId) {
-            $join->on('t_notifikasi_read.notifikasi_id', '=', 't_notifikasi.id')
-                ->where('t_notifikasi_read.user_uniq_id', '=', $userUniqId);
-        });
-
-        $builder->where(function ($query) use ($userUniqId) {
-            $query->where('t_notifikasi.user_uniq_id', $userUniqId)
-                ->orWhereNull('t_notifikasi.user_uniq_id');
-        });
-
-        $builder->whereNull('t_notifikasi_read.user_uniq_id');
-        $builder->where('t_notifikasi.status_kirim', '=', 'terkirim');
-    }
-
-    public function scopeDataNotifikasi(Builder $builder, $userUniqId, $options = []): void {
-        $search = [];
-        if (count($options) != 0) {
-            $search = $options['search'];
+        public function senderId(): BelongsTo {
+            return $this->belongsTo(User::class, 'sender_id', 'id');
         }
 
-        $builder->select(
-            't_notifikasi.*',
-            'notifikasi_read.readed',
-        );
+        public function scopeDataCountNotifikasi(Builder $builder, $userUniqId): void {
+            $builder->select('t_notifikasi.*');
 
-        $builder->leftJoin('t_notifikasi_read', function ($join) use ($userUniqId) {
-            $join->on('t_notifikasi_read.notifikasi_id', '=', 't_notifikasi.id')
-                ->where('t_notifikasi_read.user_uniq_id', '=', $userUniqId);
-        });
+            $builder->leftJoin('t_notifikasi_read', function ($join) use ($userUniqId) {
+                $join->on('t_notifikasi_read.notifikasi_id', '=', 't_notifikasi.id')
+                    ->where('t_notifikasi_read.user_uniq_id', '=', $userUniqId);
+            });
 
-        if (isset($search['kategori']) && $search['kategori'] != '') {
-            if ($search['kategori'] != 'all') {
-                $builder->where('t_notifikasi.kategori', '=', $search['kategori']);
+            $builder->where(function ($query) use ($userUniqId) {
+                $query->where('t_notifikasi.user_uniq_id', $userUniqId)
+                    ->orWhereNull('t_notifikasi.user_uniq_id');
+            });
+
+            $builder->whereNull('t_notifikasi_read.user_uniq_id');
+            $builder->where('t_notifikasi.status_kirim', '=', 'terkirim');
+        }
+
+        public function scopeDataNotifikasi(Builder $builder, $userUniqId, $options = []): void {
+            $search = [];
+            if (count($options) != 0) {
+                $search = $options['search'];
             }
+
+            $builder->select([
+                't_notifikasi.*',
+                't_notifikasi_read.readed'
+            ]);
+
+            $builder->leftJoin('t_notifikasi_read', function ($join) use ($userUniqId) {
+                $join->on('t_notifikasi_read.notifikasi_id', '=', 't_notifikasi.id')
+                    ->where('t_notifikasi_read.user_uniq_id', '=', $userUniqId);
+            });
+
+            if (isset($search['kategori']) && $search['kategori'] != '') {
+                if ($search['kategori'] != 'all') {
+                    $builder->where('t_notifikasi.kategori', '=', $search['kategori']);
+                }
+            }
+
+            $builder->where(function ($query) use ($userUniqId) {
+                $query->where('t_notifikasi.user_uniq_id', $userUniqId);
+                $query->orWhereNull('t_notifikasi.user_uniq_id');
+            });
+            $builder->where('t_notifikasi.status_kirim', '=', 'terkirim');
+            $builder->orderBy('t_notifikasi.created_at', 'DESC');
         }
 
-        $builder->where(function ($query) use ($userUniqId) {
-            $query->where('t_notifikasi.user_uniq_id', $userUniqId);
-            $query->orWhereNull('t_notifikasi.user_uniq_id');
-        });
-        $builder->where('t_notifikasi.status_kirim', '=', 'terkirim');
-        $builder->orderBy('t_notifikasi.created_at', 'DESC');
     }
-
-}
