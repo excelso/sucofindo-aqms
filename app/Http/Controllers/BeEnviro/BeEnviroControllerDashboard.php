@@ -47,7 +47,7 @@
          * Ambil platform_id milik user, di-cache agar tidak query berulang
          * dalam satu request yang sama.
          */
-        private function getUserPlatformIds(int $userId): array {
+        private function getUserPlatformIds(mixed $userId): array {
             $cacheKey = "user_platform_ids_{$userId}";
 
             return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($userId) {
@@ -126,7 +126,7 @@
          * Ambil data platform AQMS beserta count online/offline.
          * Count dihitung via query agregat (bukan load semua data dulu).
          */
-        private function getAqmsPlatformData(int $userId, ?string $heartbeatStatus): array {
+        private function getAqmsPlatformData(mixed $userId, ?string $heartbeatStatus): array {
             $userPlatformId = $this->getUserPlatformIds($userId);
 
             // Query data dengan filter
