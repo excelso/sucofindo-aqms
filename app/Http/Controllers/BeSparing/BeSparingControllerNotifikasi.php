@@ -147,12 +147,11 @@
 
         public function readNotifikasi(Request $request): JsonResponse {
             try {
-                $dataNotifRead = (new NotifikasiRead)
-                    ->where('notifikasi_id', $request->input('notifikasi_id'))
+                $alreadyRead = NotifikasiRead::where('notifikasi_id', $request->input('notifikasi_id'))
                     ->where('user_uniq_id', request()->user()->user_uniq_id)
-                    ->count();
+                    ->exists();
 
-                if ($dataNotifRead == 0) {
+                if (!$alreadyRead) {
                     NotifikasiRead::create([
                         'notifikasi_id' => $request->input('notifikasi_id'),
                         'user_uniq_id' => request()->user()->user_uniq_id,
